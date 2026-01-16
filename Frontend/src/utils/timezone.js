@@ -7,13 +7,17 @@
 
 /**
  * Get current date and time in Pakistan timezone
+ * Pakistan Standard Time (PKT) = UTC+5
+ * Works correctly regardless of browser timezone
  * @returns {Date} Date object representing current time in Pakistan
  */
 export const getPakistanDate = () => {
-  // Pakistan is UTC+5
+  // Get current UTC time
   const now = new Date();
-  const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-  const pakistanTime = new Date(utc + (3600000 * 5)); // UTC+5
+  const utcTime = now.getTime(); // Milliseconds since epoch (UTC)
+  // Pakistan is UTC+5: add 5 hours to UTC
+  const pktOffset = 5 * 60 * 60 * 1000; // 5 hours in milliseconds
+  const pakistanTime = new Date(utcTime + pktOffset);
   return pakistanTime;
 };
 
@@ -23,9 +27,9 @@ export const getPakistanDate = () => {
  */
 export const getPakistanDateString = () => {
   const date = getPakistanDate();
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(date.getUTCDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 };
 
@@ -35,9 +39,9 @@ export const getPakistanDateString = () => {
  */
 export const getPakistanTimeString = () => {
   const date = getPakistanDate();
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  const seconds = String(date.getSeconds()).padStart(2, '0');
+  const hours = String(date.getUTCHours()).padStart(2, '0');
+  const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+  const seconds = String(date.getUTCSeconds()).padStart(2, '0');
   return `${hours}:${minutes}:${seconds}`;
 };
 
