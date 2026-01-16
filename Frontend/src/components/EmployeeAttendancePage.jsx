@@ -48,6 +48,7 @@ import {
   List,
   MessageCircle,
   FileText,
+  RefreshCw,
   Activity,
   Wifi,
   Sparkle,
@@ -83,9 +84,18 @@ import {
 // Helper function to get consistent employee ID from localStorage
 const getEmployeeId = () => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
-  // Always use user.id or user.userId (from user_as_employees table)
-  // This ensures consistency with attendance records
-  return user.userId || user.id || 2;
+  // Priority order for employee ID:
+  // 1. user.employeeId (from login response - employee_onboarding.id)
+  // 2. user.userId (from user_as_employees.id) 
+  // 3. user.id (fallback)
+  // DO NOT default to 2 - that causes wrong employee to be fetched
+  const empId = user.employeeId || user.userId || user.id;
+  if (!empId) {
+    console.error('⚠️ ERROR: No employee ID found in localStorage user object:', user);
+    return null;
+  }
+  console.log('✅ getEmployeeId returning:', empId);
+  return empId;
 };
 
 /**
@@ -98,28 +108,33 @@ const parsePakistanTime = (dateStr, timeStr) => {
   
   try {
     // The database stores times as HH:MM:SS in Pakistan timezone (UTC+5)
-    // Example: check_in_time: "00:54:22" means 00:54:22 Pakistan time
+    // Example: check_in_time: "16:24:22" means 16:24:22 Pakistan time
     // 
-    // Simply create a Date object using the time string as-is
-    // WITHOUT any timezone conversions, since the times are already in Pakistan timezone
+    // To create a comparable Date object:
+    // 1. Take the Pakistan time (e.g., 16:24:22)
+    // 2. Subtract 5 hours to get UTC equivalent (e.g., 11:24:22 UTC)
+    // 3. Create a UTC Date object with those UTC values
+    // 4. This Date object can then be compared directly with getPakistanDate()
+    //    because getPakistanDate() also returns a Date adjusted by +5 hours
     
     const [hours, minutes, seconds] = timeStr.split(':').map(Number);
-    
-    // Create a date using the Pakistan time values directly
-    // This represents the moment in Pakistan timezone
-    const date = new Date();
-    date.setHours(hours);
-    date.setMinutes(minutes);
-    date.setSeconds(seconds);
-    date.setMilliseconds(0);
-    
-    // Set the date component from dateStr
     const [year, month, day] = dateStr.split('-').map(Number);
-    date.setFullYear(year);
-    date.setMonth(month - 1);
-    date.setDate(day);
     
-    return date;
+    // Convert Pakistan time to UTC by subtracting 5 hours
+    // If check_in_time is 16:24:22 PKT, the UTC equivalent is 11:24:22
+    let utcHours = hours - 5;
+    let utcDay = day;
+    
+    // Handle day wraparound (e.g., if time becomes negative)
+    if (utcHours < 0) {
+      utcHours += 24;
+      utcDay -= 1;
+    }
+    
+    // Create UTC Date object with the converted time
+    const utcDate = new Date(Date.UTC(year, month - 1, utcDay, utcHours, minutes, seconds));
+    
+    return utcDate;
   } catch (error) {
     console.error('Error parsing Pakistan time:', error);
     return new Date(`${dateStr}T${timeStr}`);
@@ -157,6 +172,7 @@ export const useAttendance = () => {
     lastUpdate: new Date(),
     status: 'pending'
   });
+  const [isAttendanceDataLoaded, setIsAttendanceDataLoaded] = useState(false);
 
   const handleSystemCheckIn = async () => {
     try {
@@ -718,13 +734,21 @@ export const useAttendance = () => {
             const isActiveSession = !!checkInTime && !checkOutTime;
             let currentWorkingTime = attendanceRecord.net_working_time_minutes || 0;
             
+            console.log('🔍 TIME PARSING DEBUG:');
+            console.log('   API check_in_time:', attendanceRecord.check_in_time);
+            console.log('   Parsed checkInTime (UTC):', checkInTime?.toUTCString());
+            console.log('   Parsed checkInTime (local):', checkInTime?.toString());
+            console.log('   isActiveSession:', isActiveSession);
+            
             if (isActiveSession && checkInTime) {
-              const now = new Date();
+              // Get current Pakistan time consistently
+              const now = getPakistanDate();
               currentWorkingTime = (now - checkInTime) / (1000 * 60);
               
               console.log(`⏱️ WORKING TIME CALCULATION:`);
-              console.log(`   Check-in: ${checkInTime.toLocaleString()}`);
-              console.log(`   Now: ${now.toLocaleString()}`);
+              console.log(`   Check-in time (Date object): ${checkInTime.toISOString()}`);
+              console.log(`   Current time (getPakistanDate): ${now.toISOString()}`);
+              console.log(`   Difference in ms: ${now - checkInTime}`);
               console.log(`   Elapsed: ${currentWorkingTime.toFixed(2)} minutes = ${(currentWorkingTime / 60).toFixed(2)} hours`);
             }
             
@@ -737,14 +761,55 @@ export const useAttendance = () => {
               status: attendanceRecord.status?.toLowerCase() || 'present'
             }));
             
+            // IMPORTANT: Also update attendanceData immediately with today's record
+            // This ensures getCheckInStatus() uses the latest data from database
+            const todayStr = attendanceDateStr;
+            
+            console.log('📊 UPDATING attendanceData with today\'s record:');
+            console.log('   Date:', todayStr);
+            console.log('   Check-in:', attendanceRecord.check_in_time);
+            console.log('   Check-out:', attendanceRecord.check_out_time);
+            
+            setAttendanceData(prev => {
+              const existingIndex = prev.findIndex(r => r.date === todayStr);
+              const updatedRecord = {
+                date: todayStr,
+                day: new Date(todayStr).getDate(),
+                status: attendanceRecord.status?.toLowerCase() || 'present',
+                checkIn: attendanceRecord.check_in_time || '-',
+                checkOut: attendanceRecord.check_out_time || '-',
+                hours: attendanceRecord.net_working_time_minutes ? (attendanceRecord.net_working_time_minutes / 60).toFixed(1) : '0.0',
+                check_out_time: attendanceRecord.check_out_time || null,
+                check_in_time: attendanceRecord.check_in_time || null
+              };
+              
+              console.log('   Updated record:', updatedRecord);
+              
+              if (existingIndex >= 0) {
+                const updated = [...prev];
+                updated[existingIndex] = { ...updated[existingIndex], ...updatedRecord };
+                return updated;
+              } else {
+                return [updatedRecord, ...prev];
+              }
+            });
+            
             console.log('✅ Check-in status synced: checkedIn =', isActiveSession, ', checkInTime =', checkInTime);
+            // Mark attendance data as loaded so component can render
+            setIsAttendanceDataLoaded(true);
           }
         }
       } catch (error) {
         console.error('Error fetching today\'s attendance:', error);
+        // Mark data as loaded even if fetch fails, so component doesn't hang
+        setIsAttendanceDataLoaded(true);
       }
     };
     
+    // Fetch immediately and also set up an interval to keep refreshing
+    fetchTodayData();
+    const interval = setInterval(fetchTodayData, 10000); // Refresh every 10 seconds
+
     // Then fetch historical/monthly data for both charts and attendance sheet
     const fetchHistoricalData = async () => {
       try {
@@ -827,10 +892,10 @@ export const useAttendance = () => {
       }
     };
     
-    // Fetch today's data first to ensure check-in status is correct
-    fetchTodayData();
     // Then fetch historical data
     fetchHistoricalData();
+
+    return () => clearInterval(interval);
   }, []);
 
   return {
@@ -844,7 +909,8 @@ export const useAttendance = () => {
     setAttendanceData,
     getTodayStatus,
     getAttendanceStats,
-    fetchAttendanceData
+    fetchAttendanceData,
+    isAttendanceDataLoaded
   };
 };
 
@@ -1613,7 +1679,8 @@ export function EmployeeAttendancePage() {
     setAttendanceData,
     getTodayStatus,
     getAttendanceStats,
-    fetchAttendanceData
+    fetchAttendanceData,
+    isAttendanceDataLoaded
   } = useAttendance();
 
   const [isLoading, setIsLoading] = useState(false);
@@ -2552,19 +2619,35 @@ export function EmployeeAttendancePage() {
     return !isLoading;
   };
 
-  // Get check-in status message
+  // Get check-in status message - uses BOTH DATABASE and IN-MEMORY state
   const getCheckInStatus = () => {
     // Get today's record from attendance data (source of truth from database)
-    const todayStr = new Date().toISOString().split('T')[0];
+    // Use getPakistanDate to get Pakistan timezone instead of browser timezone
+    const pkDate = getPakistanDate();
+    const todayStr = `${pkDate.getFullYear()}-${String(pkDate.getMonth() + 1).padStart(2, '0')}-${String(pkDate.getDate()).padStart(2, '0')}`;
     const todayRecord = attendanceData?.find(r => r.date === todayStr);
+    
+    console.log('📋 getCheckInStatus DEBUG:');
+    console.log('   Pakistan today date:', todayStr);
+    console.log('   systemAttendance.checkedIn:', systemAttendance.checkedIn);
+    console.log('   systemAttendance.checkInTime:', systemAttendance.checkInTime);
+    console.log('   attendanceData records:', attendanceData?.length);
+    if (attendanceData?.length > 0) {
+      console.log('   First few dates:', attendanceData.slice(0, 3).map(r => `${r.date} (checkin: ${r.check_in_time}, checkout: ${r.check_out_time})`));
+    }
+    console.log('   Today record found:', !!todayRecord);
     
     // IMPORTANT: Check the actual database record for check_out_time, not in-memory state
     // The database is the source of truth. In-memory state can be stale after page reload
     const dbCheckOutTime = todayRecord?.check_out_time;
     const dbCheckInTime = todayRecord?.check_in_time;
     
+    console.log('   dbCheckInTime:', dbCheckInTime);
+    console.log('   dbCheckOutTime:', dbCheckOutTime);
+    
     // If database shows checkout, display it regardless of in-memory state
     if (dbCheckOutTime) {
+      console.log('   ✅ User has checked out (from DB)');
       return {
         checked: false,
         message: `Checked out at ${formatPakistanTimeString(dbCheckOutTime)}`,
@@ -2574,10 +2657,27 @@ export function EmployeeAttendancePage() {
     
     // If database shows check-in but no checkout, user is currently checked in
     if (dbCheckInTime && !dbCheckOutTime) {
+      console.log('   ✅ Detected active check-in session from database');
       return {
         checked: true,
         message: `Checked in at ${formatPakistanTimeString(dbCheckInTime)}`,
         time: dbCheckInTime
+      };
+    }
+    
+    // FALLBACK: If attendanceData hasn't loaded yet but systemAttendance shows checked in,
+    // use that (this handles the case where fetch is still in progress on page load)
+    if (systemAttendance.checkedIn && systemAttendance.checkInTime) {
+      console.log('   ✅ Using systemAttendance state (DB fetch in progress)');
+      const timeStr = systemAttendance.checkInTime.toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: true 
+      });
+      return {
+        checked: true,
+        message: `Checked in at ${timeStr}`,
+        time: systemAttendance.checkInTime
       };
     }
     
@@ -2667,12 +2767,18 @@ export function EmployeeAttendancePage() {
       {isLoading && (
         <div className="fixed inset-0 bg-white/80 backdrop-blur-sm z-50 flex items-center justify-center pointer-events-auto">
           <div className="flex flex-col items-center gap-4">
-            {/* Spinning Loader */}
-            <div className="relative w-12 h-12">
-              <div className="absolute inset-0 border-3 border-blue-200 rounded-full"></div>
-              <div className="absolute inset-0 border-3 border-transparent border-t-blue-600 border-r-blue-600 rounded-full animate-spin"></div>
-            </div>
-            <p className="text-sm font-medium text-gray-700">Loading...</p>
+            <div className="w-12 h-12 border-3 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+            <p className="text-gray-600 font-medium">Loading attendance...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Show loading screen while attendance data is being fetched on initial load */}
+      {!isAttendanceDataLoaded && (
+        <div className="fixed inset-0 bg-white/90 backdrop-blur-sm z-40 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+            <p className="text-gray-700 font-medium">Syncing check-in status...</p>
           </div>
         </div>
       )}
@@ -2731,7 +2837,7 @@ export function EmployeeAttendancePage() {
         {activeTab === 'dashboard' ? (
           <>
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 mb-6">
               <div className="bg-white rounded-lg p-4 border border-blue-200 shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex items-center justify-between mb-2">
                   <Clock className="h-5 w-5 text-blue-600" />
@@ -2786,14 +2892,7 @@ export function EmployeeAttendancePage() {
                 <p className="text-xs text-gray-600 mt-1">Debt balance</p>
               </div> */}
 
-              <div className="bg-white rounded-lg p-4 border border-cyan-200 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between mb-2">
-                  <Activity className="h-5 w-5 text-cyan-600" />
-                  <span className="text-xs font-medium text-cyan-600 uppercase">Hours</span>
-                </div>
-                <p className="text-2xl font-bold text-gray-900">{formatDuration(workingHoursSummary.netWorkingTime)}</p>
-                <p className="text-xs text-gray-600 mt-1">Net working</p>
-              </div>
+              {/* Hours card removed (Net working) per design request */}
             </div>
 
             {/* Main Content Area */}
@@ -2827,9 +2926,23 @@ export function EmployeeAttendancePage() {
                   <p className="text-sm text-gray-700">
                     {getCheckInStatus().message}
                   </p>
+                  {attendanceData.length === 0 && (
+                    <p className="text-xs text-gray-500 mt-2 italic">Loading attendance data...</p>
+                  )}
                 </div>
                 
                 <div className="space-y-3">
+                  <button 
+                    onClick={async () => {
+                      console.log('🔄 Manual refresh triggered');
+                      await fetchAttendanceData();
+                    }}
+                    className="w-full flex items-center justify-center gap-2 p-2 rounded-lg font-medium transition-all bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm"
+                  >
+                    <RefreshCw className="h-3 w-3" />
+                    <span>Refresh Status</span>
+                  </button>
+                  
                   <button 
                     onClick={handleSystemCheckInWrapper}
                     disabled={!canCheckIn()}

@@ -23,10 +23,18 @@ export function EmployeeAttendancePage() {
 
   useEffect(() => {
     if (userInfo.employeeId) {
+      // Fetch immediately on component mount
       fetchTodayAttendance();
       fetchMonthlyAttendance();
+      
+      // Also set up a refresh interval to keep data in sync
+      const interval = setInterval(() => {
+        fetchTodayAttendance();
+      }, 5000); // Refresh every 5 seconds
+      
+      return () => clearInterval(interval);
     }
-  }, []);
+  }, [userInfo.employeeId]);
 
   // Fetch Today's Attendance
   const fetchTodayAttendance = async () => {
@@ -39,16 +47,27 @@ export function EmployeeAttendancePage() {
       );
       const data = await response.json();
       
+      console.log('📊 Today attendance data:', data);
+      
       if (data.success && data.data) {
         setTodayAttendance(data.data);
-        setCheckedIn(!!data.data.check_in_time);
-        setCheckedOut(!!data.data.check_out_time);
+        const hasCheckIn = !!data.data.check_in_time;
+        const hasCheckOut = !!data.data.check_out_time;
+        
+        console.log('✅ Check-in status:', hasCheckIn);
+        console.log('✅ Check-out status:', hasCheckOut);
+        
+        setCheckedIn(hasCheckIn);
+        setCheckedOut(hasCheckOut);
       } else {
+        console.log('❌ No attendance data found for today');
         setTodayAttendance(null);
+        setCheckedIn(false);
+        setCheckedOut(false);
       }
     } catch (err) {
       setError('Failed to fetch today attendance');
-      console.error(err);
+      console.error('Error fetching attendance:', err);
     } finally {
       setLoading(false);
     }

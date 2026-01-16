@@ -122,41 +122,7 @@ const LoginPage = () => {
           return;
         }
 
-        // Auto check-in for employees (not admin or HR)
-        if (userRole === 'employee') {
-          try {
-            const checkInPayload = {
-              employee_id: data.data.employeeId || data.data.employee_id || data.data.id,
-              email: data.data.email,
-              name: data.data.name,
-              device_info: deviceInfo.deviceType,
-              ip_address: deviceInfo.ipAddress
-            };
-            console.log('🔍 Check-in payload:', checkInPayload);
-            console.log('📦 Backend response data:', data.data);
-            
-            const checkInResponse = await fetch(endpoints.attendance.checkIn, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${data.data.token}`
-              },
-              body: JSON.stringify(checkInPayload)
-            });
-
-            if (checkInResponse.ok) {
-              const checkInData = await checkInResponse.json();
-              console.log('✅ Auto check-in successful:', checkInData);
-            } else {
-              console.log('⚠️ Check-in already recorded for today');
-            }
-          } catch (checkInError) {
-            console.warn('⚠️ Auto check-in failed (may already be checked in):', checkInError.message);
-            // Don't block login if check-in fails
-          }
-        }
-
-        // Navigate based on role
+        // Navigate based on role (check-in is now manual only)
         if (userRole === 'admin') {
           navigate('/admin/dashboard');
         } else if (userRole === 'hr') {
