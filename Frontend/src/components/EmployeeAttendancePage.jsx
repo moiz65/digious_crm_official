@@ -837,14 +837,22 @@ export const useAttendance = () => {
           const data = await response.json();
           if (data.success && data.data) {
             console.log(`✅ Fetched ${data.data.length} historical attendance records`);
+            console.log('📦 RAW API RESPONSE - First record:', JSON.stringify(data.data[0], null, 2));
             
             // Convert to formatted data
-            const historicalData = data.data.map(record => {
+            const historicalData = data.data.map((record, idx) => {
               // Use the attendance_date as-is since backend now returns YYYY-MM-DD format
               // This is already the correct local date, not UTC
               const attendanceDateStr = record.attendance_date.includes('T')
                 ? record.attendance_date.split('T')[0]  // If it still has time component
                 : record.attendance_date;  // If it's already YYYY-MM-DD
+              
+              if (idx === 0) {
+                console.log('🔍 FIRST RECORD TRANSFORMATION:');
+                console.log('   Input record:', JSON.stringify(record, null, 2));
+                console.log('   check_in_time field:', record.check_in_time);
+                console.log('   check_out_time field:', record.check_out_time);
+              }
               
               const checkInTime = record.check_in_time 
                 ? parsePakistanTime(attendanceDateStr, record.check_in_time)
@@ -852,6 +860,11 @@ export const useAttendance = () => {
               const checkOutTime = record.check_out_time
                 ? parsePakistanTime(attendanceDateStr, record.check_out_time)
                 : null;
+              
+              if (idx === 0) {
+                console.log('   Parsed checkInTime:', checkInTime);
+                console.log('   Parsed checkOutTime:', checkOutTime);
+              }
                 
               return {
                 date: attendanceDateStr,
@@ -863,6 +876,8 @@ export const useAttendance = () => {
                 checkOut: checkOutTime
                   ? checkOutTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
                   : '-',
+                check_in_time: record.check_in_time || null,
+                check_out_time: record.check_out_time || null,
                 hours: record.net_working_time_minutes && record.net_working_time_minutes > 0 ? (record.net_working_time_minutes / 60).toFixed(1) : '-',
                 grossHours: record.gross_working_time_minutes && record.gross_working_time_minutes > 0 ? (record.gross_working_time_minutes / 60).toFixed(1) : '-',
                 remarks: record.remarks || (checkOutTime ? 'Checked out' : 'Active session'),
@@ -2634,6 +2649,8 @@ export function EmployeeAttendancePage() {
     console.log('   attendanceData records:', attendanceData?.length);
     if (attendanceData?.length > 0) {
       console.log('   First few dates:', attendanceData.slice(0, 3).map(r => `${r.date} (checkin: ${r.check_in_time}, checkout: ${r.check_out_time})`));
+      console.log('   📝 Full first record fields:', Object.keys(attendanceData[0]));
+      console.log('   📝 Full first record data:', JSON.stringify(attendanceData[0], null, 2));
     }
     console.log('   Today record found:', !!todayRecord);
     
