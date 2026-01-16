@@ -898,8 +898,27 @@ export const useAttendance = () => {
               };
             });
             
-            // Set monthly data for both charts and attendance sheet
-            setAttendanceData(historicalData);
+            // IMPORTANT: Merge historical data with existing today's data
+            // Don't overwrite - today's data has fresh check_in/check_out from the dedicated fetch
+            console.log('📋 MERGING historical data with existing attendance data');
+            console.log('   Current attendanceData length:', attendanceData?.length);
+            console.log('   New historicalData length:', historicalData.length);
+            
+            setAttendanceData(prevData => {
+              // Keep today's record if it exists (it has fresh data from fetchTodayData)
+              const todayStr = new Date().toISOString().split('T')[0];
+              const todayRecord = prevData.find(r => r.date === todayStr);
+              
+              if (todayRecord) {
+                console.log('   ✅ Preserving today\'s record from previous fetch');
+                // Merge: use today's record, then add historical records that aren't today
+                const merged = historicalData.filter(r => r.date !== todayStr);
+                return [todayRecord, ...merged];
+              } else {
+                console.log('   ℹ️ No today record found, using historical data as-is');
+                return historicalData;
+              }
+            });
           }
         }
       } catch (error) {
