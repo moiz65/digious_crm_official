@@ -1447,16 +1447,16 @@ const MonthlyOverview = ({
   const statsCards = getStatsCards();
 
   return (
-    <div className="bg-white rounded-3xl p-8 border border-gray-200 shadow-md mb-8">
+    <div className="bg-gradient-to-br from-white via-gray-50 to-white rounded-3xl p-8 border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 mb-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">Monthly Overview</h2>
-          <p className="text-gray-600 text-sm mt-1">
+          <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 bg-clip-text text-transparent">Monthly Overview</h2>
+          <p className="text-gray-500 text-sm mt-1 font-medium">
             {currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })} Performance Analytics
           </p>
         </div>
         
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-4 bg-gray-50 p-3 rounded-xl border border-gray-200">
           {/* Time Range Filter */}
           <div className="flex gap-2">
             {timeRangeOptions.map(option => {
@@ -1472,10 +1472,10 @@ const MonthlyOverview = ({
                       setShowCustomRange(true);
                     }
                   }}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ${
+                  className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ${
                     timeRange === option.value 
-                      ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md' 
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md' 
+                      : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'
                   }`}
                 >
                   <IconComponent className="h-4 w-4" />
@@ -1486,17 +1486,17 @@ const MonthlyOverview = ({
           </div>
           
           {/* Data Type Filter */}
-          <div className="flex gap-2">
+          <div className="flex gap-2 ml-4 pl-4 border-l border-gray-300">
             {filterOptions.map(option => {
               const IconComponent = option.icon;
               return (
                 <button
                   key={option.value}
                   onClick={() => onFilterChange(option.value)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ${
+                  className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ${
                     activeFilter === option.value 
-                      ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md' 
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-md' 
+                      : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'
                   }`}
                 >
                   <IconComponent className="h-4 w-4" />
@@ -2640,145 +2640,45 @@ const OverviewTab = ({
 
   return (
     <div className="space-y-6">
-      {/* Uninformed Tracking */}
-      <UnexplainedAbsenceTracking
-        attendanceData={attendanceData}
-        employees={employees}
-        selectedDate={selectedDate}
-        onMarkAsExplained={onMarkAsExplained}
-        onSendReminder={onSendReminder}
-        onOpenExplanationModal={(employeeId, date) => {
-          setExplanationData({ employeeId, date, explanation: '' });
-          setIsExplanationModalOpen(true);
-        }}
-      />
-
-      {/* Filters Section */}
-      <div className="bg-white rounded-3xl p-7 border border-gray-200 shadow-md">
-        <h3 className="text-lg font-bold text-gray-900 mb-5">Filters</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Calendar Section - Now First */}
+      <div className="bg-gradient-to-br from-white via-gray-50 to-white rounded-3xl p-8 border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300">
+        <div className="flex items-center justify-between mb-8">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Time Range</label>
-            <select
-              value={filters.timeRange}
-              onChange={(e) => handleFilterChange('timeRange', e.target.value)}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#349dff] focus:border-transparent bg-white"
-            >
-              {timeRangeOptions.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 bg-clip-text text-transparent">
+              {currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })} Calendar
+            </h2>
+            <p className="text-sm text-gray-500 mt-1">Track daily attendance and patterns</p>
           </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Department</label>
-            <select
-              value={filters.department}
-              onChange={(e) => handleFilterChange('department', e.target.value)}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#349dff] focus:border-transparent bg-white"
-            >
-              {departmentOptions.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Status</label>
-            <select
-              value={filters.status}
-              onChange={(e) => handleFilterChange('status', e.target.value)}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#349dff] focus:border-transparent bg-white"
-            >
-              {statusOptions.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {filters.timeRange === 'custom' && (
-            <div className="lg:col-span-2 grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Start Date</label>
-                <input
-                  type="date"
-                  value={filters.dateRange.start}
-                  onChange={(e) => handleDateRangeChange('start', e.target.value)}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#349dff] focus:border-transparent"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">End Date</label>
-                <input
-                  type="date"
-                  value={filters.dateRange.end}
-                  onChange={(e) => handleDateRangeChange('end', e.target.value)}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#349dff] focus:border-transparent"
-                />
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="mt-5 flex items-center space-x-3 text-sm text-gray-600 flex-wrap">
-          <span className="font-semibold">Showing:</span>
-          <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full font-medium">{getFilteredEmployees().length} employees</span>
-          <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full font-medium">{getFilteredAttendanceData().length} records</span>
-          {filters.department !== 'all' && (
-            <span className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full font-medium">
-              {filters.department}
-            </span>
-          )}
-          {filters.status !== 'all' && (
-            <span className="bg-orange-100 text-orange-800 px-3 py-1 rounded-full font-medium">
-              {filters.status}
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* Calendar Section */}
-      <div className="bg-white rounded-3xl p-7 border border-gray-200 shadow-md">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
-            {currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })} Calendar
-          </h2>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3 bg-gray-50 p-3 rounded-xl border border-gray-200">
             <button 
               onClick={() => navigateMonth(-1)}
-              className="p-2.5 rounded-lg border border-gray-300 hover:bg-gray-100 transition duration-300"
+              className="p-2.5 rounded-lg border border-gray-300 hover:bg-white hover:border-blue-400 transition duration-300 text-gray-700 hover:text-blue-600"
             >
               <ArrowLeft className="h-4 w-4" />
             </button>
             <button 
               onClick={() => setCurrentDate(new Date())}
-              className="px-4 py-2 text-sm font-medium bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-300 text-blue-700 rounded-lg hover:bg-blue-100 transition duration-300"
+              className="px-4 py-2 text-sm font-semibold bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition duration-300 shadow-sm hover:shadow-md"
             >
               Today
             </button>
-            <span className="text-sm font-semibold text-gray-700 min-w-[120px] text-center">
+            <span className="text-sm font-bold text-gray-700 min-w-[150px] text-center">
               {currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
             </span>
             <button 
               onClick={() => navigateMonth(1)}
-              className="p-2.5 rounded-lg border border-gray-300 hover:bg-gray-100 transition duration-300"
+              className="p-2.5 rounded-lg border border-gray-300 hover:bg-white hover:border-blue-400 transition duration-300 text-gray-700 hover:text-blue-600"
             >
               <ArrowRight className="h-4 w-4" />
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-7 gap-5 mb-8">
+        <div className="grid grid-cols-7 gap-4 mb-8">
           {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
             <div
               key={day}
-              className="text-center text-s font-bold tracking-wide uppercase text-black py-2"
+              className="text-center text-xs font-bold tracking-wider uppercase text-gray-700 py-3 border-b-2 border-gray-200"
             >
               {day}
             </div>
@@ -3074,6 +2974,19 @@ const OverviewTab = ({
           <p className="text-gray-500 text-sm">The attendance details will appear here with employee check-in times, breaks, and status information.</p>
         </div>
       )}
+
+      {/* Uninformed Tracking - Now at the End */}
+      <UnexplainedAbsenceTracking
+        attendanceData={attendanceData}
+        employees={employees}
+        selectedDate={selectedDate}
+        onMarkAsExplained={onMarkAsExplained}
+        onSendReminder={onSendReminder}
+        onOpenExplanationModal={(employeeId, date) => {
+          setExplanationData({ employeeId, date, explanation: '' });
+          setIsExplanationModalOpen(true);
+        }}
+      />
     </div>
   );
 };
@@ -4429,66 +4342,95 @@ export function HrAttendancePage() {
               ))}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-              <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-medium text-gray-600">Present Today</h3>
-                  <CheckCircle className="h-5 w-5 text-green-500" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-5 mb-8">
+              {/* Present Today Card */}
+              <div className="group relative bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-6 border border-green-200 shadow-sm hover:shadow-lg hover:border-green-300 transition-all duration-300 overflow-hidden">
+                <div className="absolute top-0 right-0 w-20 h-20 bg-green-100 rounded-full -mr-8 -mt-8 opacity-40 group-hover:opacity-60 transition-opacity"></div>
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-sm font-semibold text-gray-700">Present Today</h3>
+                    <div className="p-2.5 bg-green-100 rounded-lg">
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                    </div>
+                  </div>
+                  <div className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">{stats.presentToday}</div>
+                  <p className="text-sm text-green-700 mt-2 flex items-center font-medium">
+                    <Users className="h-4 w-4 mr-1.5" />
+                    {stats.totalEmployees > 0 ? Math.round((stats.presentToday / stats.totalEmployees) * 100) : 0}% attendance rate
+                  </p>
                 </div>
-                <div className="text-2xl font-bold text-gray-900">{stats.presentToday}</div>
-                <p className="text-sm text-green-600 mt-1 flex items-center">
-                  <Users className="h-4 w-4 mr-1" />
-                  {stats.totalEmployees > 0 ? Math.round((stats.presentToday / stats.totalEmployees) * 100) : 0}% attendance
-                </p>
               </div>
 
-              <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-medium text-gray-600">On Leave</h3>
-                  <Calendar className="h-5 w-5 text-orange-500" />
+              {/* On Leave Card */}
+              <div className="group relative bg-gradient-to-br from-orange-50 to-amber-50 rounded-2xl p-6 border border-orange-200 shadow-sm hover:shadow-lg hover:border-orange-300 transition-all duration-300 overflow-hidden">
+                <div className="absolute top-0 right-0 w-20 h-20 bg-orange-100 rounded-full -mr-8 -mt-8 opacity-40 group-hover:opacity-60 transition-opacity"></div>
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-sm font-semibold text-gray-700">On Leave</h3>
+                    <div className="p-2.5 bg-orange-100 rounded-lg">
+                      <Calendar className="h-5 w-5 text-orange-600" />
+                    </div>
+                  </div>
+                  <div className="text-3xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">{stats.onLeave}</div>
+                  <p className="text-sm text-orange-700 mt-2 flex items-center font-medium">
+                    <Clock className="h-4 w-4 mr-1.5" />
+                    {stats.totalLeavesTaken} total this month
+                  </p>
                 </div>
-                <div className="text-2xl font-bold text-gray-900">{stats.onLeave}</div>
-                <p className="text-sm text-orange-600 mt-1 flex items-center">
-                  <Clock className="h-4 w-4 mr-1" />
-                  {stats.totalLeavesTaken} total this month
-                </p>
               </div>
 
-              <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-medium text-gray-600">Monthly Rate</h3>
-                  <PieChart className="h-5 w-5 text-blue-500" />
+              {/* Monthly Rate Card */}
+              <div className="group relative bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-6 border border-blue-200 shadow-sm hover:shadow-lg hover:border-blue-300 transition-all duration-300 overflow-hidden">
+                <div className="absolute top-0 right-0 w-20 h-20 bg-blue-100 rounded-full -mr-8 -mt-8 opacity-40 group-hover:opacity-60 transition-opacity"></div>
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-sm font-semibold text-gray-700">Monthly Rate</h3>
+                    <div className="p-2.5 bg-blue-100 rounded-lg">
+                      <PieChart className="h-5 w-5 text-blue-600" />
+                    </div>
+                  </div>
+                  <div className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">{stats.monthlyAttendanceRate}%</div>
+                  <p className="text-sm text-blue-700 mt-2 flex items-center font-medium">
+                    <BarChart3 className="h-4 w-4 mr-1.5" />
+                    Overall performance
+                  </p>
                 </div>
-                <div className="text-2xl font-bold text-gray-900">{stats.monthlyAttendanceRate}%</div>
-                <p className="text-sm text-blue-600 mt-1 flex items-center">
-                  <BarChart3 className="h-4 w-4 mr-1" />
-                  Overall attendance
-                </p>
               </div>
 
-              <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-medium text-gray-600">Late Today</h3>
-                  <Clock className="h-5 w-5 text-red-500" />
+              {/* Late Today Card */}
+              <div className="group relative bg-gradient-to-br from-red-50 to-rose-50 rounded-2xl p-6 border border-red-200 shadow-sm hover:shadow-lg hover:border-red-300 transition-all duration-300 overflow-hidden">
+                <div className="absolute top-0 right-0 w-20 h-20 bg-red-100 rounded-full -mr-8 -mt-8 opacity-40 group-hover:opacity-60 transition-opacity"></div>
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-sm font-semibold text-gray-700">Late Today</h3>
+                    <div className="p-2.5 bg-red-100 rounded-lg">
+                      <Clock className="h-5 w-5 text-red-600" />
+                    </div>
+                  </div>
+                  <div className="text-3xl font-bold bg-gradient-to-r from-red-600 to-rose-600 bg-clip-text text-transparent">{stats.lateToday}</div>
+                  <p className="text-sm text-red-700 mt-2 flex items-center font-medium">
+                    <AlertCircle className="h-4 w-4 mr-1.5" />
+                    Late arrivals
+                  </p>
                 </div>
-                <div className="text-2xl font-bold text-gray-900">{stats.lateToday}</div>
-                <p className="text-sm text-red-600 mt-1 flex items-center">
-                  <AlertCircle className="h-4 w-4 mr-1" />
-                  Late arrivals
-                </p>
               </div>
 
-              {/* New Uninformed card */}
-              <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-medium text-gray-600">Uninformed</h3>
-                  <UserX className="h-5 w-5 text-red-500" />
+              {/* Uninformed Card */}
+              <div className="group relative bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 border border-purple-200 shadow-sm hover:shadow-lg hover:border-purple-300 transition-all duration-300 overflow-hidden">
+                <div className="absolute top-0 right-0 w-20 h-20 bg-purple-100 rounded-full -mr-8 -mt-8 opacity-40 group-hover:opacity-60 transition-opacity"></div>
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-sm font-semibold text-gray-700">Uninformed</h3>
+                    <div className="p-2.5 bg-purple-100 rounded-lg">
+                      <UserX className="h-5 w-5 text-purple-600" />
+                    </div>
+                  </div>
+                  <div className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">{stats.unexplainedAbsences}</div>
+                  <p className="text-sm text-purple-700 mt-2 flex items-center font-medium">
+                    <AlertCircle className="h-4 w-4 mr-1.5" />
+                    Need follow-up
+                  </p>
                 </div>
-                <div className="text-2xl font-bold text-gray-900">{stats.unexplainedAbsences}</div>
-                <p className="text-sm text-red-600 mt-1 flex items-center">
-                  <AlertCircle className="h-4 w-4 mr-1" />
-                  Need follow-up
-                </p>
               </div>
             </div>
 
