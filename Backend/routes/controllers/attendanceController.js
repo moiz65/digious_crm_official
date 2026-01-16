@@ -171,7 +171,7 @@ exports.checkIn = async (req, res) => {
       if (existingAttendance.length > 0) {
         // If there's an existing record with NULL check_out_time, check if we should auto-complete it
         if (existingAttendance[0].check_out_time === null) {
-          // IMPORTANT FIX: Only auto-checkout if the record is 24+ hours old
+          // IMPORTANT FIX: Only auto-checkout if it's after 9:00 AM (next day)
           // This prevents immediate auto-checkout on same-shift re-login
           
           // Get the check-in record with created_at timestamp
@@ -183,20 +183,28 @@ exports.checkIn = async (req, res) => {
           if (fullRecord.length > 0) {
             const createdAt = new Date(fullRecord[0].created_at);
             const pkNow = getPakistanDate();
-            const hoursSinceCheckIn = (pkNow.getTime() - createdAt.getTime()) / (1000 * 60 * 60); // Convert ms to hours
             
-            // Auto-checkout if record is stale (24+ hours) OR if it's a new shift attempt (employee trying to check in again)
+            // Check if current time is after 9:00 AM
+            const currentHour = pkNow.getHours();
+            const currentMinute = pkNow.getMinutes();
+            const isAfter9AM = currentHour >= 9; // 9:00 AM or later
+            
+            // Check if check-in was from a previous day (not today)
+            const createdDate = new Date(createdAt);
+            const currentDate = new Date(pkNow);
+            const isPreviousDay = createdDate.toDateString() !== currentDate.toDateString();
+            
+            // Auto-checkout if it's after 9:00 AM AND check-in was from previous day
+            // OR if it's a new shift attempt (employee trying to check in at shift hours 21:00+)
             // This allows employees to auto-complete their previous shift and start a new one
             const isNewShiftAttempt = checkInTotalMinutes >= 21 * 60; // Trying to check in during shift hours (21:00+)
             
-            if (hoursSinceCheckIn >= 24 || isNewShiftAttempt) {
+            if ((isAfter9AM && isPreviousDay) || isNewShiftAttempt) {
               console.log(`🔧 AUTO-COMPLETING PREVIOUS CHECKOUT: Record ID ${existingAttendance[0].id}`);
-              console.log(`   Reason: ${isNewShiftAttempt ? 'New shift check-in attempt' : `Stale record (${hoursSinceCheckIn.toFixed(1)} hours old)`}`);
+              console.log(`   Reason: ${isNewShiftAttempt ? 'New shift check-in attempt' : `After 9:00 AM (current time: ${currentHour}:${String(currentMinute).padStart(2, '0')})`}`);
               
-              // Auto-complete the previous checkout with current time minus 1 minute
-              const pkDate = getPakistanDate();
-              pkDate.setMinutes(pkDate.getMinutes() - 1);
-              const autoCheckOutTime = getPakistanTimeString(); // Use Pakistan time
+              // Auto-complete the previous checkout at 9:00 AM
+              const autoCheckOutTime = '09:00:00'; // Fixed checkout time at 9:00 AM
               
               const [breakResult] = await connection.query(
                 `SELECT total_break_duration_minutes FROM Employee_Attendance WHERE id = ?`,
@@ -225,8 +233,8 @@ exports.checkIn = async (req, res) => {
               console.log(`   Working hours calculated: ${workingHours.gross} minutes (${(workingHours.gross/60).toFixed(2)} hours)`);
               // After auto-completing previous record, proceed to create new check-in
             } else {
-              // Record is less than 24 hours old and not a shift time attempt - prevent duplicate check-in
-              console.log(`⚠️ DUPLICATE CHECK-IN ATTEMPT BLOCKED (record only ${hoursSinceCheckIn.toFixed(1)} hours old)`);
+              // Record is from today and before 9:00 AM - prevent duplicate check-in
+              console.log(`⚠️ DUPLICATE CHECK-IN ATTEMPT BLOCKED (record from today, current time: ${currentHour}:${String(currentMinute).padStart(2, '0')})`);
               console.log(`   Record ID: ${existingAttendance[0].id}`);
               console.log(`   Check-in Time: ${existingAttendance[0].check_in_time}`);
               console.log(`   Status: ALREADY CHECKED IN - Please checkout first before checking in again`);
@@ -239,7 +247,8 @@ exports.checkIn = async (req, res) => {
                   recordId: existingAttendance[0].id,
                   checkInTime: existingAttendance[0].check_in_time,
                   attendanceDate: attendanceDate,
-                  hoursOpen: hoursSinceCheckIn.toFixed(1),
+                  currentTime: `${currentHour}:${String(currentMinute).padStart(2, '0')}`,
+                  autoCheckoutTime: '09:00 AM',
                   action: 'Please call POST /api/v1/attendance/check-out to complete your previous session'
                 }
               });
