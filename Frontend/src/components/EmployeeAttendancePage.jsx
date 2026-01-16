@@ -795,9 +795,33 @@ export const useAttendance = () => {
             });
             
             console.log('✅ Check-in status synced: checkedIn =', isActiveSession, ', checkInTime =', checkInTime);
-            // Mark attendance data as loaded so component can render
-            setIsAttendanceDataLoaded(true);
+          } else {
+            // response.ok but no data - this means no record exists for today (404 from API)
+            console.log('ℹ️ No attendance record for today - employee not yet checked in');
+            setSystemAttendance(prev => ({
+              ...prev,
+              checkedIn: false,
+              checkInTime: null,
+              checkOutTime: null,
+              totalWorkingTime: 0,
+              status: 'absent'
+            }));
           }
+          // Mark attendance data as loaded so component can render
+          setIsAttendanceDataLoaded(true);
+        } else {
+          // 404 or other error response
+          console.log(`⚠️ Failed to fetch today's attendance: ${response.status}`);
+          setSystemAttendance(prev => ({
+            ...prev,
+            checkedIn: false,
+            checkInTime: null,
+            checkOutTime: null,
+            totalWorkingTime: 0,
+            status: 'absent'
+          }));
+          // Mark attendance data as loaded even on error
+          setIsAttendanceDataLoaded(true);
         }
       } catch (error) {
         console.error('Error fetching today\'s attendance:', error);
@@ -906,7 +930,9 @@ export const useAttendance = () => {
             
             setAttendanceData(prevData => {
               // Keep today's record if it exists (it has fresh data from fetchTodayData)
-              const todayStr = new Date().toISOString().split('T')[0];
+              // IMPORTANT: Use getPakistanDate() for correct timezone matching with database records
+              const pkDate = getPakistanDate();
+              const todayStr = `${pkDate.getFullYear()}-${String(pkDate.getMonth() + 1).padStart(2, '0')}-${String(pkDate.getDate()).padStart(2, '0')}`;
               const todayRecord = prevData.find(r => r.date === todayStr);
               
               if (todayRecord) {
