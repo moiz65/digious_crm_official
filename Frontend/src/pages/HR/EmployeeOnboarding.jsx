@@ -39,6 +39,8 @@ const EmployeeOnboarding = () => {
     allowanceAmount: '',
     address: '',
     emergencyContact: '',
+    emergencyContactName: '',
+    emergencyContactRelationship: '',
     requestPasswordChange: true,
     bankAccount: '',
     taxId: '',
@@ -52,6 +54,7 @@ const EmployeeOnboarding = () => {
     cnic_expiry_date: '',
     cnic_expiry_month: '',
     cnic_expiry_year: '',
+    dob: '',
     currency: 'PKR',
     exchange_rate: 278,
     // Resource allocation (optional) - predefined resources
@@ -91,7 +94,9 @@ const EmployeeOnboarding = () => {
       if (formData.email && !formData.email.endsWith('@digioussolutions.com')) newErrors.email = 'Email must be @digioussolutions.com';
       if (!formData.phone.trim()) newErrors.phone = 'Phone is required';
       if (!formData.address.trim()) newErrors.address = 'Address is required';
-      if (!formData.emergencyContact.trim()) newErrors.emergencyContact = 'Emergency contact is required';
+      if (!formData.emergencyContactName.trim()) newErrors.emergencyContactName = 'Contact person name is required';
+      if (!formData.emergencyContactRelationship.trim()) newErrors.emergencyContactRelationship = 'Relationship is required';
+      if (!formData.emergencyContact.trim()) newErrors.emergencyContact = 'Emergency contact phone is required';
       if (!formData.cnic.trim()) newErrors.cnic = 'CNIC is required';
       if (!formData.cnic_issue_date) newErrors.cnic_issue_date = 'CNIC issue month/year is required';
       else if (!/^\d{4}-\d{2}$/.test(formData.cnic_issue_date)) newErrors.cnic_issue_date = 'CNIC issue must be month and year (YYYY-MM)';
@@ -115,7 +120,7 @@ const EmployeeOnboarding = () => {
       if (!formData.sub_department.trim()) newErrors.sub_department = 'Sub-Department is required';
       if (!formData.employment_status) newErrors.employment_status = 'Employment status is required';
       if (!formData.joinDate) newErrors.joinDate = 'Join date is required';
-      if (!formData.confirmation_date) newErrors.confirmation_date = 'Confirmation date is required';
+      // if (!formData.confirmation_date) newErrors.confirmation_date = 'Confirmation date is required';
       if (!formData.baseSalary) newErrors.baseSalary = 'Base salary is required';
     }
     return newErrors;
@@ -163,6 +168,7 @@ const EmployeeOnboarding = () => {
       password: formData.password,
       phone: formData.phone,
       cnic: formData.cnic,
+      dob: formData.dob,
       department: formData.department,
       sub_department: formData.sub_department,
       
@@ -174,6 +180,8 @@ const EmployeeOnboarding = () => {
       
       // Contact & Address
       address: formData.address,
+      emergency_contact_name: formData.emergencyContactName,
+      emergency_contact_relationship: formData.emergencyContactRelationship,
       emergency_contact: formData.emergencyContact,
       
       // Bank & Account details
@@ -281,6 +289,8 @@ const EmployeeOnboarding = () => {
       allowanceAmount: '',
       address: '',
       emergencyContact: '',
+      emergencyContactName: '',
+      emergencyContactRelationship: '',
       requestPasswordChange: true,
       bankAccount: '',
       taxId: '',
@@ -294,6 +304,7 @@ const EmployeeOnboarding = () => {
       cnic_expiry_date: '',
       cnic_expiry_month: '',
       cnic_expiry_year: '',
+      dob: '',
       currency: 'PKR',
       exchange_rate: 278,
       // Resource allocation fields reset
@@ -801,6 +812,17 @@ const EmployeeOnboarding = () => {
                       {errors.cnic_expiry_date && <p className="text-red-500 text-sm mt-1">{errors.cnic_expiry_date}</p>}
                     </div>
 
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">Date of Birth</label>
+                      <input
+                        type="date"
+                        name="dob"
+                        value={formData.dob}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 border-blue-200 focus:ring-blue-500"
+                      />
+                    </div>
+
                     <div className="col-span-2">
                       <label className="block text-sm font-semibold text-slate-700 mb-2">Address *</label>
                       <textarea
@@ -817,18 +839,51 @@ const EmployeeOnboarding = () => {
                     </div>
 
                     <div className="col-span-2">
-                      <label className="block text-sm font-semibold text-slate-700 mb-2">Emergency Contact *</label>
-                      <input
-                        type="text"
-                        name="emergencyContact"
-                        value={formData.emergencyContact}
-                        onChange={handleInputChange}
-                        placeholder="Name and phone number of emergency contact"
-                        className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 ${
-                          errors.emergencyContact ? 'border-red-500 focus:ring-red-500' : 'border-blue-200 focus:ring-blue-500'
-                        }`}
-                      />
-                      {errors.emergencyContact && <p className="text-red-500 text-sm mt-1">{errors.emergencyContact}</p>}
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">Emergency Contact</label>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div>
+                          <label className="block text-xs font-medium text-slate-600 mb-1">Contact Person Name *</label>
+                          <input
+                            type="text"
+                            name="emergencyContactName"
+                            value={formData.emergencyContactName}
+                            onChange={handleInputChange}
+                            placeholder="John Doe"
+                            className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 ${
+                              errors.emergencyContactName ? 'border-red-500 focus:ring-red-500' : 'border-blue-200 focus:ring-blue-500'
+                            }`}
+                          />
+                          {errors.emergencyContactName && <p className="text-red-500 text-sm mt-1">{errors.emergencyContactName}</p>}
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-slate-600 mb-1">Relationship with Employee *</label>
+                          <input
+                            type="text"
+                            name="emergencyContactRelationship"
+                            value={formData.emergencyContactRelationship}
+                            onChange={handleInputChange}
+                            placeholder="Father, Mother, Spouse"
+                            className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 ${
+                              errors.emergencyContactRelationship ? 'border-red-500 focus:ring-red-500' : 'border-blue-200 focus:ring-blue-500'
+                            }`}
+                          />
+                          {errors.emergencyContactRelationship && <p className="text-red-500 text-sm mt-1">{errors.emergencyContactRelationship}</p>}
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-slate-600 mb-1">Phone Number *</label>
+                          <input
+                            type="tel"
+                            name="emergencyContact"
+                            value={formData.emergencyContact}
+                            onChange={handleInputChange}
+                            placeholder="+92 300 1234567"
+                            className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 ${
+                              errors.emergencyContact ? 'border-red-500 focus:ring-red-500' : 'border-blue-200 focus:ring-blue-500'
+                            }`}
+                          />
+                          {errors.emergencyContact && <p className="text-red-500 text-sm mt-1">{errors.emergencyContact}</p>}
+                        </div>
+                      </div>
                     </div>
 
                     <div>
@@ -1060,7 +1115,7 @@ const EmployeeOnboarding = () => {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-2">Confirmation Date *</label>
+                        <label className="block text-sm font-semibold text-slate-700 mb-2">Confirmation Date </label>
                         <input
                           type="date"
                           name="confirmation_date"
@@ -1340,10 +1395,21 @@ const EmployeeOnboarding = () => {
                       </>
                     )}
 
-                    {formData.emergencyContact && (
+                    {formData.dob && (
+                      <div className="p-4 bg-gray-50 rounded-xl">
+                        <p className="text-xs text-gray-600 font-medium uppercase tracking-wide">Date of Birth</p>
+                        <p className="text-lg font-bold text-gray-900 mt-2">{formData.dob}</p>
+                      </div>
+                    )}
+
+                    {(formData.emergencyContactName || formData.emergencyContactRelationship || formData.emergencyContact) && (
                       <div className="p-4 bg-gray-50 rounded-xl">
                         <p className="text-xs text-gray-600 font-medium uppercase tracking-wide">Emergency Contact</p>
-                        <p className="text-lg font-bold text-gray-900 mt-2">{formData.emergencyContact}</p>
+                        <div className="mt-2 space-y-1">
+                          {formData.emergencyContactName && <p className="text-sm font-medium text-gray-900">Name: {formData.emergencyContactName}</p>}
+                          {formData.emergencyContactRelationship && <p className="text-sm font-medium text-gray-900">Relationship: {formData.emergencyContactRelationship}</p>}
+                          {formData.emergencyContact && <p className="text-sm font-medium text-gray-900">Phone: {formData.emergencyContact}</p>}
+                        </div>
                       </div>
                     )}
 
