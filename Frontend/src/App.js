@@ -29,6 +29,7 @@ import HRMyAttendance from './pages/HR/HRMyAttendance';
 import EmployeeManagement from './pages/HR/EmployeeManagement';
 import EmployeeOnboarding from './pages/HR/EmployeeOnboarding';
 import ApplicationsMemos from './pages/HR/ApplicationsMemos';
+import LeaveManagement from './pages/HR/LeaveManagement';
 
 // Employee Pages
 import EmployeeDashboard from './pages/Employee/EmployeeDashboard';
@@ -155,7 +156,7 @@ function AppContent() {
               path="/hr/leave-management"
               element={
                 <ProtectedRoute requiredRole="hr">
-                  <HRDashboard />
+                  <LeaveManagement  />
                 </ProtectedRoute>
               }
             />

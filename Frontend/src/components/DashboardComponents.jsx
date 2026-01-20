@@ -29,7 +29,7 @@ export const DashboardHeader = ({ title, subtitle }) => {
 
   return (
     <div className="bg-white border-b border-gray-200 px-8 py-5 shadow-sm">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-8xl mx-auto">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-4xl font-bold text-gray-900 tracking-tight">{title}</h1>
