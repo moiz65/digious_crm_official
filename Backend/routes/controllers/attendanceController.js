@@ -35,11 +35,18 @@ const calculateWorkingHours = (checkInTime, checkOutTime, breakMinutes = 0) => {
       
       if (timeDifferenceMinutes >= 0) {
         grossWorkingMinutes = timeDifferenceMinutes;
-      } else if (checkOutTotalMinutes <= 6 * 60) {
+      } else if (checkOutTotalMinutes < 6 * 60) {
+        // Checkout is BEFORE 6 AM (night shift ending)
+        const minutesUntilMidnight = (24 * 60) - checkInTotalMinutes;
+        const minutesAfterMidnight = checkOutTotalMinutes;
+        grossWorkingMinutes = minutesUntilMidnight + minutesAfterMidnight;
+      } else if (checkOutTotalMinutes >= 6 * 60 && checkOutTotalMinutes <= 9 * 60) {
+        // Checkout is between 6 AM and 9 AM (early morning after night shift)
         const minutesUntilMidnight = (24 * 60) - checkInTotalMinutes;
         const minutesAfterMidnight = checkOutTotalMinutes;
         grossWorkingMinutes = minutesUntilMidnight + minutesAfterMidnight;
       } else {
+        // Checkout is after 9 AM (afternoon after night shift)
         const minutesUntilMidnight = (24 * 60) - checkInTotalMinutes;
         const minutesAfterMidnight = checkOutTotalMinutes;
         grossWorkingMinutes = minutesUntilMidnight + minutesAfterMidnight;
@@ -480,18 +487,33 @@ exports.checkOut = async (req, res) => {
           // - 21:00:00 → 23:30:00 (2.5 hours, same night)
           grossWorkingMinutes = timeDifferenceMinutes;
           console.log(`📊 Same-Work-Date Night Shift: ${checkInTime} → ${checkOutTime} = ${grossWorkingMinutes}min (${(grossWorkingMinutes/60).toFixed(2)}h)`);
-        } else if (checkOutTotalMinutes <= 6 * 60) {
-          // Negative time difference BUT checkout is at or before 6 AM = next day early morning
+        } else if (checkOutTotalMinutes < 6 * 60) {
+          // Negative time difference BUT checkout is BEFORE 6 AM = next day early morning
           // Examples:
           // - Check-in 21:00:00 → Check-out 05:30:00 (next day morning)
           // - Check-in 23:30:00 → Check-out 04:00:00 (next day morning)
-          // - Check-in 22:07:50 → Check-out 06:00:00 (next day morning)
+          // - Check-in 22:07:50 → Check-out 05:59:00 (next day morning - BEFORE 6 AM)
           const minutesUntilMidnight = (24 * 60) - checkInTotalMinutes; // Remaining today
           const minutesAfterMidnight = checkOutTotalMinutes; // Tomorrow morning
           grossWorkingMinutes = minutesUntilMidnight + minutesAfterMidnight;
           
-          console.log(`📊 Normal Night Shift: Check-in ${checkInTime} → Check-out next day ${checkOutTime}`);
+          console.log(`📊 Normal Night Shift: Check-in ${checkInTime} → Check-out next day ${checkOutTime} (BEFORE 6 AM)`);
           console.log(`   Remaining today: ${minutesUntilMidnight}min, Tomorrow: ${minutesAfterMidnight}min, Total: ${grossWorkingMinutes}min (${(grossWorkingMinutes/60).toFixed(2)}h)`);
+        } else if (checkOutTotalMinutes >= 6 * 60 && checkOutTotalMinutes <= 9 * 60) {
+          // Checkout is between 6 AM and 9 AM = still early morning of next day (shift continuation/overtime)
+          // Examples:
+          // - Check-in 21:00 (Day 1) → Check-out 06:00 (Day 2 early morning at shift end)
+          // - Check-in 21:00 (Day 1) → Check-out 06:30 (Day 2 early morning - slightly past shift end)
+          // - Check-in 21:00 (Day 1) → Check-out 08:00 (Day 2 early morning)
+          const minutesUntilMidnight = (24 * 60) - checkInTotalMinutes; // Remaining Day 1
+          const minutesAfterMidnight = checkOutTotalMinutes; // Day 2 morning
+          grossWorkingMinutes = minutesUntilMidnight + minutesAfterMidnight;
+          
+          console.log(`📊 Night Shift with Early Morning Checkout (6 AM - 9 AM):`);
+          console.log(`   Check-in: ${checkInTime} (Day 1) → Check-out: ${checkOutTime} (Day 2 early morning)`);
+          console.log(`   Minutes until midnight: ${minutesUntilMidnight}min`);
+          console.log(`   Minutes after midnight: ${minutesAfterMidnight}min`);
+          console.log(`   Total: ${grossWorkingMinutes}min = ${(grossWorkingMinutes/60).toFixed(1)}h`);
         } else {
           // Checkout is after 6 AM = next day afternoon checkout after night shift
           // Examples:
