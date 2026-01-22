@@ -149,7 +149,7 @@ exports.checkIn = async (req, res) => {
 
     const now = getPakistanDate(); // Use Pakistan timezone
     const checkInTime = getPakistanTimeString(); // HH:MM:SS in Pakistan timezone (for display)
-    const checkInTimeUTC = getUTCTimeString(); // HH:MM:SS in UTC (for database storage)
+    const checkInTimePKT = getPakistanTimeString(); // HH:MM:SS in Pakistan timezone (for database storage - should be Pakistan time, not UTC)
     const checkInHour = now.getHours(); // Pakistan hour
     
     // Determine attendance date for night shift:
@@ -330,7 +330,7 @@ exports.checkIn = async (req, res) => {
         `INSERT INTO Employee_Attendance 
          (employee_id, email, name, attendance_date, check_in_time, status, on_time, late_by_minutes, device_info, ip_address)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [employee_id, email, name, attendanceDate, checkInTimeUTC, status, onTime, lateByMinutes, device_info || null, ip_address || null]
+        [employee_id, email, name, attendanceDate, checkInTimePKT, status, onTime, lateByMinutes, device_info || null, ip_address || null]
       );
 
       console.log(`✅ Check In: ${name} (${email}) at ${checkInTime} on ${attendanceDate}`);
@@ -2300,6 +2300,179 @@ exports.autoFixMissingWorkingHours = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to auto-fix working hours',
+      error: error.message
+    });
+  }
+};
+
+// Get Break Summary for a specific employee on a specific date
+exports.getBreakSummary = async (req, res) => {
+  let connection;
+  try {
+    const { employee_id, date } = req.query;
+
+    if (!employee_id || !date) {
+      return res.status(400).json({
+        success: false,
+        message: 'Employee ID and date are required'
+      });
+    }
+
+    connection = await pool.getConnection();
+
+    try {
+      // Convert user_as_employees.id to employee_onboarding.id if needed
+      let finalEmployeeId = employee_id;
+      const [employeeMapping] = await connection.query(
+        `SELECT eo.id as onboarding_id FROM employee_onboarding eo
+         WHERE eo.id = ?`,
+        [employee_id]
+      );
+      
+      if (employeeMapping.length === 0) {
+        // Try to find via user_as_employees table
+        const [userMapping] = await connection.query(
+          `SELECT uae.employee_id FROM user_as_employees uae WHERE uae.id = ?`,
+          [employee_id]
+        );
+        
+        if (userMapping.length > 0) {
+          finalEmployeeId = userMapping[0].employee_id;
+        }
+      }
+
+      // Get attendance record for this date
+      const [attendanceRecord] = await connection.query(
+        `SELECT 
+           ea.id,
+           ea.employee_id,
+           ea.name,
+           ea.email,
+           ea.attendance_date,
+           ea.status,
+           ea.total_breaks_taken,
+           ea.total_break_duration_minutes,
+           ea.smoke_break_count,
+           ea.smoke_break_duration_minutes,
+           ea.dinner_break_count,
+           ea.dinner_break_duration_minutes,
+           ea.washroom_break_count,
+           ea.washroom_break_duration_minutes,
+           ea.prayer_break_count,
+           ea.prayer_break_duration_minutes,
+           ea.check_in_time,
+           ea.check_out_time
+         FROM Employee_Attendance ea
+         WHERE ea.employee_id = ? AND ea.attendance_date = ?`,
+        [finalEmployeeId, date]
+      );
+
+      if (attendanceRecord.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'No attendance record found for the specified date'
+        });
+      }
+
+      const attendance = attendanceRecord[0];
+      const attendanceId = attendance.id;
+
+      // Get all individual break records for this attendance
+      const [breakRecords] = await connection.query(
+        `SELECT 
+           id,
+           break_type,
+           break_start_time,
+           break_end_time,
+           break_duration_minutes,
+           reason,
+           created_at
+         FROM Employee_Breaks
+         WHERE attendance_id = ?
+         ORDER BY created_at ASC`,
+        [attendanceId]
+      );
+
+      // Calculate break statistics
+      const breakStats = {
+        totalBreaks: attendance.total_breaks_taken || 0,
+        totalDurationMinutes: attendance.total_break_duration_minutes || 0,
+        averageDurationMinutes: attendance.total_breaks_taken > 0 
+          ? Math.round((attendance.total_break_duration_minutes || 0) / attendance.total_breaks_taken)
+          : 0,
+        breakdownByType: {
+          smoke: {
+            count: attendance.smoke_break_count || 0,
+            durationMinutes: attendance.smoke_break_duration_minutes || 0,
+            label: 'Smoke Break'
+          },
+          dinner: {
+            count: attendance.dinner_break_count || 0,
+            durationMinutes: attendance.dinner_break_duration_minutes || 0,
+            label: 'Dinner Break'
+          },
+          washroom: {
+            count: attendance.washroom_break_count || 0,
+            durationMinutes: attendance.washroom_break_duration_minutes || 0,
+            label: 'Washroom Break'
+          },
+          prayer: {
+            count: attendance.prayer_break_count || 0,
+            durationMinutes: attendance.prayer_break_duration_minutes || 0,
+            label: 'Prayer Break'
+          }
+        },
+        allBreaks: breakRecords.map(brk => ({
+          id: brk.id,
+          type: brk.break_type,
+          startTime: brk.break_start_time,
+          endTime: brk.break_end_time,
+          durationMinutes: brk.break_duration_minutes,
+          reason: brk.reason,
+          createdAt: brk.created_at
+        }))
+      };
+
+      // Add formatted total duration as hours and minutes
+      const totalHours = Math.floor(breakStats.totalDurationMinutes / 60);
+      const totalMinutes = breakStats.totalDurationMinutes % 60;
+      breakStats.totalDurationFormatted = `${totalHours}h ${totalMinutes}m`;
+
+      // Add percentage breakdown by type
+      if (breakStats.totalBreaks > 0) {
+        breakStats.breakdownByType.smoke.percentage = Math.round((breakStats.breakdownByType.smoke.count / breakStats.totalBreaks) * 100);
+        breakStats.breakdownByType.dinner.percentage = Math.round((breakStats.breakdownByType.dinner.count / breakStats.totalBreaks) * 100);
+        breakStats.breakdownByType.washroom.percentage = Math.round((breakStats.breakdownByType.washroom.count / breakStats.totalBreaks) * 100);
+        breakStats.breakdownByType.prayer.percentage = Math.round((breakStats.breakdownByType.prayer.count / breakStats.totalBreaks) * 100);
+      }
+
+      console.log(`✅ Break summary retrieved for employee ${finalEmployeeId} on ${date}`);
+
+      res.status(200).json({
+        success: true,
+        message: 'Break summary retrieved successfully',
+        data: {
+          employee: {
+            id: attendance.employee_id,
+            name: attendance.name,
+            email: attendance.email
+          },
+          date: attendance.attendance_date,
+          attendanceStatus: attendance.status,
+          checkInTime: attendance.check_in_time,
+          checkOutTime: attendance.check_out_time,
+          breakStats: breakStats
+        }
+      });
+    } finally {
+      if (connection) connection.release();
+    }
+  } catch (error) {
+    console.error('❌ Get Break Summary error:', error);
+    if (connection) connection.release();
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve break summary',
       error: error.message
     });
   }
