@@ -161,8 +161,8 @@ const TodayBreaksSummary = ({ employeeId, refreshInterval = 30000 }) => {
         {/* Total Duration */}
         <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border border-green-200">
           <p className="text-xs text-green-600 font-medium">Total Time</p>
-          <p className="text-2xl font-bold text-green-900 mt-1">{totalDurationFormatted}</p>
-          <p className="text-xs text-green-600 mt-1">{totalDurationMinutes}m</p>
+          <p className="text-2xl font-bold text-green-900 mt-1">{totalDurationFormatted || '0h 0m'}</p>
+          <p className="text-xs text-green-600 mt-1">({totalDurationMinutes}m)</p>
         </div>
 
         {/* Status */}

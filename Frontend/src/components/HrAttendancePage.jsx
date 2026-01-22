@@ -305,9 +305,21 @@ const BreakDetailsModal = ({ isOpen, onClose, breaks, date, employeeName }) => {
     const totalBreaks = breaks.length;
     const totalDuration = breaks.reduce((total, breakItem) => {
       if (breakItem.breakStart && breakItem.breakEnd && breakItem.breakStart !== '-' && breakItem.breakEnd !== '-') {
-        const start = new Date(`2000-01-01T${breakItem.breakStart}`);
-        const end = new Date(`2000-01-01T${breakItem.breakEnd}`);
-        return total + (end - start) / (1000 * 60);
+        // Parse times in HH:MM:SS format
+        const [startHour, startMin, startSec = 0] = breakItem.breakStart.split(':').map(Number);
+        const [endHour, endMin, endSec = 0] = breakItem.breakEnd.split(':').map(Number);
+        
+        // Convert to total seconds since midnight
+        const startSeconds = (startHour * 3600) + (startMin * 60) + startSec;
+        const endSeconds = (endHour * 3600) + (endMin * 60) + endSec;
+        
+        // Calculate duration, handling midnight crossing
+        let durationSeconds = endSeconds - startSeconds;
+        if (durationSeconds < 0) {
+          durationSeconds += (24 * 3600);
+        }
+        
+        return total + (durationSeconds / 60);
       }
       return total;
     }, 0);

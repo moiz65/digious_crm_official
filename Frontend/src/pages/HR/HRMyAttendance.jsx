@@ -296,9 +296,24 @@ const HRMyAttendance = () => {
       }
 
       // Calculate duration from start time to now
+      // Parse times correctly: HH:MM:SS format
+      const [startHour, startMin, startSec] = breakRecord.break_start_time.split(':').map(Number);
       const now = new Date();
-      const breakStartTime = new Date(`2000-01-01 ${breakRecord.break_start_time}`);
-      const duration = Math.floor((now - breakStartTime) / (1000 * 60)); // Duration in minutes
+      const currentHour = now.getHours();
+      const currentMin = now.getMinutes();
+      const currentSec = now.getSeconds();
+      
+      // Convert both to total minutes since midnight for accurate calculation
+      const startTotalSeconds = (startHour * 3600) + (startMin * 60) + (startSec || 0);
+      const nowTotalSeconds = (currentHour * 3600) + (currentMin * 60) + currentSec;
+      
+      // Calculate duration in minutes (handle midnight crossing)
+      let durationSeconds = nowTotalSeconds - startTotalSeconds;
+      if (durationSeconds < 0) {
+        // Break started before midnight, ended after - add 24 hours
+        durationSeconds += (24 * 3600);
+      }
+      const duration = Math.max(0, Math.floor(durationSeconds / 60));
 
       const response = await fetch(endpoints.attendance.breakEnd, {
         method: 'PATCH',
