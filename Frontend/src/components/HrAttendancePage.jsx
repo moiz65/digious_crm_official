@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { endpoints } from '../config/api';
+import BreakSummary from './BreakSummary';
+import TodayBreaksSummary from './TodayBreaksSummary';
+import { getPakistanDate } from '../utils/timezone';
 import { 
   Calendar, Users, CheckCircle, XCircle, Clock, FileText, Download, 
   Filter, Plus, Search, AlertCircle, ChevronDown, Settings, Eye, 
@@ -1838,8 +1841,15 @@ const EmployeeDetailView = ({
   const empLeaves = employeeLeaves.find(l => l.employeeId === employee.id);
   const unexplainedAbsences = getUnexplainedAbsences();
 
+  // Sort attendance by date (newest first, oldest last) - FIXED for proper date ordering
+  const sortedEmpAttendance = empAttendance.slice().sort((a, b) => {
+    const dateA = new Date(a.date).getTime();
+    const dateB = new Date(b.date).getTime();
+    return dateB - dateA; // Descending order (latest first)
+  });
+
   // Group attendance by month for month-wise navigation
-  const monthGroups = empAttendance
+  const monthGroups = sortedEmpAttendance
     .slice()
     .sort((a, b) => new Date(b.date) - new Date(a.date))
     .reduce((acc, dayData) => {
@@ -1920,6 +1930,11 @@ const EmployeeDetailView = ({
             <div className="text-2xl font-bold text-cyan-600">{empStats.totalOvertime}h</div>
             <div className="text-xs font-medium text-cyan-700 mt-2">Overtime</div>
           </div>
+        </div>
+
+        {/* Today's Breaks Summary */}
+        <div className="mb-8">
+          <TodayBreaksSummary employeeId={employee.id} refreshInterval={30000} />
         </div>
 
         {/* Uninformed Section */}
@@ -2067,6 +2082,16 @@ const EmployeeDetailView = ({
             </div>
           </div>
         </div>
+
+        {/* Break Summary Section */}
+        {selectedBreakDate && (
+          <div className="mb-8">
+            <BreakSummary 
+              employeeId={employee.id} 
+              date={selectedBreakDate} 
+            />
+          </div>
+        )}
 
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
@@ -2232,7 +2257,7 @@ const EmployeeDetailView = ({
           </div>
 
           <div className="space-y-3">
-            {empAttendance.slice(0, 10).map((record) => {
+            {sortedEmpAttendance.slice(0, 10).map((record) => {
               const isUnexplained = record.status === 'absent' && (!record.notes || record.notes === 'No notification');
               const breaksForDay = getEmployeeBreaksForDate(employee.id, record.date);
               const totalBreakTime = breaksForDay.reduce((total, breakItem) => total + breakItem.duration, 0);
@@ -3759,6 +3784,79 @@ export function HrAttendancePage() {
             attendanceDateStr = record.attendance_date;
           }
           
+          // FIXED: Calculate working hours if missing but check-in/out exist
+          let calculatedHours = '-';
+          if (record.gross_working_time_minutes && record.gross_working_time_minutes > 0) {
+            // Backend has calculated working hours - use it
+            const totalMinutes = record.gross_working_time_minutes;
+            const hours = Math.floor(totalMinutes / 60);
+            const minutes = totalMinutes % 60;
+            calculatedHours = `${hours}h ${minutes}m`;
+          } else if (record.check_in_time && record.check_in_time !== '-') {
+            // Frontend fallback calculation when working hours are missing
+            // This handles both checked-out and still-working scenarios
+            try {
+              const [checkInHour, checkInMin, checkInSec = 0] = record.check_in_time.split(':').map(Number);
+              
+              const checkInMinutes = checkInHour * 60 + checkInMin;
+              let checkOutMinutes = 0;
+              let hasCheckOut = false;
+              
+              if (record.check_out_time && record.check_out_time !== '-') {
+                // Employee has checked out - use checkout time
+                const [checkOutHour, checkOutMin, checkOutSec = 0] = record.check_out_time.split(':').map(Number);
+                checkOutMinutes = checkOutHour * 60 + checkOutMin;
+                hasCheckOut = true;
+              } else {
+                // Employee still working - use current time in Pakistan timezone
+                const now = new Date();
+                // Assuming getPakistanDate function exists and returns correct time
+                const nowPKT = typeof getPakistanDate === 'function' ? getPakistanDate() : now;
+                checkOutMinutes = nowPKT.getHours() * 60 + nowPKT.getMinutes();
+              }
+              
+              let grossMinutes = 0;
+              const isNightShift = checkInMinutes >= 21 * 60; // After 9 PM (21:00)
+              
+              if (isNightShift) {
+                // Night shift: check-in after 21:00, checkout is next morning
+                if (checkOutMinutes >= checkInMinutes) {
+                  // Same day checkout (shouldn't happen for night shift, but handle it)
+                  grossMinutes = checkOutMinutes - checkInMinutes;
+                } else {
+                  // Next day checkout (normal night shift case) - crossed midnight
+                  const minutesUntilMidnight = (24 * 60) - checkInMinutes;
+                  grossMinutes = minutesUntilMidnight + checkOutMinutes;
+                }
+              } else if (checkInMinutes < 6 * 60) {
+                // Early morning check-in (before 6 AM) - continuation of previous night shift
+                const minutesUntilMidnight = (24 * 60) - checkInMinutes;
+                grossMinutes = minutesUntilMidnight + checkOutMinutes;
+              } else {
+                // Regular day shift (6 AM to 9 PM)
+                grossMinutes = Math.max(0, checkOutMinutes - checkInMinutes);
+              }
+              
+              const breakMinutes = record.total_break_duration_minutes || 0;
+              const netMinutes = Math.max(0, grossMinutes - breakMinutes);
+              
+              // Format as "Xh Ym" with proper hour/minute conversion
+              const hours = Math.floor(netMinutes / 60);
+              const minutes = netMinutes % 60;
+              
+              if (hours === 0 && minutes === 0) {
+                calculatedHours = '0h 0m';
+              } else if (hours === 0) {
+                calculatedHours = `${minutes}m`;
+              } else {
+                calculatedHours = `${hours}h ${minutes}m`;
+              }
+            } catch (e) {
+              console.warn('Error calculating working hours:', e);
+              calculatedHours = '-';
+            }
+          }
+          
           return {
             id: record.id,
             employeeId: record.employee_id,
@@ -3768,7 +3866,7 @@ export function HrAttendancePage() {
             status: record.status?.toLowerCase() || 'absent',
             checkIn: record.check_in_time || '-',
             checkOut: record.check_out_time || '-',
-            hours: record.gross_working_time_minutes ? (record.gross_working_time_minutes / 60).toFixed(1) : '0.0',
+            hours: calculatedHours,
             breaks: record.total_breaks_taken || 0,
             breakDuration: record.total_break_duration_minutes || 0,
             overtime: record.overtime_hours || '0.0',
@@ -3781,7 +3879,8 @@ export function HrAttendancePage() {
             dinner_break_duration_minutes: record.dinner_break_duration_minutes || 0,
             washroom_break_duration_minutes: record.washroom_break_duration_minutes || 0,
             prayer_break_duration_minutes: record.prayer_break_duration_minutes || 0,
-            remarks: record.remarks || ''
+            remarks: record.remarks || '',
+            notes: record.remarks || ''
           };
         });
         
@@ -4092,10 +4191,11 @@ export function HrAttendancePage() {
     let filtered = getFilteredEmployees();
     
     if (searchTerm) {
+      const term = searchTerm.toLowerCase();
       filtered = filtered.filter(emp => 
-        emp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        emp.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        emp.position.toLowerCase().includes(searchTerm.toLowerCase())
+        (emp.name || '').toLowerCase().includes(term) ||
+        (emp.department || '').toLowerCase().includes(term) ||
+        (emp.position || '').toLowerCase().includes(term)
       );
     }
     

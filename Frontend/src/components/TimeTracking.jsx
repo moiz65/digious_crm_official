@@ -174,8 +174,11 @@ export function TimeTracker() {
   const filteredActivities = activities.filter(activity => {
     if (filter !== 'all' && activity.activityType !== filter) return false;
     if (departmentFilter !== 'all' && activity.department !== departmentFilter) return false;
-    if (searchTerm && !activity.employeeName.toLowerCase().includes(searchTerm.toLowerCase()) && 
-        !activity.description.toLowerCase().includes(searchTerm.toLowerCase())) return false;
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      if (!((activity.employeeName || '').toLowerCase().includes(term) ||
+            (activity.description || '').toLowerCase().includes(term))) return false;
+    }
     
     const activityDate = new Date(activity.timestamp);
     const now = new Date();

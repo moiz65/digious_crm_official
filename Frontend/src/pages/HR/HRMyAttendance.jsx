@@ -3,7 +3,7 @@ import HrSidebar from '../../components/HrSidebar';
 import { DashboardHeader } from '../../components/DashboardComponents';
 import { useAuth } from '../../context/AuthContext';
 import { endpoints } from '../../config/api';
-import { getPakistanTimeString, getPakistanDateString } from '../../utils/timezone';
+import { getPakistanTimeString, getPakistanDateString, getPakistanDate } from '../../utils/timezone';
 import {
   CheckCircle,
   Clock,
@@ -330,14 +330,68 @@ const HRMyAttendance = () => {
   const getWorkingHours = () => {
     if (!attendanceData?.check_in_time) return '0h 0m';
     
-    const checkInTime = new Date(`2000-01-01 ${attendanceData.check_in_time}`);
-    const currentOrCheckOutTime = attendanceData.check_out_time 
-      ? new Date(`2000-01-01 ${attendanceData.check_out_time}`)
-      : new Date(`2000-01-01 ${getPakistanTimeString()}`);
+    const [checkInHour, checkInMin, checkInSec] = attendanceData.check_in_time.split(':').map(Number);
+    const checkInTotalMinutes = checkInHour * 60 + checkInMin;
     
-    const diffMs = currentOrCheckOutTime - checkInTime;
-    const hours = Math.floor(diffMs / (1000 * 60 * 60));
-    const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    let checkOutTotalMinutes = 0;
+    let isCurrentTime = false;
+    
+    if (attendanceData.check_out_time) {
+      const [checkOutHour, checkOutMin, checkOutSec] = attendanceData.check_out_time.split(':').map(Number);
+      checkOutTotalMinutes = checkOutHour * 60 + checkOutMin;
+    } else {
+      // Use current time in Pakistan timezone
+      // IMPORTANT: Use getUTCHours/getUTCMinutes because getPakistanDate() returns a Date with shifted milliseconds
+      // The UTC hours/minutes of that shifted Date represent the Pakistan time
+      const now = getPakistanDate ? getPakistanDate() : new Date();
+      checkOutTotalMinutes = now.getUTCHours() * 60 + now.getUTCMinutes();
+      isCurrentTime = true;
+    }
+    
+    let grossMinutes = 0;
+    const isNightShift = checkInTotalMinutes >= 21 * 60; // Check-in after 9 PM
+    
+    // DEBUG: Log calculation details
+    console.log('🕐 Working Hours Calculation:', {
+      check_in_time: attendanceData.check_in_time,
+      check_out_time: attendanceData.check_out_time,
+      checkInTotalMinutes,
+      checkOutTotalMinutes,
+      isCurrentTime,
+      isNightShift,
+      difference: checkOutTotalMinutes - checkInTotalMinutes
+    });
+    
+    if (isNightShift) {
+      // Night shift - need to handle midnight wraparound
+      if (checkOutTotalMinutes >= checkInTotalMinutes) {
+        // Same day checkout (unlikely for night shift but possible)
+        grossMinutes = checkOutTotalMinutes - checkInTotalMinutes;
+      } else {
+        // Next day checkout - crossed midnight
+        const minutesUntilMidnight = (24 * 60) - checkInTotalMinutes;
+        const minutesAfterMidnight = checkOutTotalMinutes;
+        grossMinutes = minutesUntilMidnight + minutesAfterMidnight;
+      }
+    } else if (checkOutTotalMinutes < checkInTotalMinutes) {
+      // Checkout time is less than check-in (crossed midnight) - old day shift or early morning
+      const minutesUntilMidnight = (24 * 60) - checkInTotalMinutes;
+      const minutesAfterMidnight = checkOutTotalMinutes;
+      grossMinutes = minutesUntilMidnight + minutesAfterMidnight;
+    } else {
+      // Regular day shift
+      grossMinutes = checkOutTotalMinutes - checkInTotalMinutes;
+    }
+    
+    const hours = Math.floor(grossMinutes / 60);
+    const minutes = grossMinutes % 60;
+    
+    console.log('📊 Calculated working hours:', {
+      grossMinutes,
+      hours,
+      minutes,
+      result: `${hours}h ${minutes}m`
+    });
     
     return `${hours}h ${minutes}m`;
   };

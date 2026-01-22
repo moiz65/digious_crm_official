@@ -51,6 +51,7 @@ export const endpoints = {
     all: `${config.FULL_API_URL}/attendance/all`,
     status: (employeeId) => `${config.FULL_API_URL}/attendance/status/${employeeId}`,
     generateAbsent: `${config.FULL_API_URL}/attendance/generate-absent`,
+    base: `${config.FULL_API_URL}/attendance`,
     
     // Break endpoints
     breakStart: `${config.FULL_API_URL}/attendance/break-start`,
@@ -58,6 +59,7 @@ export const endpoints = {
     breakProgress: `${config.FULL_API_URL}/attendance/break-progress`,
     ongoingBreaks: (employeeId) => `${config.FULL_API_URL}/attendance/ongoing-breaks/${employeeId}`,
     todayBreaks: (employeeId) => `${config.FULL_API_URL}/attendance/today-breaks/${employeeId}`,
+    breakSummary: `${config.FULL_API_URL}/attendance/break-summary`,
   },
 
   // Rules endpoints

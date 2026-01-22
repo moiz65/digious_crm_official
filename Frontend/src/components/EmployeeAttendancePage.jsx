@@ -108,31 +108,20 @@ const parsePakistanTime = (dateStr, timeStr) => {
   
   try {
     // The database stores times as HH:MM:SS in Pakistan timezone (UTC+5)
-    // Example: check_in_time: "16:24:22" means 16:24:22 Pakistan time
+    // Example: check_in_time: "18:59:58" means 18:59:58 Pakistan time
     // 
-    // To create a comparable Date object:
-    // 1. Take the Pakistan time (e.g., 16:24:22)
-    // 2. Subtract 5 hours to get UTC equivalent (e.g., 11:24:22 UTC)
-    // 3. Create a UTC Date object with those UTC values
-    // 4. This Date object can then be compared directly with getPakistanDate()
-    //    because getPakistanDate() also returns a Date adjusted by +5 hours
+    // IMPORTANT: This must match getPakistanDate() logic for proper comparison
+    // getPakistanDate() returns: new Date(utcTime + 5*60*60*1000)
+    // So we need to create a Date that represents the Pakistan time in the same way
     
     const [hours, minutes, seconds] = timeStr.split(':').map(Number);
     const [year, month, day] = dateStr.split('-').map(Number);
     
-    // Convert Pakistan time to UTC by subtracting 5 hours
-    // If check_in_time is 16:24:22 PKT, the UTC equivalent is 11:24:22
-    let utcHours = hours - 5;
-    let utcDay = day;
-    
-    // Handle day wraparound (e.g., if time becomes negative)
-    if (utcHours < 0) {
-      utcHours += 24;
-      utcDay -= 1;
-    }
-    
-    // Create UTC Date object with the converted time
-    const utcDate = new Date(Date.UTC(year, month - 1, utcDay, utcHours, minutes, seconds));
+    // Create a UTC date for this Pakistan time by treating the Pakistan time values as UTC
+    // This matches how getPakistanDate() works - it adds offset to the timestamp
+    // For example: 18:59:58 PKT → create UTC date with 18:59:58 UTC
+    // Then when compared with getPakistanDate() which also treats PKT as UTC time, they align
+    const utcDate = new Date(Date.UTC(year, month - 1, day, hours, minutes, seconds));
     
     return utcDate;
   } catch (error) {
@@ -1074,8 +1063,9 @@ const AttendanceSheet = ({ attendanceData, onExport, onFilter }) => {
   const filteredData = dataToDisplay
     .filter(record => {
       const matchesStatus = filterStatus === 'all' || record.status === filterStatus;
-      const matchesSearch = record.date.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          (record.remarks && record.remarks.toLowerCase().includes(searchTerm.toLowerCase()));
+      const term = searchTerm.toLowerCase();
+      const matchesSearch = (record.date || '').toLowerCase().includes(term) ||
+                          ((record.remarks || '').toLowerCase().includes(term));
       
       return matchesStatus && matchesSearch;
     })
