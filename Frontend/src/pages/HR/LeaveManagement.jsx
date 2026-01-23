@@ -5,7 +5,6 @@ import { useAuth } from '../../context/AuthContext';
 import HrLeaveManagement from '../../components/HrLeaveManagement';
 
 const LeaveManagement = () => {
-  const { role } = useAuth();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [activeItem, setActiveItem] = useState('leaves');
 
@@ -25,7 +24,7 @@ const LeaveManagement = () => {
           title="Leave Management"
           subtitle="Manage employee leave requests and balances"
         />
-        {/* <RoleBasedNav role={role} /> */}
+        
 
         <HrLeaveManagement/>
 

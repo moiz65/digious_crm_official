@@ -884,9 +884,9 @@ export default function AdvancedLeaveManagementSystem() {
                           <Eye size={12} className="inline mr-1" />
                           View
                         </button>
-                        <button className="p-1.5 hover:bg-slate-100 rounded">
+                        {/* <button className="p-1.5 hover:bg-slate-100 rounded">
                           <MoreVertical size={16} className="text-slate-500" />
-                        </button>
+                        </button> */}
                       </div>
                     </td>
                   </tr>

@@ -1350,9 +1350,10 @@ const AttendanceSheet = ({ attendanceData, onExport, onFilter }) => {
       </div>
 
       {/* Analytics Dashboard */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* hello */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 ">
         {/* Attendance Distribution Chart */}
-        <div className="bg-white rounded-xl border border-blue-100 p-6 shadow-sm hover:shadow-md transition-all">
+        {/* <div className="bg-white rounded-xl border border-blue-100 p-6 shadow-sm hover:shadow-md transition-all">
           <div className="flex items-center justify-between mb-4">
             <h4 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
               <PieChart className="h-5 w-5 text-blue-600" />
@@ -1401,10 +1402,10 @@ const AttendanceSheet = ({ attendanceData, onExport, onFilter }) => {
               <span className="text-sm text-gray-600">Absent ({monthlyStats.absent})</span>
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* Working Hours Trend */}
-        <div className="bg-white rounded-xl border border-blue-100 p-6 shadow-sm hover:shadow-md transition-all">
+        {/* <div className="bg-white rounded-xl border border-blue-100 p-6 shadow-sm hover:shadow-md transition-all">
           <div className="flex items-center justify-between mb-4">
             <h4 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
               <LineChart className="h-5 w-5 text-blue-600" />
@@ -1456,8 +1457,9 @@ const AttendanceSheet = ({ attendanceData, onExport, onFilter }) => {
               />
             </AreaChart>
           </ResponsiveContainer>
-        </div>
+        </div> */}
       </div>
+      
 
       {/* Enhanced Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -1519,7 +1521,7 @@ const AttendanceSheet = ({ attendanceData, onExport, onFilter }) => {
       </div>
 
       {/* Weekly Performance Bar Chart */}
-      <div className="bg-white rounded-xl border border-blue-100 p-6 shadow-sm hover:shadow-md transition-all">
+      {/* <div className="bg-white rounded-xl border border-blue-100 p-6 shadow-sm hover:shadow-md transition-all">
         <div className="flex items-center justify-between mb-4">
           <h4 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
             <BarChart3 className="h-5 w-5 text-blue-600" />
@@ -1566,7 +1568,7 @@ const AttendanceSheet = ({ attendanceData, onExport, onFilter }) => {
             <Bar dataKey="target" fill="#10b981" radius={[8, 8, 0, 0]} name="Target (9h)" opacity={0.3} />
           </BarChart>
         </ResponsiveContainer>
-      </div>
+      </div> */}
 
       {/* Attendance Table */}
       <div className="bg-white rounded-xl border border-blue-100 overflow-hidden shadow-sm hover:shadow-md transition-all">
@@ -3396,3 +3398,4 @@ export function EmployeeAttendancePage() {
     </div>
   );
 }
+
