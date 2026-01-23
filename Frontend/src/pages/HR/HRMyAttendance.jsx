@@ -520,7 +520,7 @@ const HRMyAttendance = () => {
           {/* Status Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             {/* Current Status */}
-            <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
+            <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-2xl p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center">
                   <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
@@ -529,7 +529,7 @@ const HRMyAttendance = () => {
                     <CheckCircle className={`w-6 h-6 ${getStatusColor()}`} />
                   </div>
                   <div className="ml-4">
-                    <h3 className="text-sm font-semibold text-gray-600 uppercase">Status</h3>
+                    <h3 className="text-sm font-medium text-green-800">Status</h3>
                     <p className={`text-xl font-bold ${getStatusColor()}`}>
                       {getStatusText()}
                     </p>
@@ -537,21 +537,21 @@ const HRMyAttendance = () => {
                 </div>
               </div>
               {attendanceData?.check_in_time && (
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-green">
                   Checked in at: {attendanceData.check_in_time}
                 </p>
               )}
             </div>
 
             {/* Working Hours */}
-            <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-2xl p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center">
                   <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center">
                     <Clock className="w-6 h-6 text-blue-600" />
                   </div>
                   <div className="ml-4">
-                    <h3 className="text-sm font-semibold text-gray-600 uppercase">Working Hours</h3>
+                    <h3 className="text-sm font-medium text-blue-800">Working Hours</h3>
                     <p className="text-xl font-bold text-blue-600">
                       {getWorkingHours()}
                     </p>
@@ -564,14 +564,14 @@ const HRMyAttendance = () => {
             </div>
 
             {/* Total Breaks */}
-            <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
+            <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-2xl p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center">
                   <div className="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center">
                     <PauseCircle className="w-6 h-6 text-purple-600" />
                   </div>
                   <div className="ml-4">
-                    <h3 className="text-sm font-semibold text-gray-600 uppercase">Total Breaks</h3>
+                    <h3 className="text-sm font-medium text-purple-800">Total Breaks</h3>
                     <p className="text-xl font-bold text-purple-600">
                       {attendanceData?.total_breaks_taken || 0}
                     </p>
@@ -584,14 +584,14 @@ const HRMyAttendance = () => {
             </div>
 
             {/* Late Arrivals */}
-            <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
+            <div className="bg-gradient-to-br from-amber-50 to-amber-100 border border-amber-200 rounded-2xl p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center">
                   <div className="w-12 h-12 bg-orange-100 rounded-2xl flex items-center justify-center">
                     <AlertCircle className="w-6 h-6 text-orange-600" />
                   </div>
                   <div className="ml-4">
-                    <h3 className="text-sm font-semibold text-gray-600 uppercase">Late By</h3>
+                    <h3 className="text-sm font-medium text-orange-800">Late By</h3>
                     <p className="text-xl font-bold text-orange-600">
                       {attendanceData?.late_by_minutes || 0}m
                     </p>

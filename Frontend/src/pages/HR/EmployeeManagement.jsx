@@ -284,13 +284,13 @@ const EmployeeManagement = () => {
           <div className="w-full max-w-full mx-auto">
             {/* Stats Cards */}
             <div className="mb-12">
-              <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-6">Overview</h3>
+              {/* <h3 className="text-3xl font-bold text-gray-900 capitalize mb-6">Overview</h3> */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300 hover:border-blue-200">
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-2xl p-6">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <p className="text-gray-500 text-xs font-semibold uppercase tracking-wide">Total Employees</p>
-                      <p className="text-4xl font-bold text-gray-900 mt-4">{employees.length}</p>
+                      <p className="text-sm font-medium text-blue-800">Total Employees</p>
+                      <p className="text-3xl font-bold text-blue-900 mt-4">{employees.length}</p>
                     </div>
                     <div className="p-4 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg">
                       <Users className="w-7 h-7 text-white" />
@@ -298,11 +298,11 @@ const EmployeeManagement = () => {
                   </div>
                 </div>
 
-                <div className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300 hover:border-green-200">
+                <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-2xl p-6">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <p className="text-gray-500 text-xs font-semibold uppercase tracking-wide">Active Staff</p>
-                      <p className="text-4xl font-bold text-gray-900 mt-4">
+                      <p className="text-sm font-medium text-green-800">Active Staff</p>
+                      <p className="text-3xl font-bold text-green-900 mt-4">
                         {employees.filter(e => e.status === 'Active').length}
                       </p>
                     </div>
@@ -312,11 +312,11 @@ const EmployeeManagement = () => {
                   </div>
                 </div>
 
-                <div className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300 hover:border-purple-200">
+                <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-2xl p-6">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <p className="text-gray-500 text-xs font-semibold uppercase tracking-wide">Departments</p>
-                      <p className="text-4xl font-bold text-gray-900 mt-4">
+                      <p className="text-sm font-medium text-purple-800">Departments</p>
+                      <p className="text-4xl font-bold text-purple-900 mt-4">
                         {new Set(employees.map(e => e.department)).size}
                       </p>
                     </div>
@@ -326,11 +326,11 @@ const EmployeeManagement = () => {
                   </div>
                 </div>
 
-                <div className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300 hover:border-orange-200">
+                <div className="bg-gradient-to-br from-amber-50 to-amber-100 border border-amber-200 rounded-2xl p-6">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <p className="text-gray-500 text-xs font-semibold uppercase tracking-wide">New This Month</p>
-                      <p className="text-4xl font-bold text-gray-900 mt-4">
+                      <p className="text-sm font-medium text-amber-800">New This Month</p>
+                      <p className="text-4xl font-bold text-amber-900 mt-4">
                         {employees.filter(e => {
                           const joinDate = new Date(e.join_date || e.joinDate);
                           const now = new Date();
@@ -397,14 +397,14 @@ const EmployeeManagement = () => {
                 <table className="w-full">
                   <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
                     <tr>
-                      <th className="text-left py-5 px-7 text-xs font-bold text-gray-700 uppercase tracking-wider">Employee ID</th>
-                      <th className="text-left py-5 px-7 text-xs font-bold text-gray-700 uppercase tracking-wider">Employee</th>
-                      <th className="text-left py-5 px-7 text-xs font-bold text-gray-700 uppercase tracking-wider">Contact</th>
-                      <th className="text-left py-5 px-7 text-xs font-bold text-gray-700 uppercase tracking-wider">Department</th>
-                      <th className="text-left py-5 px-7 text-xs font-bold text-gray-700 uppercase tracking-wider">Sub-Department</th>
-                      <th className="text-left py-5 px-7 text-xs font-bold text-gray-700 uppercase tracking-wider">Join Date</th>
-                      <th className="text-left py-5 px-7 text-xs font-bold text-gray-700 uppercase tracking-wider">Status</th>
-                      <th className="text-center py-5 px-7 text-xs font-bold text-gray-700 uppercase tracking-wider">Actions</th>
+                      <th className="text-left py-5 px-7 text-xs font-bold text-gray-700 capitalize tracking-wider">Employee ID</th>
+                      <th className="text-left py-5 px-7 text-xs font-bold text-gray-700 capitalize tracking-wider">Employee</th>
+                      <th className="text-left py-5 px-7 text-xs font-bold text-gray-700 capitalize tracking-wider">Contact</th>
+                      <th className="text-left py-5 px-7 text-xs font-bold text-gray-700 capitalize tracking-wider">Department</th>
+                      <th className="text-left py-5 px-7 text-xs font-bold text-gray-700 capitalize tracking-wider">Sub-Department</th>
+                      <th className="text-left py-5 px-7 text-xs font-bold text-gray-700 capitalize tracking-wider">Join Date</th>
+                      <th className="text-left py-5 px-7 text-xs font-bold text-gray-700 capitalize tracking-wider">Status</th>
+                      <th className="text-center py-5 px-7 text-xs font-bold text-gray-700 capitalize tracking-wider">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
@@ -460,7 +460,7 @@ const EmployeeManagement = () => {
                             </p>
                           </td>
                           <td className="py-5 px-7">
-                            <span className="px-4 py-2 bg-green-100 text-green-700 rounded-lg text-xs font-bold uppercase tracking-wide">
+                            <span className="px-4 py-2 bg-green-100 text-green-700 rounded-lg text-xs font-bold capitalize tracking-wide">
                               {employee.status || 'Active'}
                             </span>
                           </td>
@@ -1034,7 +1034,7 @@ const CompactField = ({
 }) => {
   return (
     <div className="p-3 sm:p-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg border border-blue-100 hover:border-blue-300 transition">
-      <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide flex items-center gap-1 mb-1">
+      <p className="text-xs font-semibold text-slate-600 capitalize tracking-wide flex items-center gap-1 mb-1">
         {Icon && <Icon className="w-3 h-3" />}
         {label}
       </p>
