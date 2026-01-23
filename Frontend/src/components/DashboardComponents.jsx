@@ -37,6 +37,15 @@ export const DashboardHeader = ({ title, subtitle }) => {
           </div>
 
           <div className="flex items-center space-x-6">
+             <div className="flex gap-3">
+                          <button
+                            onClick={() => navigate('/hr/onboarding')}
+                            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-md hover:shadow-lg font-semibold text-sm"
+                          >
+                            {/* <Plus className="w-5 h-5" /> */}
+                            Onboard Employee
+                          </button>
+                        </div>
             <div className="text-right pr-6 border-r border-gray-200">
               <p className="text-sm font-bold text-gray-900">{user?.name || user?.email || 'User'}</p>
               <p className={`text-xs font-semibold bg-gradient-to-r ${roleInfo[role]?.color} bg-clip-text text-transparent mt-1`}>
@@ -47,6 +56,7 @@ export const DashboardHeader = ({ title, subtitle }) => {
             <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-md">
               {String(user?.name || user?.email || 'U').charAt(0).toUpperCase()}
             </div>
+           
 
             <button
               onClick={handleLogout}
@@ -111,3 +121,8 @@ export const RoleBasedNav = ({ role }) => {
     </nav>
   );
 };
+
+
+
+
+

@@ -1208,7 +1208,7 @@ const AttendanceSheet = ({ attendanceData, onExport, onFilter }) => {
     <div className="space-y-6">
       {/* Preloader */}
       {isLoading && (
-        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
+        <div className="w-full fixed inset-0 flex items-center justify-center z-100">
           <div className="bg-white rounded-2xl p-8 shadow-2xl flex flex-col items-center gap-4">
             <div className="relative w-16 h-16">
               <div className="absolute inset-0 border-4 border-blue-100 rounded-full"></div>
@@ -2817,7 +2817,7 @@ export function EmployeeAttendancePage() {
               <h1 className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
                 Attendance Dashboard
               </h1>
-              <p className="text-gray-600 mt-2">Manage your daily atten  dance and working hours</p>
+              <p className="text-gray-600 mt-2">Manage your daily attendance and working hours</p>
             </div>
             <div className="bg-white rounded-xl border border-blue-200 p-4 shadow-sm">
               <div className="flex items-center gap-2 text-lg font-semibold text-blue-600">
@@ -2863,7 +2863,7 @@ export function EmployeeAttendancePage() {
         {activeTab === 'dashboard' ? (
           <>
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 mb-6">
               <div className="bg-white rounded-lg p-4 border border-blue-200 shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex items-center justify-between mb-2">
                   <Clock className="h-5 w-5 text-blue-600" />
@@ -2908,16 +2908,6 @@ export function EmployeeAttendancePage() {
                 <p className="text-2xl font-bold text-gray-900">{formatDuration(todayBreakTime)}</p>
                 <p className="text-xs text-gray-600 mt-1">Today | Month: {formatDuration(monthBreakTime)}</p>
               </div>
-
-              {/* <div className="bg-white rounded-lg p-4 border border-amber-200 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between mb-2">
-                  <Clock4 className="h-5 w-5 text-amber-600" />
-                  <span className="text-xs font-medium text-amber-600 uppercase">Overtime</span>
-                </div>
-                <p className="text-2xl font-bold text-gray-900">{formatDuration(monthlySummary.overtimeMinutes > 0 ? monthlySummary.overtimeMinutes : overtimeDebt.netDebt)}</p>
-                <p className="text-xs text-gray-600 mt-1">Debt balance</p>
-              </div> */}
-
               {/* Hours card removed (Net working) per design request */}
             </div>
 

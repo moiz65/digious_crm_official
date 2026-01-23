@@ -565,7 +565,7 @@ const EmployeeManagement = () => {
       {/* Employee Details Modal */}
       {showDetailsModal && selectedEmployee && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
-          <div className="bg-white rounded-2xl w-full max-w-4xl shadow-2xl max-h-[95vh] overflow-y-auto">
+          <div className="bg-white rounded-2xl w-full max-w-5xl shadow-2xl max-h-[95vh] overflow-y-auto">
             {/* Header - Sticky */}
             <div className="sticky top-0 flex justify-between items-start p-4 sm:p-6 border-b border-gray-200 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-t-2xl gap-4">
               <div className="flex-1">
