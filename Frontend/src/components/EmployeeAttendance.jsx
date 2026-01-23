@@ -587,9 +587,10 @@ export function EmployeeAttendance() {
 
   // Filter data
   const filteredData = attendanceData.filter(record => {
+    const term = searchTerm.toLowerCase();
     const matchesSearch = searchTerm === '' || 
-      record.employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      record.employee.department.toLowerCase().includes(searchTerm.toLowerCase());
+      (record.employee?.name || '').toLowerCase().includes(term) ||
+      (record.employee?.department || '').toLowerCase().includes(term);
 
     const matchesDepartment = filters.department === 'All' || 
       record.employee.department === filters.department;

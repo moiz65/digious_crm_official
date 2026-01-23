@@ -201,16 +201,18 @@ const AdminApplicationsMemos = () => {
   const departments = ['All', 'Sales', 'Marketing', 'Production', 'HR', 'Operations'];
 
   const filteredApplications = applications.filter(app => {
-    const matchesSearch = app.employeeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         app.subject.toLowerCase().includes(searchTerm.toLowerCase());
+    const term = searchTerm.toLowerCase();
+    const matchesSearch = (app.employeeName || '').toLowerCase().includes(term) ||
+                         (app.subject || '').toLowerCase().includes(term);
     const matchesStatus = filterStatus === 'All' || app.status === filterStatus;
     const matchesType = filterType === 'All' || app.type === filterType;
     return matchesSearch && matchesStatus && matchesType;
   });
 
   const filteredMemos = memos.filter(memo => {
-    const matchesSearch = memo.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         memo.content.toLowerCase().includes(searchTerm.toLowerCase());
+    const term = searchTerm.toLowerCase();
+    const matchesSearch = (memo.title || '').toLowerCase().includes(term) ||
+                         (memo.content || '').toLowerCase().includes(term);
     const matchesType = filterType === 'All' || memo.type === filterType;
     return matchesSearch && matchesType;
   });

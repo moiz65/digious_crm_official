@@ -236,16 +236,17 @@ export function SuperAdminDashboard() {
   ]);
 
   // Filter data based on search
+  const term = searchTerm.toLowerCase();
   const filteredEmployees = employees.filter(emp => 
-    emp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    emp.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    emp.department.toLowerCase().includes(searchTerm.toLowerCase())
+    (emp.name || '').toLowerCase().includes(term) ||
+    (emp.email || '').toLowerCase().includes(term) ||
+    (emp.department || '').toLowerCase().includes(term)
   );
 
   const filteredLeads = leads.filter(lead =>
-    lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    lead.contact.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    lead.status.toLowerCase().includes(searchTerm.toLowerCase())
+    (lead.name || '').toLowerCase().includes(term) ||
+    (lead.contact || '').toLowerCase().includes(term) ||
+    (lead.status || '').toLowerCase().includes(term)
   );
 
   useEffect(() => {

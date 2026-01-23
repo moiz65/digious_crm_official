@@ -59,8 +59,9 @@ const EmployeeManagement = () => {
   const departments = ['All', ...new Set(employees.map(emp => emp.department || 'N/A'))];
 
   const filteredEmployees = employees.filter(emp => {
-    const matchesSearch = emp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         emp.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const term = searchTerm.toLowerCase();
+    const matchesSearch = (emp.name || '').toLowerCase().includes(term) ||
+                         (emp.email || '').toLowerCase().includes(term);
     const matchesDept = filterDept === 'All' || emp.department === filterDept;
     return matchesSearch && matchesDept;
   });

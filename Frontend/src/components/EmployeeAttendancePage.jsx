@@ -108,31 +108,20 @@ const parsePakistanTime = (dateStr, timeStr) => {
   
   try {
     // The database stores times as HH:MM:SS in Pakistan timezone (UTC+5)
-    // Example: check_in_time: "16:24:22" means 16:24:22 Pakistan time
+    // Example: check_in_time: "18:59:58" means 18:59:58 Pakistan time
     // 
-    // To create a comparable Date object:
-    // 1. Take the Pakistan time (e.g., 16:24:22)
-    // 2. Subtract 5 hours to get UTC equivalent (e.g., 11:24:22 UTC)
-    // 3. Create a UTC Date object with those UTC values
-    // 4. This Date object can then be compared directly with getPakistanDate()
-    //    because getPakistanDate() also returns a Date adjusted by +5 hours
+    // IMPORTANT: This must match getPakistanDate() logic for proper comparison
+    // getPakistanDate() returns: new Date(utcTime + 5*60*60*1000)
+    // So we need to create a Date that represents the Pakistan time in the same way
     
     const [hours, minutes, seconds] = timeStr.split(':').map(Number);
     const [year, month, day] = dateStr.split('-').map(Number);
     
-    // Convert Pakistan time to UTC by subtracting 5 hours
-    // If check_in_time is 16:24:22 PKT, the UTC equivalent is 11:24:22
-    let utcHours = hours - 5;
-    let utcDay = day;
-    
-    // Handle day wraparound (e.g., if time becomes negative)
-    if (utcHours < 0) {
-      utcHours += 24;
-      utcDay -= 1;
-    }
-    
-    // Create UTC Date object with the converted time
-    const utcDate = new Date(Date.UTC(year, month - 1, utcDay, utcHours, minutes, seconds));
+    // Create a UTC date for this Pakistan time by treating the Pakistan time values as UTC
+    // This matches how getPakistanDate() works - it adds offset to the timestamp
+    // For example: 18:59:58 PKT → create UTC date with 18:59:58 UTC
+    // Then when compared with getPakistanDate() which also treats PKT as UTC time, they align
+    const utcDate = new Date(Date.UTC(year, month - 1, day, hours, minutes, seconds));
     
     return utcDate;
   } catch (error) {
@@ -418,7 +407,13 @@ export const useAttendance = () => {
       }
       
       // Calculate elapsed time from check-in time to now (in minutes)
-      const elapsedMinutes = (now - checkInDate) / (1000 * 60);
+      let elapsedMinutes = (now - checkInDate) / (1000 * 60);
+      
+      // ⚠️ SAFETY CHECK: Prevent negative durations (clock skew or timezone issues)
+      if (elapsedMinutes < 0) {
+        console.warn(`⚠️ NEGATIVE TIME DETECTED: checkInDate=${checkInDate.toLocaleString()}, now=${now.toLocaleString()}, elapsed=${elapsedMinutes.toFixed(2)}m`);
+        elapsedMinutes = 0; // Reset to 0 to prevent negative display
+      }
       
       // Debug logging for time calculation
       console.log(`⏱️ TIME UPDATE: checkInDate=${checkInDate.toLocaleString()}, now=${now.toLocaleString()}, elapsedMinutes=${elapsedMinutes.toFixed(2)}`);
@@ -429,19 +424,14 @@ export const useAttendance = () => {
         console.warn(`⚠️ SESSION ALERT: Session open for ${hoursElapsed} hours. Should auto-checkout.`);
       }
       
-      // Only update if the value actually changes (to reduce unnecessary re-renders)
+      // Update state every second (timer runs at 1000ms interval)
       setSystemAttendance(prev => {
-        const prevTotalTime = prev.totalWorkingTime || 0;
-        // Update every second for smooth timer (was 0.5 minutes)
-        if (Math.abs(elapsedMinutes - prevTotalTime) > 0.016) {
-          console.log(`📊 STATE UPDATE: totalWorkingTime ${prevTotalTime.toFixed(2)} -> ${elapsedMinutes.toFixed(2)}`);
-          return {
-            ...prev,
-            totalWorkingTime: elapsedMinutes,
-            lastUpdate: now
-          };
-        }
-        return prev;
+        console.log(`📊 STATE UPDATE: totalWorkingTime ${(prev.totalWorkingTime || 0).toFixed(2)} -> ${elapsedMinutes.toFixed(2)}`);
+        return {
+          ...prev,
+          totalWorkingTime: elapsedMinutes,
+          lastUpdate: now
+        };
       });
 
       // Update hours in attendance data
@@ -877,34 +867,22 @@ export const useAttendance = () => {
                 console.log('   check_in_time field:', record.check_in_time);
                 console.log('   check_out_time field:', record.check_out_time);
               }
-              
-              const checkInTime = record.check_in_time 
-                ? parsePakistanTime(attendanceDateStr, record.check_in_time)
-                : null;
-              const checkOutTime = record.check_out_time
-                ? parsePakistanTime(attendanceDateStr, record.check_out_time)
-                : null;
-              
-              if (idx === 0) {
-                console.log('   Parsed checkInTime:', checkInTime);
-                console.log('   Parsed checkOutTime:', checkOutTime);
-              }
                 
               return {
                 date: attendanceDateStr,
                 day: parseInt(attendanceDateStr.split('-')[2]),  // Parse day from YYYY-MM-DD
                 status: record.status?.toLowerCase() || 'present',
-                checkIn: checkInTime
-                  ? checkInTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+                checkIn: record.check_in_time
+                  ? formatPakistanTimeString(record.check_in_time)
                   : '-',
-                checkOut: checkOutTime
-                  ? checkOutTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+                checkOut: record.check_out_time
+                  ? formatPakistanTimeString(record.check_out_time)
                   : '-',
                 check_in_time: record.check_in_time || null,
                 check_out_time: record.check_out_time || null,
                 hours: record.net_working_time_minutes && record.net_working_time_minutes > 0 ? (record.net_working_time_minutes / 60).toFixed(1) : '-',
                 grossHours: record.gross_working_time_minutes && record.gross_working_time_minutes > 0 ? (record.gross_working_time_minutes / 60).toFixed(1) : '-',
-                remarks: record.remarks || (checkOutTime ? 'Checked out' : 'Active session'),
+                remarks: record.remarks || (record.check_out_time ? 'Checked out' : 'Active session'),
                 lateByMinutes: record.late_by_minutes || 0,
                 overtimeHours: record.overtime_hours && parseFloat(record.overtime_hours) > 0 ? parseFloat(record.overtime_hours).toFixed(2) : '-',
                 overtimeMinutes: record.overtime_minutes || 0,
@@ -1028,10 +1006,10 @@ const AttendanceSheet = ({ attendanceData, onExport, onFilter }) => {
               day: new Date(record.attendance_date).getDate(),
               status: statusLower,
               checkIn: record.check_in_time 
-                ? parsePakistanTime(record.attendance_date, record.check_in_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+                ? formatPakistanTimeString(record.check_in_time)
                 : '-',
               checkOut: record.check_out_time
-                ? parsePakistanTime(record.attendance_date, record.check_out_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+                ? formatPakistanTimeString(record.check_out_time)
                 : '-',
               hours: record.net_working_time_minutes ? (record.net_working_time_minutes / 60).toFixed(1) : '0.0',
               overtimeHours: record.overtime_hours ? parseFloat(record.overtime_hours).toFixed(2) : '0.0',
@@ -1074,8 +1052,9 @@ const AttendanceSheet = ({ attendanceData, onExport, onFilter }) => {
   const filteredData = dataToDisplay
     .filter(record => {
       const matchesStatus = filterStatus === 'all' || record.status === filterStatus;
-      const matchesSearch = record.date.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          (record.remarks && record.remarks.toLowerCase().includes(searchTerm.toLowerCase()));
+      const term = searchTerm.toLowerCase();
+      const matchesSearch = (record.date || '').toLowerCase().includes(term) ||
+                          ((record.remarks || '').toLowerCase().includes(term));
       
       return matchesStatus && matchesSearch;
     })
@@ -2627,8 +2606,14 @@ export function EmployeeAttendancePage() {
 
   // Format duration for display
   const formatDuration = (minutes) => {
-    // Ensure minutes is a number
-    const mins = typeof minutes === 'number' ? minutes : parseFloat(minutes) || 0;
+    // Ensure minutes is a number and prevent negative values
+    let mins = typeof minutes === 'number' ? minutes : parseFloat(minutes) || 0;
+    
+    // Safety check: prevent negative durations from displaying
+    if (mins < 0) {
+      console.warn(`⚠️ formatDuration received negative value: ${mins}m, resetting to 0`);
+      mins = 0;
+    }
     
     const hours = Math.floor(mins / 60);
     const remainingMins = Math.floor(mins % 60);
@@ -2699,38 +2684,29 @@ export function EmployeeAttendancePage() {
     }
     console.log('   Today record found:', !!todayRecord);
     
-    // IMPORTANT: Check the actual database record for check_out_time, not in-memory state
-    // The database is the source of truth. In-memory state can be stale after page reload
-    const dbCheckOutTime = todayRecord?.check_out_time;
-    const dbCheckInTime = todayRecord?.check_in_time;
+    // Use systemAttendance which has properly parsed Pakistan timezone Date objects
+    // systemAttendance is populated from fetchAttendanceData() which calls parsePakistanTime()
+    const hasCheckOut = systemAttendance.checkOutTime !== null && systemAttendance.checkOutTime !== undefined;
+    const hasCheckIn = systemAttendance.checkInTime !== null && systemAttendance.checkInTime !== undefined;
     
-    console.log('   dbCheckInTime:', dbCheckInTime);
-    console.log('   dbCheckOutTime:', dbCheckOutTime);
-    
-    // If database shows checkout, display it regardless of in-memory state
-    if (dbCheckOutTime) {
-      console.log('   ✅ User has checked out (from DB)');
+    // If system shows checkout, display it
+    if (hasCheckOut && systemAttendance.checkOutTime) {
+      console.log('   ✅ User has checked out (from systemAttendance)');
+      const timeStr = systemAttendance.checkOutTime.toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: true 
+      });
       return {
         checked: false,
-        message: `Checked out at ${formatPakistanTimeString(dbCheckOutTime)}`,
-        time: dbCheckOutTime
+        message: `Checked out at ${timeStr}`,
+        time: systemAttendance.checkOutTime
       };
     }
     
-    // If database shows check-in but no checkout, user is currently checked in
-    if (dbCheckInTime && !dbCheckOutTime) {
-      console.log('   ✅ Detected active check-in session from database');
-      return {
-        checked: true,
-        message: `Checked in at ${formatPakistanTimeString(dbCheckInTime)}`,
-        time: dbCheckInTime
-      };
-    }
-    
-    // FALLBACK: If attendanceData hasn't loaded yet but systemAttendance shows checked in,
-    // use that (this handles the case where fetch is still in progress on page load)
-    if (systemAttendance.checkedIn && systemAttendance.checkInTime) {
-      console.log('   ✅ Using systemAttendance state (DB fetch in progress)');
+    // If system shows check-in but no checkout, user is currently checked in
+    if (hasCheckIn && !hasCheckOut) {
+      console.log('   ✅ Detected active check-in session from systemAttendance');
       const timeStr = systemAttendance.checkInTime.toLocaleTimeString('en-US', { 
         hour: '2-digit', 
         minute: '2-digit',
@@ -2743,21 +2719,7 @@ export function EmployeeAttendancePage() {
       };
     }
     
-    // Fallback to in-memory state only if database is not yet loaded
-    if (systemAttendance.checkInTime && !systemAttendance.checkOutTime) {
-      return {
-        checked: true,
-        message: `Checked in at ${systemAttendance.checkInTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}`,
-        time: systemAttendance.checkInTime
-      };
-    }
-    if (systemAttendance.checkOutTime) {
-      return {
-        checked: false,
-        message: `Checked out at ${systemAttendance.checkOutTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}`,
-        time: systemAttendance.checkOutTime
-      };
-    }
+    // FALLBACK: If we reach here, user is not checked in
     return { checked: false, message: 'Not checked in yet', time: null };
   };
 
@@ -2985,9 +2947,8 @@ export function EmployeeAttendancePage() {
                       </>
                     )}
                   </div>
-                  <p className="text-sm text-gray-700">
-                    {getCheckInStatus().message}
-                  </p>
+                  {/* Removed: avoid showing DB-derived check-in message (may be timezone-mismatched).
+                      Rely on systemAttendance state and the session timer for accurate display. */}
                   {attendanceData.length === 0 && (
                     <p className="text-xs text-gray-500 mt-2 italic">Loading attendance data...</p>
                   )}
