@@ -163,7 +163,7 @@ const HRDashboard = () => {
                   return (
                     <div
                       key={index}
-                      className="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 p-8 border border-gray-100 hover:border-blue-200"
+                      className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-2xl p-6 hover:shadow-lg transition-shadow duration-300 group"
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
