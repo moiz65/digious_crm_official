@@ -80,6 +80,17 @@ export const endpoints = {
     getByUser: (userId) => `${config.FULL_API_URL}/activities/user/${userId}`,
   },
 
+  // Leave Management endpoints
+  leaves: {
+    requests: `${config.FULL_API_URL}/leaves/requests`,
+    create: `${config.FULL_API_URL}/leaves/create`,
+    approve: (id) => `${config.FULL_API_URL}/leaves/${id}/approve`,
+    reject: (id) => `${config.FULL_API_URL}/leaves/${id}/reject`,
+    balances: `${config.FULL_API_URL}/leaves/balances`,
+    types: `${config.FULL_API_URL}/leaves/types`,
+    calendar: `${config.FULL_API_URL}/leaves/calendar`,
+  },
+
   // Health check
   health: `${API_BASE_URL}/api/health`,
 };

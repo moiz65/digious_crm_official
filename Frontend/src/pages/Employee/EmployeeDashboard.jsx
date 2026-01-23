@@ -10,10 +10,10 @@ const EmployeeDashboard = () => {
   const [activeItem, setActiveItem] = useState('dashboard');
 
   const stats = [
-    { label: 'Hours This Week', value: '40h', icon: Clock, color: 'from-blue-500 to-cyan-600', bgColor: 'from-blue-50 to-cyan-50', iconBg: 'from-blue-500 to-blue-600' },
-    { label: 'Attendance Rate', value: '96%', icon: Calendar, color: 'from-green-500 to-emerald-600', bgColor: 'from-green-50 to-emerald-50', iconBg: 'from-green-500 to-green-600' },
-    { label: 'Pending Requests', value: '2', icon: FileText, color: 'from-orange-500 to-red-600', bgColor: 'from-orange-50 to-red-50', iconBg: 'from-orange-500 to-red-600' },
-    { label: 'Profile Status', value: 'Active', icon: User, color: 'from-purple-500 to-pink-600', bgColor: 'from-purple-50 to-pink-50', iconBg: 'from-purple-500 to-purple-600' }
+    { label: 'Hours This Week', value: '40h', icon: Clock, color: 'from-blue-500 to-cyan-600', bgColor: 'from-white to-white', iconBg: 'from-blue-500 to-blue-600' },
+    { label: 'Attendance Rate', value: '96%', icon: Calendar, color: 'from-green-500 to-emerald-600', bgColor: 'from-white to-white', iconBg: 'from-green-500 to-green-600' },
+    { label: 'Pending Requests', value: '2', icon: FileText, color: 'from-orange-500 to-red-600', bgColor: 'from-white to-white', iconBg: 'from-orange-500 to-red-600' },
+    { label: 'Profile Status', value: 'Active', icon: User, color: 'from-purple-500 to-pink-600', bgColor: 'from-white to-white', iconBg: 'from-purple-500 to-purple-600' }
   ];
 
   return (
@@ -42,12 +42,12 @@ const EmployeeDashboard = () => {
             return (
               <div
                 key={index}
-                className={`bg-gradient-to-br ${stat.bgColor} rounded-2xl shadow-lg border-2 border-white p-6 hover:shadow-xl transition-all duration-300 group hover:scale-105`}
+                className={`bg-gradient-to-br ${stat.bgColor} rounded-2xl shadow-lg border-2  p-6 hover:shadow-xl transition-all duration-300 group hover:scale-105`}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-3">{stat.label}</p>
-                    <p className="text-4xl font-extrabold bg-gradient-to-r ${stat.color} bg-clip-text text-transparent">{stat.value}</p>
+                    <p className="text-3xl font-semibold bg-gradient-to-r ${stat.color} bg-clip-text text-black/90">{stat.value}</p>
                   </div>
                   <div className={`p-3 rounded-xl bg-gradient-to-br ${stat.iconBg} shadow-md group-hover:scale-110 transition-transform`}>
                     <Icon className="w-6 h-6 text-white" />

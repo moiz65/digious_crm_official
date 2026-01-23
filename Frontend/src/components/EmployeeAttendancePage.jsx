@@ -1208,7 +1208,7 @@ const AttendanceSheet = ({ attendanceData, onExport, onFilter }) => {
     <div className="space-y-6">
       {/* Preloader */}
       {isLoading && (
-        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
+        <div className="w-full fixed inset-0 flex items-center justify-center z-100">
           <div className="bg-white rounded-2xl p-8 shadow-2xl flex flex-col items-center gap-4">
             <div className="relative w-16 h-16">
               <div className="absolute inset-0 border-4 border-blue-100 rounded-full"></div>
@@ -1276,7 +1276,7 @@ const AttendanceSheet = ({ attendanceData, onExport, onFilter }) => {
           </div>
 
           {/* Search */}
-          <div className="relative">
+          {/* <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <input
               type="text"
@@ -1285,7 +1285,7 @@ const AttendanceSheet = ({ attendanceData, onExport, onFilter }) => {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
             />
-          </div>
+          </div> */}
 
           {/* Filter */}
           <select
@@ -1329,9 +1329,10 @@ const AttendanceSheet = ({ attendanceData, onExport, onFilter }) => {
       </div>
 
       {/* Analytics Dashboard */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* hello */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 ">
         {/* Attendance Distribution Chart */}
-        <div className="bg-white rounded-xl border border-blue-100 p-6 shadow-sm hover:shadow-md transition-all">
+        {/* <div className="bg-white rounded-xl border border-blue-100 p-6 shadow-sm hover:shadow-md transition-all">
           <div className="flex items-center justify-between mb-4">
             <h4 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
               <PieChart className="h-5 w-5 text-blue-600" />
@@ -1380,10 +1381,10 @@ const AttendanceSheet = ({ attendanceData, onExport, onFilter }) => {
               <span className="text-sm text-gray-600">Absent ({monthlyStats.absent})</span>
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* Working Hours Trend */}
-        <div className="bg-white rounded-xl border border-blue-100 p-6 shadow-sm hover:shadow-md transition-all">
+        {/* <div className="bg-white rounded-xl border border-blue-100 p-6 shadow-sm hover:shadow-md transition-all">
           <div className="flex items-center justify-between mb-4">
             <h4 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
               <LineChart className="h-5 w-5 text-blue-600" />
@@ -1435,8 +1436,9 @@ const AttendanceSheet = ({ attendanceData, onExport, onFilter }) => {
               />
             </AreaChart>
           </ResponsiveContainer>
-        </div>
+        </div> */}
       </div>
+      
 
       {/* Enhanced Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -1498,7 +1500,7 @@ const AttendanceSheet = ({ attendanceData, onExport, onFilter }) => {
       </div>
 
       {/* Weekly Performance Bar Chart */}
-      <div className="bg-white rounded-xl border border-blue-100 p-6 shadow-sm hover:shadow-md transition-all">
+      {/* <div className="bg-white rounded-xl border border-blue-100 p-6 shadow-sm hover:shadow-md transition-all">
         <div className="flex items-center justify-between mb-4">
           <h4 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
             <BarChart3 className="h-5 w-5 text-blue-600" />
@@ -1545,7 +1547,7 @@ const AttendanceSheet = ({ attendanceData, onExport, onFilter }) => {
             <Bar dataKey="target" fill="#10b981" radius={[8, 8, 0, 0]} name="Target (9h)" opacity={0.3} />
           </BarChart>
         </ResponsiveContainer>
-      </div>
+      </div> */}
 
       {/* Attendance Table */}
       <div className="bg-white rounded-xl border border-blue-100 overflow-hidden shadow-sm hover:shadow-md transition-all">
@@ -2815,7 +2817,7 @@ export function EmployeeAttendancePage() {
               <h1 className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
                 Attendance Dashboard
               </h1>
-              <p className="text-gray-600 mt-2">Manage your daily atten  dance and working hours</p>
+              <p className="text-gray-600 mt-2">Manage your daily attendance and working hours</p>
             </div>
             <div className="bg-white rounded-xl border border-blue-200 p-4 shadow-sm">
               <div className="flex items-center gap-2 text-lg font-semibold text-blue-600">
@@ -2861,7 +2863,7 @@ export function EmployeeAttendancePage() {
         {activeTab === 'dashboard' ? (
           <>
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 mb-6">
               <div className="bg-white rounded-lg p-4 border border-blue-200 shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex items-center justify-between mb-2">
                   <Clock className="h-5 w-5 text-blue-600" />
@@ -2906,16 +2908,6 @@ export function EmployeeAttendancePage() {
                 <p className="text-2xl font-bold text-gray-900">{formatDuration(todayBreakTime)}</p>
                 <p className="text-xs text-gray-600 mt-1">Today | Month: {formatDuration(monthBreakTime)}</p>
               </div>
-
-              {/* <div className="bg-white rounded-lg p-4 border border-amber-200 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between mb-2">
-                  <Clock4 className="h-5 w-5 text-amber-600" />
-                  <span className="text-xs font-medium text-amber-600 uppercase">Overtime</span>
-                </div>
-                <p className="text-2xl font-bold text-gray-900">{formatDuration(monthlySummary.overtimeMinutes > 0 ? monthlySummary.overtimeMinutes : overtimeDebt.netDebt)}</p>
-                <p className="text-xs text-gray-600 mt-1">Debt balance</p>
-              </div> */}
-
               {/* Hours card removed (Net working) per design request */}
             </div>
 
@@ -3357,3 +3349,4 @@ export function EmployeeAttendancePage() {
     </div>
   );
 }
+

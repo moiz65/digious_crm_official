@@ -767,7 +767,7 @@ const HRMyAttendance = () => {
           </div>
 
           {/* Charts Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
             {/* Weekly Working Hours Chart */}
             <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
               <h3 className="text-lg font-bold text-gray-900 mb-4">Weekly Working Hours</h3>
@@ -812,11 +812,11 @@ const HRMyAttendance = () => {
           {activeTab === 'sheet' && (
             <div className="space-y-6">
               {/* Header Section */}
-              <div className="bg-blue-600 rounded-lg p-6 text-white shadow-md">
+              <div className="bg-white rounded-lg p-6 text-black/90 shadow-md">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                   <div>
                     <h2 className="text-2xl font-bold mb-1">Attendance Records</h2>
-                    <p className="text-blue-100 text-sm">
+                    <p className="text-black/70 text-sm">
                       <span className="font-semibold">{
                         monthlyAttendance.filter(r => 
                           statusFilter === 'All Status' || r.status === statusFilter
@@ -886,7 +886,7 @@ const HRMyAttendance = () => {
 
               {/* Quick Stats Grid */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-white rounded-lg p-4 shadow border-l-4 border-blue-600">
+                <div className="bg-white rounded-lg p-4 shadow border-l-4 border-[#349DFF]">
                   <p className="text-gray-600 text-xs font-semibold uppercase">Total</p>
                   <p className="text-2xl font-bold text-gray-900 mt-1">{monthlyAttendance.length}</p>
                 </div>
@@ -922,7 +922,7 @@ const HRMyAttendance = () => {
                     onClick={() => setStatusFilter('All Status')}
                     className={`px-6 py-3 rounded-full font-semibold transition-all text-sm shadow-md ${
                       statusFilter === 'All Status'
-                        ? 'bg-blue-600 text-white shadow-lg scale-105'
+                        ? 'bg-[#349DFF] text-white shadow-lg scale-105'
                         : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-blue-400'
                     }`}
                   >
@@ -978,13 +978,13 @@ const HRMyAttendance = () => {
 
               {/* Attendance Table */}
               <div className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden relative z-10">
-                <div className="px-6 py-4 border-b border-gray-200 bg-blue-600 text-white">
+                <div className="px-6 py-4 border-b border-gray-200 bg-white text-black/90">
                   <h2 className="text-lg font-bold">Detailed Attendance</h2>
                 </div>
                 
                 <div className="overflow-x-auto">
                   <table className="w-full">
-                    <thead className="bg-blue-500 text-white">
+                    <thead className="bg-[#349DFF] text-white">
                       <tr>
                         <th className="px-4 py-3 text-left text-sm font-semibold">Date</th>
                         <th className="px-4 py-3 text-left text-sm font-semibold">Check In</th>
