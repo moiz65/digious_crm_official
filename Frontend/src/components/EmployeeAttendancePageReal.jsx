@@ -379,14 +379,21 @@ export function EmployeeAttendancePage() {
                   </div>
 
                   <div className="bg-white rounded-xl shadow-md p-4 border border-red-100">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-gray-600 font-medium">Working Hours</p>
-                        <p className="text-2xl font-bold text-gray-900">
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="text-sm text-gray-600 font-medium">Working Hours</p>
+                      <TrendingUp className="h-8 w-8 text-green-600" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                        <p className="text-xs text-gray-500 mb-1">Current Session</p>
+                        <p className="text-lg font-bold text-gray-900">
                           {Math.floor(todayAttendance.net_working_time_minutes / 60)}h {todayAttendance.net_working_time_minutes % 60}m
                         </p>
                       </div>
-                      <TrendingUp className="h-8 w-8 text-green-600" />
+                      <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                        <p className="text-xs text-gray-500 mb-1">Expected</p>
+                        <p className="text-lg font-bold text-gray-900">9h 0m</p>
+                      </div>
                     </div>
                   </div>
 

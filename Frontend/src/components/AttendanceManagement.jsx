@@ -1742,12 +1742,13 @@ export function AdvancedAttendanceManagement() {
       }
     }
 
-    // Search term filter
+    // Search term filter (defensive: guard undefined fields)
+    const term = searchTerm.toLowerCase();
     const matchesSearch = searchTerm === '' || 
-      record.employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      record.employee.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      record.employee.team.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      record.employee.position.toLowerCase().includes(searchTerm.toLowerCase());
+      (record.employee?.name || '').toLowerCase().includes(term) ||
+      (record.employee?.department || '').toLowerCase().includes(term) ||
+      (record.employee?.team || '').toLowerCase().includes(term) ||
+      (record.employee?.position || '').toLowerCase().includes(term);
 
     // Department filter
     const matchesDepartment = filters.department === 'All' || 

@@ -16,6 +16,7 @@ router.get('/today-breaks/:employee_id', authMiddleware, attendanceController.ge
 // Get attendance data (Public for HR Dashboard)
 router.get('/today/:employee_id', attendanceController.getTodayAttendance);
 router.get('/monthly/:employee_id', attendanceController.getMonthlyAttendance);
+router.get('/break-summary', attendanceController.getBreakSummary); // Get break summary for a specific employee and date
 
 // Admin Routes (Public for HR Dashboard)
 router.post('/generate-absent', attendanceController.generateAbsentRecords); // Generate absent records from joining date

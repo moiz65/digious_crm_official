@@ -157,8 +157,9 @@ const ApplicationsMemos = () => {
   const departments = ['All', 'Sales', 'Marketing', 'Production', 'HR', 'Operations'];
 
   const filteredApplications = applications.filter(app => {
-    const matchesSearch = app.employeeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         app.subject.toLowerCase().includes(searchTerm.toLowerCase());
+    const term = searchTerm.toLowerCase();
+    const matchesSearch = (app.employeeName || '').toLowerCase().includes(term) ||
+                         (app.subject || '').toLowerCase().includes(term);
     const matchesStatus = filterStatus === 'All' || app.status === filterStatus;
     const matchesType = filterType === 'All' || app.type === filterType;
     const matchesDateRange = (!startDate || app.submittedDate >= startDate) && (!endDate || app.submittedDate <= endDate);
@@ -166,8 +167,9 @@ const ApplicationsMemos = () => {
   });
 
   const filteredMemos = memos.filter(memo => {
-    const matchesSearch = memo.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         memo.content.toLowerCase().includes(searchTerm.toLowerCase());
+    const term = searchTerm.toLowerCase();
+    const matchesSearch = (memo.title || '').toLowerCase().includes(term) ||
+                         (memo.content || '').toLowerCase().includes(term);
     const matchesType = filterType === 'All' || memo.type === filterType;
     const matchesDateRange = (!startDate || memo.issuedDate >= startDate) && (!endDate || memo.issuedDate <= endDate);
     return matchesSearch && matchesType && matchesDateRange;
