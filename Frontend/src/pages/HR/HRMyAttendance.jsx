@@ -524,7 +524,7 @@ const HRMyAttendance = () => {
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center">
                   <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
-                    attendanceData?.check_in_time && !attendanceData?.check_out_time ? 'bg-green-100' : attendanceData?.check_out_time ? 'bg-blue-100' : 'bg-gray-100'
+                    attendanceData?.check_in_time && !attendanceData?.check_out_time ? 'bg-green-100' : attendanceData?.check_out_time ? 'bg-blue-100' : 'bg-white'
                   }`}>
                     <CheckCircle className={`w-6 h-6 ${getStatusColor()}`} />
                   </div>
@@ -935,7 +935,7 @@ const HRMyAttendance = () => {
                     className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${
                       statusFilter === 'Present'
                         ? 'bg-green-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        : 'bg-white text-gray-700 hover:bg-gray-200'
                     }`}
                   >
                     Present ({monthlyAttendance.filter(r => r.status === 'Present').length})
@@ -946,7 +946,7 @@ const HRMyAttendance = () => {
                     className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${
                       statusFilter === 'Late'
                         ? 'bg-orange-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        : 'bg-white text-gray-700 hover:bg-gray-200'
                     }`}
                   >
                     Late ({monthlyAttendance.filter(r => r.status === 'Late').length})
@@ -957,7 +957,7 @@ const HRMyAttendance = () => {
                     className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${
                       statusFilter === 'Absent'
                         ? 'bg-red-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        : 'bg-white text-gray-700 hover:bg-gray-200'
                     }`}
                   >
                     Absent ({monthlyAttendance.filter(r => r.status === 'Absent').length})
@@ -968,7 +968,7 @@ const HRMyAttendance = () => {
                     className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${
                       statusFilter === 'Leave'
                         ? 'bg-purple-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        : 'bg-white text-gray-700 hover:bg-gray-200'
                     }`}
                   >
                     Leave ({monthlyAttendance.filter(r => r.status === 'Leave').length})
