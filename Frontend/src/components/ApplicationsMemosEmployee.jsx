@@ -1,29 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import {
-  User, Mail, Phone, Calendar, MapPin, Briefcase,
-  FileCheck, ClipboardList, Plus, Search, Filter,
+  Calendar, MapPin, Briefcase,
+  FileCheck, ClipboardList, Plus, Search,
   Clock, AlertCircle, CheckCircle, X, Download,
-  Printer, Share2, Paperclip, Upload, Eye,
-  Check, UserPlus, Award, TrendingUp, DollarSign,
-  Package, ShoppingCart, CreditCard, PieChart, Grid,
-  Bell, Settings, LogOut, Home, BarChart, Users,
-  Shield, Building, Globe, Bookmark, Star,
-  CloudUpload, FileText, Send, Edit, Trash2,
-  FilePlus, FolderPlus, FolderOpen, Folder,
-  MessageSquare, Mail as MailIcon, BellRing, 
-  CalendarDays, Target, Timer, Zap, Rocket,
-  Trophy, Medal, Crown, Heart, ThumbsUp,
-  TrendingDown, RefreshCw, ExternalLink, Link,
-  Copy, QrCode, Smartphone, Tablet, Monitor,
-  Headphones, Camera, Video, Mic, Music,
-  Wifi, Battery, Power, Database, Server,
-  Cpu, HardDrive, Network, Lock, Key,
-  EyeOff, Eye as EyeIcon, Fingerprint,
-  ShieldCheck, ShieldAlert, ShieldOff
+  Printer, Share2, Paperclip, Eye,
+  Check, DollarSign,
+  Package, FileText, Send, Edit, Trash2,
+  FilePlus,
+  MessageSquare, Bell, User, Users, Home, Target, Globe, CloudUpload, Mail as MailIcon
 } from 'lucide-react';
 
 const ApplicationsMemosEmployee = () => {
-  const [employee, setEmployee] = useState({
+  const [employee] = useState({
     id: 1,
     name: 'John Smith',
     email: 'john.smith@company.com',

@@ -1,6 +1,5 @@
 // src/utils/pdfExport.js
 import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 
 /**
  * Standard PDF Layout Template
@@ -48,7 +47,7 @@ export const PDFTemplate = {
  */
 export const generateTablePDF = (title, subtitle, columns, data, filename) => {
   const doc = new jsPDF(PDFTemplate.orientation, 'mm', PDFTemplate.pageFormat);
-  const { margins, colors, fonts } = PDFTemplate;
+  const { margins } = PDFTemplate;
   
   let yPosition = margins.top;
   
@@ -107,7 +106,6 @@ const addHeader = (doc, title, subtitle, yPos) => {
  */
 const addCompanyInfo = (doc, yPos) => {
   const { margins, colors, fonts } = PDFTemplate;
-  const pageWidth = doc.internal.pageSize.getWidth();
   
   doc.setFontSize(fonts.small.size);
   doc.setFont(undefined, 'bold');

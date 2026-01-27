@@ -1,11 +1,10 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LogOut, Home } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 
 export const DashboardHeader = ({ title, subtitle }) => {
   const { user, role, logoutNoCheckout } = useAuth();
-  const navigate = useNavigate();
 
   const roleInfo = {
     admin: { color: 'from-red-500 to-pink-600', label: 'Administrator' },

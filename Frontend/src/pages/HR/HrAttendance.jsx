@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import HrSidebar from '../../components/HrSidebar';
 
-import AttendancePage, { HrAttendancePage } from '../../components/HrAttendancePage';
-
-// import AttendanceManagement from '../components/AttendanceManagement';
+import { HrAttendancePage } from '../../components/HrAttendancePage';
 
 const Attendance = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);

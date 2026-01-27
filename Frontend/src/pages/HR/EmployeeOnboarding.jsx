@@ -77,7 +77,6 @@ const EmployeeOnboarding = () => {
     resourcesNote: ''
   });
 
-  const [showResourcesSection, setShowResourcesSection] = useState(false);
   const [employeeIdStatus, setEmployeeIdStatus] = useState(null); // 'available', 'exists', 'checking'
   const [suggestedNextId, setSuggestedNextId] = useState(null);
   const EMPLOYEE_ID_PREFIX = 'DG';

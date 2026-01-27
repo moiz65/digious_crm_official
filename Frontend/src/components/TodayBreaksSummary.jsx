@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import { endpoints } from '../config/api';
 import { 
-  Coffee, Clock, Cigarette, Utensils, Sparkle, Wifi, 
-  AlertCircle, Loader, TrendingUp, RefreshCw
+  Coffee, Cigarette, Utensils, Sparkle, Wifi, 
+  AlertCircle, Loader, RefreshCw
 } from 'lucide-react';
 
 // Break Type Colors

@@ -212,8 +212,9 @@ exports.checkIn = async (req, res) => {
               console.log(`🔧 AUTO-COMPLETING PREVIOUS CHECKOUT: Record ID ${existingAttendance[0].id}`);
               console.log(`   Reason: ${isNewShiftAttempt ? 'New shift check-in attempt' : `After 9:00 AM (current time: ${currentHour}:${String(currentMinute).padStart(2, '0')})`}`);
               
-              // Auto-complete the previous checkout at 9:00 AM
-              const autoCheckOutTime = '09:00:00'; // Fixed checkout time at 9:00 AM
+              // Auto-complete the previous checkout at current time (Pakistan timezone)
+              // This is only a fallback - if user manually checks out before 9 AM, that time is used instead
+              const autoCheckOutTime = getPakistanTimeString(); // Use actual current time, not fixed 9:00 AM
               
               const [breakResult] = await connection.query(
                 `SELECT total_break_duration_minutes FROM Employee_Attendance WHERE id = ?`,
@@ -410,6 +411,23 @@ exports.checkOut = async (req, res) => {
     connection = await pool.getConnection();
 
     try {
+      // ============================================================
+      // CHECKOUT POLICY - CRITICAL RULE
+      // ============================================================
+      // Users MUST checkout BEFORE 9:00 AM
+      // - Can checkout ANYTIME before 9 AM (early morning, mid-morning, etc.)
+      // - Manual checkout at 05:30 AM = ALLOWED (before 9 AM)
+      // - Manual checkout at 06:15 AM = ALLOWED (before 9 AM)
+      // - Manual checkout at 07:45 AM = ALLOWED (before 9 AM)
+      // - Manual checkout at 08:59 AM = ALLOWED (before 9 AM)
+      // - Manual checkout at 09:01 AM = BLOCKED (after 9 AM deadline)
+      //
+      // Auto-checkout FALLBACK:
+      // - If user doesn't manually checkout before 9:00 AM
+      // - System auto-completes at 9:00 AM with actual current time
+      // - This is only a safety net, not a restriction
+      // ============================================================
+      
       // Work date logic for night shift:
       // The night shift runs from 21:00 (9 PM) to 06:00 (6 AM) next day
       // Get today's date
@@ -458,6 +476,27 @@ exports.checkOut = async (req, res) => {
       const attendanceId = attendanceRecord[0].id;
       const checkInTime = attendanceRecord[0].check_in_time;
       const totalBreakMinutes = attendanceRecord[0].total_break_duration_minutes || 0;
+
+      // VALIDATE: Check if checkout is before 9:00 AM (Policy enforcement)
+      // Users MUST checkout before 9:00 AM. After 9 AM, system auto-completes checkout
+      const [checkOutHourValidate, checkOutMinValidate] = checkOutTime.split(':').map(Number);
+      const checkOutTotalMinutesValidate = checkOutHourValidate * 60 + checkOutMinValidate;
+      const nineAMTotalMinutes = 9 * 60; // 540 minutes = 9:00 AM
+      
+      if (checkOutTotalMinutesValidate >= nineAMTotalMinutes) {
+        // Checkout time is at or after 9:00 AM - not allowed for manual checkout
+        connection.release();
+        console.log(`❌ CHECKOUT AFTER 9:00 AM NOT ALLOWED: Employee ${employee_id} attempted checkout at ${checkOutTime}`);
+        return res.status(400).json({
+          success: false,
+          message: 'Checkout deadline exceeded. Manual checkout must be before 9:00 AM. System will auto-complete your checkout at 9:00 AM if not done manually.',
+          data: {
+            attemptedCheckOutTime: checkOutTime,
+            deadline: '09:00:00',
+            policy: 'Manual checkout allowed: Before 6 AM, After 6 AM, but MUST be before 9:00 AM'
+          }
+        });
+      }
 
       // Calculate working times
       // For night shift: if check-in is after 21:00 and check-out is before 06:00 NEXT DAY,

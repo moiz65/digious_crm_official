@@ -7,8 +7,6 @@ import {
   Clock,
   LogIn,
   LogOut,
-  Calculator,
-  Scale,
   Check,
   X,
   Clock4,
@@ -16,7 +14,6 @@ import {
   ToiletIcon,
   Calendar1,
   Utensils,
-  Users,
   AlertCircle,
   BarChart3,
   PieChart,
@@ -42,12 +39,6 @@ import {
   Moon,
   ArrowLeft,
   ArrowRight,
-  User,
-  Target,
-  Grid,
-  List,
-  MessageCircle,
-  FileText,
   RefreshCw,
   Activity,
   Wifi,
@@ -55,13 +46,13 @@ import {
   RotateCcw,
   Building,
   ChevronUp,
-  ArcElement,
   ShieldUser,
   Table,
   TrendingUp,
-  LineChart,
+  Coffee,
+  FileText,
   PauseCircle,
-  Coffee
+  LineChart
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -584,7 +575,6 @@ export const useAttendance = () => {
       
       if (data.success && data.data) {
         const attendanceRecord = data.data;
-        const isCheckedIn = data.isCheckedIn || (attendanceRecord.check_out_time === null && attendanceRecord.check_in_time !== null);
         
         // Extract date as YYYY-MM-DD format (handle ISO timestamps)
         // The API returns attendance_date which may be UTC or a date string
@@ -2126,19 +2116,16 @@ export function EmployeeAttendancePage() {
       ? totalGrossMinutes + systemAttendance.totalWorkingTime
       : totalGrossMinutes;
     
-    // Only calculate overtime if current time is after 6 AM (using Pakistan timezone)
-    const nowPKT = getPakistanDate();
-    const isAfter6AM = nowPKT.getHours() >= 6;
-    
+    // Calculate overtime anytime (no time restriction)
+    // Users can checkout at any time BEFORE 9 AM - it will be treated as normal checkout
+    // Auto-checkout only triggers at 9 AM if user forgot to manually checkout
+    // Policy: Checkout must happen BEFORE 9:00 AM (e.g., 6:30 AM, 8:15 AM, 8:59 AM all OK)
     const requiredWorkingTime = 9 * 60; // 540 minutes
     let overtimeRequired = 0;
     
-    if (isAfter6AM) {
-      overtimeRequired = Math.max(0, requiredWorkingTime - netWorkingTime + overtimeDebt.netDebt);
-      console.log('📊 Overtime calculation: After 6 AM - overtime eligible');
-    } else {
-      console.log('⏱️ Overtime calculation: Before 6 AM - no overtime counted');
-    }
+    // Overtime is calculated for all manual checkouts before 9 AM
+    overtimeRequired = Math.max(0, requiredWorkingTime - netWorkingTime + overtimeDebt.netDebt);
+    console.log('📊 Overtime calculation: Available for checkout before 9 AM');
     
     return {
       totalBreakTime: breakSummary.totalDuration,

@@ -5,7 +5,7 @@ import {
   CheckCircle, Clock, Download, 
   Search, Filter, Eye, RefreshCw, Activity,
   Coffee, LogIn, LogOut, AlertCircle, TrendingUp, TrendingDown,
-  Calendar, UserCheck, UserX, Zap, BarChart3, X
+  UserCheck, UserX, Zap, BarChart3, X
 } from 'lucide-react';
 import Chart from 'chart.js/auto';
 
@@ -1107,7 +1107,7 @@ const EmployeeDetailModal = ({ employee, onClose, nowTime }) => {
                         // Parse time string HH:MM:SS into minutes since midnight
                         const parseTimeToMinutes = (timeStr) => {
                           if (!timeStr) return 0;
-                          const [h, m, s] = timeStr.split(':').map(Number);
+                          const [h, m] = timeStr.split(':').map(Number);
                           return (h || 0) * 60 + (m || 0);
                         };
                         

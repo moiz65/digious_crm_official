@@ -3,38 +3,29 @@ import HrSidebar from '../../components/HrSidebar';
 import { DashboardHeader } from '../../components/DashboardComponents';
 import { useAuth } from '../../context/AuthContext';
 import { endpoints } from '../../config/api';
-import { getPakistanTimeString, getPakistanDateString, getPakistanDate } from '../../utils/timezone';
+import { getPakistanDate } from '../../utils/timezone';
 import {
   CheckCircle,
   Clock,
   LogIn,
   LogOut,
-  Coffee,
   User,
-  Calendar,
   Activity,
   AlertCircle,
-  BarChart3,
   Timer,
-  PlayCircle,
-  StopCircle,
   PauseCircle,
   Utensils,
   Cigarette,
   Table,
-  LineChart,
   Shield
 } from 'lucide-react';
 import { 
   BarChart, 
   Bar, 
-  LineChart as ReLineChart, 
-  Line, 
   XAxis, 
   YAxis, 
   CartesianGrid, 
   Tooltip, 
-  Legend, 
   ResponsiveContainer,
   PieChart,
   Pie,

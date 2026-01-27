@@ -64,7 +64,7 @@ const attendanceRoutes = require('./routes/attendance');
 const rulesRoutes = require('./routes/rules');
 const activitiesRoutes = require('./routes/activities');
 
-app.use(`/api/${process.env.API_VERSION}`, onboardingRoutes);
+app.use(`/api/${process.env.API_VERSION}/onboarding`, onboardingRoutes);
 app.use(`/api/${process.env.API_VERSION}/auth`, authRoutes);
 app.use(`/api/${process.env.API_VERSION}/system-info`, userSystemInfoRoutes);
 app.use(`/api/${process.env.API_VERSION}/attendance`, attendanceRoutes);

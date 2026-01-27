@@ -2,9 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import HrSidebar from '../../components/HrSidebar';
-import { endpoints, config } from '../../config/api';
+import { config } from '../../config/api';
 import { 
-  Users, Search, Plus, Edit, Trash2, Eye, Download, Filter,
+  Users, Search, Plus, Edit, Trash2, Eye, Download,
   Mail, Phone, MapPin, Calendar, Briefcase, X, Loader
 } from 'lucide-react';
 import { generateTablePDF, exportToCSV } from '../../utils/pdfExport';
