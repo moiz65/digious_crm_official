@@ -4033,6 +4033,16 @@ export function HrAttendancePage() {
             attendanceDateStr = attendanceDate.toLocaleDateString('en-CA');
           }
           
+          // Calculate hours: use current_session_minutes if still checked in, otherwise use gross_working_time_minutes
+          let hoursValue = '0.0';
+          if (record.check_out_time) {
+            // Checked out - use finalized gross working time
+            hoursValue = record.gross_working_time_minutes ? (record.gross_working_time_minutes / 60).toFixed(1) : '0.0';
+          } else if (record.current_session_minutes !== undefined) {
+            // Still checked in - use real-time current session
+            hoursValue = (record.current_session_minutes / 60).toFixed(1);
+          }
+          
           return {
             id: record.id,
             employeeId: record.employee_id,
@@ -4042,7 +4052,7 @@ export function HrAttendancePage() {
             status: record.status?.toLowerCase() || 'absent',
             checkIn: record.check_in_time || '-',
             checkOut: record.check_out_time || '-',
-            hours: record.gross_working_time_minutes ? (record.gross_working_time_minutes / 60).toFixed(1) : '0.0',
+            hours: hoursValue,
             breaks: record.total_breaks_taken || 0,
             breakDuration: record.total_break_duration_minutes || 0,
             overtime: record.overtime_hours || '0.0',

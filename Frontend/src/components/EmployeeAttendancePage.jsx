@@ -1,3 +1,5 @@
+////////
+
 import { useState, useEffect } from 'react';
 import { endpoints } from '../config/api';
 import { getPakistanTimeString, getPakistanDate } from '../utils/timezone';
@@ -99,20 +101,27 @@ const parsePakistanTime = (dateStr, timeStr) => {
   
   try {
     // The database stores times as HH:MM:SS in Pakistan timezone (UTC+5)
-    // Example: check_in_time: "18:59:58" means 18:59:58 Pakistan time
+    // Example: check_in_time: "17:54:27" means 17:54:27 Pakistan time
     // 
-    // IMPORTANT: This must match getPakistanDate() logic for proper comparison
-    // getPakistanDate() returns: new Date(utcTime + 5*60*60*1000)
-    // So we need to create a Date that represents the Pakistan time in the same way
+    // To match getPakistanDate() comparison:
+    // - Database has: 17:54:27 PKT
+    // - We need UTC equivalent: subtract 5 hours = 12:54:27 UTC
+    // - Then when compared with getPakistanDate() (which adds 5 hours to UTC), they align
     
     const [hours, minutes, seconds] = timeStr.split(':').map(Number);
     const [year, month, day] = dateStr.split('-').map(Number);
     
-    // Create a UTC date for this Pakistan time by treating the Pakistan time values as UTC
-    // This matches how getPakistanDate() works - it adds offset to the timestamp
-    // For example: 18:59:58 PKT → create UTC date with 18:59:58 UTC
-    // Then when compared with getPakistanDate() which also treats PKT as UTC time, they align
-    const utcDate = new Date(Date.UTC(year, month - 1, day, hours, minutes, seconds));
+    // Create date with Pakistan time, then adjust to UTC
+    let utcHours = hours - 5;
+    let utcDay = day;
+    
+    // Handle day wraparound (midnight crossing)
+    if (utcHours < 0) {
+      utcHours += 24;
+      utcDay -= 1; // Previous day
+    }
+    
+    const utcDate = new Date(Date.UTC(year, month - 1, utcDay, utcHours, minutes, seconds));
     
     return utcDate;
   } catch (error) {
@@ -382,66 +391,37 @@ export const useAttendance = () => {
   };
 
   const updateWorkingTime = () => {
-    if (systemAttendance.checkedIn && systemAttendance.checkInTime) {
-      const now = new Date();
+    if (systemAttendance.checkedIn) {
+      // Simple approach: just increment the working time by 1 minute every second
+      // This avoids timezone calculation issues on the frontend
+      // The backend already calculated it correctly via current_session_minutes
       
-      // Ensure checkInTime is a Date object (in case it's a string from API)
-      let checkInDate = systemAttendance.checkInTime;
-      if (typeof checkInDate === 'string') {
-        checkInDate = new Date(checkInDate);
-      }
-      
-      // Validate that we have a valid Date
-      if (!(checkInDate instanceof Date) || isNaN(checkInDate)) {
-        console.error('❌ Invalid checkInTime format:', systemAttendance.checkInTime);
-        return;
-      }
-      
-      // Calculate elapsed time from check-in time to now (in minutes)
-      let elapsedMinutes = (now - checkInDate) / (1000 * 60);
-      
-      // ⚠️ SAFETY CHECK: Prevent negative durations (clock skew or timezone issues)
-      if (elapsedMinutes < 0) {
-        console.warn(`⚠️ NEGATIVE TIME DETECTED: checkInDate=${checkInDate.toLocaleString()}, now=${now.toLocaleString()}, elapsed=${elapsedMinutes.toFixed(2)}m`);
-        elapsedMinutes = 0; // Reset to 0 to prevent negative display
-      }
-      
-      // Debug logging for time calculation
-      console.log(`⏱️ TIME UPDATE: checkInDate=${checkInDate.toLocaleString()}, now=${now.toLocaleString()}, elapsedMinutes=${elapsedMinutes.toFixed(2)}`);
-      
-      // ⚠️ SAFETY CHECK: If session has been open for 24+ hours, alert
-      if (elapsedMinutes >= 24 * 60) {
-        const hoursElapsed = (elapsedMinutes / 60).toFixed(1);
-        console.warn(`⚠️ SESSION ALERT: Session open for ${hoursElapsed} hours. Should auto-checkout.`);
-      }
-      
-      // Update state every second (timer runs at 1000ms interval)
       setSystemAttendance(prev => {
-        console.log(`📊 STATE UPDATE: totalWorkingTime ${(prev.totalWorkingTime || 0).toFixed(2)} -> ${elapsedMinutes.toFixed(2)}`);
+        const newTime = (prev.totalWorkingTime || 0) + (1 / 60); // Add 1 second worth
+        
+        console.log(`⏱️ TIMER UPDATE: ${prev.totalWorkingTime?.toFixed(2)} -> ${newTime.toFixed(2)} minutes`);
+        
         return {
           ...prev,
-          totalWorkingTime: elapsedMinutes,
-          lastUpdate: now
+          totalWorkingTime: newTime,
+          lastUpdate: new Date()
         };
       });
 
       // Update hours in attendance data
-      const now2 = new Date();
-      const today = now2.toISOString().split('T')[0];
-      const hours = elapsedMinutes / 60;
-      
       setAttendanceData(prev => {
+        const today = new Date().toISOString().split('T')[0];
         const existingIndex = prev.findIndex(day => day.date === today);
         if (existingIndex >= 0) {
           const updated = [...prev];
-          const newHours = hours.toFixed(1);
+          const newHours = ((systemAttendance.totalWorkingTime || 0) / 60).toFixed(1);
           if (updated[existingIndex].hours !== newHours) {
             updated[existingIndex] = {
               ...updated[existingIndex],
               hours: newHours
             };
-            return updated;
           }
+          return updated;
         }
         return prev;
       });
@@ -716,30 +696,38 @@ export const useAttendance = () => {
             
             console.log('🔍 TIME PARSING DEBUG:');
             console.log('   API check_in_time:', attendanceRecord.check_in_time);
+            console.log('   API current_session_minutes:', attendanceRecord.current_session_minutes);
             console.log('   Parsed checkInTime (UTC):', checkInTime?.toUTCString());
             console.log('   Parsed checkInTime (local):', checkInTime?.toString());
             console.log('   isActiveSession:', isActiveSession);
             
-            if (isActiveSession && checkInTime) {
-              // Get current Pakistan time consistently
-              const now = getPakistanDate();
-              currentWorkingTime = (now - checkInTime) / (1000 * 60);
-              
-              console.log(`⏱️ WORKING TIME CALCULATION:`);
-              console.log(`   Check-in time (Date object): ${checkInTime.toISOString()}`);
-              console.log(`   Current time (getPakistanDate): ${now.toISOString()}`);
-              console.log(`   Difference in ms: ${now - checkInTime}`);
-              console.log(`   Elapsed: ${currentWorkingTime.toFixed(2)} minutes = ${(currentWorkingTime / 60).toFixed(2)} hours`);
+            if (isActiveSession) {
+              // Use current_session_minutes from backend (already calculated correctly)
+              if (attendanceRecord.current_session_minutes !== undefined) {
+                currentWorkingTime = attendanceRecord.current_session_minutes;
+                console.log(`⏱️ USING BACKEND current_session_minutes: ${currentWorkingTime} minutes`);
+              } else {
+                // Fallback: calculate from check-in time if backend value not available
+                const now = getPakistanDate();
+                currentWorkingTime = (now - checkInTime) / (1000 * 60);
+                console.log(`⏱️ FALLBACK CALCULATION: ${currentWorkingTime.toFixed(2)} minutes`);
+              }
             }
             
-            setSystemAttendance(prev => ({
-              ...prev,
-              checkedIn: isActiveSession,
-              checkInTime: checkInTime,
-              checkOutTime: checkOutTime,
-              totalWorkingTime: currentWorkingTime,
-              status: attendanceRecord.status?.toLowerCase() || 'present'
-            }));
+            setSystemAttendance(prev => {
+              // Only reset totalWorkingTime on initial check-in or checkout
+              // If already checked in, preserve the local timer that increments smoothly
+              const shouldUpdateTimer = !prev.checkedIn || !isActiveSession;
+              
+              return {
+                ...prev,
+                checkedIn: isActiveSession,
+                checkInTime: checkInTime,
+                checkOutTime: checkOutTime,
+                totalWorkingTime: shouldUpdateTimer ? currentWorkingTime : prev.totalWorkingTime,
+                status: attendanceRecord.status?.toLowerCase() || 'present'
+              };
+            });
             
             // IMPORTANT: Also update attendanceData immediately with today's record
             // This ensures getCheckInStatus() uses the latest data from database
@@ -752,13 +740,24 @@ export const useAttendance = () => {
             
             setAttendanceData(prev => {
               const existingIndex = prev.findIndex(r => r.date === todayStr);
+              
+              // Calculate hours: use current_session_minutes if still checked in, otherwise use net_working_time_minutes
+              let hoursValue = '0.0';
+              if (attendanceRecord.check_out_time) {
+                // Checked out - use finalized working time
+                hoursValue = attendanceRecord.net_working_time_minutes ? (attendanceRecord.net_working_time_minutes / 60).toFixed(1) : '0.0';
+              } else if (attendanceRecord.current_session_minutes !== undefined) {
+                // Still checked in - use real-time current session
+                hoursValue = (attendanceRecord.current_session_minutes / 60).toFixed(1);
+              }
+              
               const updatedRecord = {
                 date: todayStr,
                 day: new Date(todayStr).getDate(),
                 status: attendanceRecord.status?.toLowerCase() || 'present',
                 checkIn: attendanceRecord.check_in_time || '-',
                 checkOut: attendanceRecord.check_out_time || '-',
-                hours: attendanceRecord.net_working_time_minutes ? (attendanceRecord.net_working_time_minutes / 60).toFixed(1) : '0.0',
+                hours: hoursValue,
                 check_out_time: attendanceRecord.check_out_time || null,
                 check_in_time: attendanceRecord.check_in_time || null
               };
@@ -991,6 +990,17 @@ const AttendanceSheet = ({ attendanceData, onExport, onFilter }) => {
           const formattedData = data.data.map(record => {
             const statusLower = record.status ? record.status.toLowerCase() : 'absent';
             const { status: _, ...rest } = record; // Exclude the original status field
+            
+            // Calculate hours: use current_session_minutes if still checked in, otherwise use net_working_time_minutes
+            let hoursValue = '0.0';
+            if (record.check_out_time) {
+              // Checked out - use finalized working time
+              hoursValue = record.net_working_time_minutes ? (record.net_working_time_minutes / 60).toFixed(1) : '0.0';
+            } else if (record.current_session_minutes !== undefined) {
+              // Still checked in - use real-time current session
+              hoursValue = (record.current_session_minutes / 60).toFixed(1);
+            }
+            
             return {
               date: record.attendance_date,
               day: new Date(record.attendance_date).getDate(),
@@ -1001,7 +1011,7 @@ const AttendanceSheet = ({ attendanceData, onExport, onFilter }) => {
               checkOut: record.check_out_time
                 ? formatPakistanTimeString(record.check_out_time)
                 : '-',
-              hours: record.net_working_time_minutes ? (record.net_working_time_minutes / 60).toFixed(1) : '0.0',
+              hours: hoursValue,
               overtimeHours: record.overtime_hours ? parseFloat(record.overtime_hours).toFixed(2) : '0.0',
               grossHours: record.gross_working_time_minutes ? (record.gross_working_time_minutes / 60).toFixed(1) : '0.0',
               lateByMinutes: record.late_by_minutes || 0,
@@ -2973,18 +2983,44 @@ export function EmployeeAttendancePage() {
                 </div>
 
                 {systemAttendance.checkedIn && (
-                  <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-700">Current Session:</span>
-                      <span className="text-xl font-bold text-blue-600">
-                        {formatDuration(systemAttendance.totalWorkingTime)}
+                  <div className="mt-4 p-6 bg-gradient-to-br from-blue-50 via-blue-50 to-cyan-50 rounded-lg border-2 border-blue-300 shadow-md">
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="text-sm font-semibold text-gray-700 uppercase tracking-wide">⏱️ Session Timer</span>
+                      <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-full">
+                        {systemAttendance.isOnBreak ? '🔸 ON BREAK' : '🟢 WORKING'}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2 mt-2 text-xs text-gray-600">
+                    
+                    <div className="text-center mb-4">
+                      <div className="text-5xl font-black text-blue-600 font-mono tracking-tighter">
+                        {(() => {
+                          const totalMinutes = Math.floor(systemAttendance.totalWorkingTime || 0);
+                          const hours = Math.floor(totalMinutes / 60);
+                          const minutes = totalMinutes % 60;
+                          const seconds = Math.floor(((systemAttendance.totalWorkingTime || 0) % 1) * 60);
+                          return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                        })()}
+                      </div>
+                      <p className="text-xs text-gray-500 mt-2">hours : minutes : seconds</p>
+                    </div>
+                    
+                    <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden mb-3">
+                      <div 
+                        className="bg-gradient-to-r from-blue-500 to-cyan-500 h-full transition-all duration-300"
+                        style={{ width: `${Math.min(((systemAttendance.totalWorkingTime || 0) / 540) * 100, 100)}%` }}
+                      />
+                    </div>
+                    
+                    <div className="flex items-center justify-between text-xs text-gray-600 px-1">
+                      <span>Session started at {systemAttendance.checkInTime?.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) || 'N/A'}</span>
+                      <span className="text-blue-600 font-semibold">{Math.min(Math.round(((systemAttendance.totalWorkingTime || 0) / 540) * 100), 100)}% of daily target</span>
+                    </div>
+                    
+                    <div className="flex items-center gap-2 mt-3 text-xs text-gray-600 bg-white bg-opacity-50 p-2 rounded">
                       {systemAttendance.isOnBreak ? (
-                        <><Clock className="h-3 w-3" /> Break in progress</>
+                        <><Clock className="h-3 w-3 text-amber-600" /> <span className="text-amber-700 font-semibold">Break in progress</span></>
                       ) : (
-                        <><Activity className="h-3 w-3" /> Working...</>
+                        <><Activity className="h-3 w-3 text-green-600 animate-pulse" /> <span className="text-green-700 font-semibold">Working...</span></>
                       )}
                     </div>
                   </div>
