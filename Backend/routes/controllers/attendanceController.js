@@ -5,12 +5,13 @@ const { getPakistanDate, getPakistanDateString, getPakistanTimeString, getPakist
 
 // ============================================================
 // HELPER FUNCTION: Get local date string (YYYY-MM-DD) from Date object
-// Using Pakistan timezone
+// Using Pakistan timezone (UTC+5)
 // ============================================================
 const getLocalDateString = (date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
+  // Use UTC methods because getPakistanDate() returns a date with UTC offset
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(date.getUTCDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 };
 
@@ -150,7 +151,11 @@ exports.checkIn = async (req, res) => {
     const now = getPakistanDate(); // Use Pakistan timezone
     const checkInTime = getPakistanTimeString(); // HH:MM:SS in Pakistan timezone (for display)
     const checkInTimePKT = getPakistanTimeString(); // HH:MM:SS in Pakistan timezone (for database storage - should be Pakistan time, not UTC)
-    const checkInHour = now.getHours(); // Pakistan hour
+    
+    // Calculate checkInTotalMinutes early (needed for auto-checkout logic)
+    const [checkInHourVal, checkInMin, checkInSec] = checkInTime.split(':').map(Number);
+    const checkInHour = checkInHourVal; // Use the parsed hour value from the time string (not from Date.getHours())
+    const checkInTotalMinutes = checkInHourVal * 60 + checkInMin;
     
     // Determine attendance date for night shift:
     // Night shift: 21:00 (9 PM) to 06:00 (6 AM) next day
@@ -274,9 +279,7 @@ exports.checkIn = async (req, res) => {
         }
       }
 
-    const [checkInHourVal, checkInMin, checkInSec] = checkInTime.split(':').map(Number);
-    const checkInTotalMinutes = checkInHourVal * 60 + checkInMin;
-      
+    // Status and timing calculations already have checkInTotalMinutes available from above
       // Time boundaries:
       // - Shift Start: 21:00 (1260 minutes) - Evening check-in
       // - Late After: 21:15 (1275 minutes) - Grace period ends, marked as Late if AFTER 21:15
@@ -1686,6 +1689,45 @@ exports.getTodayAttendance = async (req, res) => {
       // Determine if user is currently checked in (check_out_time is null)
       const isCheckedIn = record.check_out_time === null;
 
+      // Calculate current session duration for active sessions
+      let currentSessionMinutes = 0;
+      if (isCheckedIn && record.check_in_time) {
+        try {
+          // Parse check-in time (HH:MM:SS format) - this is already in Pakistan time
+          const [checkInHour, checkInMin, checkInSec] = record.check_in_time.split(':').map(Number);
+          const checkInTotalMinutes = checkInHour * 60 + checkInMin;
+          
+          // Get CURRENT TIME STRING in Pakistan timezone
+          const currentTimeString = getPakistanTimeString(); // Returns HH:MM:SS in Pakistan time
+          const [currentHour, currentMin, currentSec] = currentTimeString.split(':').map(Number);
+          const currentTotalMinutes = currentHour * 60 + currentMin;
+          
+          // Calculate elapsed time
+          // Night shift logic: if check-in was in evening (21:00-23:59) and current time is early morning (0:00-6:00), 
+          // then we've crossed midnight
+          const checkInIsNight = checkInHour >= 21 && checkInHour <= 23;
+          const currentIsEarlyMorning = currentHour >= 0 && currentHour < 6;
+          
+          if (checkInIsNight && currentIsEarlyMorning) {
+            // Night shift spanning midnight (checked in 21:00+, now in 00:00-06:00)
+            const minutesUntilMidnight = (24 * 60) - checkInTotalMinutes;
+            const minutesAfterMidnight = currentTotalMinutes;
+            currentSessionMinutes = minutesUntilMidnight + minutesAfterMidnight;
+          } else {
+            // Same period (either both evening or both early morning) - simple subtraction
+            currentSessionMinutes = Math.abs(currentTotalMinutes - checkInTotalMinutes);
+          }
+          
+          // Subtract break time from current session
+          const totalBreakMinutes = breaks.reduce((sum, brk) => sum + (brk.break_duration_minutes || 0), 0);
+          currentSessionMinutes = Math.max(0, currentSessionMinutes - totalBreakMinutes);
+          
+          console.log(`⏱️ Current session calculation: check-in=${record.check_in_time} (night=${checkInIsNight}), now=${currentHour}:${String(currentMin).padStart(2, '0')} (early=${currentIsEarlyMorning}), elapsed=${currentSessionMinutes}m, breaks=${totalBreakMinutes}m`);
+        } catch (err) {
+          console.error('Error calculating current session:', err);
+        }
+      }
+
       // Convert UTC times stored in database to Pakistan times for display
       const displayRecord = {
         ...record,
@@ -1697,7 +1739,8 @@ exports.getTodayAttendance = async (req, res) => {
           break_start_time: breakRecord.break_start_time,
           break_end_time: breakRecord.break_end_time || null
         })),
-        isCheckedIn: isCheckedIn
+        isCheckedIn: isCheckedIn,
+        current_session_minutes: currentSessionMinutes
       };
 
       res.status(200).json({

@@ -111,7 +111,7 @@ const formatPakistanDate = (date) => {
 const getPakistanYesterday = () => {
   const today = getPakistanDate();
   const yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
+  yesterday.setUTCDate(yesterday.getUTCDate() - 1);
   return yesterday;
 };
 
@@ -121,9 +121,9 @@ const getPakistanYesterday = () => {
  */
 const getPakistanYesterdayString = () => {
   const yesterday = getPakistanYesterday();
-  const year = yesterday.getFullYear();
-  const month = String(yesterday.getMonth() + 1).padStart(2, '0');
-  const day = String(yesterday.getDate()).padStart(2, '0');
+  const year = yesterday.getUTCFullYear();
+  const month = String(yesterday.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(yesterday.getUTCDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 };
 
