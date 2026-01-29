@@ -1,30 +1,75 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  User, Mail, Phone, Calendar, MapPin, Briefcase, 
-  Shield, Lock, Settings, Download, Edit, X, 
-  Upload, Camera, Building, Globe, CheckCircle,
-  FileText, Eye, Share2, Printer, Bell, Clock,
-  CreditCard, UserCheck, BarChart3, Target, Zap,
-  MoreVertical, ExternalLink, Copy, RefreshCw,
-  Trash2, Folder, File, BookOpen, Newspaper,
-  Clipboard, CalendarDays, Watch, Thermometer,
-  Wind, Cloud, Umbrella, Plus, Tag, XCircle,
-  Save, AlertCircle, Pencil, PlusCircle, MinusCircle,
-  Check, ChevronDown, ChevronRight, Star
-} from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import {
+  User,
+  Mail,
+  Phone,
+  Calendar,
+  MapPin,
+  Briefcase,
+  Shield,
+  Lock,
+  Settings,
+  Download,
+  Edit,
+  X,
+  Upload,
+  Camera,
+  Building,
+  Globe,
+  CheckCircle,
+  FileText,
+  Eye,
+  Share2,
+  Printer,
+  Bell,
+  Clock,
+  CreditCard,
+  UserCheck,
+  BarChart3,
+  Target,
+  Zap,
+  MoreVertical,
+  ExternalLink,
+  Copy,
+  RefreshCw,
+  Trash2,
+  Folder,
+  File,
+  BookOpen,
+  Newspaper,
+  Clipboard,
+  CalendarDays,
+  Watch,
+  Thermometer,
+  Wind,
+  Cloud,
+  Umbrella,
+  Plus,
+  Tag,
+  XCircle,
+  Save,
+  AlertCircle,
+  Pencil,
+  PlusCircle,
+  MinusCircle,
+  Check,
+  ChevronDown,
+  ChevronRight,
+  Star,
+} from "lucide-react";
 
 const EmployeePersonalProfile = ({ employeeId, onBack }) => {
   const [employee, setEmployee] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState("overview");
   const [isEditing, setIsEditing] = useState(false);
   const [showDocumentModal, setShowDocumentModal] = useState(false);
   const [showPreferencesModal, setShowPreferencesModal] = useState(false);
   const [editingSkills, setEditingSkills] = useState(false);
-  const [newSkill, setNewSkill] = useState('');
-  const [skillType, setSkillType] = useState('technical');
+  const [newSkill, setNewSkill] = useState("");
+  const [skillType, setSkillType] = useState("technical");
   const [isSaving, setIsSaving] = useState(false);
-  
+
   // Sample employee data
   const sampleEmployee = {
     id: employeeId || 1,
@@ -40,7 +85,7 @@ const EmployeePersonalProfile = ({ employeeId, onBack }) => {
       maritalStatus: "Married",
       nationality: "American",
       bloodGroup: "O+",
-      profileImage: null
+      profileImage: null,
     },
     professionalInfo: {
       role: "HR Manager",
@@ -54,7 +99,7 @@ const EmployeePersonalProfile = ({ employeeId, onBack }) => {
       employeeLevel: "Senior Manager",
       officeLocation: "New York Headquarters",
       workSchedule: "9:00 AM - 6:00 PM",
-      workMode: "Hybrid (3 days office)"
+      workMode: "Hybrid (3 days office)",
     },
     personalDetails: {
       address: "123 Park Avenue, New York, NY 10022",
@@ -62,7 +107,7 @@ const EmployeePersonalProfile = ({ employeeId, onBack }) => {
       personalEmail: "anthony.lewis@personal.com",
       linkedin: "linkedin.com/in/anthonylewis",
       github: "github.com/anthonylewis",
-      portfolio: "anthonylewis.design"
+      portfolio: "anthonylewis.design",
     },
     certifications: [
       {
@@ -71,7 +116,7 @@ const EmployeePersonalProfile = ({ employeeId, onBack }) => {
         issuer: "HR Certification Institute",
         issueDate: "2015-06-15",
         expiryDate: "2025-06-15",
-        credentialId: "PHR-12345"
+        credentialId: "PHR-12345",
       },
       {
         id: 2,
@@ -79,12 +124,22 @@ const EmployeePersonalProfile = ({ employeeId, onBack }) => {
         issuer: "Society for HR Management",
         issueDate: "2016-03-20",
         expiryDate: "2026-03-20",
-        credentialId: "SHRM-CP-67890"
-      }
+        credentialId: "SHRM-CP-67890",
+      },
     ],
     skills: {
-      technical: ["HR Analytics", "Recruitment Software", "Payroll Systems", "Performance Management Tools"],
-      soft: ["Leadership", "Communication", "Conflict Resolution", "Strategic Planning"],
+      technical: [
+        "HR Analytics",
+        "Recruitment Software",
+        "Payroll Systems",
+        "Performance Management Tools",
+      ],
+      soft: [
+        "Leadership",
+        "Communication",
+        "Conflict Resolution",
+        "Strategic Planning",
+      ],
     },
     workHistory: [
       {
@@ -95,8 +150,8 @@ const EmployeePersonalProfile = ({ employeeId, onBack }) => {
         duration: "4 years",
         achievements: [
           "Reduced employee turnover by 30%",
-          "Implemented new performance review system"
-        ]
+          "Implemented new performance review system",
+        ],
       },
       {
         id: 2,
@@ -106,9 +161,9 @@ const EmployeePersonalProfile = ({ employeeId, onBack }) => {
         duration: "4 years",
         achievements: [
           "Managed recruitment for 200+ positions",
-          "Developed training programs"
-        ]
-      }
+          "Developed training programs",
+        ],
+      },
     ],
     achievements: [
       {
@@ -116,36 +171,37 @@ const EmployeePersonalProfile = ({ employeeId, onBack }) => {
         title: "Employee of the Year",
         issuer: "Current Company",
         date: "2023-12-15",
-        description: "Recognized for outstanding contributions to HR initiatives"
+        description:
+          "Recognized for outstanding contributions to HR initiatives",
       },
       {
         id: 2,
         title: "Best Team Leadership Award",
         issuer: "HR Association",
         date: "2022-11-10",
-        description: "Awarded for exceptional team management"
-      }
+        description: "Awarded for exceptional team management",
+      },
     ],
-    preferences: {
-      communication: {
-        preferredMethod: "Email",
-        notificationFrequency: "Daily",
-        newsletter: true,
-        marketingEmails: false
-      },
-      privacy: {
-        profileVisibility: "Company Only",
-        contactVisibility: "HR Department Only",
-        showBirthday: true,
-        showAnniversary: true
-      },
-      accessibility: {
-        theme: "Light",
-        fontSize: "Medium",
-        language: "English",
-        reducedMotion: false
-      }
-    },
+    // preferences: {
+    //   communication: {
+    //     preferredMethod: "Email",
+    //     notificationFrequency: "Daily",
+    //     newsletter: true,
+    //     marketingEmails: false,
+    //   },
+    //   privacy: {
+    //     profileVisibility: "Company Only",
+    //     contactVisibility: "HR Department Only",
+    //     showBirthday: true,
+    //     showAnniversary: true,
+    //   },
+    //   accessibility: {
+    //     theme: "Light",
+    //     fontSize: "Medium",
+    //     language: "English",
+    //     reducedMotion: false,
+    //   },
+    // },
     documents: [
       {
         id: 1,
@@ -154,7 +210,7 @@ const EmployeePersonalProfile = ({ employeeId, onBack }) => {
         uploadDate: "2023-01-10",
         expiryDate: "2026-01-10",
         status: "Valid",
-        size: "2.5 MB"
+        size: "2.5 MB",
       },
       {
         id: 2,
@@ -163,7 +219,7 @@ const EmployeePersonalProfile = ({ employeeId, onBack }) => {
         uploadDate: "2023-01-12",
         expiryDate: "2033-05-15",
         status: "Valid",
-        size: "1.2 MB"
+        size: "1.2 MB",
       },
       {
         id: 3,
@@ -172,8 +228,8 @@ const EmployeePersonalProfile = ({ employeeId, onBack }) => {
         uploadDate: "2023-01-12",
         expiryDate: null,
         status: "Verified",
-        size: "5.7 MB"
-      }
+        size: "5.7 MB",
+      },
     ],
     leaveBalance: {
       annual: 20,
@@ -181,7 +237,7 @@ const EmployeePersonalProfile = ({ employeeId, onBack }) => {
       remaining: 8,
       sick: 10,
       maternity: 0,
-      paternity: 0
+      paternity: 0,
     },
     performance: {
       currentRating: 4.7,
@@ -189,7 +245,7 @@ const EmployeePersonalProfile = ({ employeeId, onBack }) => {
       nextReview: "2024-06-01",
       achievements: 15,
       goals: 8,
-      completedGoals: 6
+      completedGoals: 6,
     },
     healthInfo: {
       bloodGroup: "O+",
@@ -199,7 +255,7 @@ const EmployeePersonalProfile = ({ employeeId, onBack }) => {
       insuranceProvider: "Blue Cross",
       policyNumber: "BC-123456789",
       lastCheckup: "2023-11-15",
-      nextCheckup: "2024-05-15"
+      nextCheckup: "2024-05-15",
     },
     financialInfo: {
       bankName: "Chase Bank",
@@ -207,8 +263,8 @@ const EmployeePersonalProfile = ({ employeeId, onBack }) => {
       routingNumber: "021000021",
       taxId: "123-45-6789",
       salaryAccount: true,
-      investmentAccounts: ["401k", "Stock Portfolio"]
-    }
+      investmentAccounts: ["401k", "Stock Portfolio"],
+    },
   };
 
   useEffect(() => {
@@ -222,42 +278,47 @@ const EmployeePersonalProfile = ({ employeeId, onBack }) => {
   // Skills Management Functions
   const handleAddSkill = () => {
     if (!newSkill.trim()) return;
-    
-    setEmployee(prev => {
+
+    setEmployee((prev) => {
       const updatedSkills = { ...prev.skills };
       if (!updatedSkills[skillType].includes(newSkill.trim())) {
-        updatedSkills[skillType] = [...updatedSkills[skillType], newSkill.trim()];
+        updatedSkills[skillType] = [
+          ...updatedSkills[skillType],
+          newSkill.trim(),
+        ];
       }
       return { ...prev, skills: updatedSkills };
     });
-    
-    setNewSkill('');
+
+    setNewSkill("");
   };
 
   const handleRemoveSkill = (type, skillToRemove) => {
-    setEmployee(prev => {
+    setEmployee((prev) => {
       const updatedSkills = { ...prev.skills };
-      updatedSkills[type] = updatedSkills[type].filter(skill => skill !== skillToRemove);
+      updatedSkills[type] = updatedSkills[type].filter(
+        (skill) => skill !== skillToRemove,
+      );
       return { ...prev, skills: updatedSkills };
     });
   };
 
   const handleSaveSkills = async () => {
     setIsSaving(true);
-    
+
     // Simulate API call
     setTimeout(() => {
-      console.log('Skills saved:', employee.skills);
+      console.log("Skills saved:", employee.skills);
       setEditingSkills(false);
       setIsSaving(false);
-      
+
       // Show success message
-      alert('Skills updated successfully!');
+      alert("Skills updated successfully!");
     }, 1000);
   };
 
   const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       e.preventDefault();
       handleAddSkill();
     }
@@ -276,12 +337,15 @@ const EmployeePersonalProfile = ({ employeeId, onBack }) => {
 
   if (!employee) {
     return (
-        
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-gray-100 flex items-center justify-center">
         <div className="text-center">
           <User className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Employee not found</h3>
-          <p className="text-gray-600 mb-6">The requested employee profile could not be loaded.</p>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            Employee not found
+          </h3>
+          <p className="text-gray-600 mb-6">
+            The requested employee profile could not be loaded.
+          </p>
           {onBack && (
             <button
               onClick={onBack}
@@ -296,22 +360,22 @@ const EmployeePersonalProfile = ({ employeeId, onBack }) => {
   }
 
   const tabs = [
-    { id: 'overview', label: 'Overview', icon: User },
-    { id: 'professional', label: 'Professional', icon: Briefcase },
-    { id: 'personal', label: 'Personal', icon: User },
-    { id: 'documents', label: 'Documents', icon: FileText },
-    { id: 'preferences', label: 'Preferences', icon: Settings }
+    { id: "overview", label: "Overview", icon: User },
+    { id: "professional", label: "Professional", icon: Briefcase },
+    { id: "personal", label: "Personal", icon: User },
+    { id: "documents", label: "Documents", icon: FileText },
+    // { id: "preferences", label: "Preferences", icon: Settings },
   ];
 
   const handleSaveProfile = (updatedData) => {
-    setEmployee(prev => ({ ...prev, ...updatedData }));
+    setEmployee((prev) => ({ ...prev, ...updatedData }));
     setIsEditing(false);
     // In real app, send to API
   };
 
   const handleUploadDocument = (document) => {
     // Handle document upload
-    console.log('Upload document:', document);
+    console.log("Upload document:", document);
   };
 
   return (
@@ -334,8 +398,12 @@ const EmployeePersonalProfile = ({ employeeId, onBack }) => {
                 ← Back to Employees
               </button>
             )}
-            <h1 className="text-4xl font-extrabold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">Employee Personal Profile</h1>
-            <p className="text-gray-600">Complete personal and professional information</p>
+            <h1 className="text-4xl font-extrabold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+              Employee Personal Profile
+            </h1>
+            <p className="text-gray-600">
+              Complete personal and professional information
+            </p>
           </div>
           <div className="flex items-center gap-3">
             <button className="p-3 hover:bg-blue-50 rounded-xl transition-colors border border-gray-200 hover:border-blue-300">
@@ -361,14 +429,17 @@ const EmployeePersonalProfile = ({ employeeId, onBack }) => {
                 <div className="w-full h-full rounded-full border-4 border-blue-200 overflow-hidden shadow-lg">
                   <div className="w-full h-full bg-gradient-to-br from-blue-200 to-purple-200 flex items-center justify-center">
                     {employee.basicInfo.profileImage ? (
-                      <img 
-                        src={employee.basicInfo.profileImage} 
+                      <img
+                        src={employee.basicInfo.profileImage}
                         alt={employee.basicInfo.name}
                         className="w-full h-full object-cover"
                       />
                     ) : (
                       <span className="text-blue-900 text-5xl font-extrabold">
-                        {employee.basicInfo.name.split(' ').map(n => n[0]).join('')}
+                        {employee.basicInfo.name
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")}
                       </span>
                     )}
                   </div>
@@ -377,11 +448,17 @@ const EmployeePersonalProfile = ({ employeeId, onBack }) => {
                   <Camera className="h-4 w-4" />
                 </button>
               </div>
-              
-              <h2 className="text-2xl font-extrabold text-gray-900 mb-1">{employee.basicInfo.name}</h2>
-              <p className="text-gray-600 font-medium mb-3">{employee.professionalInfo.role}</p>
+
+              <h2 className="text-2xl font-extrabold text-gray-900 mb-1">
+                {employee.basicInfo.name}
+              </h2>
+              <p className="text-gray-600 font-medium mb-3">
+                {employee.professionalInfo.role}
+              </p>
               <div className="mt-3">
-                <span className={`px-4 py-1.5 text-sm font-semibold rounded-full shadow-sm ${employee.professionalInfo.employmentStatus === 'Active' ? 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border-2 border-green-200' : 'bg-gradient-to-r from-red-100 to-rose-100 text-red-800 border-2 border-red-200'}`}>
+                <span
+                  className={`px-4 py-1.5 text-sm font-semibold rounded-full shadow-sm ${employee.professionalInfo.employmentStatus === "Active" ? "bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border-2 border-green-200" : "bg-gradient-to-r from-red-100 to-rose-100 text-red-800 border-2 border-red-200"}`}
+                >
                   {employee.professionalInfo.employmentStatus}
                 </span>
               </div>
@@ -393,8 +470,12 @@ const EmployeePersonalProfile = ({ employeeId, onBack }) => {
                   <Mail className="h-5 w-5 text-white" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs text-gray-500 font-medium">Work Email</p>
-                  <p className="font-semibold text-gray-900 truncate">{employee.basicInfo.email}</p>
+                  <p className="text-xs text-gray-500 font-medium">
+                    Work Email
+                  </p>
+                  <p className="font-semibold text-gray-900 truncate">
+                    {employee.basicInfo.email}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200 hover:shadow-md transition-all">
@@ -402,8 +483,12 @@ const EmployeePersonalProfile = ({ employeeId, onBack }) => {
                   <Phone className="h-5 w-5 text-white" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-xs text-gray-500 font-medium">Work Phone</p>
-                  <p className="font-semibold text-gray-900">{employee.basicInfo.phone}</p>
+                  <p className="text-xs text-gray-500 font-medium">
+                    Work Phone
+                  </p>
+                  <p className="font-semibold text-gray-900">
+                    {employee.basicInfo.phone}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border border-purple-200 hover:shadow-md transition-all">
@@ -411,8 +496,12 @@ const EmployeePersonalProfile = ({ employeeId, onBack }) => {
                   <Briefcase className="h-5 w-5 text-white" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-xs text-gray-500 font-medium">Employee ID</p>
-                  <p className="font-semibold text-gray-900">{employee.basicInfo.employeeId}</p>
+                  <p className="text-xs text-gray-500 font-medium">
+                    Employee ID
+                  </p>
+                  <p className="font-semibold text-gray-900">
+                    {employee.basicInfo.employeeId}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl border border-orange-200 hover:shadow-md transition-all">
@@ -420,31 +509,53 @@ const EmployeePersonalProfile = ({ employeeId, onBack }) => {
                   <Building className="h-5 w-5 text-white" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-xs text-gray-500 font-medium">Department</p>
-                  <p className="font-semibold text-gray-900">{employee.professionalInfo.department}</p>
+                  <p className="text-xs text-gray-500 font-medium">
+                    Department
+                  </p>
+                  <p className="font-semibold text-gray-900">
+                    {employee.professionalInfo.department}
+                  </p>
                 </div>
               </div>
             </div>
 
             {/* Quick Stats */}
             <div className="mt-8 pt-6 border-t-2 border-gray-200">
-              <h4 className="font-bold text-gray-900 mb-5 text-lg">Quick Stats</h4>
+              <h4 className="font-bold text-gray-900 mb-5 text-lg">
+                Quick Stats
+              </h4>
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-gradient-to-br from-blue-100 to-cyan-100 p-4 rounded-xl border-2 border-blue-200 hover:shadow-lg transition-all group">
-                  <p className="text-xs text-blue-700 font-semibold mb-1">Performance</p>
-                  <p className="text-2xl font-extrabold text-blue-900 group-hover:scale-110 transition-transform">{employee.performance.currentRating}/5.0</p>
+                  <p className="text-xs text-blue-700 font-semibold mb-1">
+                    Performance
+                  </p>
+                  <p className="text-2xl font-extrabold text-blue-900 group-hover:scale-110 transition-transform">
+                    {employee.performance.currentRating}/5.0
+                  </p>
                 </div>
                 <div className="bg-gradient-to-br from-green-100 to-emerald-100 p-4 rounded-xl border-2 border-green-200 hover:shadow-lg transition-all group">
-                  <p className="text-xs text-green-700 font-semibold mb-1">Leave Balance</p>
-                  <p className="text-2xl font-extrabold text-green-900 group-hover:scale-110 transition-transform">{employee.leaveBalance.remaining} days</p>
+                  <p className="text-xs text-green-700 font-semibold mb-1">
+                    Leave Balance
+                  </p>
+                  <p className="text-2xl font-extrabold text-green-900 group-hover:scale-110 transition-transform">
+                    {employee.leaveBalance.remaining} days
+                  </p>
                 </div>
                 <div className="bg-gradient-to-br from-purple-100 to-violet-100 p-4 rounded-xl border-2 border-purple-200 hover:shadow-lg transition-all group">
-                  <p className="text-xs text-purple-700 font-semibold mb-1">Experience</p>
-                  <p className="text-2xl font-extrabold text-purple-900 group-hover:scale-110 transition-transform">{employee.professionalInfo.workExperience}</p>
+                  <p className="text-xs text-purple-700 font-semibold mb-1">
+                    Experience
+                  </p>
+                  <p className="text-2xl font-extrabold text-purple-900 group-hover:scale-110 transition-transform">
+                    {employee.professionalInfo.workExperience}
+                  </p>
                 </div>
                 <div className="bg-gradient-to-br from-orange-100 to-amber-100 p-4 rounded-xl border-2 border-orange-200 hover:shadow-lg transition-all group">
-                  <p className="text-xs text-orange-700 font-semibold mb-1">Certifications</p>
-                  <p className="text-2xl font-extrabold text-orange-900 group-hover:scale-110 transition-transform">{employee.certifications.length}</p>
+                  <p className="text-xs text-orange-700 font-semibold mb-1">
+                    Certifications
+                  </p>
+                  <p className="text-2xl font-extrabold text-orange-900 group-hover:scale-110 transition-transform">
+                    {employee.certifications.length}
+                  </p>
                 </div>
               </div>
             </div>
@@ -457,16 +568,16 @@ const EmployeePersonalProfile = ({ employeeId, onBack }) => {
           <div className="bg-white rounded-3xl border-2 border-gray-200 shadow-xl mb-6 overflow-hidden hover:shadow-2xl transition-all">
             <div className="border-b-2 border-gray-200 bg-gradient-to-r from-gray-50 to-blue-50">
               <nav className="flex overflow-x-auto">
-                {tabs.map(tab => {
+                {tabs.map((tab) => {
                   const Icon = tab.icon;
                   return (
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
                       className={`flex items-center gap-2 px-6 py-4 text-sm font-semibold whitespace-nowrap transition-all ${
-                        activeTab === tab.id 
-                          ? 'text-blue-600 bg-white border-b-4 border-blue-600 shadow-sm' 
-                          : 'text-gray-500 hover:text-gray-900 hover:bg-white/50'
+                        activeTab === tab.id
+                          ? "text-blue-600 bg-white border-b-4 border-blue-600 shadow-sm"
+                          : "text-gray-500 hover:text-gray-900 hover:bg-white/50"
                       }`}
                     >
                       <Icon className="h-4 w-4" />
@@ -479,24 +590,32 @@ const EmployeePersonalProfile = ({ employeeId, onBack }) => {
 
             {/* Tab Content */}
             <div className="p-6">
-              {activeTab === 'overview' && <OverviewTab 
-                employee={employee} 
-                editingSkills={editingSkills}
-                setEditingSkills={setEditingSkills}
-                newSkill={newSkill}
-                setNewSkill={setNewSkill}
-                skillType={skillType}
-                setSkillType={setSkillType}
-                handleAddSkill={handleAddSkill}
-                handleRemoveSkill={handleRemoveSkill}
-                handleSaveSkills={handleSaveSkills}
-                isSaving={isSaving}
-                handleKeyPress={handleKeyPress}
-              />}
-              {activeTab === 'professional' && <ProfessionalTab employee={employee} />}
-              {activeTab === 'personal' && <PersonalTab employee={employee} />}
-              {activeTab === 'documents' && <DocumentsTab employee={employee} />}
-              {activeTab === 'preferences' && <PreferencesTab employee={employee} />}
+              {activeTab === "overview" && (
+                <OverviewTab
+                  employee={employee}
+                  editingSkills={editingSkills}
+                  setEditingSkills={setEditingSkills}
+                  newSkill={newSkill}
+                  setNewSkill={setNewSkill}
+                  skillType={skillType}
+                  setSkillType={setSkillType}
+                  handleAddSkill={handleAddSkill}
+                  handleRemoveSkill={handleRemoveSkill}
+                  handleSaveSkills={handleSaveSkills}
+                  isSaving={isSaving}
+                  handleKeyPress={handleKeyPress}
+                />
+              )}
+              {activeTab === "professional" && (
+                <ProfessionalTab employee={employee} />
+              )}
+              {activeTab === "personal" && <PersonalTab employee={employee} />}
+              {activeTab === "documents" && (
+                <DocumentsTab employee={employee} />
+              )}
+              {/* {activeTab === "preferences" && (
+                <PreferencesTab employee={employee} />
+              )} */}
             </div>
           </div>
         </div>
@@ -522,9 +641,9 @@ const EmployeePersonalProfile = ({ employeeId, onBack }) => {
 };
 
 // Tab Components
-const OverviewTab = ({ 
-  employee, 
-  editingSkills, 
+const OverviewTab = ({
+  employee,
+  editingSkills,
   setEditingSkills,
   newSkill,
   setNewSkill,
@@ -534,15 +653,19 @@ const OverviewTab = ({
   handleRemoveSkill,
   handleSaveSkills,
   isSaving,
-  handleKeyPress
+  handleKeyPress,
 }) => (
   <div className="space-y-6">
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div className="bg-blue-50 rounded-xl p-4">
-        <h4 className="font-semibold text-blue-900 mb-2">Performance Summary</h4>
+        <h4 className="font-semibold text-blue-900 mb-2">
+          Performance Summary
+        </h4>
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-3xl font-bold text-blue-700">{employee.performance.currentRating}</p>
+            <p className="text-3xl font-bold text-blue-700">
+              {employee.performance.currentRating}
+            </p>
             <p className="text-sm text-blue-600">Current Rating</p>
           </div>
           <div className="text-right">
@@ -551,12 +674,14 @@ const OverviewTab = ({
           </div>
         </div>
       </div>
-      
+
       <div className="bg-green-50 rounded-xl p-4">
         <h4 className="font-semibold text-green-900 mb-2">Leave Summary</h4>
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-3xl font-bold text-green-700">{employee.leaveBalance.remaining}</p>
+            <p className="text-3xl font-bold text-green-700">
+              {employee.leaveBalance.remaining}
+            </p>
             <p className="text-sm text-green-600">Days Remaining</p>
           </div>
           <div className="text-right">
@@ -606,7 +731,7 @@ const OverviewTab = ({
           </div>
         )}
       </div>
-      
+
       {editingSkills ? (
         <div className="space-y-6">
           {/* Add New Skill Form */}
@@ -630,19 +755,23 @@ const OverviewTab = ({
                 </button>
               </div>
               <div>
-                <label className="text-sm text-gray-600 mb-1 block">Skill Type</label>
+                <label className="text-sm text-gray-600 mb-1 block">
+                  Skill Type
+                </label>
                 <div className="flex gap-2">
-                  {['technical', 'soft'].map((type) => (
+                  {["technical", "soft"].map((type) => (
                     <button
                       key={type}
                       onClick={() => setSkillType(type)}
                       className={`px-3 py-1.5 text-sm rounded-lg transition duration-200 ${
-                        skillType === type 
-                          ? 'bg-blue-600 text-white' 
-                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        skillType === type
+                          ? "bg-blue-600 text-white"
+                          : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                       }`}
                     >
-                      {type === 'technical' ? 'Technical Skills' : 'Soft Skills'}
+                      {type === "technical"
+                        ? "Technical Skills"
+                        : "Soft Skills"}
                     </button>
                   ))}
                 </div>
@@ -655,14 +784,19 @@ const OverviewTab = ({
             <div>
               <h5 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
                 <span className="text-blue-600">Technical Skills</span>
-                <span className="text-sm text-gray-500">({employee.skills.technical.length})</span>
+                <span className="text-sm text-gray-500">
+                  ({employee.skills.technical.length})
+                </span>
               </h5>
               <div className="flex flex-wrap gap-2">
                 {employee.skills.technical.map((skill, index) => (
-                  <div key={index} className="flex items-center gap-1 px-3 py-1.5 bg-blue-100 text-blue-800 rounded-full">
+                  <div
+                    key={index}
+                    className="flex items-center gap-1 px-3 py-1.5 bg-blue-100 text-blue-800 rounded-full"
+                  >
                     <span>{skill}</span>
                     <button
-                      onClick={() => handleRemoveSkill('technical', skill)}
+                      onClick={() => handleRemoveSkill("technical", skill)}
                       className="ml-1 text-blue-600 hover:text-blue-800"
                     >
                       <XCircle className="h-3 w-3" />
@@ -670,22 +804,29 @@ const OverviewTab = ({
                   </div>
                 ))}
                 {employee.skills.technical.length === 0 && (
-                  <p className="text-sm text-gray-500 italic">No technical skills added yet</p>
+                  <p className="text-sm text-gray-500 italic">
+                    No technical skills added yet
+                  </p>
                 )}
               </div>
             </div>
-            
+
             <div>
               <h5 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
                 <span className="text-green-600">Soft Skills</span>
-                <span className="text-sm text-gray-500">({employee.skills.soft.length})</span>
+                <span className="text-sm text-gray-500">
+                  ({employee.skills.soft.length})
+                </span>
               </h5>
               <div className="flex flex-wrap gap-2">
                 {employee.skills.soft.map((skill, index) => (
-                  <div key={index} className="flex items-center gap-1 px-3 py-1.5 bg-green-100 text-green-800 rounded-full">
+                  <div
+                    key={index}
+                    className="flex items-center gap-1 px-3 py-1.5 bg-green-100 text-green-800 rounded-full"
+                  >
                     <span>{skill}</span>
                     <button
-                      onClick={() => handleRemoveSkill('soft', skill)}
+                      onClick={() => handleRemoveSkill("soft", skill)}
                       className="ml-1 text-green-600 hover:text-green-800"
                     >
                       <XCircle className="h-3 w-3" />
@@ -693,7 +834,9 @@ const OverviewTab = ({
                   </div>
                 ))}
                 {employee.skills.soft.length === 0 && (
-                  <p className="text-sm text-gray-500 italic">No soft skills added yet</p>
+                  <p className="text-sm text-gray-500 italic">
+                    No soft skills added yet
+                  </p>
                 )}
               </div>
             </div>
@@ -702,21 +845,31 @@ const OverviewTab = ({
       ) : (
         <div className="space-y-4">
           <div>
-            <h5 className="text-sm font-medium text-gray-700 mb-2">Technical Skills</h5>
+            <h5 className="text-sm font-medium text-gray-700 mb-2">
+              Technical Skills
+            </h5>
             <div className="flex flex-wrap gap-2">
               {employee.skills.technical.map((skill, index) => (
-                <span key={index} className="px-3 py-1.5 bg-blue-100 text-blue-800 rounded-full text-sm">
+                <span
+                  key={index}
+                  className="px-3 py-1.5 bg-blue-100 text-blue-800 rounded-full text-sm"
+                >
                   {skill}
                 </span>
               ))}
             </div>
           </div>
-          
+
           <div>
-            <h5 className="text-sm font-medium text-gray-700 mb-2">Soft Skills</h5>
+            <h5 className="text-sm font-medium text-gray-700 mb-2">
+              Soft Skills
+            </h5>
             <div className="flex flex-wrap gap-2">
               {employee.skills.soft.map((skill, index) => (
-                <span key={index} className="px-3 py-1.5 bg-green-100 text-green-800 rounded-full text-sm">
+                <span
+                  key={index}
+                  className="px-3 py-1.5 bg-green-100 text-green-800 rounded-full text-sm"
+                >
                   {skill}
                 </span>
               ))}
@@ -729,15 +882,20 @@ const OverviewTab = ({
     <div>
       <h4 className="font-semibold text-gray-900 mb-4">Recent Achievements</h4>
       <div className="space-y-3">
-        {employee.achievements.slice(0, 2).map(achievement => (
-          <div key={achievement.id} className="flex items-start gap-3 p-3 border border-gray-200 rounded-xl">
+        {employee.achievements.slice(0, 2).map((achievement) => (
+          <div
+            key={achievement.id}
+            className="flex items-start gap-3 p-3 border border-gray-200 rounded-xl"
+          >
             <div className="p-2 bg-yellow-100 rounded-lg">
               <Star className="h-5 w-5 text-yellow-600" />
             </div>
             <div>
               <h5 className="font-medium text-gray-900">{achievement.title}</h5>
               <p className="text-sm text-gray-600">{achievement.description}</p>
-              <p className="text-xs text-gray-500 mt-1">Awarded: {achievement.date}</p>
+              <p className="text-xs text-gray-500 mt-1">
+                Awarded: {achievement.date}
+              </p>
             </div>
           </div>
         ))}
@@ -751,26 +909,50 @@ const ProfessionalTab = ({ employee }) => (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div className="space-y-4">
         <div>
-          <h5 className="text-sm font-medium text-gray-700 mb-1">Employee Type</h5>
-          <p className="font-medium">{employee.professionalInfo.employeeType}</p>
+          <h5 className="text-sm font-medium text-gray-700 mb-1">
+            Employee Type
+          </h5>
+          <p className="font-medium">
+            {employee.professionalInfo.employeeType}
+          </p>
         </div>
         <div>
-          <h5 className="text-sm font-medium text-gray-700 mb-1">Work Schedule</h5>
-          <p className="font-medium">{employee.professionalInfo.workSchedule}</p>
+          <h5 className="text-sm font-medium text-gray-700 mb-1">
+            Work Schedule
+          </h5>
+          <p className="font-medium">
+            {employee.professionalInfo.workSchedule}
+          </p>
         </div>
         <div>
-          <h5 className="text-sm font-medium text-gray-700 mb-1">Office Location</h5>
-          <p className="font-medium">{employee.professionalInfo.officeLocation}</p>
+          <h5 className="text-sm font-medium text-gray-700 mb-1">
+            Office Location
+          </h5>
+          <p className="font-medium">
+            {employee.professionalInfo.officeLocation}
+          </p>
         </div>
         <div>
-          <h5 className="text-sm font-medium text-gray-700 mb-1">Salary Grade</h5>
+          <h5 className="text-sm font-medium text-gray-700 mb-1">
+            Salary Grade
+          </h5>
           <p className="font-medium">{employee.professionalInfo.salaryGrade}</p>
         </div>
+        <div>
+          <h5 className="text-sm font-medium text-gray-700 mb-1">
+            ------------------- Add Employee Resources Here -------------
+          </h5>
+          <p className="font-medium">
+            Eg: Laptop, Software Licenses etc.
+          </p>
+        </div>
       </div>
-      
+
       <div className="space-y-4">
         <div>
-          <h5 className="text-sm font-medium text-gray-700 mb-1">Reporting To</h5>
+          <h5 className="text-sm font-medium text-gray-700 mb-1">
+            Reporting To
+          </h5>
           <p className="font-medium">{employee.professionalInfo.reportingTo}</p>
         </div>
         <div>
@@ -778,17 +960,32 @@ const ProfessionalTab = ({ employee }) => (
           <p className="font-medium">{employee.professionalInfo.workMode}</p>
         </div>
         <div>
-          <h5 className="text-sm font-medium text-gray-700 mb-1">Joining Date</h5>
+          <h5 className="text-sm font-medium text-gray-700 mb-1">
+            Joining Date
+          </h5>
           <p className="font-medium">{employee.professionalInfo.joiningDate}</p>
         </div>
         <div>
-          <h5 className="text-sm font-medium text-gray-700 mb-1">Employee Level</h5>
-          <p className="font-medium">{employee.professionalInfo.employeeLevel}</p>
+          <h5 className="text-sm font-medium text-gray-700 mb-1">
+            Employee Level
+          </h5>
+          <p className="font-medium">
+            {employee.professionalInfo.employeeLevel}
+          </p>
         </div>
+        <div>
+          <h5 className="text-sm font-medium text-gray-700 mb-1">
+            ------------------- Add Employee Allownaces Here -------------
+          </h5>
+          <p className="font-medium">
+            Eg: phone bill, transport etc.
+          </p>
+        </div>
+        
       </div>
     </div>
 
-    <div>
+    {/* <div>
       <h4 className="font-semibold text-gray-900 mb-4">Work History</h4>
       <div className="space-y-4">
         {employee.workHistory.map(job => (
@@ -831,7 +1028,7 @@ const ProfessionalTab = ({ employee }) => (
           </div>
         ))}
       </div>
-    </div>
+    </div> */}
   </div>
 );
 
@@ -840,15 +1037,19 @@ const PersonalTab = ({ employee }) => (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div className="space-y-4">
         <div>
-          <h5 className="text-sm font-medium text-gray-700 mb-1">Date of Birth</h5>
-          <p className="font-medium">{employee.basicInfo.dateOfBirth} (Age: {employee.basicInfo.age})</p>
+          <h5 className="text-sm font-medium text-gray-700 mb-1">
+            Date of Birth
+          </h5>
+          <p className="font-medium">
+            {employee.basicInfo.dateOfBirth} (Age: {employee.basicInfo.age})
+          </p>
         </div>
         <div>
           <h5 className="text-sm font-medium text-gray-700 mb-1">Gender</h5>
           <p className="font-medium">{employee.basicInfo.gender}</p>
         </div>
       </div>
-      
+
       <div className="space-y-4">
         {/* Additional personal info can go here */}
       </div>
@@ -876,7 +1077,9 @@ const PersonalTab = ({ employee }) => (
             <Mail className="h-4 w-4" />
             Personal Email
           </h5>
-          <p className="text-gray-600">{employee.personalDetails.personalEmail}</p>
+          <p className="text-gray-600">
+            {employee.personalDetails.personalEmail}
+          </p>
         </div>
         <div className="p-4 border border-gray-200 rounded-xl">
           <h5 className="font-medium text-gray-900 mb-2 flex items-center gap-2">
@@ -889,16 +1092,22 @@ const PersonalTab = ({ employee }) => (
     </div>
 
     <div>
-      <h4 className="font-semibold text-gray-900 mb-4">Financial Information</h4>
+      <h4 className="font-semibold text-gray-900 mb-4">
+        Financial Information
+      </h4>
       <div className="space-y-3">
         <div className="flex justify-between items-center p-3 border border-gray-200 rounded-xl">
           <div>
             <h5 className="font-medium text-gray-900">Bank Name</h5>
-            <p className="text-sm text-gray-600">{employee.financialInfo.bankName}</p>
+            <p className="text-sm text-gray-600">
+              {employee.financialInfo.bankName}
+            </p>
           </div>
           <div className="text-right">
             <p className="text-sm text-gray-600">Account Number</p>
-            <p className="font-medium">{employee.financialInfo.accountNumber}</p>
+            <p className="font-medium">
+              {employee.financialInfo.accountNumber}
+            </p>
           </div>
         </div>
       </div>
@@ -917,8 +1126,11 @@ const DocumentsTab = ({ employee }) => (
     </div>
 
     <div className="space-y-3">
-      {employee.documents.map(doc => (
-        <div key={doc.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-xl hover:bg-gray-50">
+      {employee.documents.map((doc) => (
+        <div
+          key={doc.id}
+          className="flex items-center justify-between p-4 border border-gray-200 rounded-xl hover:bg-gray-50"
+        >
           <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-100 rounded-lg">
               <FileText className="h-5 w-5 text-blue-600" />
@@ -932,7 +1144,9 @@ const DocumentsTab = ({ employee }) => (
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <span className={`px-2 py-1 text-xs rounded-full ${doc.status === 'Valid' || doc.status === 'Verified' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+            <span
+              className={`px-2 py-1 text-xs rounded-full ${doc.status === "Valid" || doc.status === "Verified" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}`}
+            >
               {doc.status}
             </span>
             <button className="p-2 hover:bg-gray-100 rounded-lg">
@@ -974,48 +1188,56 @@ const DocumentsTab = ({ employee }) => (
   </div>
 );
 
-const PreferencesTab = ({ employee }) => (
-  <div className="space-y-6">
-    <div>
-      <h4 className="font-semibold text-gray-900 mb-4">Communication Preferences</h4>
-      <div className="space-y-4">
-        <div className="flex items-center justify-between p-3 border border-gray-200 rounded-xl">
-          <div>
-            <h5 className="font-medium text-gray-900">Email Notifications</h5>
-            <p className="text-sm text-gray-600">Receive daily updates</p>
-          </div>
-          <label className="relative inline-flex items-center cursor-pointer">
-            <input type="checkbox" className="sr-only peer" defaultChecked={employee.preferences.communication.newsletter} />
-            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-          </label>
-        </div>
-      </div>
-    </div>
+// const PreferencesTab = ({ employee }) => (
+//   <div className="space-y-6">
+//     <div>
+//       <h4 className="font-semibold text-gray-900 mb-4">
+//         Communication Preferences
+//       </h4>
+//       <div className="space-y-4">
+//         <div className="flex items-center justify-between p-3 border border-gray-200 rounded-xl">
+//           <div>
+//             <h5 className="font-medium text-gray-900">Email Notifications</h5>
+//             <p className="text-sm text-gray-600">Receive daily updates</p>
+//           </div>
+//           <label className="relative inline-flex items-center cursor-pointer">
+//             <input
+//               type="checkbox"
+//               className="sr-only peer"
+//               defaultChecked={employee.preferences.communication.newsletter}
+//             />
+//             <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+//           </label>
+//         </div>
+//       </div>
+//     </div>
 
-    <div>
-      <h4 className="font-semibold text-gray-900 mb-4">Privacy Settings</h4>
-      <div className="space-y-3">
-        <div>
-          <label className="text-sm font-medium text-gray-700 mb-1 block">Profile Visibility</label>
-          <select 
-            className="w-full px-3 py-2 border border-gray-300 rounded-xl"
-            defaultValue={employee.preferences.privacy.profileVisibility}
-          >
-            <option>Company Only</option>
-            <option>My Department Only</option>
-            <option>Team Members Only</option>
-            <option>Public</option>
-          </select>
-        </div>
-      </div>
-    </div>
-  </div>
-);
+//     <div>
+//       <h4 className="font-semibold text-gray-900 mb-4">Privacy Settings</h4>
+//       <div className="space-y-3">
+//         <div>
+//           <label className="text-sm font-medium text-gray-700 mb-1 block">
+//             Profile Visibility
+//           </label>
+//           <select
+//             className="w-full px-3 py-2 border border-gray-300 rounded-xl"
+//             defaultValue={employee.preferences.privacy.profileVisibility}
+//           >
+//             <option>Company Only</option>
+//             <option>My Department Only</option>
+//             <option>Team Members Only</option>
+//             <option>Public</option>
+//           </select>
+//         </div>
+//       </div>
+//     </div>
+//   </div>
+// );
 
 // Modal Components
 const DocumentUploadModal = ({ onClose, onUpload }) => {
   const [file, setFile] = useState(null);
-  const [documentType, setDocumentType] = useState('');
+  const [documentType, setDocumentType] = useState("");
 
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
@@ -1033,16 +1255,23 @@ const DocumentUploadModal = ({ onClose, onUpload }) => {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl w-full max-w-md">
         <div className="flex justify-between items-center p-6 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Upload Document</h3>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg">
+          <h3 className="text-lg font-semibold text-gray-900">
+            Upload Document
+          </h3>
+          <button
+            onClick={onClose}
+            className="p-1 hover:bg-gray-100 rounded-lg"
+          >
             <X className="h-5 w-5" />
           </button>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Document Type</label>
-            <select 
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Document Type
+            </label>
+            <select
               value={documentType}
               onChange={(e) => setDocumentType(e.target.value)}
               required
@@ -1055,13 +1284,17 @@ const DocumentUploadModal = ({ onClose, onUpload }) => {
               <option value="other">Other</option>
             </select>
           </div>
-          
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Upload File</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Upload File
+            </label>
             <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center">
               <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-              <p className="text-sm text-gray-600 mb-2">Drag & drop files or click to browse</p>
-              <input 
+              <p className="text-sm text-gray-600 mb-2">
+                Drag & drop files or click to browse
+              </p>
+              <input
                 type="file"
                 onChange={handleFileChange}
                 required
@@ -1070,16 +1303,16 @@ const DocumentUploadModal = ({ onClose, onUpload }) => {
               <p className="text-xs text-gray-500 mt-2">Max file size: 10MB</p>
             </div>
           </div>
-          
+
           <div className="flex gap-3 pt-4">
-            <button 
+            <button
               type="button"
               onClick={onClose}
               className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200"
             >
               Cancel
             </button>
-            <button 
+            <button
               type="submit"
               className="flex-1 px-4 py-2 text-white bg-blue-600 rounded-xl hover:bg-blue-700"
             >
@@ -1105,25 +1338,39 @@ const PreferencesModal = ({ employee, onClose, onSave }) => {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center p-6 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Edit Preferences</h3>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg">
+          <h3 className="text-lg font-semibold text-gray-900">
+            Edit Preferences
+          </h3>
+          <button
+            onClick={onClose}
+            className="p-1 hover:bg-gray-100 rounded-lg"
+          >
             <X className="h-5 w-5" />
           </button>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <div className="space-y-4">
-            <h4 className="font-semibold text-gray-900">Communication Preferences</h4>
+            <h4 className="font-semibold text-gray-900">
+              Communication Preferences
+            </h4>
             <div className="space-y-3">
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-1 block">Preferred Communication Method</label>
-                <select 
+                <label className="text-sm font-medium text-gray-700 mb-1 block">
+                  Preferred Communication Method
+                </label>
+                <select
                   className="w-full px-3 py-2 border border-gray-300 rounded-xl"
                   value={formData.communication.preferredMethod}
-                  onChange={(e) => setFormData(prev => ({
-                    ...prev,
-                    communication: { ...prev.communication, preferredMethod: e.target.value }
-                  }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      communication: {
+                        ...prev.communication,
+                        preferredMethod: e.target.value,
+                      },
+                    }))
+                  }
                 >
                   <option>Email</option>
                   <option>Phone</option>
@@ -1131,16 +1378,23 @@ const PreferencesModal = ({ employee, onClose, onSave }) => {
                   <option>SMS</option>
                 </select>
               </div>
-              
+
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-1 block">Notification Frequency</label>
-                <select 
+                <label className="text-sm font-medium text-gray-700 mb-1 block">
+                  Notification Frequency
+                </label>
+                <select
                   className="w-full px-3 py-2 border border-gray-300 rounded-xl"
                   value={formData.communication.notificationFrequency}
-                  onChange={(e) => setFormData(prev => ({
-                    ...prev,
-                    communication: { ...prev.communication, notificationFrequency: e.target.value }
-                  }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      communication: {
+                        ...prev.communication,
+                        notificationFrequency: e.target.value,
+                      },
+                    }))
+                  }
                 >
                   <option>Real-time</option>
                   <option>Hourly</option>
@@ -1150,16 +1404,16 @@ const PreferencesModal = ({ employee, onClose, onSave }) => {
               </div>
             </div>
           </div>
-          
+
           <div className="flex gap-3 pt-4">
-            <button 
+            <button
               type="button"
               onClick={onClose}
               className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200"
             >
               Cancel
             </button>
-            <button 
+            <button
               type="submit"
               className="flex-1 px-4 py-2 text-white bg-blue-600 rounded-xl hover:bg-blue-700"
             >

@@ -218,7 +218,10 @@ function AppContent() {
             <Route path="/activity-tracker" element={<ActivityTracker />} />
             <Route path="/testdashboard" element={<ActivityTracker />} /> 
             <Route path="/employeeattendance" element={<EmployeeAttendance />} /> 
+            {/* superAdmin */}
             <Route path="/employees" element={<Employees />} /> 
+            <Route path="/add-employees" element={<EmployeeOnboarding />} />
+            {/* superAdmin */}
             <Route path="/employeedetails" element={<EmployeeDetails />} />
             <Route path="/application-memos" element={<ApplicationandMemos />} />
             <Route path="/applications-memos" element={<ApplicationandMemoEmployees />} />

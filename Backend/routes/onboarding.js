@@ -3,9 +3,12 @@ const router = express.Router();
 const onboardingController = require('./controllers/onboardingController');
 const debugController = require('./controllers/debugController');
 const authMiddleware = require('../middleware/auth');
+// const employeeProfilePictureRoutes = require('../routes/employeeProfilePicture');
 
 // GET - Check if employee ID exists and get next available ID
 router.get('/check-employee-id/:numericId', onboardingController.checkEmployeeIdAvailability);
+
+// router.use('/employees', employeeProfilePictureRoutes);
 
 // POST - Create new employee
 router.post('/employees', onboardingController.createEmployee);

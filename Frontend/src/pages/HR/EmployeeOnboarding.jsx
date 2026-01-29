@@ -539,7 +539,7 @@ const EmployeeOnboarding = () => {
                         <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <button
-                onClick={() => navigate('/hr/employees')}
+                onClick={() => navigate(-1)}
                 className="p-2 hover:bg-gray-100 rounded-lg transition"
               >
                 <ArrowLeft className="w-6 h-6 text-gray-600" />
