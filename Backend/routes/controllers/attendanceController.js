@@ -1833,26 +1833,25 @@ exports.getTodayAttendance = async (req, res) => {
           const currentTotalMinutes = currentHour * 60 + currentMin;
           
           // Calculate elapsed time
-          // Night shift logic: if check-in was in evening (21:00-23:59) and current time is early morning (0:00-6:00), 
-          // then we've crossed midnight
-          const checkInIsNight = checkInHour >= 21 && checkInHour <= 23;
-          const currentIsEarlyMorning = currentHour >= 0 && currentHour < 6;
-          
-          if (checkInIsNight && currentIsEarlyMorning) {
-            // Night shift spanning midnight (checked in 21:00+, now in 00:00-06:00)
+          // Determine if we've crossed midnight. Older logic only flagged check-ins >= 21:00 as night shifts
+          // which caused wrong long durations for check-ins around 20:00-21:00 when current time is after midnight.
+          // Robust rule: if current time (minutes since midnight) is less than check-in minutes, assume we crossed midnight.
+          if (currentTotalMinutes < checkInTotalMinutes) {
+            // Night shift spanning midnight (checked in earlier today, now after midnight)
             const minutesUntilMidnight = (24 * 60) - checkInTotalMinutes;
             const minutesAfterMidnight = currentTotalMinutes;
             currentSessionMinutes = minutesUntilMidnight + minutesAfterMidnight;
+            console.log(`⏱️ Midnight-cross detected: checkIn=${checkInTotalMinutes}m, now=${currentTotalMinutes}m, elapsed=${currentSessionMinutes}m`);
           } else {
-            // Same period (either both evening or both early morning) - simple subtraction
-            currentSessionMinutes = Math.abs(currentTotalMinutes - checkInTotalMinutes);
+            // Same calendar day - direct subtraction
+            currentSessionMinutes = currentTotalMinutes - checkInTotalMinutes;
           }
           
           // Subtract break time from current session
           const totalBreakMinutes = breaks.reduce((sum, brk) => sum + (brk.break_duration_minutes || 0), 0);
           currentSessionMinutes = Math.max(0, currentSessionMinutes - totalBreakMinutes);
           
-          console.log(`⏱️ Current session calculation: check-in=${record.check_in_time} (night=${checkInIsNight}), now=${currentHour}:${String(currentMin).padStart(2, '0')} (early=${currentIsEarlyMorning}), elapsed=${currentSessionMinutes}m, breaks=${totalBreakMinutes}m`);
+          console.log(`⏱️ Current session calculation: check-in=${record.check_in_time}, now=${currentHour}:${String(currentMin).padStart(2, '0')}, elapsed=${currentSessionMinutes}m, breaks=${totalBreakMinutes}m`);
         } catch (err) {
           console.error('Error calculating current session:', err);
         }
