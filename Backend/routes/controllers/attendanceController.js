@@ -944,6 +944,7 @@ exports.recordBreakEnd = async (req, res) => {
     console.log('   - End Time:', break_end_time);
     console.log('   - Duration:', break_duration_minutes);
     console.log('   - Calculated attendance_date:', attendanceDate);
+    console.log('   - Current server time (Pakistan):', getPakistanTimeString());
 
     if (!employee_id || !break_type) {
       return res.status(400).json({
@@ -964,24 +965,72 @@ exports.recordBreakEnd = async (req, res) => {
 
     try {
       // Get today's attendance record using calculated attendance date
+      console.log('🔍 Looking for attendance record:');
+      console.log('   - employee_id:', employee_id, '(type:', typeof employee_id, ')');
+      console.log('   - attendance_date:', attendanceDate);
+      console.log('   - check_out_time IS NULL');
+      
       const [attendanceRecord] = await connection.query(
         `SELECT id FROM Employee_Attendance 
          WHERE employee_id = ? AND attendance_date = ? AND check_out_time IS NULL`,
         [employee_id, attendanceDate]
       );
 
+      let attendanceId;
+      console.log('🔍 Attendance record query result:', attendanceRecord);
+
       if (attendanceRecord.length === 0) {
-        if (connection) connection.release();
-        return res.status(404).json({
-          success: false,
-          message: 'No active check in found for today'
-        });
+        console.log('❌ ERROR: No active attendance record found (check_out_time may be set)');
+        console.log('   Attempting to find ANY record for this employee on this date (including checked out records)...');
+
+        // Try to find any attendance record for this employee on that date regardless of check_out_time
+        const [anyAttendance] = await connection.query(
+          `SELECT id, employee_id, attendance_date, check_in_time, check_out_time FROM Employee_Attendance 
+           WHERE employee_id = ? AND attendance_date = ?
+           ORDER BY id DESC LIMIT 1`,
+          [employee_id, attendanceDate]
+        );
+
+        console.log('   Any attendance record found:', anyAttendance);
+
+        if (anyAttendance.length > 0) {
+          console.log('⚠️ Proceeding with the most recent attendance record even though check_out_time is set.');
+          // Use this attendance record but mark that it was previously checked out
+          const fallbackAttendance = anyAttendance[0];
+          attendanceId = fallbackAttendance.id; // NOTE: attendanceId will be defined below
+          // Continue, but indicate in logs and response that attendance was not active
+        } else {
+          // Debug: Try to find any record for this employee for more information
+          const [debugRecords] = await connection.query(
+            `SELECT id, employee_id, attendance_date, check_in_time, check_out_time FROM Employee_Attendance 
+             WHERE employee_id = ? AND attendance_date = ?
+             LIMIT 5`,
+            [employee_id, attendanceDate]
+          );
+          console.log('   Debug records found:', debugRecords);
+
+          if (connection) connection.release();
+          return res.status(404).json({
+            success: false,
+            message: 'No active check in found for today',
+            debug: { employee_id, attendanceDate }
+          });
+        }
       }
 
-      const attendanceId = attendanceRecord[0].id;
+if (!attendanceId && attendanceRecord && attendanceRecord.length > 0) {
+        attendanceId = attendanceRecord[0].id;
+      }
+
       const breakEnd = break_end_time || getPakistanTimeString();
 
       // Find the most recent break record for this type that doesn't have an end time
+      console.log('🔍 Looking for active break record:');
+      console.log('   - attendance_id:', attendanceId);
+      console.log('   - employee_id:', employee_id);
+      console.log('   - break_type:', break_type);
+      console.log('   - break_end_time IS NULL');
+      
       const [breakRecord] = await connection.query(
         `SELECT id FROM Employee_Breaks 
          WHERE attendance_id = ? AND employee_id = ? AND break_type = ? AND break_end_time IS NULL
@@ -989,24 +1038,76 @@ exports.recordBreakEnd = async (req, res) => {
         [attendanceId, employee_id, break_type]
       );
 
+      console.log('🔍 Break record query result:', breakRecord);
+
       if (breakRecord.length === 0) {
-        if (connection) connection.release();
-        return res.status(404).json({
-          success: false,
-          message: 'No active break found for this type'
-        });
+        console.log('❌ ERROR: No active break found for this attendance');
+        console.log('   Attempting fallback: find any active break for this employee & type regardless of attendance_id...');
+
+        // Try to find any active break for this employee and type (some systems may have saved break without attendance link)
+        const [fallbackBreak] = await connection.query(
+          `SELECT id, attendance_id, break_start_time FROM Employee_Breaks 
+           WHERE employee_id = ? AND break_type = ? AND break_end_time IS NULL
+           ORDER BY created_at DESC LIMIT 1`,
+          [employee_id, break_type]
+        );
+
+        console.log('   Fallback break found:', fallbackBreak);
+
+        if (fallbackBreak.length > 0) {
+          console.log('⚠️ Using fallback break record (no attendance-specific match)');
+          // Use fallback break and associated attendance_id
+          const fb = fallbackBreak[0];
+          // If we didn't have attendanceId earlier, use break's attendance_id
+          if (!attendanceId && fb.attendance_id) {
+            attendanceId = fb.attendance_id;
+          }
+
+          // Set resolvedBreakId so the unified update flow can proceed
+          var resolvedBreakId = fb.id;
+          console.log('   Resolved break id (fallback):', resolvedBreakId);
+
+          // Ensure we have an attendance id to update statistics
+          if (!attendanceId) {
+            console.log('❌ ERROR: No attendance_id available for fallback break. Aborting.');
+            if (connection) connection.release();
+            return res.status(404).json({
+              success: false,
+              message: 'No active break found for this type',
+              debug: { attendance_id: attendanceId, break_type, employee_id }
+            });
+          }
+        } else {
+          console.log('   Attempting to find ANY break for this attendance...');
+          // Debug: Try to find any break for this attendance
+          const [debugBreaks] = await connection.query(
+            `SELECT id, break_type, break_start_time, break_end_time FROM Employee_Breaks 
+             WHERE attendance_id = ?
+             LIMIT 10`,
+            [attendanceId]
+          );
+          console.log('   Debug breaks found:', debugBreaks);
+
+          if (connection) connection.release();
+          return res.status(404).json({
+            success: false,
+            message: 'No active break found for this type',
+            debug: { attendance_id: attendanceId, break_type, employee_id }
+          });
+        }
       }
 
-      const breakId = breakRecord[0].id;
+      const breakId = (typeof resolvedBreakId !== 'undefined' && resolvedBreakId) ? resolvedBreakId : breakRecord[0].id;
       const breakDurationMinutes = Math.floor(break_duration_minutes || 0);
 
       // Update break record with end time and duration
-      await connection.query(
+      const [updateBreakResult] = await connection.query(
         `UPDATE Employee_Breaks 
          SET break_end_time = ?, break_duration_minutes = ?, updated_at = NOW()
          WHERE id = ?`,
         [breakEnd, breakDurationMinutes, breakId]
       );
+      console.log(`🔧 Employee_Breaks UPDATE affectedRows=${updateBreakResult.affectedRows}, breakId=${breakId}`);
 
       // Update attendance record with break statistics
       const fieldMap = {
@@ -1047,7 +1148,10 @@ exports.recordBreakEnd = async (req, res) => {
       }
       
       const updateQuery = updateQueryParts.join('\n');
-      await connection.query(updateQuery, queryParams);
+      console.log('🔧 Attendance UPDATE query:', updateQuery);
+      console.log('🔧 Attendance UPDATE params:', queryParams);
+      const [updateAttendanceResult] = await connection.query(updateQuery, queryParams);
+      console.log(`🔧 Employee_Attendance UPDATE affectedRows=${updateAttendanceResult.affectedRows}, attendanceId=${attendanceId}`);
 
       console.log(`✅ Break END recorded: ${break_type} for employee ${employee_id} (${breakDurationMinutes} min)`);
 
@@ -1168,6 +1272,32 @@ exports.recordBreakProgress = async (req, res) => {
          WHERE id = ? AND break_end_time IS NULL`,
         [Math.floor(current_duration_minutes), breakId]
       );
+
+      // Update only the per-type duration field so the UI reflects ongoing duration.
+      // IMPORTANT: Do NOT increment total counts or add to total_break_duration_minutes here to avoid double-counting.
+      const durationFieldMap = {
+        'Smoke': 'smoke_break_duration_minutes',
+        'Dinner': 'dinner_break_duration_minutes',
+        'Washroom': 'washroom_break_duration_minutes',
+        'Prayer': 'prayer_break_duration_minutes',
+        'Other': 'smoke_break_duration_minutes'
+      };
+
+      if (['Smoke', 'Dinner', 'Washroom', 'Prayer', 'Other'].includes(break_type)) {
+        const breakDurationField = durationFieldMap[break_type];
+        try {
+          await connection.query(
+            `UPDATE Employee_Attendance
+             SET ${breakDurationField} = ?,
+                 updated_at = NOW()
+             WHERE id = ?`,
+            [Math.floor(current_duration_minutes), attendanceId]
+          );
+          console.log(`ℹ️ Attendance ${attendanceId} ${breakDurationField} updated to ${Math.floor(current_duration_minutes)} (autosave)`);
+        } catch (e) {
+          console.warn('⚠️ Failed to update attendance duration during autosave:', e);
+        }
+      }
 
       console.log(`✅ Break progress auto-saved: ${break_type} - Duration: ${current_duration_minutes}m`);
 
@@ -2475,41 +2605,85 @@ exports.getBreakSummary = async (req, res) => {
         [attendanceId]
       );
 
-      // Calculate break statistics
-      const breakStats = {
-        totalBreaks: attendance.total_breaks_taken || 0,
-        totalDurationMinutes: attendance.total_break_duration_minutes || 0,
-        averageDurationMinutes: attendance.total_breaks_taken > 0 
-          ? Math.round((attendance.total_break_duration_minutes || 0) / attendance.total_breaks_taken)
-          : 0,
-        breakdownByType: {
-          smoke: {
-            count: attendance.smoke_break_count || 0,
-            durationMinutes: attendance.smoke_break_duration_minutes || 0,
-            label: 'Smoke Break'
-          },
-          dinner: {
-            count: attendance.dinner_break_count || 0,
-            durationMinutes: attendance.dinner_break_duration_minutes || 0,
-            label: 'Dinner Break'
-          },
-          washroom: {
-            count: attendance.washroom_break_count || 0,
-            durationMinutes: attendance.washroom_break_duration_minutes || 0,
-            label: 'Washroom Break'
-          },
-          prayer: {
-            count: attendance.prayer_break_count || 0,
-            durationMinutes: attendance.prayer_break_duration_minutes || 0,
-            label: 'Prayer Break'
+      // Calculate break statistics based on break records (includes ongoing breaks)
+      const nowPk = getPakistanDate();
+
+      // Initialize breakdown
+      const breakdownByType = {
+        smoke: { count: 0, durationMinutes: 0, label: 'Smoke Break' },
+        dinner: { count: 0, durationMinutes: 0, label: 'Dinner Break' },
+        washroom: { count: 0, durationMinutes: 0, label: 'Washroom Break' },
+        prayer: { count: 0, durationMinutes: 0, label: 'Prayer Break' }
+      };
+
+      let totalDurationMinutes = 0;
+      let totalBreaks = 0;
+
+      // Helper to compute duration for a break record (handles ongoing breaks)
+      const computeBreakDuration = (brk) => {
+        // If break has explicit duration, prefer it (end recorded previously)
+        if (brk.break_duration_minutes !== null && brk.break_duration_minutes !== undefined) {
+          return Number(brk.break_duration_minutes);
+        }
+
+        // Otherwise compute from break_start_time to nowPk
+        try {
+          const hourPart = parseInt(String(brk.break_start_time || '00:00:00').split(':')[0], 10) || 0;
+          let breakDateObj = new Date(`${attendance.attendance_date}T00:00:00`);
+          if (hourPart >= 0 && hourPart < 6) {
+            // For early morning times, the real timestamp is on the next calendar day
+            breakDateObj.setDate(breakDateObj.getDate() + 1);
           }
-        },
+          const pad = (n) => String(n).padStart(2, '0');
+          const dateForBreak = `${breakDateObj.getFullYear()}-${pad(breakDateObj.getMonth() + 1)}-${pad(breakDateObj.getDate())}`;
+          const breakStart = new Date(`${dateForBreak}T${brk.break_start_time}`);
+          const diff = Math.floor((nowPk - breakStart) / (1000 * 60));
+          return Math.max(0, diff);
+        } catch (e) {
+          console.warn('⚠️ Failed to compute break duration for record:', brk, e);
+          return 0;
+        }
+      };
+
+      breakRecords.forEach(brk => {
+        totalBreaks += 1;
+        const duration = computeBreakDuration(brk);
+        totalDurationMinutes += duration;
+
+        const type = (brk.break_type || '').toLowerCase();
+        if (type === 'smoke') {
+          breakdownByType.smoke.count += 1;
+          breakdownByType.smoke.durationMinutes += duration;
+        } else if (type === 'dinner') {
+          breakdownByType.dinner.count += 1;
+          breakdownByType.dinner.durationMinutes += duration;
+        } else if (type === 'washroom') {
+          breakdownByType.washroom.count += 1;
+          breakdownByType.washroom.durationMinutes += duration;
+        } else if (type === 'prayer') {
+          breakdownByType.prayer.count += 1;
+          breakdownByType.prayer.durationMinutes += duration;
+        } else {
+          // treat unknown as smoke (legacy)
+          breakdownByType.smoke.count += 1;
+          breakdownByType.smoke.durationMinutes += duration;
+        }
+      });
+
+      // Use floor for average so partial minutes don't round up
+      const averageDurationMinutes = totalBreaks > 0 ? Math.floor(totalDurationMinutes / totalBreaks) : 0;
+
+      const breakStats = {
+        totalBreaks,
+        totalDurationMinutes,
+        averageDurationMinutes,
+        breakdownByType,
         allBreaks: breakRecords.map(brk => ({
           id: brk.id,
           type: brk.break_type,
           startTime: brk.break_start_time,
           endTime: brk.break_end_time,
-          durationMinutes: brk.break_duration_minutes,
+          durationMinutes: brk.break_duration_minutes || computeBreakDuration(brk),
           reason: brk.reason,
           createdAt: brk.created_at
         }))

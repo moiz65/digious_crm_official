@@ -88,6 +88,7 @@ exports.createEmployee = async (req, res) => {
       bankName: bank_name || bankName,
       cnicIssueDate: cnic_issue_date || cnicIssueDate,
       cnicExpiryDate: cnic_expiry_date || cnicExpiryDate,
+      dob: req.body.dob || null,
       requestPasswordChange:
         request_password_change !== undefined
           ? request_password_change
@@ -228,8 +229,8 @@ exports.createEmployee = async (req, res) => {
       // Insert employee onboarding record
       const [employeeResult] = await connection.query(
         `INSERT INTO employee_onboarding 
-        (employee_id, name, email, password_temp, phone, cnic, department, sub_department, join_date, confirmation_date, address, emergency_contact, request_password_change, account_title_name, bank_name, bank_account, tax_id, designation, employment_status, cnic_issue_date, cnic_expiry_date, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        (employee_id, name, email, password_temp, phone, cnic, department, sub_department, join_date, confirmation_date, address, emergency_contact, request_password_change, account_title_name, bank_name, bank_account, tax_id, designation, employment_status, cnic_issue_date, cnic_expiry_date, dob, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           normalizedData.employeeId,
           normalizedData.name,
@@ -252,6 +253,7 @@ exports.createEmployee = async (req, res) => {
           finalEmploymentStatus,
           normalizedCnicIssueDate || null,
           normalizedCnicExpiryDate || null,
+          normalizedData.dob || null,
           "Active",
         ],
       );
@@ -474,6 +476,18 @@ exports.getEmployeeById = async (req, res) => {
 
       const employee = employees[0];
 
+      // CNIC/DOB are stored on employee_onboarding (single source of truth)
+      // Compute CNIC document status based on cnic_expiry_date
+      let docStatus = null;
+      if (!employee.cnic_expiry_date) docStatus = 'Invalid';
+      else {
+        const expiry = new Date(employee.cnic_expiry_date);
+        if (isNaN(expiry.getTime())) docStatus = null;
+        else if (expiry < new Date()) docStatus = 'Expired';
+        else docStatus = 'Valid';
+      }
+      employee.cnic_document_status = docStatus;
+
       // Get allowances
       const [allowances] = await connection.query(
         `SELECT allowance_name as name, allowance_amount as amount 
@@ -604,16 +618,41 @@ exports.updateEmployee = async (req, res) => {
       "confirmation_date",
       "cnic_issue_date",
       "cnic_expiry_date",
+      "dob",
       "profile_picture",
     ];
 
     const updateFields = [];
     const updateValues = [];
 
+    const normalizeToDate = (val) => {
+      if (val === null || val === undefined || val === '') return null;
+      if (typeof val !== 'string') return val;
+      // Already YYYY-MM-DD
+      if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
+      // ISO timestamp or other formats - extract YYYY-MM-DD if possible
+      const m = val.match(/^(\d{4}-\d{2}-\d{2})/);
+      if (m) return m[1];
+      // Fallback to Date parse (use UTC components)
+      const d = new Date(val);
+      if (!isNaN(d.getTime())) {
+        const y = d.getUTCFullYear();
+        const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+        const dd = String(d.getUTCDate()).padStart(2, '0');
+        return `${y}-${mm}-${dd}`;
+      }
+      return val;
+    };
+
     for (const key of allowedFields) {
       if (employeeFields[key] !== undefined) {
         updateFields.push(`${key} = ?`);
-        updateValues.push(employeeFields[key]);
+        let value = employeeFields[key];
+        // Normalize date-like fields to YYYY-MM-DD for MySQL DATE columns
+        if (key.includes('date') || key === 'dob' || key === 'join_date' || key === 'confirmation_date') {
+          value = normalizeToDate(value);
+        }
+        updateValues.push(value);
       }
     }
 
