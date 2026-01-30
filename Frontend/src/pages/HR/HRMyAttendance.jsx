@@ -9,15 +9,10 @@ import {
   Clock,
   LogIn,
   LogOut,
-  User,
-  Activity,
   AlertCircle,
-  Timer,
-  PauseCircle,
-  Utensils,
-  Cigarette,
   Table,
-  Shield
+  Shield,
+  PauseCircle
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -41,8 +36,6 @@ const HRMyAttendance = () => {
   const [attendanceData, setAttendanceData] = useState(null);
   const [monthlyAttendance, setMonthlyAttendance] = useState([]);
   const [isCheckedIn, setIsCheckedIn] = useState(false);
-  const [activeBreaks, setActiveBreaks] = useState([]);
-  const [breakTimers, setBreakTimers] = useState({}); // Track elapsed time for each break
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('All Status'); // Filter for status
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
@@ -62,7 +55,6 @@ const HRMyAttendance = () => {
   useEffect(() => {
     console.log('🔍 HRMyAttendance mounted with user:', user);
     fetchTodayAttendance();
-    fetchActiveBreaks();
     fetchMonthlyAttendance();
   }, []);
 
@@ -72,46 +64,6 @@ const HRMyAttendance = () => {
     fetchMonthlyAttendance();
   }, [selectedMonth, selectedYear]);
 
-  // Update break timers every second
-  useEffect(() => {
-    if (activeBreaks.length === 0) return;
-
-    const timerInterval = setInterval(() => {
-      const newTimers = {};
-      activeBreaks.forEach(breakItem => {
-        if (breakItem.break_start_time) {
-          const [startHour, startMin, startSec] = breakItem.break_start_time.split(':').map(Number);
-          const now = new Date();
-          const currentHour = now.getHours();
-          const currentMin = now.getMinutes();
-          const currentSec = now.getSeconds();
-          
-          const startTotalSeconds = (startHour * 3600) + (startMin * 60) + (startSec || 0);
-          const nowTotalSeconds = (currentHour * 3600) + (currentMin * 60) + currentSec;
-          
-          let elapsedSeconds = nowTotalSeconds - startTotalSeconds;
-          if (elapsedSeconds < 0) elapsedSeconds += 24 * 3600; // Handle midnight wraparound
-          
-          newTimers[breakItem.id] = elapsedSeconds;
-        }
-      });
-      setBreakTimers(newTimers);
-    }, 1000);
-
-    return () => clearInterval(timerInterval);
-  }, [activeBreaks]);
-
-  // Format elapsed time as MM:SS or H:MM:SS
-  const formatElapsedTime = (seconds) => {
-    if (!seconds) return '0:00';
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    if (hours > 0) {
-      return `${hours}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-    }
-    return `${minutes}:${String(secs).padStart(2, '0')}`;
-  };
 
   // Reset pagination when status filter changes
   useEffect(() => {
@@ -202,28 +154,7 @@ const HRMyAttendance = () => {
     }
   };
 
-  const fetchActiveBreaks = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const employeeId = getEmployeeId();
-      
-      if (!employeeId) return;
 
-      const response = await fetch(endpoints.attendance.ongoingBreaks(employeeId), {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        setActiveBreaks(data.data || []);
-      }
-    } catch (error) {
-      console.error('Error fetching active breaks:', error);
-    }
-  };
 
   const handleCheckIn = async () => {
     try {
@@ -288,92 +219,7 @@ const HRMyAttendance = () => {
     }
   };
 
-  const handleBreakStart = async (breakType) => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(endpoints.attendance.breakStart, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          employee_id: getEmployeeId(),
-          break_type: breakType,
-          reason: `${breakType.charAt(0).toUpperCase() + breakType.slice(1)} break`
-        })
-      });
 
-      const data = await response.json();
-      if (data.success) {
-        fetchActiveBreaks();
-      } else {
-        alert(data.message || 'Failed to start break');
-      }
-    } catch (error) {
-      console.error('Start break error:', error);
-      alert('Failed to start break');
-    }
-  };
-
-  const handleBreakEnd = async (breakId) => {
-    try {
-      const token = localStorage.getItem('token');
-      const employeeId = getEmployeeId();
-      
-      // Find the break details from activeBreaks
-      const breakRecord = activeBreaks.find(b => b.id === breakId);
-      if (!breakRecord) {
-        alert('Break record not found');
-        return;
-      }
-
-      // Calculate duration from start time to now
-      // Parse times correctly: HH:MM:SS format
-      const [startHour, startMin, startSec] = breakRecord.break_start_time.split(':').map(Number);
-      const now = new Date();
-      const currentHour = now.getHours();
-      const currentMin = now.getMinutes();
-      const currentSec = now.getSeconds();
-      
-      // Convert both to total minutes since midnight for accurate calculation
-      const startTotalSeconds = (startHour * 3600) + (startMin * 60) + (startSec || 0);
-      const nowTotalSeconds = (currentHour * 3600) + (currentMin * 60) + currentSec;
-      
-      // Calculate duration in minutes (handle midnight crossing)
-      let durationSeconds = nowTotalSeconds - startTotalSeconds;
-      if (durationSeconds < 0) {
-        // Break started before midnight, ended after - add 24 hours
-        durationSeconds += (24 * 3600);
-      }
-      const duration = Math.max(0, Math.floor(durationSeconds / 60));
-
-      const response = await fetch(endpoints.attendance.breakEnd, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          employee_id: employeeId,
-          break_type: breakRecord.break_type,
-          break_end_time: now.toTimeString().split(' ')[0],
-          break_duration_minutes: duration
-        })
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        fetchActiveBreaks();
-        fetchTodayAttendance();
-      } else {
-        alert(data.message || 'Failed to end break');
-      }
-    } catch (error) {
-      console.error('End break error:', error);
-      alert('Failed to end break');
-    }
-  };
 
   const getWorkingHours = () => {
     if (!attendanceData?.check_in_time) return '0h 0m';
@@ -503,12 +349,7 @@ const HRMyAttendance = () => {
     return `${hours}h ${mins}m`;
   };
 
-  const breakTypes = [
-    { type: 'Smoke', label: 'Smoke Break', icon: Cigarette, color: 'bg-gray-500', duration: 5 },
-    { type: 'Dinner', label: 'Dinner Break', icon: Utensils, color: 'bg-orange-500', duration: 60 },
-    { type: 'Washroom', label: 'Washroom Break', icon: User, color: 'bg-blue-500', duration: 10 },
-    { type: 'Prayer', label: 'Prayer Break', icon: Activity, color: 'bg-purple-500', duration: 10 }
-  ];
+  // Breaks removed from HR view — no break types needed here.
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-cyan-50">
@@ -737,124 +578,7 @@ const HRMyAttendance = () => {
               </div>
             </div>
 
-            {/* Break Management */}
-            <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-200">
-              <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                <PauseCircle className="w-6 h-6 text-purple-600" />
-                Break Management
-              </h2>
-              
-              {/* Break Type Cards Grid */}
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                {breakTypes.map((breakType) => {
-                  const Icon = breakType.icon;
-                  const isActive = activeBreaks.some(b => b.break_type === breakType.type);
-                  
-                  return (
-                    <button
-                      key={breakType.type}
-                      onClick={() => handleBreakStart(breakType.type)}
-                      disabled={!isCheckedIn || isActive || attendanceData?.check_out_time}
-                      className={`p-5 rounded-xl text-center transition-all duration-300 border ${
-                        !isCheckedIn || isActive || attendanceData?.check_out_time
-                          ? 'bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed'
-                          : 'bg-white border-gray-200 hover:border-purple-300 hover:shadow-md text-gray-900'
-                      }`}
-                    >
-                      <Icon className="w-6 h-6 mx-auto mb-2 opacity-70" />
-                      <div className="text-sm font-semibold">{breakType.label}</div>
-                      <div className="text-xs text-gray-500 mt-1">{breakType.duration}m</div>
-                    </button>
-                  );
-                })}
-              </div>
 
-              {/* Active Breaks Alert */}
-              {activeBreaks.length > 0 && (
-                <div className="mb-6 bg-amber-50 border border-amber-200 rounded-lg p-4">
-                  <h3 className="text-sm font-semibold text-amber-900 mb-3 flex items-center gap-2">
-                    <Timer className="w-4 h-4" />
-                    Active Breaks
-                  </h3>
-                  <div className="space-y-2">
-                    {activeBreaks.map((breakItem) => (
-                      <div key={breakItem.id} className="flex items-center justify-between bg-white rounded-lg p-3 border border-amber-100">
-                        <div className="flex-1">
-                          <span className="text-sm font-medium text-gray-700">
-                            {breakItem.break_type.charAt(0).toUpperCase() + breakItem.break_type.slice(1)} Break
-                          </span>
-                          <div className="mt-1 flex items-center gap-2">
-                            <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                              <div 
-                                className="h-full bg-gradient-to-r from-amber-400 to-amber-500 transition-all"
-                                style={{
-                                  width: `${Math.min(100, (breakTimers[breakItem.id] || 0) / (breakItem.break_type === 'Dinner' ? 60 : breakItem.break_type === 'Smoke' ? 5 : 10) * 100)}%`
-                                }}
-                              />
-                            </div>
-                            <span className="text-xs font-mono font-bold text-amber-700 min-w-[50px]">
-                              {formatElapsedTime(breakTimers[breakItem.id] || 0)}
-                            </span>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => handleBreakEnd(breakItem.id)}
-                          className="ml-3 text-xs bg-red-500 text-white px-3 py-1 rounded-full hover:bg-red-600 transition-colors whitespace-nowrap"
-                        >
-                          End Break
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Today's Break Summary */}
-              {attendanceData && (
-                <div className="pt-6 border-t border-gray-200">
-                  <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-4">Today's Breaks</h3>
-                  
-                  {/* Main Stats */}
-                  <div className="space-y-3 mb-4">
-                    <div className="flex justify-between items-center">
-                      <p className="text-gray-700 font-medium">Total Breaks:</p>
-                      <p className="text-2xl font-bold text-purple-600">{attendanceData.total_breaks_taken || 0}</p>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <p className="text-gray-700 font-medium">Total Time:</p>
-                      <p className="text-2xl font-bold text-purple-600">{formatTimeDisplay(attendanceData.total_break_duration_minutes || 0)}</p>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <p className="text-gray-700 font-medium">Active:</p>
-                      <p className="text-2xl font-bold text-purple-600">{activeBreaks.length}</p>
-                    </div>
-                  </div>
-                  
-                  {/* Break Details by Type - Always Show */}
-                  <div className="pt-4 border-t border-purple-200">
-                    <h4 className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-3">Break Details</h4>
-                    <div className="grid grid-cols-2 gap-3 text-sm">
-                      <div className="flex justify-between items-center bg-gray-50 p-2 rounded">
-                        <span className="text-gray-700">Smoke Break:</span>
-                        <span className="font-semibold text-purple-600">0x</span>
-                      </div>
-                      <div className="flex justify-between items-center bg-gray-50 p-2 rounded">
-                        <span className="text-gray-700">Dinner Break:</span>
-                        <span className="font-semibold text-purple-600">0x</span>
-                      </div>
-                      <div className="flex justify-between items-center bg-gray-50 p-2 rounded">
-                        <span className="text-gray-700">Washroom Break:</span>
-                        <span className="font-semibold text-purple-600">0x</span>
-                      </div>
-                      <div className="flex justify-between items-center bg-gray-50 p-2 rounded">
-                        <span className="text-gray-700">Prayer Break:</span>
-                        <span className="font-semibold text-purple-600">0x</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
           </div>
 
           {/* Charts Section */}

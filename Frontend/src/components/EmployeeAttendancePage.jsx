@@ -149,6 +149,30 @@ const formatPakistanTimeString = (timeStr) => {
   }
 };
 
+// Small toast helper (used for user-facing messages)
+const showToast = (message, type = 'success') => {
+  try {
+    const el = document.createElement('div');
+    const isError = type === 'error';
+    el.className = `fixed top-4 right-4 z-50 max-w-sm p-3 rounded-lg shadow-lg transform transition-opacity duration-300 ${isError ? 'bg-red-50 border-l-4 border-red-500 text-red-800' : 'bg-green-50 border-l-4 border-green-500 text-green-800'}`;
+    el.style.opacity = '0';
+    el.innerHTML = `
+      <div class="flex items-start gap-3">
+        <div class="flex-1 text-sm">${message}</div>
+        <button class="ml-3 text-sm font-medium" aria-label="close">✕</button>
+      </div>
+    `;
+    const btn = el.querySelector('button');
+    btn.addEventListener('click', () => el.remove());
+    document.body.appendChild(el);
+    requestAnimationFrame(() => { el.style.opacity = '1'; });
+    setTimeout(() => { if (el.parentNode) el.remove(); }, 4500);
+  } catch (e) {
+    console.error('Toast error', e);
+    alert(message);
+  }
+};
+
 // Custom hook for attendance management
 export const useAttendance = () => {
   const [attendanceData, setAttendanceData] = useState([]);
@@ -2376,7 +2400,7 @@ export function EmployeeAttendancePage() {
     console.log('🔵 ════════════════════════════════════════\n');
   };
 
-  const handleBreakEnd = (breakType) => {
+  const handleBreakEnd = async (breakType) => {
     const now = new Date();
     console.log('🔴 ════════════════════════════════════════');
     console.log('🔴 BREAK ENDED');
@@ -2416,47 +2440,14 @@ export function EmployeeAttendancePage() {
       console.log('   💾 Auto-save interval cleared');
     }
 
-    setBreakData(prev => {
-      const breakInfo = prev[breakType];
-      if (!breakInfo || !breakInfo.startTime) {
-        console.log('   ❌ No break info or start time');
-        return prev;
+    // Mark as ending to prevent double clicks
+    setBreakData(prev => ({
+      ...prev,
+      [breakType]: {
+        ...prev[breakType],
+        ending: true
       }
-      
-      const duration = (now - breakInfo.startTime) / (1000 * 60); // Calculate actual duration
-      const exceeded = Math.max(0, duration - breakLimit);
-      
-      console.log('   Duration:', duration.toFixed(2), 'minutes');
-      console.log('   Limit:', breakLimit, 'minutes');
-      console.log('   Exceeded:', exceeded.toFixed(2), 'minutes');
-      
-      // Add to overtime debt if exceeded
-      if (exceeded > 0) {
-        console.log('   ⚠️ Break exceeded! Adding to overtime debt');
-        addOvertimeDebt('break', exceeded, `${breakConfig.name} exceeded by ${Math.round(exceeded)} minutes`);
-      }
-      
-      const updated = {
-        ...prev,
-        [breakType]: {
-          ...breakInfo,
-          active: false,
-          startTime: null,
-          warningTimer: null,
-          autoEndTimer: null,
-          totalDuration: breakInfo.totalDuration + duration,
-          exceededDuration: breakInfo.exceededDuration + exceeded,
-          breakCount: breakInfo.breakCount + 1,
-        }
-      };
-      
-      console.log('   Updated breakData for', breakType, ':', updated[breakType]);
-      return updated;
-    });
-
-    // Resume working time tracking
-    setBreakStatus(false);
-    console.log('   ✅ Break ended successfully');
+    }));
 
     // Update break end time in database (break was already saved on start)
     const updateBreakEnd = async () => {
@@ -2466,7 +2457,7 @@ export function EmployeeAttendancePage() {
         
         if (!token) {
           console.warn('⚠️ No token available, cannot update break end time');
-          return;
+          return { ok: false };
         }
 
         const capitalizedBreakType = breakType.charAt(0).toUpperCase() + breakType.slice(1);
@@ -2492,26 +2483,99 @@ export function EmployeeAttendancePage() {
           })
         });
 
-        if (response.ok) {
-          const data = await response.json();
-          console.log('✅ Break end time successfully updated:', data);
-          
-          // Refetch attendance data to update UI with break information
-          console.log('🔄 Refetching attendance data to sync break records...');
-          setTimeout(() => {
-            fetchAttendanceData();
-          }, 300);
-        } else {
-          const errorData = await response.json().catch(() => ({}));
-          console.warn('⚠️ Failed to update break end time:', response.status, errorData.message);
-        }
+        return response;
       } catch (error) {
         console.error('❌ Error updating break end time:', error);
+        return { ok: false };
       }
     };
 
-    // Call the update function
-    updateBreakEnd();
+    // Call the update function and wait for result
+    const resp = await updateBreakEnd();
+
+    try {
+      if (resp && resp.ok) {
+        const data = await resp.json();
+        console.log('✅ Break end time successfully updated:', data);
+
+        // Update local breakData (finalize end)
+        setBreakData(prev => {
+          const breakInfo = prev[breakType];
+          if (!breakInfo || !breakInfo.startTime) return prev;
+
+          const duration = (now - breakInfo.startTime) / (1000 * 60); // Calculate actual duration
+          const exceeded = Math.max(0, duration - breakLimit);
+
+          // Add to overtime debt if exceeded
+          if (exceeded > 0) {
+            addOvertimeDebt('break', exceeded, `${breakConfig.name} exceeded by ${Math.round(exceeded)} minutes`);
+          }
+
+          const updated = {
+            ...prev,
+            [breakType]: {
+              ...breakInfo,
+              active: false,
+              ending: false,
+              startTime: null,
+              warningTimer: null,
+              autoEndTimer: null,
+              totalDuration: breakInfo.totalDuration + duration,
+              exceededDuration: breakInfo.exceededDuration + exceeded,
+              breakCount: breakInfo.breakCount + 1,
+            }
+          };
+
+          console.log('   Updated breakData for', breakType, ':', updated[breakType]);
+          return updated;
+        });
+
+        // Resume working time tracking
+        setBreakStatus(false);
+        console.log('   ✅ Break ended successfully');
+
+        // Refetch both attendance data AND today's breaks to update UI with break information
+        console.log('🔄 Refetching attendance data and today\'s breaks to sync records...');
+        setTimeout(() => {
+          fetchAttendanceData();
+          fetchTodayBreaksFromDB(); // Also refresh the breaks summary
+        }, 300);
+
+      } else {
+        // Failure: attempt to read server response for debugging
+        try {
+          const errData = await resp.json();
+          console.error('❌ Break end failed - server response:', errData);
+          showToast && showToast(errData.message || 'Failed to end break. Changes will be refreshed from server.', 'error');
+        } catch (parseError) {
+          console.error('❌ Break end failed - unable to parse server response', parseError);
+          showToast && showToast('Failed to end break. Changes will be refreshed from server.', 'error');
+        }
+
+        // revert ending flag and keep break active
+        setBreakData(prev => ({
+          ...prev,
+          [breakType]: {
+            ...prev[breakType],
+            ending: false
+          }
+        }));
+
+        // Refresh UI from server state to reflect true DB state
+        setTimeout(() => {
+          fetchAttendanceData();
+          fetchTodayBreaksFromDB();
+        }, 300);
+      }
+    } catch (e) {
+      console.error('❌ Error handling break end response:', e);
+      showToast && showToast('Failed to end break due to network error', 'error');
+      setTimeout(() => {
+        fetchAttendanceData();
+        fetchTodayBreaksFromDB();
+      }, 300);
+    }
+
     console.log('🔴 ════════════════════════════════════════\n');
   };
 
@@ -2771,6 +2835,35 @@ export function EmployeeAttendancePage() {
     day.status === 'present' || day.status === 'late'
   );
 
+  // Compute live displayMinutes and percent for session timer (uses Pakistan timezone)
+  let displayMinutes = Math.floor(systemAttendance.totalWorkingTime || 0);
+  if (systemAttendance.checkedIn && systemAttendance.checkInTime) {
+    try {
+      // Normalize checkInTime to a Date object if it's a string
+      let checkInDate = systemAttendance.checkInTime;
+      if (typeof checkInDate === 'string') {
+        const parsed = new Date(checkInDate);
+        if (!isNaN(parsed.getTime())) checkInDate = parsed;
+      }
+
+      if (checkInDate instanceof Date && !isNaN(checkInDate.getTime())) {
+        const nowPk = getPakistanDate();
+        const diffMinutes = Math.floor((nowPk.getTime() - checkInDate.getTime()) / (1000 * 60));
+        // Sanity check: if diff is reasonable (0 <= diff <= 24h), use it; otherwise fallback to totalWorkingTime
+        if (diffMinutes >= 0 && diffMinutes <= 24 * 60) {
+          displayMinutes = diffMinutes;
+        } else {
+          console.warn('Unusual session length detected, using server-provided totalWorkingTime as fallback', { diffMinutes, totalWorkingTime: systemAttendance.totalWorkingTime });
+        }
+      } else {
+        console.warn('Invalid checkInTime value, falling back to totalWorkingTime', systemAttendance.checkInTime);
+      }
+    } catch (e) {
+      console.error('Error computing displayMinutes:', e);
+    }
+  }
+  const displayPercent = Math.min(Math.round((displayMinutes / 540) * 100), 100);
+
   // Tab navigation
   const tabs = [
     { id: 'dashboard', name: 'Attendance Dashboard', icon: ShieldUser },
@@ -2990,31 +3083,30 @@ export function EmployeeAttendancePage() {
                         {systemAttendance.isOnBreak ? '🔸 ON BREAK' : '🟢 WORKING'}
                       </span>
                     </div>
-                    
-                    <div className="text-center mb-4">
-                      <div className="text-5xl font-black text-blue-600 font-mono tracking-tighter">
-                        {(() => {
-                          const totalMinutes = Math.floor(systemAttendance.totalWorkingTime || 0);
-                          const hours = Math.floor(totalMinutes / 60);
-                          const minutes = totalMinutes % 60;
-                          const seconds = Math.floor(((systemAttendance.totalWorkingTime || 0) % 1) * 60);
-                          return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-                        })()}
-                      </div>
-                      <p className="text-xs text-gray-500 mt-2">hours : minutes : seconds</p>
+
+                    {/* Display timer calculated from displayMinutes (computed above) */}
+                    <div className="text-5xl font-black text-blue-600 font-mono tracking-tighter">
+                      {(() => {
+                        const hours = Math.floor((displayMinutes || 0) / 60);
+                        const minutes = (displayMinutes || 0) % 60;
+                        return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+                      })()}
                     </div>
+                    <p className="text-xs text-gray-500 mt-2">hours : minutes</p>
                     
                     <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden mb-3">
                       <div 
                         className="bg-gradient-to-r from-blue-500 to-cyan-500 h-full transition-all duration-300"
-                        style={{ width: `${Math.min(((systemAttendance.totalWorkingTime || 0) / 540) * 100, 100)}%` }}
+                        style={{ width: `${Math.min(((displayMinutes || 0) / 540) * 100, 100)}%` }}
                       />
                     </div>
-                    
+
                     <div className="flex items-center justify-between text-xs text-gray-600 px-1">
-                      <span>Session started at {systemAttendance.checkInTime?.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) || 'N/A'}</span>
-                      <span className="text-blue-600 font-semibold">{Math.min(Math.round(((systemAttendance.totalWorkingTime || 0) / 540) * 100), 100)}% of daily target</span>
+                      <span>Session started at {systemAttendance.checkInTime?.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) || 'N/A'}</span>
+                      <span className="text-blue-600 font-semibold ml-2">{displayPercent}% of daily target</span>
                     </div>
+                    
+
                     
                     <div className="flex items-center gap-2 mt-3 text-xs text-gray-600 bg-white bg-opacity-50 p-2 rounded">
                       {systemAttendance.isOnBreak ? (
@@ -3069,10 +3161,20 @@ export function EmployeeAttendancePage() {
                         {breakInfo && breakInfo.active && (
                           <button 
                             onClick={() => handleManualBreakEnd(breakType.id)}
-                            className="w-full flex items-center justify-center p-2 rounded-lg border border-gray-200 hover:border-gray-300 bg-white text-xs"
+                            disabled={!!breakInfo.ending}
+                            className={`w-full flex items-center justify-center p-2 rounded-lg border border-gray-200 ${breakInfo.ending ? 'opacity-60 cursor-not-allowed bg-gray-100' : 'hover:border-gray-300 bg-white'} text-xs`}
                           >
-                            <CheckCircle className="h-3 w-3 mr-1" />
-                            End Break
+                            {breakInfo.ending ? (
+                              <>
+                                <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
+                                Ending...
+                              </>
+                            ) : (
+                              <>
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                                End Break
+                              </>
+                            )}
                           </button>
                         )}
                       </div>
