@@ -1107,14 +1107,14 @@ exports.recordBreakEnd = async (req, res) => {
       attendanceDate = getPakistanDateString();
     }
 
-    console.log("⏸️ Record break END request received:");
-    console.log("   - JWT employeeId:", jwtEmployeeId);
-    console.log("   - Request employee_id:", reqEmployeeId);
-    console.log("   - Using employee_id:", employee_id);
-    console.log("   - Break Type:", break_type);
-    console.log("   - End Time:", break_end_time);
-    console.log("   - Duration:", break_duration_minutes);
-    console.log("   - Calculated attendance_date:", attendanceDate);
+    console.log('⏸️ Record break END request received:');
+    console.log('   - JWT employeeId:', jwtEmployeeId);
+    console.log('   - Request employee_id:', reqEmployeeId);
+    console.log('   - Using employee_id:', employee_id);
+    console.log('   - Break Type:', break_type);
+    console.log('   - End Time:', break_end_time);
+    console.log('   - Duration:', break_duration_minutes);
+    console.log('   - Calculated attendance_date:', attendanceDate);
 
     if (!employee_id || !break_type) {
       return res.status(400).json({
@@ -1135,24 +1135,41 @@ exports.recordBreakEnd = async (req, res) => {
 
     try {
       // Get today's attendance record using calculated attendance date
+      console.log('🔍 Looking for attendance record:');
+      console.log('   - employee_id:', employee_id, '(type:', typeof employee_id, ')');
+      console.log('   - attendance_date:', attendanceDate);
+      console.log('   - check_out_time IS NULL');
+      
       const [attendanceRecord] = await connection.query(
         `SELECT id FROM Employee_Attendance 
          WHERE employee_id = ? AND attendance_date = ? AND check_out_time IS NULL`,
         [employee_id, attendanceDate],
       );
 
+      let attendanceId;
+      console.log('🔍 Attendance record query result:', attendanceRecord);
+
       if (attendanceRecord.length === 0) {
         if (connection) connection.release();
         return res.status(404).json({
           success: false,
-          message: "No active check in found for today",
+          message: 'No active check in found for today'
         });
       }
 
-      const attendanceId = attendanceRecord[0].id;
+if (!attendanceId && attendanceRecord && attendanceRecord.length > 0) {
+        attendanceId = attendanceRecord[0].id;
+      }
+
       const breakEnd = break_end_time || getPakistanTimeString();
 
       // Find the most recent break record for this type that doesn't have an end time
+      console.log('🔍 Looking for active break record:');
+      console.log('   - attendance_id:', attendanceId);
+      console.log('   - employee_id:', employee_id);
+      console.log('   - break_type:', break_type);
+      console.log('   - break_end_time IS NULL');
+      
       const [breakRecord] = await connection.query(
         `SELECT id FROM Employee_Breaks 
          WHERE attendance_id = ? AND employee_id = ? AND break_type = ? AND break_end_time IS NULL
@@ -1160,11 +1177,13 @@ exports.recordBreakEnd = async (req, res) => {
         [attendanceId, employee_id, break_type],
       );
 
+      console.log('🔍 Break record query result:', breakRecord);
+
       if (breakRecord.length === 0) {
         if (connection) connection.release();
         return res.status(404).json({
           success: false,
-          message: "No active break found for this type",
+          message: 'No active break found for this type'
         });
       }
 
@@ -1172,12 +1191,13 @@ exports.recordBreakEnd = async (req, res) => {
       const breakDurationMinutes = Math.floor(break_duration_minutes || 0);
 
       // Update break record with end time and duration
-      await connection.query(
+      const [updateBreakResult] = await connection.query(
         `UPDATE Employee_Breaks 
          SET break_end_time = ?, break_duration_minutes = ?, updated_at = NOW()
          WHERE id = ?`,
         [breakEnd, breakDurationMinutes, breakId],
       );
+      console.log(`🔧 Employee_Breaks UPDATE affectedRows=${updateBreakResult.affectedRows}, breakId=${breakId}`);
 
       // Update attendance record with break statistics
       const fieldMap = {
@@ -1221,8 +1241,8 @@ exports.recordBreakEnd = async (req, res) => {
         ];
         queryParams = [breakDurationMinutes, attendanceId];
       }
-
-      const updateQuery = updateQueryParts.join("\n");
+      
+      const updateQuery = updateQueryParts.join('\n');
       await connection.query(updateQuery, queryParams);
 
       console.log(
@@ -1346,6 +1366,32 @@ exports.recordBreakProgress = async (req, res) => {
          WHERE id = ? AND break_end_time IS NULL`,
         [Math.floor(current_duration_minutes), breakId],
       );
+
+      // Update only the per-type duration field so the UI reflects ongoing duration.
+      // IMPORTANT: Do NOT increment total counts or add to total_break_duration_minutes here to avoid double-counting.
+      const durationFieldMap = {
+        'Smoke': 'smoke_break_duration_minutes',
+        'Dinner': 'dinner_break_duration_minutes',
+        'Washroom': 'washroom_break_duration_minutes',
+        'Prayer': 'prayer_break_duration_minutes',
+        'Other': 'smoke_break_duration_minutes'
+      };
+
+      if (['Smoke', 'Dinner', 'Washroom', 'Prayer', 'Other'].includes(break_type)) {
+        const breakDurationField = durationFieldMap[break_type];
+        try {
+          await connection.query(
+            `UPDATE Employee_Attendance
+             SET ${breakDurationField} = ?,
+                 updated_at = NOW()
+             WHERE id = ?`,
+            [Math.floor(current_duration_minutes), attendanceId]
+          );
+          console.log(`ℹ️ Attendance ${attendanceId} ${breakDurationField} updated to ${Math.floor(current_duration_minutes)} (autosave)`);
+        } catch (e) {
+          console.warn('⚠️ Failed to update attendance duration during autosave:', e);
+        }
+      }
 
       console.log(
         `✅ Break progress auto-saved: ${break_type} - Duration: ${current_duration_minutes}m`,
@@ -1947,36 +1993,27 @@ exports.getTodayAttendance = async (req, res) => {
           const currentTotalMinutes = currentHour * 60 + currentMin;
 
           // Calculate elapsed time
-          // Night shift logic: if check-in was in evening (21:00-23:59) and current time is early morning (0:00-6:00),
+          // Night shift logic: if check-in was in evening (21:00-23:59) and current time is early morning (0:00-6:00), 
           // then we've crossed midnight
           const checkInIsNight = checkInHour >= 21 && checkInHour <= 23;
           const currentIsEarlyMorning = currentHour >= 0 && currentHour < 6;
-
+          
           if (checkInIsNight && currentIsEarlyMorning) {
             // Night shift spanning midnight (checked in 21:00+, now in 00:00-06:00)
-            const minutesUntilMidnight = 24 * 60 - checkInTotalMinutes;
+            const minutesUntilMidnight = (24 * 60) - checkInTotalMinutes;
             const minutesAfterMidnight = currentTotalMinutes;
             currentSessionMinutes = minutesUntilMidnight + minutesAfterMidnight;
+            console.log(`⏱️ Midnight-cross detected: checkIn=${checkInTotalMinutes}m, now=${currentTotalMinutes}m, elapsed=${currentSessionMinutes}m`);
           } else {
             // Same period (either both evening or both early morning) - simple subtraction
-            currentSessionMinutes = Math.abs(
-              currentTotalMinutes - checkInTotalMinutes,
-            );
+            currentSessionMinutes = Math.abs(currentTotalMinutes - checkInTotalMinutes);
           }
 
           // Subtract break time from current session
-          const totalBreakMinutes = breaks.reduce(
-            (sum, brk) => sum + (brk.break_duration_minutes || 0),
-            0,
-          );
-          currentSessionMinutes = Math.max(
-            0,
-            currentSessionMinutes - totalBreakMinutes,
-          );
-
-          console.log(
-            `⏱️ Current session calculation: check-in=${record.check_in_time} (night=${checkInIsNight}), now=${currentHour}:${String(currentMin).padStart(2, "0")} (early=${currentIsEarlyMorning}), elapsed=${currentSessionMinutes}m, breaks=${totalBreakMinutes}m`,
-          );
+          const totalBreakMinutes = breaks.reduce((sum, brk) => sum + (brk.break_duration_minutes || 0), 0);
+          currentSessionMinutes = Math.max(0, currentSessionMinutes - totalBreakMinutes);
+          
+          console.log(`⏱️ Current session calculation: check-in=${record.check_in_time} (night=${checkInIsNight}), now=${currentHour}:${String(currentMin).padStart(2, '0')} (early=${currentIsEarlyMorning}), elapsed=${currentSessionMinutes}m, breaks=${totalBreakMinutes}m`);
         } catch (err) {
           console.error("Error calculating current session:", err);
         }
@@ -2795,41 +2832,37 @@ exports.getBreakSummary = async (req, res) => {
       const breakStats = {
         totalBreaks: attendance.total_breaks_taken || 0,
         totalDurationMinutes: attendance.total_break_duration_minutes || 0,
-        averageDurationMinutes:
-          attendance.total_breaks_taken > 0
-            ? Math.round(
-                (attendance.total_break_duration_minutes || 0) /
-                  attendance.total_breaks_taken,
-              )
-            : 0,
+        averageDurationMinutes: attendance.total_breaks_taken > 0 
+          ? Math.round((attendance.total_break_duration_minutes || 0) / attendance.total_breaks_taken)
+          : 0,
         breakdownByType: {
           smoke: {
             count: attendance.smoke_break_count || 0,
             durationMinutes: attendance.smoke_break_duration_minutes || 0,
-            label: "Smoke Break",
+            label: 'Smoke Break'
           },
           dinner: {
             count: attendance.dinner_break_count || 0,
             durationMinutes: attendance.dinner_break_duration_minutes || 0,
-            label: "Dinner Break",
+            label: 'Dinner Break'
           },
           washroom: {
             count: attendance.washroom_break_count || 0,
             durationMinutes: attendance.washroom_break_duration_minutes || 0,
-            label: "Washroom Break",
+            label: 'Washroom Break'
           },
           prayer: {
             count: attendance.prayer_break_count || 0,
             durationMinutes: attendance.prayer_break_duration_minutes || 0,
-            label: "Prayer Break",
-          },
+            label: 'Prayer Break'
+          }
         },
-        allBreaks: breakRecords.map((brk) => ({
+        allBreaks: breakRecords.map(brk => ({
           id: brk.id,
           type: brk.break_type,
           startTime: brk.break_start_time,
           endTime: brk.break_end_time,
-          durationMinutes: brk.break_duration_minutes,
+          durationMinutes: brk.break_duration_minutes || computeBreakDuration(brk),
           reason: brk.reason,
           createdAt: brk.created_at,
         })),

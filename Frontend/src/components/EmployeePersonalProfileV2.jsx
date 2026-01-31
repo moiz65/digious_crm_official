@@ -3,11 +3,11 @@ import {
   User, Mail, Phone, MapPin, Briefcase, Building, Calendar,
   Heart, Shield, Lock, Settings, Download, Edit, X, Upload, Camera,
   Globe, CheckCircle, FileText, Eye, Share2, Printer, Clock, CreditCard,
-  Zap, AlertCircle, Pencil, Save, TrendingUp, Award, DollarSign,
-  Linkedin, Github, ExternalLink, Users,
+  BarChart3, Target, Zap, AlertCircle, Pencil, Save, TrendingUp, Award,
+  Linkedin, Github, ExternalLink, DollarSign, BriefcaseIcon, Users,
   ChevronRight, Plus, Trash2, GraduationCap, Star, Calendar as CalendarIcon
 } from "lucide-react";
-import EmployeeProfileService from "../services/employeeProfileService";
+
 import config from '../config/api';
 
 const EmployeePersonalProfileV2 = ({ employeeId, onBack }) => {
@@ -17,7 +17,6 @@ const EmployeePersonalProfileV2 = ({ employeeId, onBack }) => {
   const [employee, setEmployee] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [successMessage, setSuccessMessage] = useState(null);
 
   // API Configuration - use centralized config
   const API_BASE_URL = config.FULL_API_URL;
@@ -28,64 +27,34 @@ const EmployeePersonalProfileV2 = ({ employeeId, onBack }) => {
       setLoading(true);
       setError(null);
 
-      // Fetch profile summary from API
-      const profileResponse = await EmployeeProfileService.getProfileSummary(empId);
+      // In production, make these API calls to your backend
+      // For now, using sample data structure that matches database output
       
-      if (!profileResponse.success) {
-        throw new Error(profileResponse.message || 'Failed to load profile');
-      }
+      // Query 1: Get profile summary (joins employees + profiles + departments)
+      // GET /api/employees/{empId}/profile-summary
+      
+      // Query 2: Get financial summary (bank accounts + allowances masked)
+      // GET /api/employees/{empId}/financial-summary
+      
+      // Query 3: Get attendance summary (90-day stats)
+      // GET /api/employees/{empId}/attendance-summary
+      
+      // Query 4: Get performance summary (reviews + goals)
+      // GET /api/employees/{empId}/performance-summary
 
-      const profileData = profileResponse.data?.profile;
+      // Simulated API call - replace with actual axios/fetch calls
+      const response = await new Promise((resolve) => {
+        setTimeout(() => {
+          resolve({
+            data: sampleEmployee, // Replace with API response
+          });
+        }, 500);
+      });
 
-      // Parse JSON fields
-      const documents = profileData?.documents_json ? JSON.parse(profileData.documents_json) : [];
-      const resources = profileData?.resources_json ? JSON.parse(profileData.resources_json) : [];
-
-      // Transform to component format
-      const transformedEmployee = {
-        id: profileData?.id,
-        employeeId: profileData?.employee_id,
-        fullName: profileData?.full_name,
-        email: profileData?.email,
-        phone: profileData?.phone,
-        department: profileData?.department,
-        designation: profileData?.designation,
-        joinDate: profileData?.join_date,
-        yearsInCompany: profileData?.years_in_company,
-        status: profileData?.status,
-
-        profile: {
-          bio: profileData?.bio,
-          bannerImage: profileData?.banner_url,
-          preferredContactMethod: profileData?.preferred_contact_method,
-          workModePreference: profileData?.work_mode_preference,
-          preferredWorkLocation: profileData?.preferred_work_location,
-        },
-
-        personalDetails: {
-          emergencyContactName: profileData?.emergency_contact_name,
-          emergencyContactPhone: profileData?.emergency_contact_phone,
-          emergencyContactRelation: profileData?.emergency_contact_relation,
-          address: profileData?.address,
-          linkedin: profileData?.linkedin_url,
-          github: profileData?.github_url,
-          portfolio: profileData?.portfolio_url,
-        },
-
-        financialInfo: {
-          bankAccountSummary: profileData?.bank_accounts_summary,
-          totalAllowances: profileData?.total_allowances,
-        },
-
-        documents,
-        resources,
-        profileCompleteness: profileResponse.data?.metadata?.profile_completeness || 0
-      };
-
-      setEmployee(transformedEmployee);
+      setEmployee(response.data);
     } catch (err) {
       console.error("Error fetching employee profile:", err);
-      setError(err.message || "Failed to load employee profile");
+      setError("Failed to load employee profile");
     } finally {
       setLoading(false);
     }
@@ -106,19 +75,19 @@ const EmployeePersonalProfileV2 = ({ employeeId, onBack }) => {
         linkedin_url: employee.personalDetails?.linkedin || null,
         github_url: employee.personalDetails?.github || null,
         portfolio_url: employee.personalDetails?.portfolio || null,
-        preferred_work_location: employee.profile?.preferredWorkLocation || null,
-        work_mode_preference: employee.profile?.workModePreference || null,
       };
 
-      // Call API to update profile
-      const result = await EmployeeProfileService.updateProfile(employee.id, payload);
+      // Attempt real API call
+      const res = await fetch(`${API_BASE_URL}/employees/${employee.id}/profile`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
-      if (!result.success) {
-        throw new Error(result.message || 'Failed to save profile');
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || "Failed to save profile");
       }
-
-      setSuccessMessage('Profile saved successfully!');
-      setTimeout(() => setSuccessMessage(null), 3000);
 
       // Refresh data after save
       await fetchEmployeeProfile(employee.id);
@@ -147,159 +116,6 @@ const EmployeePersonalProfileV2 = ({ employeeId, onBack }) => {
       return next;
     });
   };
-
-  // Banner and Documents state
-  const [bannerFile, setBannerFile] = useState(null);
-  const [isUploadingBanner, setIsUploadingBanner] = useState(false);
-  const [docFile, setDocFile] = useState(null);
-  const [docType, setDocType] = useState("");
-  const [docDesc, setDocDesc] = useState("");
-  const [isUploadingDoc, setIsUploadingDoc] = useState(false);
-
-  // Banner select handler
-  const handleBannerSelect = (e) => {
-    const file = e.target.files && e.target.files[0];
-    if (!file) return;
-    setBannerFile(file);
-    // show preview immediately
-    const url = URL.createObjectURL(file);
-    updateEmployeeField('profile.bannerImage', url);
-  };
-
-  const uploadBanner = async () => {
-    if (!bannerFile || !employee) return;
-    try {
-      setIsUploadingBanner(true);
-      setError(null);
-
-      const result = await EmployeeProfileService.uploadBanner(employee.id, bannerFile);
-
-      if (!result.success) {
-        throw new Error(result.message || 'Banner upload failed');
-      }
-
-      setSuccessMessage('Banner uploaded successfully!');
-      setTimeout(() => setSuccessMessage(null), 3000);
-
-      // Update employee data with new banner URL
-      setEmployee(prev => ({
-        ...prev,
-        profile: { ...prev.profile, bannerImage: result.data.banner_url }
-      }));
-
-      setBannerFile(null);
-    } catch (err) {
-      console.error('Error uploading banner:', err);
-      setError(err.message || 'Failed to upload banner');
-    } finally {
-      setIsUploadingBanner(false);
-    }
-  };
-
-  // Document upload handlers
-  const handleDocFileChange = (e) => {
-    const file = e.target.files && e.target.files[0];
-    if (!file) return;
-    setDocFile(file);
-  };
-
-  const uploadDocument = async () => {
-    if (!docFile || !docType || !employee) {
-      setError('Please select a document file and type');
-      return;
-    }
-    try {
-      setIsUploadingDoc(true);
-      setError(null);
-
-      // Prepare document for upload (match service expected format)
-      const documentsToUpload = [{
-        imageFile: docFile,
-        title: docDesc || docFile.name,
-        type: docType
-      }];
-
-      // Use the service to upload document
-      const result = await EmployeeProfileService.uploadDocuments(employee.id, documentsToUpload);
-
-      if (!result.success) {
-        throw new Error(result.message || 'Document upload failed');
-      }
-
-      setSuccessMessage('Document uploaded successfully!');
-      setTimeout(() => setSuccessMessage(null), 3000);
-
-      // Create document object from response
-      const uploadedDoc = {
-        id: Date.now(),
-        fileName: docFile.name,
-        type: docType,
-        description: docDesc,
-        uploadedAt: new Date().toISOString(),
-        url: result.data.documents && result.data.documents[0] ? result.data.documents[0].url : URL.createObjectURL(docFile),
-      };
-
-      // Add to local state
-      setEmployee(prev => ({
-        ...prev,
-        documents: [...(prev.documents || []), uploadedDoc]
-      }));
-
-      // Reset form
-      setDocFile(null);
-      setDocType('');
-      setDocDesc('');
-    } catch (err) {
-      console.error('Error uploading document:', err);
-      setError(err.message || 'Document upload failed');
-    } finally {
-      setIsUploadingDoc(false);
-    }
-  };
-
-  // Remove document
-  const removeDocument = (docId) => {
-    setEmployee(prev => ({ ...prev, documents: (prev.documents || []).filter(d => d.id !== docId) }));
-  };
-
-  // Resource management (equipment, documents, other)
-  const [resourceType, setResourceType] = useState('');
-  const [resourceName, setResourceName] = useState('');
-  const [resourceSerial, setResourceSerial] = useState('');
-  const [resourceIssuedAt, setResourceIssuedAt] = useState('');
-  const [resourceFile, setResourceFile] = useState(null);
-
-  const handleResourceFileChange = (e) => {
-    const f = e.target.files && e.target.files[0];
-    setResourceFile(f || null);
-  };
-
-  const addResource = async () => {
-    if (!resourceType || !resourceName) {
-      setError('Please provide resource type and name');
-      return;
-    }
-
-    // Simulated add - in production, POST to server and return created resource with id & url
-    const newRes = {
-      id: Date.now(),
-      title: resourceName,
-      type: resourceType === 'document' ? 'document' : (resourceType === 'equipment' ? 'equipment' : 'other'),
-      serial: resourceSerial || null,
-      status: resourceType === 'equipment' ? 'Issued' : null,
-      issuedAt: resourceIssuedAt || (resourceType === 'equipment' ? new Date().toISOString().split('T')[0] : null),
-      url: resourceFile ? URL.createObjectURL(resourceFile) : (resourceType === 'document' ? null : null)
-    };
-
-    setEmployee(prev => ({ ...prev, resources: [ ...(prev.resources || []), newRes ] }));
-
-    // reset inputs
-    setResourceType(''); setResourceName(''); setResourceSerial(''); setResourceIssuedAt(''); setResourceFile(null);
-  };
-
-  const removeResource = (resId) => {
-    setEmployee(prev => ({ ...prev, resources: (prev.resources || []).filter(r => r.id !== resId) }));
-  }; 
 
   // Sample data matching database structure
   const sampleEmployee = {
@@ -342,10 +158,8 @@ const EmployeePersonalProfileV2 = ({ employeeId, onBack }) => {
       portfolio: "https://hunain.dev",
     },
     profile: {
-      preferredContactMethod: "Email",
-      bannerImage: null
+      preferredContactMethod: "Email"
     },
-    documents: [],
     bankInfo: {
       accountNumber: "PKRIBAN123456",
       bankName: "HBL",
@@ -355,7 +169,6 @@ const EmployeePersonalProfileV2 = ({ employeeId, onBack }) => {
       branchCode: "KHI001",
     },
     financialInfo: {
-      baseSalary: 150000,
       totalAllowances: 18000,
       allowancesList: [
         { name: "Housing Allowance", amount: 8000, currency: "PKR" },
@@ -364,12 +177,6 @@ const EmployeePersonalProfileV2 = ({ employeeId, onBack }) => {
       ],
       salaryGrade: "G7",
     },
-    resources: [
-      { id: 1, title: 'Employee Handbook', url: '/docs/handbook.pdf', type: 'document' },
-      { id: 2, title: 'Onboarding Slides', url: '/docs/onboarding.pdf', type: 'document' },
-      { id: 3, title: 'Dell Latitude 5430', type: 'equipment', serial: 'DL5430-12345', status: 'Issued', issuedAt: '2025-06-01' },
-      { id: 4, title: 'USB-C Charger', type: 'equipment', serial: 'CHG-9988', status: 'Issued', issuedAt: '2025-06-01' },
-    ],
     attendanceStats: {
       presentDays: 45,
       absentDays: 2,
@@ -407,8 +214,25 @@ const EmployeePersonalProfileV2 = ({ employeeId, onBack }) => {
       technical: ["React", "Node.js", "MongoDB", "AWS", "Docker", "GraphQL"],
       soft: ["Leadership", "Communication", "Problem Solving", "Team Management"],
     },
-
-    achievements: [
+    workHistory: [
+      {
+        id: 1,
+        company: "Digious",
+        position: "Senior Full-Stack Developer",
+        period: "Jan 2023 - Present",
+        duration: "3 years",
+        description: "Leading development of CRM platform",
+      },
+      {
+        id: 2,
+        company: "TechCorp Pakistan",
+        position: "Senior Developer",
+        period: "2020 - 2023",
+        duration: "3 years",
+        description: "Managed team of 5 developers",
+      },
+    ],
+    certifications: [
       {
         id: 1,
         name: "AWS Solutions Architect",
@@ -507,27 +331,9 @@ const EmployeePersonalProfileV2 = ({ employeeId, onBack }) => {
           </button>
         )}
 
-        {/* Hero Section (supports banner upload) */}
+        {/* Hero Section */}
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden mb-8">
-          <div
-            className={`h-32 bg-gradient-to-r from-blue-600 to-purple-600 ${employee.profile?.bannerImage ? 'bg-cover bg-center' : ''}`}
-            style={employee?.profile?.bannerImage ? { backgroundImage: `url(${employee?.profile?.bannerImage})` } : {}}
-          >
-            {/* Banner upload control */}
-            <div className="flex justify-end p-3 items-center gap-3">
-              <label className="inline-flex items-center gap-2 bg-white/80 text-sm px-3 py-1 rounded-md cursor-pointer hover:bg-white">
-                <input id="banner-upload" type="file" accept="image/*" className="hidden" onChange={(e) => handleBannerSelect(e)} />
-                <Camera className="h-4 w-4 text-gray-700" />
-                <span className="text-gray-700">Upload Banner</span>
-              </label>
-              {bannerFile && (
-                <div className="inline-flex items-center gap-2">
-                  <button onClick={uploadBanner} disabled={isUploadingBanner} className="px-3 py-1 bg-green-600 text-white rounded-md text-sm">{isUploadingBanner ? 'Uploading...' : 'Apply'}</button>
-                  <button onClick={() => { setBannerFile(null); updateEmployeeField('profile.bannerImage', null); }} className="px-3 py-1 bg-gray-100 rounded-md text-sm">Cancel</button>
-                </div>
-              )}
-            </div>
-          </div>
+          <div className="bg-gradient-to-r from-blue-600 to-purple-600 h-32"></div>
           
           <div className="px-8 pb-8 relative">
             {/* Avatar positioned on top of gradient */}
@@ -606,10 +412,40 @@ const EmployeePersonalProfileV2 = ({ employeeId, onBack }) => {
           </div>
         </div>
 
-
+        {/* Key Metrics Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <MetricCard
+            icon={<BarChart3 className="h-6 w-6" />}
+            label="Performance Rating"
+            value={employee?.performanceInfo?.currentRating || '—'}
+            subtitle="/5.0"
+            color="blue"
+          />
+          <MetricCard
+            icon={<Target className="h-6 w-6" />}
+            label="Goals Progress"
+            value={`${employee?.performanceInfo?.avgGoalProgress ?? 0}%`}
+            subtitle={`${employee?.performanceInfo?.inProgressGoals ?? 0} in progress`}
+            color="purple"
+          />
+          <MetricCard
+            icon={<Clock className="h-6 w-6" />}
+            label="Attendance"
+            value={`${employee?.attendanceStats?.attendancePercentage ?? 0}%`}
+            subtitle={`${employee?.attendanceStats?.presentDays ?? 0} days`}
+            color="green"
+          />
+          <MetricCard
+            icon={<DollarSign className="h-6 w-6" />}
+            label="Total Allowances"
+            value={`${employee?.financialInfo?.totalAllowances ?? 0}`}
+            subtitle="PKR per month"
+            color="amber"
+          />
+        </div>
 
         {/* Two-column layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Sidebar */}
           <div className="lg:col-span-1 space-y-6">
             {/* Contact Information */}
@@ -701,41 +537,6 @@ const EmployeePersonalProfileV2 = ({ employeeId, onBack }) => {
                 )}
               </div>
             </CardSection>
-
-            {/* Required Documents (compact) */}
-            <div className="mt-4">
-              <div className="min-h-0">
-                <CardSection title="Required Documents" icon={<FileText className="h-5 w-5" />}>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <select value={docType} onChange={(e)=>setDocType(e.target.value)} className="border rounded-md p-1 text-sm">
-                      <option value="">Type</option>
-                      <option value="contract">Contract</option>
-                      <option value="identification">Identification</option>
-                      <option value="certificate">Certificate</option>
-                      <option value="other">Other</option>
-                    </select>
-                    <input type="file" onChange={handleDocFileChange} className="border rounded-md p-1 text-sm bg-white" />
-                    <input type="text" value={docDesc} onChange={(e)=>setDocDesc(e.target.value)} placeholder="Desc" className="border rounded-md p-1 text-sm w-36" />
-                    <button onClick={uploadDocument} disabled={isUploadingDoc} className="px-3 py-1 bg-blue-600 text-white rounded-md text-sm">{isUploadingDoc ? 'Uploading...' : 'Upload'}</button>
-                  </div>
-
-                  <div className="mt-3 space-y-2 max-h-40 overflow-auto">
-                    {(employee.documents || []).slice(0,8).map(d => (
-                      <div key={d.id} className="flex items-center justify-between p-2 border rounded-md">
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium truncate">{d.fileName}</p>
-                          <p className="text-xs text-gray-500">{d.type} • {new Date(d.uploadedAt).toLocaleDateString()}</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <a href={d.url} target="_blank" rel="noreferrer" className="text-blue-600 text-sm">Open</a>
-                          <button onClick={()=>removeDocument(d.id)} className="text-red-600 text-sm">Remove</button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardSection>
-              </div>
-            </div>
           </div>
 
           {/* Right Content */}
@@ -743,86 +544,64 @@ const EmployeePersonalProfileV2 = ({ employeeId, onBack }) => {
             {/* Professional Information */}
             <CardSection title="Professional Information" icon={<Briefcase className="h-5 w-5" />}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <InfoRow label="Employee ID" value={employee?.basicInfo?.employeeId || '—'} />
-                <InfoRow label="Department" value={employee?.professionalInfo?.department || '—'} />
-                <InfoRow label="Reporting To" value={employee?.professionalInfo?.reportingTo || '—'} />
-                <InfoRow label="Joining Date" value={employee?.professionalInfo?.joiningDate || '—'} />
-                <InfoRow label="Work Experience" value={employee?.professionalInfo?.workExperience || '—'} />
-                <InfoRow label="Employee Level" value={employee?.professionalInfo?.employeeLevel || '—'} />
-                <InfoRow label="Office Location" value={employee?.professionalInfo?.officeLocation || '—'} />
-                <InfoRow label="Work Schedule" value={employee?.professionalInfo?.workSchedule || '—'} />
-                <InfoRow label="Work Mode" value={employee?.professionalInfo?.workMode || '—'} />
+                <InfoRow label="Employee ID" value={employee.basicInfo.employeeId} />
+                <InfoRow label="Department" value={employee.professionalInfo.department} />
+                <InfoRow label="Reporting To" value={employee.professionalInfo.reportingTo} />
+                <InfoRow label="Joining Date" value={employee.professionalInfo.joiningDate } />
+                <InfoRow label="Work Experience" value={employee.professionalInfo.workExperience} />
+                <InfoRow label="Employee Level" value={employee.professionalInfo.employeeLevel} />
+                <InfoRow label="Office Location" value={employee.professionalInfo.officeLocation} />
+                <InfoRow label="Work Schedule" value={employee.professionalInfo.workSchedule} />
+                <InfoRow label="Work Mode" value={employee.professionalInfo.workMode} />
               </div>
             </CardSection>
 
-            {/* Salary & Allowances */}
-            <CardSection title="Salary & Allowances" icon={<DollarSign className="h-5 w-5" />}>
-              <div className="space-y-3">
-                <InfoRow label="Base Salary" value={`${employee?.financialInfo?.baseSalary ? employee?.financialInfo?.baseSalary.toLocaleString() : '—'} PKR`} />
-                <div className="pt-2">
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Allowances</p>
-                  <div className="mt-2 space-y-2">
-                    {(employee?.financialInfo?.allowancesList || []).map((a, i) => (
-                      <div key={i} className="flex items-center justify-between p-2 bg-gray-50 rounded-md border border-gray-100">
-                        <span className="text-sm">{a?.name || '—'}</span>
-                        <span className="text-sm font-semibold text-blue-600">{a?.amount || 0} {a?.currency || 'PKR'}</span>
-                      </div>
-                    ))}
+            {/* Performance & Goals */}
+            <CardSection title="Performance & Review" icon={<TrendingUp className="h-5 w-5" />}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <InfoRow label="Current Rating" value={`${employee.performanceInfo.currentRating}/5.0`} />
+                <InfoRow label="Last Review" value={employee.performanceInfo.lastReviewDate} />
+                <InfoRow label="Next Review" value={employee.performanceInfo.nextReviewDate} />
+                <InfoRow label="Review Status" value={employee.performanceInfo.reviewStatus} />
+              </div>
+              
+              <div className="bg-blue-50 rounded-lg p-4 border border-blue-200 mt-4">
+                <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                  <Target className="h-4 w-4 text-blue-600" />
+                  Goals Progress
+                </h4>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">In Progress</span>
+                    <span className="font-semibold text-blue-600">{employee.performanceInfo.inProgressGoals}/{employee.performanceInfo.totalGoals}</span>
                   </div>
-                  <div className="mt-2 flex items-center justify-between p-2 bg-blue-50 rounded-md border border-blue-100 font-semibold">
-                    <span>Total Monthly Allowances</span>
-                    <span className="text-blue-600">{employee?.financialInfo?.totalAllowances || 0} PKR</span>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className="bg-blue-600 h-2 rounded-full"
+                      style={{ width: `${employee.performanceInfo.avgGoalProgress}%` }}
+                    ></div>
                   </div>
+                  <p className="text-gray-500">{employee.performanceInfo.avgGoalProgress}% average progress</p>
                 </div>
               </div>
             </CardSection>
 
-            {/* Resources */}
-            <CardSection title="Resources" icon={<FileText className="h-5 w-5" />}>
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                  <select value={resourceType} onChange={(e) => setResourceType(e.target.value)} className="border rounded-md p-2">
-                    <option value="">Select Type</option>
-                    <option value="document">Document</option>
-                    <option value="equipment">Equipment</option>
-                    <option value="other">Other</option>
-                  </select>
-                  <input type="text" value={resourceName} onChange={(e) => setResourceName(e.target.value)} placeholder="Name (e.g., Dell Laptop)" className="border rounded-md p-2" />
-                  {resourceType === 'equipment' && (
-                    <input type="text" value={resourceSerial} onChange={(e) => setResourceSerial(e.target.value)} placeholder="Serial number" className="border rounded-md p-2" />
-                  )}
-                  {resourceType === 'document' && (
-                    <input type="file" onChange={handleResourceFileChange} className="border rounded-md p-2 bg-white" />
-                  )}
-                </div>
-                <div className="flex items-center gap-3">
-                  <input type="date" value={resourceIssuedAt} onChange={(e) => setResourceIssuedAt(e.target.value)} className="border rounded-md p-2" />
-                  <button onClick={addResource} className="px-4 py-2 bg-blue-600 text-white rounded-md">Add Resource</button>
-                  <p className="text-sm text-gray-500">Equipment will be tracked by serial number.</p>
-                </div>
+            {/* Attendance & Leave */}
+            <CardSection title="Attendance & Leave" icon={<Calendar className="h-5 w-5" />}>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                <StatBox label="Present Days" value={employee.attendanceStats.presentDays} color="green" />
+                <StatBox label="Absent Days" value={employee.attendanceStats.absentDays} color="red" />
+                <StatBox label="Late Days" value={employee.attendanceStats.lateDays} color="amber" />
+              </div>
 
-                {/* Resources list */}
+              <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-4 border border-green-200 mt-4">
+                <h4 className="font-semibold text-gray-900 mb-3">Leave Balance</h4>
                 <div className="space-y-2">
-                  {(employee.resources || []).map((r) => (
-                    <div key={r.id} className="flex items-center justify-between p-3 border rounded-md bg-gray-50">
-                      <div>
-                        <p className="font-medium">{r.title}</p>
-                        <p className="text-xs text-gray-500">
-                          {r.type === 'equipment' ? `${r.type.toUpperCase()} • SN: ${r.serial} • ${r.status}` : r.type.toUpperCase()}
-                        </p>
-                        {r.issuedAt && <p className="text-xs text-gray-500">Issued: {r.issuedAt}</p>}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {r.url && <a href={r.url} target="_blank" rel="noreferrer" className="text-blue-600">Open</a>}
-                        <button onClick={() => removeResource(r.id)} className="text-red-600">Remove</button>
-                      </div>
-                    </div>
-                  ))}
+                  <LeaveBar label="Annual Leave" used={employee.leaveBalance.taken} total={employee.leaveBalance.annual} color="blue" />
+                  <LeaveBar label="Sick Leave" used={0} total={employee.leaveBalance.sick} color="orange" />
                 </div>
               </div>
             </CardSection>
-
-
 
             {/* Skills & Expertise */}
             <CardSection title="Skills & Expertise" icon={<Zap className="h-5 w-5" />}>
@@ -830,7 +609,7 @@ const EmployeePersonalProfileV2 = ({ employeeId, onBack }) => {
                 <div>
                   <h4 className="text-sm font-semibold text-gray-900 mb-2">Technical Skills</h4>
                   <div className="flex flex-wrap gap-2">
-                    {(employee?.skills?.technical || []).map((skill, i) => (
+                    {employee.skills.technical.map((skill, i) => (
                       <span key={i} className="px-3 py-1.5 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
                         {skill}
                       </span>
@@ -840,7 +619,7 @@ const EmployeePersonalProfileV2 = ({ employeeId, onBack }) => {
                 <div>
                   <h4 className="text-sm font-semibold text-gray-900 mb-2">Soft Skills</h4>
                   <div className="flex flex-wrap gap-2">
-                    {(employee?.skills?.soft || []).map((skill, i) => (
+                    {employee.skills.soft.map((skill, i) => (
                       <span key={i} className="px-3 py-1.5 bg-purple-100 text-purple-800 rounded-full text-sm font-medium">
                         {skill}
                       </span>
@@ -850,38 +629,64 @@ const EmployeePersonalProfileV2 = ({ employeeId, onBack }) => {
               </div>
             </CardSection>
 
-
+            {/* Allowances */}
+            <CardSection title="Allowances & Benefits" icon={<DollarSign className="h-5 w-5" />}>
+              <div className="space-y-3">
+                {employee.financialInfo.allowancesList.map((allowance, i) => (
+                  <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <span className="font-medium text-gray-900">{allowance.name}</span>
+                    <span className="text-blue-600 font-semibold">{allowance.amount} {allowance.currency}</span>
+                  </div>
+                ))}
+                <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border-2 border-blue-200 font-semibold">
+                  <span>Total Monthly Allowances</span>
+                  <span className="text-blue-600">{employee.financialInfo.totalAllowances} PKR</span>
+                </div>
+              </div>
+            </CardSection>
           </div>
         </div>
 
-        {/* Achievements */}
-        <div className="relative z-20 grid grid-cols-1 gap-8 mt-12 lg:mt-16">
-          <CardSection title="Achievements" icon={<Star className="h-5 w-5" />}>
+        {/* Work History & Certifications */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+          {/* Work History */}
+          <CardSection title="Work History" icon={<BriefcaseIcon className="h-5 w-5" />}>
             <div className="space-y-4">
-              {(employee?.achievements && employee?.achievements?.length > 0) ? (
-                employee?.achievements?.map((ach, i) => (
-                  <div key={i} className="pb-4 border-b last:border-b-0 last:pb-0">
-                    <div className="flex items-start gap-3">
-                      <Star className="h-5 w-5 text-blue-600 flex-shrink-0 mt-1" />
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold text-gray-900 text-sm">{ach?.name || '—'}</h4>
-                        <p className="text-xs text-gray-600">{ach?.issuer || '—'}</p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          Date: {ach?.issueDate || '—'}
-                          {ach?.expiryDate && ` • Expires: ${ach?.expiryDate}`}
-                        </p>
-                      </div>
+              {employee.workHistory.map((job, i) => (
+                <div key={i} className="pb-4 border-b last:border-b-0 last:pb-0">
+                  <div className="flex items-start justify-between mb-1">
+                    <h4 className="font-semibold text-gray-900">{job.position}</h4>
+                    <span className="text-sm text-gray-500">{job.duration}</span>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-1">{job.company}</p>
+                  <p className="text-xs text-gray-500">{job.period}</p>
+                  <p className="text-sm text-gray-700 mt-2">{job.description}</p>
+                </div>
+              ))}
+            </div>
+          </CardSection>
+
+          {/* Certifications */}
+          <CardSection title="Certifications" icon={<Award className="h-5 w-5" />}>
+            <div className="space-y-4">
+              {employee.certifications.map((cert, i) => (
+                <div key={i} className="pb-4 border-b last:border-b-0 last:pb-0">
+                  <div className="flex items-start gap-3">
+                    <GraduationCap className="h-5 w-5 text-blue-600 flex-shrink-0 mt-1" />
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-semibold text-gray-900 text-sm">{cert.name}</h4>
+                      <p className="text-xs text-gray-600">{cert.issuer}</p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Issued: {cert.issueDate}
+                        {cert.expiryDate && ` • Expires: ${cert.expiryDate}`}
+                      </p>
                     </div>
                   </div>
-                ))
-              ) : (
-                <p className="text-sm text-gray-500">No achievements listed.</p>
-              )}
+                </div>
+              ))}
             </div>
           </CardSection>
         </div>
-
-
       </div>
     </div>
   );
@@ -889,12 +694,12 @@ const EmployeePersonalProfileV2 = ({ employeeId, onBack }) => {
 
 // Helper Components
 const CardSection = ({ title, icon, children }) => (
-  <div className="bg-white rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition-shadow relative z-0">
-    <div className="px-5 py-3 border-b border-gray-100 flex items-center gap-3">
+  <div className="bg-white rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition-shadow">
+    <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
       <div className="text-blue-600">{icon}</div>
-      <h3 className="text-base font-semibold text-gray-900">{title}</h3>
+      <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
     </div>
-    <div className="p-4">{children}</div>
+    <div className="p-6">{children}</div>
   </div>
 );
 
@@ -916,7 +721,25 @@ const InfoRow = ({ icon, label, value, copyable, subtitle }) => (
   </div>
 );
 
+const MetricCard = ({ icon, label, value, subtitle, color }) => {
+  const colorClasses = {
+    blue: "bg-blue-50 border-blue-200 text-blue-600",
+    purple: "bg-purple-50 border-purple-200 text-purple-600",
+    green: "bg-green-50 border-green-200 text-green-600",
+    amber: "bg-amber-50 border-amber-200 text-amber-600",
+  };
 
+  return (
+    <div className={`rounded-xl border p-6 ${colorClasses[color] || colorClasses.blue}`}>
+      <div className="flex items-start justify-between mb-3">
+        <div className="p-2.5 bg-white rounded-lg">{icon}</div>
+      </div>
+      <p className="text-xs font-medium opacity-75 mb-1">{label}</p>
+      <p className="text-3xl font-bold">{value}</p>
+      <p className="text-xs opacity-60 mt-1">{subtitle}</p>
+    </div>
+  );
+};
 
 const SocialLink = ({ icon, label, url }) => (
   <a href={url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-blue-50 border border-gray-200 hover:border-blue-200 transition-all group">
@@ -928,8 +751,34 @@ const SocialLink = ({ icon, label, url }) => (
   </a>
 );
 
+const StatBox = ({ label, value, color }) => {
+  const colorClasses = {
+    green: "bg-green-50 text-green-700 border-green-200",
+    red: "bg-red-50 text-red-700 border-red-200",
+    amber: "bg-amber-50 text-amber-700 border-amber-200",
+  };
 
+  return (
+    <div className={`rounded-lg border p-3 text-center ${colorClasses[color]}`}>
+      <p className="text-xs font-medium opacity-75 mb-1">{label}</p>
+      <p className="text-2xl font-bold">{value}</p>
+    </div>
+  );
+};
 
-
+const LeaveBar = ({ label, used, total, color }) => (
+  <div className="space-y-1">
+    <div className="flex justify-between text-sm">
+      <span className="font-medium text-gray-900">{label}</span>
+      <span className="text-gray-600">{used}/{total}</span>
+    </div>
+    <div className="w-full bg-gray-200 rounded-full h-2.5">
+      <div
+        className={`h-2.5 rounded-full bg-${color}-500`}
+        style={{ width: `${(used / total) * 100}%` }}
+      ></div>
+    </div>
+  </div>
+);
 
 export default EmployeePersonalProfileV2;

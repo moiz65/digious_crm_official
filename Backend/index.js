@@ -27,15 +27,22 @@ const corsOptions = {
     
     const allAllowedOrigins = [...allowedOrigins, ...envOrigins];
 
-    console.log('🔐 CORS Check - Origin:', origin);
-    console.log('✅ Allowed Origins:', allAllowedOrigins);
+    // In development, log the origin for debugging. In production, avoid printing origins or allowlist to logs.
+    if (process.env.NODE_ENV === 'development') {
+      console.debug('🔐 CORS Check - Origin:', origin);
+    }
 
     // Allow requests with no origin (like mobile apps or curl requests)
     // Also allow any origin that matches our allowlist
     if (!origin || allAllowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      console.error('❌ CORS Blocked - Origin not in allowlist:', origin);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('❌ CORS Blocked - Origin not in allowlist:', origin);
+      } else {
+        // Keep production logs minimal to avoid exposing sensitive configuration
+        console.error('❌ CORS Blocked - Origin not allowed');
+      }
       callback(new Error('Not allowed by CORS'));
     }
   },
@@ -63,6 +70,7 @@ const userSystemInfoRoutes = require('./routes/userSystemInfo');
 const attendanceRoutes = require('./routes/attendance');
 const rulesRoutes = require('./routes/rules');
 const activitiesRoutes = require('./routes/activities');
+const employeeProfileRoutes = require('./routes/employeeProfile');
 
 app.use(`/api/${process.env.API_VERSION}`, onboardingRoutes);
 app.use(`/api/${process.env.API_VERSION}/auth`, authRoutes);
@@ -70,6 +78,7 @@ app.use(`/api/${process.env.API_VERSION}/system-info`, userSystemInfoRoutes);
 app.use(`/api/${process.env.API_VERSION}/attendance`, attendanceRoutes);
 app.use(`/api/${process.env.API_VERSION}/activities`, activitiesRoutes);
 app.use(`/api/${process.env.API_VERSION}/rules`, rulesRoutes);
+app.use(`/api/${process.env.API_VERSION}/employees`, employeeProfileRoutes);
 
 // 404 handler
 app.use((req, res) => {

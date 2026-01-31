@@ -97,14 +97,18 @@ const EmployeeOnboarding = () => {
       if (!formData.emergencyContactRelationship.trim()) newErrors.emergencyContactRelationship = 'Relationship is required';
       if (!formData.emergencyContact.trim()) newErrors.emergencyContact = 'Emergency contact phone is required';
       if (!formData.cnic.trim()) newErrors.cnic = 'CNIC is required';
-      if (!formData.cnic_issue_date) newErrors.cnic_issue_date = 'CNIC issue month/year is required';
-      else if (!/^\d{4}-\d{2}$/.test(formData.cnic_issue_date)) newErrors.cnic_issue_date = 'CNIC issue must be month and year (YYYY-MM)';
-      if (!formData.cnic_expiry_date) newErrors.cnic_expiry_date = 'CNIC expiry month/year is required';
-      else if (!/^\d{4}-\d{2}$/.test(formData.cnic_expiry_date)) newErrors.cnic_expiry_date = 'CNIC expiry must be month and year (YYYY-MM)';
+      if (!formData.cnic_issue_date) newErrors.cnic_issue_date = 'CNIC issue date is required';
+      else if (!/^\d{4}-\d{2}-\d{2}$/.test(formData.cnic_issue_date)) newErrors.cnic_issue_date = 'CNIC issue must be day, month and year (YYYY-MM-DD)';
+      if (!formData.cnic_expiry_date) newErrors.cnic_expiry_date = 'CNIC expiry date is required';
+      else if (!/^\d{4}-\d{2}-\d{2}$/.test(formData.cnic_expiry_date)) newErrors.cnic_expiry_date = 'CNIC expiry must be day, month and year (YYYY-MM-DD)';
 
-      // Ensure expiry is same or after issue month
-      if (formData.cnic_issue_date && formData.cnic_expiry_date && /^\d{4}-\d{2}$/.test(formData.cnic_issue_date) && /^\d{4}-\d{2}$/.test(formData.cnic_expiry_date)) {
-        if (formData.cnic_expiry_date < formData.cnic_issue_date) newErrors.cnic_expiry_date = 'CNIC expiry must be same or after issue month';
+      // Ensure expiry is same or after issue date
+      if (formData.cnic_issue_date && formData.cnic_expiry_date && /^\d{4}-\d{2}-\d{2}$/.test(formData.cnic_issue_date) && /^\d{4}-\d{2}-\d{2}$/.test(formData.cnic_expiry_date)) {
+        const issue = new Date(formData.cnic_issue_date + 'T00:00:00');
+        const expiry = new Date(formData.cnic_expiry_date + 'T00:00:00');
+        if (isNaN(issue.getTime())) newErrors.cnic_issue_date = 'Invalid CNIC issue date';
+        else if (isNaN(expiry.getTime())) newErrors.cnic_expiry_date = 'Invalid CNIC expiry date';
+        else if (expiry < issue) newErrors.cnic_expiry_date = 'CNIC expiry must be same or after issue date';
       }
       if (!formData.account_title_name.trim()) newErrors.account_title_name = 'Account title name is required';
       if (!formData.bank_name) newErrors.bank_name = 'Bank name is required';
@@ -344,27 +348,39 @@ const EmployeeOnboarding = () => {
     }
 
     // CNIC month/year selects -> keep combined YYYY-MM in cnic_issue_date / cnic_expiry_date
-    if (name === 'cnic_issue_month' || name === 'cnic_issue_year') {
-      const month = name === 'cnic_issue_month' ? newValue : formData.cnic_issue_month;
-      const year = name === 'cnic_issue_year' ? newValue : formData.cnic_issue_year;
+    if (name === 'cnic_issue_date') {
+      const dateVal = newValue; // expected YYYY-MM-DD or empty
+      let month = '';
+      let year = '';
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateVal)) {
+        [year, month] = dateVal.split('-');
+      } else if (/^\d{4}-\d{2}$/.test(dateVal)) {
+        [year, month] = dateVal.split('-');
+      }
       setFormData({
         ...formData,
+        cnic_issue_date: dateVal,
         cnic_issue_month: month,
-        cnic_issue_year: year,
-        cnic_issue_date: month && year ? `${year}-${month}` : ''
+        cnic_issue_year: year
       });
       if (errors.cnic_issue_date) setErrors({ ...errors, cnic_issue_date: '' });
       return;
     }
 
-    if (name === 'cnic_expiry_month' || name === 'cnic_expiry_year') {
-      const month = name === 'cnic_expiry_month' ? newValue : formData.cnic_expiry_month;
-      const year = name === 'cnic_expiry_year' ? newValue : formData.cnic_expiry_year;
+    if (name === 'cnic_expiry_date') {
+      const dateVal = newValue; // expected YYYY-MM-DD or empty
+      let month = '';
+      let year = '';
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateVal)) {
+        [year, month] = dateVal.split('-');
+      } else if (/^\d{4}-\d{2}$/.test(dateVal)) {
+        [year, month] = dateVal.split('-');
+      }
       setFormData({
         ...formData,
+        cnic_expiry_date: dateVal,
         cnic_expiry_month: month,
-        cnic_expiry_year: year,
-        cnic_expiry_date: month && year ? `${year}-${month}` : ''
+        cnic_expiry_year: year
       });
       if (errors.cnic_expiry_date) setErrors({ ...errors, cnic_expiry_date: '' });
       return;
@@ -470,11 +486,11 @@ const EmployeeOnboarding = () => {
     });
   };
 
-  const computeTotalSalary = () => {
+  function computeTotalSalary() {
     const base = Number(formData.baseSalary || 0);
-    const allowances = formData.allowances.reduce((s, a) => s + (Number(a.amount) || 0), 0);
+    const allowances = (formData.allowances || []).reduce((s, a) => s + (Number(a.amount) || 0), 0);
     return base + allowances;
-  };
+  }
 
   const monthOptions = [
     { value: '01', label: '01 - Jan' },
@@ -492,14 +508,30 @@ const EmployeeOnboarding = () => {
   ];
 
   const currentYear = new Date().getFullYear();
-  const issueYears = Array.from({ length: 51 }, (_, i) => currentYear - i); // currentYear down to -50
-  const expiryYears = Array.from({ length: 31 }, (_, i) => currentYear + i); // currentYear to +30
+  // Allow wider ranges so Year pickers aren't limited to the current year (e.g., not capped at 2026)
+  const issueYears = Array.from({ length: 121 }, (_, i) => currentYear - i); // currentYear down to -120 (covers ~120 years back)
+  const expiryYears = Array.from({ length: 101 }, (_, i) => currentYear + i); // currentYear to +100 (far future)
+
+
 
   const formatMonthYear = (ym) => {
     if (!ym) return '';
     const parts = ym.split('-');
     if (parts.length !== 2) return ym;
     return `${parts[1]} / ${parts[0]}`; // MM / YYYY
+  };
+
+  const formatToDDMMYYYY = (ymd) => {
+    if (!ymd) return '';
+    if (/^\d{4}-\d{2}-\d{2}$/.test(ymd)) {
+      const [y,m,d] = ymd.split('-');
+      return `${d}-${m}-${y}`;
+    }
+    if (/^\d{4}-\d{2}$/.test(ymd)) {
+      const [y,m] = ymd.split('-');
+      return `01-${m}-${y}`;
+    }
+    return ymd;
   };
 
   const stepTitles = [
@@ -756,58 +788,36 @@ const EmployeeOnboarding = () => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-2">CNIC Issue (Month / Year) *</label>
-                      <div className="grid grid-cols-2 gap-3">
-                        <select
-                          name="cnic_issue_month"
-                          value={formData.cnic_issue_month || (formData.cnic_issue_date ? formData.cnic_issue_date.split('-')[1] : '')}
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">CNIC Issue (DD / MM / YYYY) *</label>
+                      <div>
+                        <input
+                          type="date"
+                          name="cnic_issue_date"
+                          value={formData.cnic_issue_date && /^\d{4}-\d{2}$/.test(formData.cnic_issue_date) ? `${formData.cnic_issue_date}-01` : (formData.cnic_issue_date || '')}
                           onChange={handleInputChange}
-                          className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 ${errors.cnic_issue_date ? 'border-red-500 focus:ring-red-500' : 'border-blue-200 focus:ring-blue-500'}`}>
-                          <option value="">Month</option>
-                          {monthOptions.map(m => (
-                            <option key={m.value} value={m.value}>{m.label}</option>
-                          ))}
-                        </select>
-                        <select
-                          name="cnic_issue_year"
-                          value={formData.cnic_issue_year || (formData.cnic_issue_date ? formData.cnic_issue_date.split('-')[0] : '')}
-                          onChange={handleInputChange}
-                          className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 ${errors.cnic_issue_date ? 'border-red-500 focus:ring-red-500' : 'border-blue-200 focus:ring-blue-500'}`}>
-                          <option value="">Year</option>
-                          {issueYears.map(y => (
-                            <option key={y} value={String(y)}>{String(y)}</option>
-                          ))}
-                        </select>
+                          min="1900-01-01"
+                          max="9999-12-31"
+                          className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 ${errors.cnic_issue_date ? 'border-red-500 focus:ring-red-500' : 'border-blue-200 focus:ring-blue-500'}`}
+                        />
                       </div>
-                      <p className="text-xs text-gray-500 mt-1">Select month and year (MM / YYYY)</p>
+                      <p className="text-xs text-gray-500 mt-1">Pick date (DD / MM / YYYY). Selected: {formatToDDMMYYYY(formData.cnic_issue_date)}</p>
                       {errors.cnic_issue_date && <p className="text-red-500 text-sm mt-1">{errors.cnic_issue_date}</p>}
                     </div>
 
                     <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-2">CNIC Expiry (Month / Year) *</label>
-                      <div className="grid grid-cols-2 gap-3">
-                        <select
-                          name="cnic_expiry_month"
-                          value={formData.cnic_expiry_month || (formData.cnic_expiry_date ? formData.cnic_expiry_date.split('-')[1] : '')}
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">CNIC Expiry (DD / MM / YYYY) *</label>
+                      <div>
+                        <input
+                          type="date"
+                          name="cnic_expiry_date"
+                          value={formData.cnic_expiry_date && /^\d{4}-\d{2}$/.test(formData.cnic_expiry_date) ? `${formData.cnic_expiry_date}-01` : (formData.cnic_expiry_date || '')}
                           onChange={handleInputChange}
-                          className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 ${errors.cnic_expiry_date ? 'border-red-500 focus:ring-red-500' : 'border-blue-200 focus:ring-blue-500'}`}>
-                          <option value="">Month</option>
-                          {monthOptions.map(m => (
-                            <option key={m.value} value={m.value}>{m.label}</option>
-                          ))}
-                        </select>
-                        <select
-                          name="cnic_expiry_year"
-                          value={formData.cnic_expiry_year || (formData.cnic_expiry_date ? formData.cnic_expiry_date.split('-')[0] : '')}
-                          onChange={handleInputChange}
-                          className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 ${errors.cnic_expiry_date ? 'border-red-500 focus:ring-red-500' : 'border-blue-200 focus:ring-blue-500'}`}>
-                          <option value="">Year</option>
-                          {expiryYears.map(y => (
-                            <option key={y} value={String(y)}>{String(y)}</option>
-                          ))}
-                        </select>
+                          min="1900-01-01"
+                          max="9999-12-31"
+                          className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 ${errors.cnic_expiry_date ? 'border-red-500 focus:ring-red-500' : 'border-blue-200 focus:ring-blue-500'}`}
+                        />
                       </div>
-                      <p className="text-xs text-gray-500 mt-1">Select month and year (MM / YYYY)</p>
+                      <p className="text-xs text-gray-500 mt-1">Pick date (DD / MM / YYYY). Selected: {formatToDDMMYYYY(formData.cnic_expiry_date)}</p>
                       {errors.cnic_expiry_date && <p className="text-red-500 text-sm mt-1">{errors.cnic_expiry_date}</p>}
                     </div>
 
