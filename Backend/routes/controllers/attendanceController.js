@@ -579,17 +579,26 @@ exports.checkOut = async (req, res) => {
         attendanceRecord[0].total_break_duration_minutes || 0;
 
       // VALIDATE: Check if checkout is before 9:00 AM (Policy enforcement)
+<<<<<<< HEAD
       // Users MUST checkout before 9:00 AM. After 9 AM, system auto-completes checkout
       const [checkOutHourValidate, checkOutMinValidate] = checkOutTime
         .split(":")
         .map(Number);
       const checkOutTotalMinutesValidate =
         checkOutHourValidate * 60 + checkOutMinValidate;
+=======
+      // Policy: Manual checkout is ALLOWED anytime BEFORE 9:00 AM
+      // Auto-checkout fallback: If user forgets, system auto-completes at 9:00 AM
+      // If user tries to checkout AFTER 9:00 AM: Already auto-checked out by system
+      const [checkOutHourValidate, checkOutMinValidate] = checkOutTime.split(':').map(Number);
+      const checkOutTotalMinutesValidate = checkOutHourValidate * 60 + checkOutMinValidate;
+>>>>>>> b81669b ( Check Error Resolve - Locally)
       const nineAMTotalMinutes = 9 * 60; // 540 minutes = 9:00 AM
 
       if (checkOutTotalMinutesValidate >= nineAMTotalMinutes) {
-        // Checkout time is at or after 9:00 AM - not allowed for manual checkout
+        // Checkout time is at or after 9:00 AM - auto-checkout already happened
         connection.release();
+<<<<<<< HEAD
         console.log(
           `❌ CHECKOUT AFTER 9:00 AM NOT ALLOWED: Employee ${employee_id} attempted checkout at ${checkOutTime}`,
         );
@@ -603,6 +612,22 @@ exports.checkOut = async (req, res) => {
             policy:
               "Manual checkout allowed: Before 6 AM, After 6 AM, but MUST be before 9:00 AM",
           },
+=======
+        console.log(`❌ CHECKOUT AFTER 9:00 AM NOT ALLOWED: Employee ${employee_id} already auto-checked out at 9:00 AM`);
+        return res.status(400).json({
+          success: false,
+          message: 'You were automatically checked out at 9:00 AM (shift deadline). If you need to adjust your checkout time, please contact HR.',
+          data: {
+            attemptedCheckOutTime: checkOutTime,
+            autoCheckoutTime: '09:00:00',
+            shiftInfo: {
+              shiftStart: '21:00:00 (previous day)',
+              shiftEnd: '06:00:00 (current day)',
+              maxStayUntil: '09:00:00 (current day) - AUTO-CHECKOUT DEADLINE'
+            },
+            policy: 'Manual checkout: Anytime BEFORE 9:00 AM | Auto-checkout: At 9:00 AM (fallback for those who forget)'
+          }
+>>>>>>> b81669b ( Check Error Resolve - Locally)
         });
       }
 
@@ -1931,10 +1956,38 @@ exports.getTodayAttendance = async (req, res) => {
         [finalEmployeeId, searchDate],
       );
 
+      // If no record found for the primary search date, and the current time is before 09:00 AM,
+      // attempt to find a pending (no check_out_time) record from the previous day (night shift continuation).
+      let record;
       if (attendance.length === 0) {
+<<<<<<< HEAD
         console.log(
           `⚠️ No attendance record found for finalEmployeeId: ${finalEmployeeId} on date: ${searchDate}`,
         );
+=======
+        console.log(`⚠️ No attendance record found for finalEmployeeId: ${finalEmployeeId} on date: ${searchDate}`);
+
+        const now = getPakistanDate();
+        const currentHour = now.getUTCHours();
+
+        if (currentHour < 9) {
+          // search yesterday for any pending check-out (night shift continuation)
+          const yesterdayDate = getPakistanYesterday();
+          const yesterdayStr = getLocalDateString(yesterdayDate);
+
+          console.log(`🔎 Searching yesterday (${yesterdayStr}) for pending check-outs because current hour < 9`);
+
+          const [yesterdayPending] = await connection.query(
+            `SELECT * FROM Employee_Attendance WHERE employee_id = ? AND attendance_date = ? AND check_out_time IS NULL LIMIT 1`,
+            [finalEmployeeId, yesterdayStr]
+          );
+
+          if (yesterdayPending.length > 0) {
+            record = yesterdayPending[0];
+            console.log(`✅ Found pending yesterday record: id=${record.id}, check_in=${record.check_in_time}`);
+          }
+        }
+>>>>>>> b81669b ( Check Error Resolve - Locally)
 
         // Try to find if employee exists at all
         const [employeeCheck] = await connection.query(
@@ -1951,6 +2004,7 @@ exports.getTodayAttendance = async (req, res) => {
             `ℹ️ Employee found in user_as_employees: ${employeeCheck[0].emp_id} (${employeeCheck[0].name})`,
           );
         }
+<<<<<<< HEAD
 
         return res.status(404).json({
           success: false,
@@ -1958,8 +2012,19 @@ exports.getTodayAttendance = async (req, res) => {
           employee_id: finalEmployeeId,
         });
       }
+=======
+>>>>>>> b81669b ( Check Error Resolve - Locally)
 
-      const record = attendance[0];
+        if (!record) {
+          return res.status(404).json({
+            success: false,
+            message: 'No attendance record for today',
+            employee_id: finalEmployeeId
+          });
+        }
+      } else {
+        record = attendance[0];
+      }
       const [breaks] = await connection.query(
         `SELECT * FROM Employee_Breaks WHERE attendance_id = ? ORDER BY break_start_time ASC`,
         [record.id],
@@ -2924,5 +2989,205 @@ exports.getBreakSummary = async (req, res) => {
       message: "Failed to retrieve break summary",
       error: error.message,
     });
+  }
+};
+
+// ============================================================
+// AUTO-CHECKOUT: Force checkout for any pending sessions at 9 AM
+// ============================================================
+// This function automatically completes check-out for employees who:
+// - Have checked in but NOT checked out
+// - Have no check-out time
+// Uses 09:00:00 as the auto-checkout time (Pakistan timezone)
+// ============================================================
+exports.autoCheckoutExpiredSessions = async (req, res) => {
+  let connection;
+  try {
+    connection = await pool.getConnection();
+    
+    const autoCheckoutTime = '09:00:00'; // Pakistan timezone
+    const expectedWorkingMinutes = 540; // 9 hours
+    
+    console.log('\n🔄 ========== AUTO-CHECKOUT PROCESS STARTED ==========');
+    console.log(`⏰ Auto-checkout time: ${autoCheckoutTime}`);
+    
+    // Find all active check-ins (without check-out) for today and yesterday
+    const todayStr = getPakistanDateString();
+    const yesterdayDate = getPakistanYesterday();
+    const yesterdayStr = getLocalDateString(yesterdayDate);
+    
+    // Query for pending check-outs from today and yesterday
+    const [pendingCheckOuts] = await connection.query(
+      `SELECT 
+        id, 
+        employee_id, 
+        name, 
+        email, 
+        attendance_date, 
+        check_in_time,
+        total_break_duration_minutes,
+        status
+       FROM Employee_Attendance 
+       WHERE check_out_time IS NULL 
+       AND (attendance_date = ? OR attendance_date = ?)
+       AND status IN ('Present', 'Late')`,
+      [todayStr, yesterdayStr]
+    );
+    
+    console.log(`📋 Found ${pendingCheckOuts.length} pending check-outs`);
+    
+    if (pendingCheckOuts.length === 0) {
+      console.log('✅ No pending check-outs found');
+      if (res) {
+        res.status(200).json({
+          success: true,
+          message: 'No pending check-outs found',
+          data: { processedCount: 0, details: [] }
+        });
+      }
+      return { success: true, processedCount: 0, details: [] };
+    }
+    
+    const processedDetails = [];
+    
+    // Process each pending check-out
+    for (const record of pendingCheckOuts) {
+      try {
+        const {
+          id: attendanceId,
+          employee_id,
+          name,
+          email,
+          attendance_date,
+          check_in_time: checkInTime,
+          total_break_duration_minutes: totalBreakMinutes,
+          status
+        } = record;
+        
+        console.log(`\n👤 Processing: ${name} (ID: ${employee_id})`);
+        console.log(`   - Attendance Date: ${attendance_date}`);
+        console.log(`   - Check-in: ${checkInTime}`);
+        console.log(`   - Breaks taken: ${totalBreakMinutes || 0} minutes`);
+        
+        // Calculate working hours from check-in to 9 AM
+        const [checkInHour, checkInMin] = checkInTime.split(':').map(Number);
+        const checkInTotalMinutes = checkInHour * 60 + checkInMin;
+        const checkOutTotalMinutes = 9 * 60; // 9:00 AM = 540 minutes
+        
+        let grossWorkingMinutes = 0;
+        const isNightShift = checkInTotalMinutes >= 21 * 60; // 21:00 or later
+        
+        if (isNightShift) {
+          // Night shift calculation
+          const timeDifferenceMinutes = checkOutTotalMinutes - checkInTotalMinutes;
+          
+          if (timeDifferenceMinutes >= 0) {
+            // Same night checkout
+            grossWorkingMinutes = timeDifferenceMinutes;
+            console.log(`   📊 Same-night: ${checkInTime} → ${autoCheckoutTime} = ${grossWorkingMinutes}min`);
+          } else if (checkOutTotalMinutes < 6 * 60) {
+            // Next day early morning (shouldn't happen at 9 AM)
+            const minutesUntilMidnight = (24 * 60) - checkInTotalMinutes;
+            const minutesAfterMidnight = checkOutTotalMinutes;
+            grossWorkingMinutes = minutesUntilMidnight + minutesAfterMidnight;
+            console.log(`   📊 Night shift: ${minutesUntilMidnight}min (until midnight) + ${minutesAfterMidnight}min (after midnight) = ${grossWorkingMinutes}min`);
+          } else {
+            // Normal night shift ending at 9 AM
+            const minutesUntilMidnight = (24 * 60) - checkInTotalMinutes;
+            const minutesAfterMidnight = checkOutTotalMinutes;
+            grossWorkingMinutes = minutesUntilMidnight + minutesAfterMidnight;
+            console.log(`   📊 Normal night shift: ${minutesUntilMidnight}min (until midnight) + ${minutesAfterMidnight}min (after midnight) = ${grossWorkingMinutes}min`);
+          }
+        } else {
+          // Day shift
+          grossWorkingMinutes = Math.max(0, checkOutTotalMinutes - checkInTotalMinutes);
+          console.log(`   📊 Day shift: ${checkInTime} → ${autoCheckoutTime} = ${grossWorkingMinutes}min`);
+        }
+        
+        grossWorkingMinutes = Math.max(0, grossWorkingMinutes);
+        const netWorkingMinutes = Math.max(0, grossWorkingMinutes - (totalBreakMinutes || 0));
+        
+        // Calculate overtime
+        let overtimeMinutes = 0;
+        let overtimeHours = '0.00';
+        
+        if (netWorkingMinutes > expectedWorkingMinutes) {
+          overtimeMinutes = netWorkingMinutes - expectedWorkingMinutes;
+          overtimeHours = (overtimeMinutes / 60).toFixed(2);
+        }
+        
+        console.log(`   ⏱️ Gross: ${grossWorkingMinutes}min, Net: ${netWorkingMinutes}min, Overtime: ${overtimeMinutes}min (${overtimeHours}h)`);
+        
+        // Update the attendance record with auto-checkout
+        await connection.query(
+          `UPDATE Employee_Attendance 
+           SET check_out_time = ?,
+               gross_working_time_minutes = ?,
+               net_working_time_minutes = ?,
+               overtime_minutes = ?,
+               overtime_hours = ?,
+               updated_at = NOW()
+           WHERE id = ?`,
+          [autoCheckoutTime, grossWorkingMinutes, netWorkingMinutes, overtimeMinutes, overtimeHours, attendanceId]
+        );
+        
+        console.log(`✅ Auto-checkout completed for ${name}`);
+        
+        processedDetails.push({
+          employee_id,
+          name,
+          email,
+          attendance_date,
+          check_in_time: checkInTime,
+          check_out_time: autoCheckoutTime,
+          gross_working_time_minutes: grossWorkingMinutes,
+          net_working_time_minutes: netWorkingMinutes,
+          overtime_hours: parseFloat(overtimeHours),
+          status: 'auto-completed'
+        });
+        
+      } catch (error) {
+        console.error(`❌ Failed to auto-checkout for employee ${record.employee_id}:`, error.message);
+        processedDetails.push({
+          employee_id: record.employee_id,
+          name: record.name,
+          status: 'failed',
+          error: error.message
+        });
+      }
+    }
+    
+    connection.release();
+    
+    console.log(`\n✅ AUTO-CHECKOUT PROCESS COMPLETED`);
+    console.log(`📊 Processed: ${processedDetails.length} records`);
+    console.log('🔄 ========== AUTO-CHECKOUT FINISHED ==========\n');
+    
+    if (res) {
+      res.status(200).json({
+        success: true,
+        message: `Auto-checkout process completed for ${processedDetails.length} records`,
+        data: {
+          processedCount: processedDetails.length,
+          details: processedDetails
+        }
+      });
+    }
+    
+    return { success: true, processedCount: processedDetails.length, details: processedDetails };
+    
+  } catch (error) {
+    console.error('❌ Auto-checkout process error:', error);
+    if (connection) connection.release();
+    
+    if (res) {
+      res.status(500).json({
+        success: false,
+        message: 'Auto-checkout process failed',
+        error: error.message
+      });
+    }
+    
+    return { success: false, error: error.message };
   }
 };
