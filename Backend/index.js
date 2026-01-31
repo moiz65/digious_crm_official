@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const schedule = require('node-schedule');
 require('dotenv').config();
 const { getPakistanISO } = require('./utils/timezone');
 
@@ -99,6 +100,34 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
+
+// ============================================================
+// SCHEDULED JOBS
+// ============================================================
+// Auto-checkout job: Runs daily at 9:00 AM Pakistan Time
+// This automatically completes check-out for any employees who 
+// haven't manually checked out before the 9 AM deadline
+// ============================================================
+const attendanceController = require('./routes/controllers/attendanceController');
+
+// Schedule auto-checkout for 9:00 AM every day (Pakistan timezone)
+// Using cron expression: 0 9 * * * = 09:00 every day
+const autoCheckoutJob = schedule.scheduleJob('0 9 * * *', async () => {
+  console.log('\n⏰ SCHEDULED JOB: Auto-checkout triggered at 9:00 AM');
+  try {
+    const result = await attendanceController.autoCheckoutExpiredSessions(null, null);
+    if (result.success) {
+      console.log(`✅ Scheduled auto-checkout completed: ${result.processedCount} records processed`);
+    } else {
+      console.error('❌ Scheduled auto-checkout failed:', result.error);
+    }
+  } catch (error) {
+    console.error('❌ Scheduled auto-checkout error:', error);
+  }
+});
+
+console.log('📅 Scheduled Jobs initialized:');
+console.log('   • Auto-checkout: 09:00 AM every day');
 
 app.listen(PORT, () => {
   console.log(`
