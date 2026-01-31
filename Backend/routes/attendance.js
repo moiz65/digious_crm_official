@@ -26,5 +26,6 @@ router.get('/breaks', attendanceController.getAllBreaks);
 router.get('/summary', authMiddleware, attendanceController.getAttendanceSummary);
 router.get('/overtime', authMiddleware, attendanceController.getOvertimeReport);
 router.post('/auto-fix-working-hours', attendanceController.autoFixMissingWorkingHours); // Auto-fix missing working hours
+router.post('/auto-checkout', attendanceController.autoCheckoutExpiredSessions); // Auto-checkout for expired sessions at 9 AM
 
 module.exports = router;
