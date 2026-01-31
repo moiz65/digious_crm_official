@@ -579,40 +579,16 @@ exports.checkOut = async (req, res) => {
         attendanceRecord[0].total_break_duration_minutes || 0;
 
       // VALIDATE: Check if checkout is before 9:00 AM (Policy enforcement)
-<<<<<<< HEAD
-      // Users MUST checkout before 9:00 AM. After 9 AM, system auto-completes checkout
-      const [checkOutHourValidate, checkOutMinValidate] = checkOutTime
-        .split(":")
-        .map(Number);
-      const checkOutTotalMinutesValidate =
-        checkOutHourValidate * 60 + checkOutMinValidate;
-=======
       // Policy: Manual checkout is ALLOWED anytime BEFORE 9:00 AM
       // Auto-checkout fallback: If user forgets, system auto-completes at 9:00 AM
       // If user tries to checkout AFTER 9:00 AM: Already auto-checked out by system
       const [checkOutHourValidate, checkOutMinValidate] = checkOutTime.split(':').map(Number);
       const checkOutTotalMinutesValidate = checkOutHourValidate * 60 + checkOutMinValidate;
->>>>>>> b81669b ( Check Error Resolve - Locally)
       const nineAMTotalMinutes = 9 * 60; // 540 minutes = 9:00 AM
 
       if (checkOutTotalMinutesValidate >= nineAMTotalMinutes) {
         // Checkout time is at or after 9:00 AM - auto-checkout already happened
         connection.release();
-<<<<<<< HEAD
-        console.log(
-          `❌ CHECKOUT AFTER 9:00 AM NOT ALLOWED: Employee ${employee_id} attempted checkout at ${checkOutTime}`,
-        );
-        return res.status(400).json({
-          success: false,
-          message:
-            "Checkout deadline exceeded. Manual checkout must be before 9:00 AM. System will auto-complete your checkout at 9:00 AM if not done manually.",
-          data: {
-            attemptedCheckOutTime: checkOutTime,
-            deadline: "09:00:00",
-            policy:
-              "Manual checkout allowed: Before 6 AM, After 6 AM, but MUST be before 9:00 AM",
-          },
-=======
         console.log(`❌ CHECKOUT AFTER 9:00 AM NOT ALLOWED: Employee ${employee_id} already auto-checked out at 9:00 AM`);
         return res.status(400).json({
           success: false,
@@ -627,7 +603,6 @@ exports.checkOut = async (req, res) => {
             },
             policy: 'Manual checkout: Anytime BEFORE 9:00 AM | Auto-checkout: At 9:00 AM (fallback for those who forget)'
           }
->>>>>>> b81669b ( Check Error Resolve - Locally)
         });
       }
 
@@ -1960,11 +1935,6 @@ exports.getTodayAttendance = async (req, res) => {
       // attempt to find a pending (no check_out_time) record from the previous day (night shift continuation).
       let record;
       if (attendance.length === 0) {
-<<<<<<< HEAD
-        console.log(
-          `⚠️ No attendance record found for finalEmployeeId: ${finalEmployeeId} on date: ${searchDate}`,
-        );
-=======
         console.log(`⚠️ No attendance record found for finalEmployeeId: ${finalEmployeeId} on date: ${searchDate}`);
 
         const now = getPakistanDate();
@@ -1987,7 +1957,6 @@ exports.getTodayAttendance = async (req, res) => {
             console.log(`✅ Found pending yesterday record: id=${record.id}, check_in=${record.check_in_time}`);
           }
         }
->>>>>>> b81669b ( Check Error Resolve - Locally)
 
         // Try to find if employee exists at all
         const [employeeCheck] = await connection.query(
@@ -2004,16 +1973,6 @@ exports.getTodayAttendance = async (req, res) => {
             `ℹ️ Employee found in user_as_employees: ${employeeCheck[0].emp_id} (${employeeCheck[0].name})`,
           );
         }
-<<<<<<< HEAD
-
-        return res.status(404).json({
-          success: false,
-          message: "No attendance record for today",
-          employee_id: finalEmployeeId,
-        });
-      }
-=======
->>>>>>> b81669b ( Check Error Resolve - Locally)
 
         if (!record) {
           return res.status(404).json({
@@ -3189,5 +3148,83 @@ exports.autoCheckoutExpiredSessions = async (req, res) => {
     }
     
     return { success: false, error: error.message };
+  }
+};
+
+// ============================================================
+// ADMIN: Fix a single attendance record by ID (set checkout + recalc)
+// Usage: POST /api/v1/attendance/fix-checkout/:id  { check_out_time: 'HH:MM:SS' (optional) }
+// If no check_out_time provided, uses '09:00:00' (auto-checkout default)
+// ============================================================
+exports.fixCheckoutById = async (req, res) => {
+  let connection;
+  try {
+    const attendanceId = req.params.id;
+    const requestedCheckOutTime = req.body.check_out_time; // optional
+
+    if (!attendanceId) {
+      return res.status(400).json({ success: false, message: 'Attendance ID is required' });
+    }
+
+    connection = await pool.getConnection();
+
+    const [rows] = await connection.query(
+      'SELECT id, employee_id, attendance_date, check_in_time, total_break_duration_minutes, status FROM Employee_Attendance WHERE id = ? LIMIT 1',
+      [attendanceId]
+    );
+
+    if (rows.length === 0) {
+      connection.release();
+      return res.status(404).json({ success: false, message: 'Attendance record not found' });
+    }
+
+    const record = rows[0];
+
+    if (record.check_in_time == null) {
+      connection.release();
+      return res.status(400).json({ success: false, message: 'Cannot fix record without check-in time' });
+    }
+
+    // If already has checkout, return
+    const [existing] = await connection.query(
+      'SELECT check_out_time FROM Employee_Attendance WHERE id = ?',
+      [attendanceId]
+    );
+
+    if (existing.length > 0 && existing[0].check_out_time) {
+      connection.release();
+      return res.status(200).json({ success: true, message: 'Record already has check-out', data: { id: attendanceId, check_out_time: existing[0].check_out_time } });
+    }
+
+    const autoCheckoutTime = requestedCheckOutTime || '09:00:00';
+    const totalBreakMinutes = record.total_break_duration_minutes || 0;
+
+    // Calculate working hours using helper
+    const working = calculateWorkingHours(record.check_in_time, autoCheckoutTime, totalBreakMinutes);
+
+    await connection.query(
+      `UPDATE Employee_Attendance SET check_out_time = ?, gross_working_time_minutes = ?, net_working_time_minutes = ?, overtime_minutes = ?, overtime_hours = ?, updated_at = NOW() WHERE id = ?`,
+      [autoCheckoutTime, working.gross, working.net, working.overtime, working.overtimeHours, attendanceId]
+    );
+
+    connection.release();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Attendance fixed successfully',
+      data: {
+        id: attendanceId,
+        check_out_time: autoCheckoutTime,
+        gross_working_time_minutes: working.gross,
+        net_working_time_minutes: working.net,
+        overtime_minutes: working.overtime,
+        overtime_hours: working.overtimeHours
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Fix checkout error:', error);
+    if (connection) connection.release();
+    res.status(500).json({ success: false, message: 'Failed to fix attendance', error: error.message });
   }
 };
