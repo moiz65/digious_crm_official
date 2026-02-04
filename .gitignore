@@ -36,3 +36,6 @@ coverage/
 *.bak
 *.swp
 *.tmp
+# Miscellaneous
+
+Official_CRM_Database.sql

@@ -48,6 +48,10 @@ export function EmployeeAttendancePage() {
       const data = await response.json();
       
       console.log('📊 Today attendance data:', data);
+      console.log('🔍 DEBUG - check_in_time:', data.data?.check_in_time);
+      console.log('🔍 DEBUG - current_session_minutes:', data.data?.current_session_minutes);
+      console.log('🔍 DEBUG - net_working_time_minutes:', data.data?.net_working_time_minutes);
+      console.log('🔍 DEBUG - check_out_time:', data.data?.check_out_time);
       
       if (data.success && data.data) {
         setTodayAttendance(data.data);
@@ -387,7 +391,12 @@ export function EmployeeAttendancePage() {
                       <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
                         <p className="text-xs text-gray-500 mb-1">Current Session</p>
                         <p className="text-lg font-bold text-gray-900">
-                          {Math.floor(todayAttendance.net_working_time_minutes / 60)}h {todayAttendance.net_working_time_minutes % 60}m
+                          {todayAttendance.check_out_time 
+                            ? // If checked out, show net working time from database
+                              `${Math.floor(todayAttendance.net_working_time_minutes / 60)}h ${todayAttendance.net_working_time_minutes % 60}m`
+                            : // If still checked in, show real-time current session duration
+                              `${Math.floor((todayAttendance.current_session_minutes || 0) / 60)}h ${(todayAttendance.current_session_minutes || 0) % 60}m`
+                          }
                         </p>
                       </div>
                       <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">

@@ -1,3 +1,5 @@
+////////
+
 import { useState, useEffect } from 'react';
 import { endpoints } from '../config/api';
 import { getPakistanTimeString, getPakistanDate } from '../utils/timezone';
@@ -7,8 +9,6 @@ import {
   Clock,
   LogIn,
   LogOut,
-  Calculator,
-  Scale,
   Check,
   X,
   Clock4,
@@ -16,7 +16,6 @@ import {
   ToiletIcon,
   Calendar1,
   Utensils,
-  Users,
   AlertCircle,
   BarChart3,
   PieChart,
@@ -42,12 +41,6 @@ import {
   Moon,
   ArrowLeft,
   ArrowRight,
-  User,
-  Target,
-  Grid,
-  List,
-  MessageCircle,
-  FileText,
   RefreshCw,
   Activity,
   Wifi,
@@ -55,13 +48,13 @@ import {
   RotateCcw,
   Building,
   ChevronUp,
-  ArcElement,
   ShieldUser,
   Table,
   TrendingUp,
-  LineChart,
+  Coffee,
+  FileText,
   PauseCircle,
-  Coffee
+  LineChart
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -108,20 +101,27 @@ const parsePakistanTime = (dateStr, timeStr) => {
   
   try {
     // The database stores times as HH:MM:SS in Pakistan timezone (UTC+5)
-    // Example: check_in_time: "18:59:58" means 18:59:58 Pakistan time
+    // Example: check_in_time: "17:54:27" means 17:54:27 Pakistan time
     // 
-    // IMPORTANT: This must match getPakistanDate() logic for proper comparison
-    // getPakistanDate() returns: new Date(utcTime + 5*60*60*1000)
-    // So we need to create a Date that represents the Pakistan time in the same way
+    // To match getPakistanDate() comparison:
+    // - Database has: 17:54:27 PKT
+    // - We need UTC equivalent: subtract 5 hours = 12:54:27 UTC
+    // - Then when compared with getPakistanDate() (which adds 5 hours to UTC), they align
     
     const [hours, minutes, seconds] = timeStr.split(':').map(Number);
     const [year, month, day] = dateStr.split('-').map(Number);
     
-    // Create a UTC date for this Pakistan time by treating the Pakistan time values as UTC
-    // This matches how getPakistanDate() works - it adds offset to the timestamp
-    // For example: 18:59:58 PKT → create UTC date with 18:59:58 UTC
-    // Then when compared with getPakistanDate() which also treats PKT as UTC time, they align
-    const utcDate = new Date(Date.UTC(year, month - 1, day, hours, minutes, seconds));
+    // Create date with Pakistan time, then adjust to UTC
+    let utcHours = hours - 5;
+    let utcDay = day;
+    
+    // Handle day wraparound (midnight crossing)
+    if (utcHours < 0) {
+      utcHours += 24;
+      utcDay -= 1; // Previous day
+    }
+    
+    const utcDate = new Date(Date.UTC(year, month - 1, utcDay, utcHours, minutes, seconds));
     
     return utcDate;
   } catch (error) {
@@ -146,6 +146,30 @@ const formatPakistanTimeString = (timeStr) => {
   } catch (error) {
     console.error('Error formatting Pakistan time:', error);
     return timeStr;
+  }
+};
+
+// Small toast helper (used for user-facing messages)
+const showToast = (message, type = 'success') => {
+  try {
+    const el = document.createElement('div');
+    const isError = type === 'error';
+    el.className = `fixed top-4 right-4 z-50 max-w-sm p-3 rounded-lg shadow-lg transform transition-opacity duration-300 ${isError ? 'bg-red-50 border-l-4 border-red-500 text-red-800' : 'bg-green-50 border-l-4 border-green-500 text-green-800'}`;
+    el.style.opacity = '0';
+    el.innerHTML = `
+      <div class="flex items-start gap-3">
+        <div class="flex-1 text-sm">${message}</div>
+        <button class="ml-3 text-sm font-medium" aria-label="close">✕</button>
+      </div>
+    `;
+    const btn = el.querySelector('button');
+    btn.addEventListener('click', () => el.remove());
+    document.body.appendChild(el);
+    requestAnimationFrame(() => { el.style.opacity = '1'; });
+    setTimeout(() => { if (el.parentNode) el.remove(); }, 4500);
+  } catch (e) {
+    console.error('Toast error', e);
+    alert(message);
   }
 };
 
@@ -391,66 +415,37 @@ export const useAttendance = () => {
   };
 
   const updateWorkingTime = () => {
-    if (systemAttendance.checkedIn && systemAttendance.checkInTime) {
-      const now = new Date();
+    if (systemAttendance.checkedIn) {
+      // Simple approach: just increment the working time by 1 minute every second
+      // This avoids timezone calculation issues on the frontend
+      // The backend already calculated it correctly via current_session_minutes
       
-      // Ensure checkInTime is a Date object (in case it's a string from API)
-      let checkInDate = systemAttendance.checkInTime;
-      if (typeof checkInDate === 'string') {
-        checkInDate = new Date(checkInDate);
-      }
-      
-      // Validate that we have a valid Date
-      if (!(checkInDate instanceof Date) || isNaN(checkInDate)) {
-        console.error('❌ Invalid checkInTime format:', systemAttendance.checkInTime);
-        return;
-      }
-      
-      // Calculate elapsed time from check-in time to now (in minutes)
-      let elapsedMinutes = (now - checkInDate) / (1000 * 60);
-      
-      // ⚠️ SAFETY CHECK: Prevent negative durations (clock skew or timezone issues)
-      if (elapsedMinutes < 0) {
-        console.warn(`⚠️ NEGATIVE TIME DETECTED: checkInDate=${checkInDate.toLocaleString()}, now=${now.toLocaleString()}, elapsed=${elapsedMinutes.toFixed(2)}m`);
-        elapsedMinutes = 0; // Reset to 0 to prevent negative display
-      }
-      
-      // Debug logging for time calculation
-      console.log(`⏱️ TIME UPDATE: checkInDate=${checkInDate.toLocaleString()}, now=${now.toLocaleString()}, elapsedMinutes=${elapsedMinutes.toFixed(2)}`);
-      
-      // ⚠️ SAFETY CHECK: If session has been open for 24+ hours, alert
-      if (elapsedMinutes >= 24 * 60) {
-        const hoursElapsed = (elapsedMinutes / 60).toFixed(1);
-        console.warn(`⚠️ SESSION ALERT: Session open for ${hoursElapsed} hours. Should auto-checkout.`);
-      }
-      
-      // Update state every second (timer runs at 1000ms interval)
       setSystemAttendance(prev => {
-        console.log(`📊 STATE UPDATE: totalWorkingTime ${(prev.totalWorkingTime || 0).toFixed(2)} -> ${elapsedMinutes.toFixed(2)}`);
+        const newTime = (prev.totalWorkingTime || 0) + (1 / 60); // Add 1 second worth
+        
+        console.log(`⏱️ TIMER UPDATE: ${prev.totalWorkingTime?.toFixed(2)} -> ${newTime.toFixed(2)} minutes`);
+        
         return {
           ...prev,
-          totalWorkingTime: elapsedMinutes,
-          lastUpdate: now
+          totalWorkingTime: newTime,
+          lastUpdate: new Date()
         };
       });
 
       // Update hours in attendance data
-      const now2 = new Date();
-      const today = now2.toISOString().split('T')[0];
-      const hours = elapsedMinutes / 60;
-      
       setAttendanceData(prev => {
+        const today = new Date().toISOString().split('T')[0];
         const existingIndex = prev.findIndex(day => day.date === today);
         if (existingIndex >= 0) {
           const updated = [...prev];
-          const newHours = hours.toFixed(1);
+          const newHours = ((systemAttendance.totalWorkingTime || 0) / 60).toFixed(1);
           if (updated[existingIndex].hours !== newHours) {
             updated[existingIndex] = {
               ...updated[existingIndex],
               hours: newHours
             };
-            return updated;
           }
+          return updated;
         }
         return prev;
       });
@@ -584,7 +579,6 @@ export const useAttendance = () => {
       
       if (data.success && data.data) {
         const attendanceRecord = data.data;
-        const isCheckedIn = data.isCheckedIn || (attendanceRecord.check_out_time === null && attendanceRecord.check_in_time !== null);
         
         // Extract date as YYYY-MM-DD format (handle ISO timestamps)
         // The API returns attendance_date which may be UTC or a date string
@@ -726,30 +720,38 @@ export const useAttendance = () => {
             
             console.log('🔍 TIME PARSING DEBUG:');
             console.log('   API check_in_time:', attendanceRecord.check_in_time);
+            console.log('   API current_session_minutes:', attendanceRecord.current_session_minutes);
             console.log('   Parsed checkInTime (UTC):', checkInTime?.toUTCString());
             console.log('   Parsed checkInTime (local):', checkInTime?.toString());
             console.log('   isActiveSession:', isActiveSession);
             
-            if (isActiveSession && checkInTime) {
-              // Get current Pakistan time consistently
-              const now = getPakistanDate();
-              currentWorkingTime = (now - checkInTime) / (1000 * 60);
-              
-              console.log(`⏱️ WORKING TIME CALCULATION:`);
-              console.log(`   Check-in time (Date object): ${checkInTime.toISOString()}`);
-              console.log(`   Current time (getPakistanDate): ${now.toISOString()}`);
-              console.log(`   Difference in ms: ${now - checkInTime}`);
-              console.log(`   Elapsed: ${currentWorkingTime.toFixed(2)} minutes = ${(currentWorkingTime / 60).toFixed(2)} hours`);
+            if (isActiveSession) {
+              // Use current_session_minutes from backend (already calculated correctly)
+              if (attendanceRecord.current_session_minutes !== undefined) {
+                currentWorkingTime = attendanceRecord.current_session_minutes;
+                console.log(`⏱️ USING BACKEND current_session_minutes: ${currentWorkingTime} minutes`);
+              } else {
+                // Fallback: calculate from check-in time if backend value not available
+                const now = getPakistanDate();
+                currentWorkingTime = (now - checkInTime) / (1000 * 60);
+                console.log(`⏱️ FALLBACK CALCULATION: ${currentWorkingTime.toFixed(2)} minutes`);
+              }
             }
             
-            setSystemAttendance(prev => ({
-              ...prev,
-              checkedIn: isActiveSession,
-              checkInTime: checkInTime,
-              checkOutTime: checkOutTime,
-              totalWorkingTime: currentWorkingTime,
-              status: attendanceRecord.status?.toLowerCase() || 'present'
-            }));
+            setSystemAttendance(prev => {
+              // Only reset totalWorkingTime on initial check-in or checkout
+              // If already checked in, preserve the local timer that increments smoothly
+              const shouldUpdateTimer = !prev.checkedIn || !isActiveSession;
+              
+              return {
+                ...prev,
+                checkedIn: isActiveSession,
+                checkInTime: checkInTime,
+                checkOutTime: checkOutTime,
+                totalWorkingTime: shouldUpdateTimer ? currentWorkingTime : prev.totalWorkingTime,
+                status: attendanceRecord.status?.toLowerCase() || 'present'
+              };
+            });
             
             // IMPORTANT: Also update attendanceData immediately with today's record
             // This ensures getCheckInStatus() uses the latest data from database
@@ -762,13 +764,24 @@ export const useAttendance = () => {
             
             setAttendanceData(prev => {
               const existingIndex = prev.findIndex(r => r.date === todayStr);
+              
+              // Calculate hours: use current_session_minutes if still checked in, otherwise use net_working_time_minutes
+              let hoursValue = '0.0';
+              if (attendanceRecord.check_out_time) {
+                // Checked out - use finalized working time
+                hoursValue = attendanceRecord.net_working_time_minutes ? (attendanceRecord.net_working_time_minutes / 60).toFixed(1) : '0.0';
+              } else if (attendanceRecord.current_session_minutes !== undefined) {
+                // Still checked in - use real-time current session
+                hoursValue = (attendanceRecord.current_session_minutes / 60).toFixed(1);
+              }
+              
               const updatedRecord = {
                 date: todayStr,
                 day: new Date(todayStr).getDate(),
                 status: attendanceRecord.status?.toLowerCase() || 'present',
                 checkIn: attendanceRecord.check_in_time || '-',
                 checkOut: attendanceRecord.check_out_time || '-',
-                hours: attendanceRecord.net_working_time_minutes ? (attendanceRecord.net_working_time_minutes / 60).toFixed(1) : '0.0',
+                hours: hoursValue,
                 check_out_time: attendanceRecord.check_out_time || null,
                 check_in_time: attendanceRecord.check_in_time || null
               };
@@ -1001,6 +1014,17 @@ const AttendanceSheet = ({ attendanceData, onExport, onFilter }) => {
           const formattedData = data.data.map(record => {
             const statusLower = record.status ? record.status.toLowerCase() : 'absent';
             const { status: _, ...rest } = record; // Exclude the original status field
+            
+            // Calculate hours: use current_session_minutes if still checked in, otherwise use net_working_time_minutes
+            let hoursValue = '0.0';
+            if (record.check_out_time) {
+              // Checked out - use finalized working time
+              hoursValue = record.net_working_time_minutes ? (record.net_working_time_minutes / 60).toFixed(1) : '0.0';
+            } else if (record.current_session_minutes !== undefined) {
+              // Still checked in - use real-time current session
+              hoursValue = (record.current_session_minutes / 60).toFixed(1);
+            }
+            
             return {
               date: record.attendance_date,
               day: new Date(record.attendance_date).getDate(),
@@ -1011,7 +1035,7 @@ const AttendanceSheet = ({ attendanceData, onExport, onFilter }) => {
               checkOut: record.check_out_time
                 ? formatPakistanTimeString(record.check_out_time)
                 : '-',
-              hours: record.net_working_time_minutes ? (record.net_working_time_minutes / 60).toFixed(1) : '0.0',
+              hours: hoursValue,
               overtimeHours: record.overtime_hours ? parseFloat(record.overtime_hours).toFixed(2) : '0.0',
               grossHours: record.gross_working_time_minutes ? (record.gross_working_time_minutes / 60).toFixed(1) : '0.0',
               lateByMinutes: record.late_by_minutes || 0,
@@ -2126,19 +2150,16 @@ export function EmployeeAttendancePage() {
       ? totalGrossMinutes + systemAttendance.totalWorkingTime
       : totalGrossMinutes;
     
-    // Only calculate overtime if current time is after 6 AM (using Pakistan timezone)
-    const nowPKT = getPakistanDate();
-    const isAfter6AM = nowPKT.getHours() >= 6;
-    
+    // Calculate overtime anytime (no time restriction)
+    // Users can checkout at any time BEFORE 9 AM - it will be treated as normal checkout
+    // Auto-checkout only triggers at 9 AM if user forgot to manually checkout
+    // Policy: Checkout must happen BEFORE 9:00 AM (e.g., 6:30 AM, 8:15 AM, 8:59 AM all OK)
     const requiredWorkingTime = 9 * 60; // 540 minutes
     let overtimeRequired = 0;
     
-    if (isAfter6AM) {
-      overtimeRequired = Math.max(0, requiredWorkingTime - netWorkingTime + overtimeDebt.netDebt);
-      console.log('📊 Overtime calculation: After 6 AM - overtime eligible');
-    } else {
-      console.log('⏱️ Overtime calculation: Before 6 AM - no overtime counted');
-    }
+    // Overtime is calculated for all manual checkouts before 9 AM
+    overtimeRequired = Math.max(0, requiredWorkingTime - netWorkingTime + overtimeDebt.netDebt);
+    console.log('📊 Overtime calculation: Available for checkout before 9 AM');
     
     return {
       totalBreakTime: breakSummary.totalDuration,
@@ -2379,7 +2400,7 @@ export function EmployeeAttendancePage() {
     console.log('🔵 ════════════════════════════════════════\n');
   };
 
-  const handleBreakEnd = (breakType) => {
+  const handleBreakEnd = async (breakType) => {
     const now = new Date();
     console.log('🔴 ════════════════════════════════════════');
     console.log('🔴 BREAK ENDED');
@@ -2419,47 +2440,14 @@ export function EmployeeAttendancePage() {
       console.log('   💾 Auto-save interval cleared');
     }
 
-    setBreakData(prev => {
-      const breakInfo = prev[breakType];
-      if (!breakInfo || !breakInfo.startTime) {
-        console.log('   ❌ No break info or start time');
-        return prev;
+    // Mark as ending to prevent double clicks
+    setBreakData(prev => ({
+      ...prev,
+      [breakType]: {
+        ...prev[breakType],
+        ending: true
       }
-      
-      const duration = (now - breakInfo.startTime) / (1000 * 60); // Calculate actual duration
-      const exceeded = Math.max(0, duration - breakLimit);
-      
-      console.log('   Duration:', duration.toFixed(2), 'minutes');
-      console.log('   Limit:', breakLimit, 'minutes');
-      console.log('   Exceeded:', exceeded.toFixed(2), 'minutes');
-      
-      // Add to overtime debt if exceeded
-      if (exceeded > 0) {
-        console.log('   ⚠️ Break exceeded! Adding to overtime debt');
-        addOvertimeDebt('break', exceeded, `${breakConfig.name} exceeded by ${Math.round(exceeded)} minutes`);
-      }
-      
-      const updated = {
-        ...prev,
-        [breakType]: {
-          ...breakInfo,
-          active: false,
-          startTime: null,
-          warningTimer: null,
-          autoEndTimer: null,
-          totalDuration: breakInfo.totalDuration + duration,
-          exceededDuration: breakInfo.exceededDuration + exceeded,
-          breakCount: breakInfo.breakCount + 1,
-        }
-      };
-      
-      console.log('   Updated breakData for', breakType, ':', updated[breakType]);
-      return updated;
-    });
-
-    // Resume working time tracking
-    setBreakStatus(false);
-    console.log('   ✅ Break ended successfully');
+    }));
 
     // Update break end time in database (break was already saved on start)
     const updateBreakEnd = async () => {
@@ -2469,7 +2457,7 @@ export function EmployeeAttendancePage() {
         
         if (!token) {
           console.warn('⚠️ No token available, cannot update break end time');
-          return;
+          return { ok: false };
         }
 
         const capitalizedBreakType = breakType.charAt(0).toUpperCase() + breakType.slice(1);
@@ -2495,26 +2483,99 @@ export function EmployeeAttendancePage() {
           })
         });
 
-        if (response.ok) {
-          const data = await response.json();
-          console.log('✅ Break end time successfully updated:', data);
-          
-          // Refetch attendance data to update UI with break information
-          console.log('🔄 Refetching attendance data to sync break records...');
-          setTimeout(() => {
-            fetchAttendanceData();
-          }, 300);
-        } else {
-          const errorData = await response.json().catch(() => ({}));
-          console.warn('⚠️ Failed to update break end time:', response.status, errorData.message);
-        }
+        return response;
       } catch (error) {
         console.error('❌ Error updating break end time:', error);
+        return { ok: false };
       }
     };
 
-    // Call the update function
-    updateBreakEnd();
+    // Call the update function and wait for result
+    const resp = await updateBreakEnd();
+
+    try {
+      if (resp && resp.ok) {
+        const data = await resp.json();
+        console.log('✅ Break end time successfully updated:', data);
+
+        // Update local breakData (finalize end)
+        setBreakData(prev => {
+          const breakInfo = prev[breakType];
+          if (!breakInfo || !breakInfo.startTime) return prev;
+
+          const duration = (now - breakInfo.startTime) / (1000 * 60); // Calculate actual duration
+          const exceeded = Math.max(0, duration - breakLimit);
+
+          // Add to overtime debt if exceeded
+          if (exceeded > 0) {
+            addOvertimeDebt('break', exceeded, `${breakConfig.name} exceeded by ${Math.round(exceeded)} minutes`);
+          }
+
+          const updated = {
+            ...prev,
+            [breakType]: {
+              ...breakInfo,
+              active: false,
+              ending: false,
+              startTime: null,
+              warningTimer: null,
+              autoEndTimer: null,
+              totalDuration: breakInfo.totalDuration + duration,
+              exceededDuration: breakInfo.exceededDuration + exceeded,
+              breakCount: breakInfo.breakCount + 1,
+            }
+          };
+
+          console.log('   Updated breakData for', breakType, ':', updated[breakType]);
+          return updated;
+        });
+
+        // Resume working time tracking
+        setBreakStatus(false);
+        console.log('   ✅ Break ended successfully');
+
+        // Refetch both attendance data AND today's breaks to update UI with break information
+        console.log('🔄 Refetching attendance data and today\'s breaks to sync records...');
+        setTimeout(() => {
+          fetchAttendanceData();
+          fetchTodayBreaksFromDB(); // Also refresh the breaks summary
+        }, 300);
+
+      } else {
+        // Failure: attempt to read server response for debugging
+        try {
+          const errData = await resp.json();
+          console.error('❌ Break end failed - server response:', errData);
+          showToast && showToast(errData.message || 'Failed to end break. Changes will be refreshed from server.', 'error');
+        } catch (parseError) {
+          console.error('❌ Break end failed - unable to parse server response', parseError);
+          showToast && showToast('Failed to end break. Changes will be refreshed from server.', 'error');
+        }
+
+        // revert ending flag and keep break active
+        setBreakData(prev => ({
+          ...prev,
+          [breakType]: {
+            ...prev[breakType],
+            ending: false
+          }
+        }));
+
+        // Refresh UI from server state to reflect true DB state
+        setTimeout(() => {
+          fetchAttendanceData();
+          fetchTodayBreaksFromDB();
+        }, 300);
+      }
+    } catch (e) {
+      console.error('❌ Error handling break end response:', e);
+      showToast && showToast('Failed to end break due to network error', 'error');
+      setTimeout(() => {
+        fetchAttendanceData();
+        fetchTodayBreaksFromDB();
+      }, 300);
+    }
+
     console.log('🔴 ════════════════════════════════════════\n');
   };
 
@@ -2774,6 +2835,35 @@ export function EmployeeAttendancePage() {
     day.status === 'present' || day.status === 'late'
   );
 
+  // Compute live displayMinutes and percent for session timer (uses Pakistan timezone)
+  let displayMinutes = Math.floor(systemAttendance.totalWorkingTime || 0);
+  if (systemAttendance.checkedIn && systemAttendance.checkInTime) {
+    try {
+      // Normalize checkInTime to a Date object if it's a string
+      let checkInDate = systemAttendance.checkInTime;
+      if (typeof checkInDate === 'string') {
+        const parsed = new Date(checkInDate);
+        if (!isNaN(parsed.getTime())) checkInDate = parsed;
+      }
+
+      if (checkInDate instanceof Date && !isNaN(checkInDate.getTime())) {
+        const nowPk = getPakistanDate();
+        const diffMinutes = Math.floor((nowPk.getTime() - checkInDate.getTime()) / (1000 * 60));
+        // Sanity check: if diff is reasonable (0 <= diff <= 24h), use it; otherwise fallback to totalWorkingTime
+        if (diffMinutes >= 0 && diffMinutes <= 24 * 60) {
+          displayMinutes = diffMinutes;
+        } else {
+          console.warn('Unusual session length detected, using server-provided totalWorkingTime as fallback', { diffMinutes, totalWorkingTime: systemAttendance.totalWorkingTime });
+        }
+      } else {
+        console.warn('Invalid checkInTime value, falling back to totalWorkingTime', systemAttendance.checkInTime);
+      }
+    } catch (e) {
+      console.error('Error computing displayMinutes:', e);
+    }
+  }
+  const displayPercent = Math.min(Math.round((displayMinutes / 540) * 100), 100);
+
   // Tab navigation
   const tabs = [
     { id: 'dashboard', name: 'Attendance Dashboard', icon: ShieldUser },
@@ -2986,18 +3076,43 @@ export function EmployeeAttendancePage() {
                 </div>
 
                 {systemAttendance.checkedIn && (
-                  <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-700">Current Session:</span>
-                      <span className="text-xl font-bold text-blue-600">
-                        {formatDuration(systemAttendance.totalWorkingTime)}
+                  <div className="mt-4 p-6 bg-gradient-to-br from-blue-50 via-blue-50 to-cyan-50 rounded-lg border-2 border-blue-300 shadow-md">
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="text-sm font-semibold text-gray-700 uppercase tracking-wide">⏱️ Session Timer</span>
+                      <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-full">
+                        {systemAttendance.isOnBreak ? '🔸 ON BREAK' : '🟢 WORKING'}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2 mt-2 text-xs text-gray-600">
+
+                    {/* Display timer calculated from displayMinutes (computed above) */}
+                    <div className="text-5xl font-black text-blue-600 font-mono tracking-tighter">
+                      {(() => {
+                        const hours = Math.floor((displayMinutes || 0) / 60);
+                        const minutes = (displayMinutes || 0) % 60;
+                        return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+                      })()}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2">hours : minutes</p>
+                    
+                    <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden mb-3">
+                      <div 
+                        className="bg-gradient-to-r from-blue-500 to-cyan-500 h-full transition-all duration-300"
+                        style={{ width: `${Math.min(((displayMinutes || 0) / 540) * 100, 100)}%` }}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between text-xs text-gray-600 px-1">
+                      <span>Session started at {systemAttendance.checkInTime?.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) || 'N/A'}</span>
+                      <span className="text-blue-600 font-semibold ml-2">{displayPercent}% of daily target</span>
+                    </div>
+                    
+
+                    
+                    <div className="flex items-center gap-2 mt-3 text-xs text-gray-600 bg-white bg-opacity-50 p-2 rounded">
                       {systemAttendance.isOnBreak ? (
-                        <><Clock className="h-3 w-3" /> Break in progress</>
+                        <><Clock className="h-3 w-3 text-amber-600" /> <span className="text-amber-700 font-semibold">Break in progress</span></>
                       ) : (
-                        <><Activity className="h-3 w-3" /> Working...</>
+                        <><Activity className="h-3 w-3 text-green-600 animate-pulse" /> <span className="text-green-700 font-semibold">Working...</span></>
                       )}
                     </div>
                   </div>
@@ -3046,10 +3161,20 @@ export function EmployeeAttendancePage() {
                         {breakInfo && breakInfo.active && (
                           <button 
                             onClick={() => handleManualBreakEnd(breakType.id)}
-                            className="w-full flex items-center justify-center p-2 rounded-lg border border-gray-200 hover:border-gray-300 bg-white text-xs"
+                            disabled={!!breakInfo.ending}
+                            className={`w-full flex items-center justify-center p-2 rounded-lg border border-gray-200 ${breakInfo.ending ? 'opacity-60 cursor-not-allowed bg-gray-100' : 'hover:border-gray-300 bg-white'} text-xs`}
                           >
-                            <CheckCircle className="h-3 w-3 mr-1" />
-                            End Break
+                            {breakInfo.ending ? (
+                              <>
+                                <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
+                                Ending...
+                              </>
+                            ) : (
+                              <>
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                                End Break
+                              </>
+                            )}
                           </button>
                         )}
                       </div>

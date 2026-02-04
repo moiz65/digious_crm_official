@@ -1,11 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const onboardingController = require('./controllers/onboardingController');
+const cnicDocumentController = require('./controllers/cnicDocumentController');
 const debugController = require('./controllers/debugController');
 const authMiddleware = require('../middleware/auth');
+// const employeeProfilePictureRoutes = require('../routes/employeeProfilePicture');
 
 // GET - Check if employee ID exists and get next available ID
 router.get('/check-employee-id/:numericId', onboardingController.checkEmployeeIdAvailability);
+
+// router.use('/employees', employeeProfilePictureRoutes);
 
 // POST - Create new employee
 router.post('/employees', onboardingController.createEmployee);
@@ -25,6 +29,21 @@ router.delete('/employees/:id', onboardingController.deleteEmployee);
 
 // GET - Get onboarding progress
 router.get('/employees/:id/progress', onboardingController.getOnboardingProgress);
+
+// ============================================================
+// CNIC Document Endpoints
+// ============================================================
+// GET - Get CNIC document for employee
+router.get('/employees/:employeeId/cnic-document', cnicDocumentController.getEmployeeCnicDocument);
+
+// PUT - Update CNIC document
+router.put('/employees/:employeeId/cnic-document', cnicDocumentController.updateEmployeeCnicDocument);
+
+// GET - Get employees with expiring CNIC (within days threshold)
+router.get('/cnic-documents/expiring', cnicDocumentController.getExpiringCnicDocuments);
+
+// GET - Get employees with expired CNIC
+router.get('/cnic-documents/expired', cnicDocumentController.getExpiredCnicDocuments);
 
 // DEBUG ENDPOINTS
 router.get('/debug/resources', debugController.debugDynamicResources);

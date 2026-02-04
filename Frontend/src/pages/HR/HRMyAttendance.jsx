@@ -3,38 +3,24 @@ import HrSidebar from '../../components/HrSidebar';
 import { DashboardHeader } from '../../components/DashboardComponents';
 import { useAuth } from '../../context/AuthContext';
 import { endpoints } from '../../config/api';
-import { getPakistanTimeString, getPakistanDateString, getPakistanDate } from '../../utils/timezone';
+import { getPakistanDate } from '../../utils/timezone';
 import {
   CheckCircle,
   Clock,
   LogIn,
   LogOut,
-  Coffee,
-  User,
-  Calendar,
-  Activity,
   AlertCircle,
-  BarChart3,
-  Timer,
-  PlayCircle,
-  StopCircle,
-  PauseCircle,
-  Utensils,
-  Cigarette,
   Table,
-  LineChart,
-  Shield
+  Shield,
+  PauseCircle
 } from 'lucide-react';
 import { 
   BarChart, 
   Bar, 
-  LineChart as ReLineChart, 
-  Line, 
   XAxis, 
   YAxis, 
   CartesianGrid, 
   Tooltip, 
-  Legend, 
   ResponsiveContainer,
   PieChart,
   Pie,
@@ -50,7 +36,6 @@ const HRMyAttendance = () => {
   const [attendanceData, setAttendanceData] = useState(null);
   const [monthlyAttendance, setMonthlyAttendance] = useState([]);
   const [isCheckedIn, setIsCheckedIn] = useState(false);
-  const [activeBreaks, setActiveBreaks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('All Status'); // Filter for status
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
@@ -70,7 +55,6 @@ const HRMyAttendance = () => {
   useEffect(() => {
     console.log('🔍 HRMyAttendance mounted with user:', user);
     fetchTodayAttendance();
-    fetchActiveBreaks();
     fetchMonthlyAttendance();
   }, []);
 
@@ -79,6 +63,7 @@ const HRMyAttendance = () => {
     setCurrentPage(1); // Reset to first page when filters change
     fetchMonthlyAttendance();
   }, [selectedMonth, selectedYear]);
+
 
   // Reset pagination when status filter changes
   useEffect(() => {
@@ -169,28 +154,7 @@ const HRMyAttendance = () => {
     }
   };
 
-  const fetchActiveBreaks = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const employeeId = getEmployeeId();
-      
-      if (!employeeId) return;
 
-      const response = await fetch(endpoints.attendance.ongoingBreaks(employeeId), {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        setActiveBreaks(data.data || []);
-      }
-    } catch (error) {
-      console.error('Error fetching active breaks:', error);
-    }
-  };
 
   const handleCheckIn = async () => {
     try {
@@ -255,92 +219,7 @@ const HRMyAttendance = () => {
     }
   };
 
-  const handleBreakStart = async (breakType) => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(endpoints.attendance.breakStart, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          employee_id: getEmployeeId(),
-          break_type: breakType,
-          reason: `${breakType.charAt(0).toUpperCase() + breakType.slice(1)} break`
-        })
-      });
 
-      const data = await response.json();
-      if (data.success) {
-        fetchActiveBreaks();
-      } else {
-        alert(data.message || 'Failed to start break');
-      }
-    } catch (error) {
-      console.error('Start break error:', error);
-      alert('Failed to start break');
-    }
-  };
-
-  const handleBreakEnd = async (breakId) => {
-    try {
-      const token = localStorage.getItem('token');
-      const employeeId = getEmployeeId();
-      
-      // Find the break details from activeBreaks
-      const breakRecord = activeBreaks.find(b => b.id === breakId);
-      if (!breakRecord) {
-        alert('Break record not found');
-        return;
-      }
-
-      // Calculate duration from start time to now
-      // Parse times correctly: HH:MM:SS format
-      const [startHour, startMin, startSec] = breakRecord.break_start_time.split(':').map(Number);
-      const now = new Date();
-      const currentHour = now.getHours();
-      const currentMin = now.getMinutes();
-      const currentSec = now.getSeconds();
-      
-      // Convert both to total minutes since midnight for accurate calculation
-      const startTotalSeconds = (startHour * 3600) + (startMin * 60) + (startSec || 0);
-      const nowTotalSeconds = (currentHour * 3600) + (currentMin * 60) + currentSec;
-      
-      // Calculate duration in minutes (handle midnight crossing)
-      let durationSeconds = nowTotalSeconds - startTotalSeconds;
-      if (durationSeconds < 0) {
-        // Break started before midnight, ended after - add 24 hours
-        durationSeconds += (24 * 3600);
-      }
-      const duration = Math.max(0, Math.floor(durationSeconds / 60));
-
-      const response = await fetch(endpoints.attendance.breakEnd, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          employee_id: employeeId,
-          break_type: breakRecord.break_type,
-          break_end_time: now.toTimeString().split(' ')[0],
-          break_duration_minutes: duration
-        })
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        fetchActiveBreaks();
-        fetchTodayAttendance();
-      } else {
-        alert(data.message || 'Failed to end break');
-      }
-    } catch (error) {
-      console.error('End break error:', error);
-      alert('Failed to end break');
-    }
-  };
 
   const getWorkingHours = () => {
     if (!attendanceData?.check_in_time) return '0h 0m';
@@ -460,12 +339,17 @@ const HRMyAttendance = () => {
     }));
   };
 
-  const breakTypes = [
-    { type: 'Smoke', label: 'Smoke Break', icon: Cigarette, color: 'bg-gray-500' },
-    { type: 'Dinner', label: 'Dinner Break', icon: Utensils, color: 'bg-orange-500' },
-    { type: 'Washroom', label: 'Washroom Break', icon: User, color: 'bg-blue-500' },
-    { type: 'Prayer', label: 'Prayer Break', icon: Activity, color: 'bg-purple-500' }
-  ];
+  // Format minutes to "Xh Ym" format (e.g., 120 minutes -> "2h 0m", 90 -> "1h 30m", 45 -> "45m")
+  const formatTimeDisplay = (minutes) => {
+    if (!minutes || minutes === 0) return '0m';
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    if (hours === 0) return `${mins}m`;
+    if (mins === 0) return `${hours}h`;
+    return `${hours}h ${mins}m`;
+  };
+
+  // Breaks removed from HR view — no break types needed here.
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-cyan-50">
@@ -579,7 +463,7 @@ const HRMyAttendance = () => {
                 </div>
               </div>
               <p className="text-sm text-gray-500">
-                Active: {activeBreaks.length}
+                Time: {formatTimeDisplay(attendanceData?.total_break_duration_minutes || 0)}
               </p>
             </div>
 
@@ -694,76 +578,7 @@ const HRMyAttendance = () => {
               </div>
             </div>
 
-            {/* Break Management */}
-            <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-200">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">Break Management</h2>
-              
-              {/* Active Breaks */}
-              {activeBreaks.length > 0 && (
-                <div className="mb-6">
-                  <h3 className="text-sm font-semibold text-gray-600 uppercase mb-3">Active Breaks</h3>
-                  <div className="space-y-2">
-                    {activeBreaks.map((breakItem) => (
-                      <div key={breakItem.id} className="flex items-center justify-between bg-red-50 border border-red-200 rounded-lg p-3">
-                        <div className="flex items-center">
-                          <Timer className="w-4 h-4 text-red-500 mr-2" />
-                          <span className="text-sm font-medium text-red-700">
-                            {breakItem.break_type.charAt(0).toUpperCase() + breakItem.break_type.slice(1)} Break
-                          </span>
-                        </div>
-                        <button
-                          onClick={() => handleBreakEnd(breakItem.id)}
-                          className="text-xs bg-red-500 text-white px-3 py-1 rounded-full hover:bg-red-600 transition-colors"
-                        >
-                          End Break
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
 
-              {/* Break Buttons */}
-              <div className="grid grid-cols-2 gap-3">
-                {breakTypes.map((breakType) => {
-                  const isActive = activeBreaks.some(b => b.break_type === breakType.type);
-                  const Icon = breakType.icon;
-                  
-                  return (
-                    <button
-                      key={breakType.type}
-                      onClick={() => handleBreakStart(breakType.type)}
-                      disabled={!isCheckedIn || isActive || attendanceData?.check_out_time}
-                      className={`p-4 rounded-xl text-center transition-all duration-300 ${
-                        !isCheckedIn || isActive || attendanceData?.check_out_time
-                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                          : `${breakType.color} hover:opacity-90 text-white shadow-lg`
-                      }`}
-                    >
-                      <Icon className="w-6 h-6 mx-auto mb-2" />
-                      <div className="text-sm font-semibold">{breakType.label}</div>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Today's Break Summary */}
-              {attendanceData && (
-                <div className="mt-6 pt-6 border-t border-gray-200">
-                  <h3 className="text-sm font-semibold text-gray-600 uppercase mb-3">Today's Breaks</h3>
-                  <div className="grid grid-cols-2 gap-4 text-center">
-                    <div>
-                      <p className="text-2xl font-bold text-purple-600">{attendanceData.total_breaks_taken || 0}</p>
-                      <p className="text-xs text-gray-500">Total Breaks</p>
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold text-purple-600">{attendanceData.total_break_duration_minutes || 0}m</p>
-                      <p className="text-xs text-gray-500">Total Time</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
           </div>
 
           {/* Charts Section */}

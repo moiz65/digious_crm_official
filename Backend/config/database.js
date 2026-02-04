@@ -11,7 +11,8 @@ const pool = mysql.createPool({
   connectionLimit: 10,
   queueLimit: 0,
   enableKeepAlive: true,
-  keepAliveInitialDelayMs: 0
+  // keepAliveInitialDelayMs was removed because mysql2 warns about unrecognized options
+  // If you need an initial delay, use a supported option when mysql2 exposes it.
   // REMOVED: timezone: '+05:00'
   // Reason: Application handles timezone conversion with getPakistanDate() in utils/timezone.js
   // Database stores times as-is without conversion to prevent double offset (+5 from app + 5 from DB = +10)

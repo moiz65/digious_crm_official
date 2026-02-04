@@ -1,27 +1,79 @@
 // components/EmployeesProfile.jsx
 
-import React, { useState, useEffect } from 'react';
-import { 
-  Users, UserPlus, CheckCircle, XCircle, Clock, 
-  TrendingUp, DollarSign, ClipboardList, Filter, 
-  Search, MoreVertical, Edit, Trash2, Eye, 
-  Plus, ChevronRight, Home, BarChart3, 
-  ArrowUpDown, CheckSquare, Square, Calendar,
-  Briefcase, ChevronDown, Download, FileText,
-  Target, Palette, Cpu, Shield, Building,
-  Award, Star, Zap, Activity, RefreshCw,
-  Mail, Phone, Code, Database, Layers,
-  ExternalLink, MessageSquare, Globe, MapPin,
-  X, Save, Tag, PlusCircle, MinusCircle,
-  User, Lock, Key, Upload, Image, EyeOff,
-  CalendarDays, GitBranch, DollarSign as Dollar, 
-  TrendingUp as Trending, Bug, 
-  Users as UsersIcon, Palette as PaletteIcon,
-  Target as TargetIcon
-} from 'lucide-react';
-import { endpoints } from '../config/api';
+import React, { useState, useEffect } from "react";
+import {
+  Users,
+  UserPlus,
+  CheckCircle,
+  XCircle,
+  Clock,
+  TrendingUp,
+  DollarSign,
+  ClipboardList,
+  Filter,
+  Search,
+  MoreVertical,
+  Edit,
+  Trash2,
+  Eye,
+  Plus,
+  ChevronRight,
+  Home,
+  BarChart3,
+  ArrowUpDown,
+  CheckSquare,
+  Square,
+  Calendar,
+  Briefcase,
+  ChevronDown,
+  Download,
+  FileText,
+  Target,
+  Palette,
+  Cpu,
+  Shield,
+  Building,
+  Award,
+  Star,
+  Zap,
+  Activity,
+  RefreshCw,
+  Mail,
+  Phone,
+  Code,
+  Database,
+  Layers,
+  ExternalLink,
+  MessageSquare,
+  Globe,
+  MapPin,
+  X,
+  Save,
+  Tag,
+  PlusCircle,
+  MinusCircle,
+  User,
+  Lock,
+  Key,
+  Upload,
+  Image,
+  EyeOff,
+  CalendarDays,
+  GitBranch,
+  DollarSign as Dollar,
+  TrendingUp as Trending,
+  Bug,
+  Users as UsersIcon,
+  Palette as PaletteIcon,
+  Target as TargetIcon,
+} from "lucide-react";
+import { endpoints } from "../config/api";
+import { format } from "date-fns";
+import { Copy } from "lucide-react"; // Add this import
+import { useNavigate } from "react-router-dom";
 
 const EmployeeProfile = () => {
+  const navigate = useNavigate();
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -31,41 +83,119 @@ const EmployeeProfile = () => {
       try {
         const response = await fetch(endpoints.employees.base);
         const data = await response.json();
-        
+
+        console.log("API Response:", data);
+
         if (data.success) {
-          // Transform API data to match component format
-          const transformedEmployees = (data.data || []).map((emp) => ({
-            id: emp.id,
-            name: emp.name || 'Unknown',
-            username: emp.employee_id || emp.name?.toLowerCase().replace(/\s+/g, '.') || 'unknown',
-            role: emp.sub_department || emp.position || 'Employee',
-            email: emp.email || '',
-            phone: emp.phone || '',
-            status: emp.status === 'Active' ? 'active' : 'inactive',
-            department: emp.department || 'Unknown',
-            joiningDate: emp.join_date || new Date().toISOString().split('T')[0],
-            experience: '-- years',
-            location: 'Unknown',
-            performance: 'Good',
-            skills: [],
-            color: ['blue', 'green', 'purple', 'orange'][Math.floor(Math.random() * 4)],
-            badgeClass: ['bg-blue-transparent', 'bg-green-transparent', 'bg-purple-transparent', 'bg-orange-transparent'][Math.floor(Math.random() * 4)],
-            attendance: Math.floor(Math.random() * 30) + 70,
-            selected: false
-          }));
-          
+          // FIX: Group employees by ID to combine resources AND allowances
+          const employeesMap = new Map();
+
+          (data.data || []).forEach((emp) => {
+            if (!emp.id) return;
+
+            if (!employeesMap.has(emp.id)) {
+              // First time seeing this employee
+              employeesMap.set(emp.id, {
+                id: emp.id,
+                name: emp.name || "Unknown",
+                username:
+                  emp.employee_id ||
+                  emp.name?.toLowerCase().replace(/\s+/g, ".") ||
+                  "unknown",
+                email: emp.email || "",
+                phone: emp.phone || "",
+                role: emp.position || "Employee",
+                address: emp.address || "Unknown",
+                // Initialize allowances as array
+                allowances: [],
+                // Initialize resources as array
+                resources: [],
+                base_salary: emp.base_salary || 0,
+                cnic: emp.cnic || "N/A",
+                profile_picture: emp.profile_picture || null,
+                designation: emp.designation || "N/A",
+                total_salary: emp.total_salary || 0,
+                status: emp.status === "Active" ? "active" : "inactive",
+                department: emp.department || "Unknown",
+                joiningDate:
+                  emp.join_date || new Date().toISOString().split("T")[0],
+                experience: "-- years",
+                location: "Unknown",
+                performance: "Good",
+                skills: [],
+                color: ["blue", "green", "purple", "orange"][
+                  Math.floor(Math.random() * 4)
+                ],
+                badgeClass: [
+                  "bg-blue-transparent",
+                  "bg-green-transparent",
+                  "bg-purple-transparent",
+                  "bg-orange-transparent",
+                ][Math.floor(Math.random() * 4)],
+                attendance: Math.floor(Math.random() * 30) + 70,
+                selected: false,
+              });
+            }
+
+            // Add allowance if it exists
+            const employee = employeesMap.get(emp.id);
+            if (emp.allowance_name && emp.allowance_name !== "N/A") {
+              // Check if allowance already exists
+              const existingAllowance = employee.allowances.find(
+                (a) => a.allowance_name === emp.allowance_name,
+              );
+
+              if (!existingAllowance) {
+                employee.allowances.push({
+                  allowance_name: emp.allowance_name,
+                  allowance_amount: emp.allowance_amount || 0,
+                });
+              }
+            }
+
+            // Add resource if it exists
+            if (emp.resource_name && emp.resource_name !== "N/A") {
+              const existingResource = employee.resources.find(
+                (r) =>
+                  r.resource_name === emp.resource_name &&
+                  r.resource_serial === emp.resource_serial,
+              );
+
+              if (!existingResource) {
+                employee.resources.push({
+                  resource_name: emp.resource_name,
+                  resource_serial: emp.resource_serial,
+                });
+              }
+            }
+          });
+
+          // Convert map to array
+          const transformedEmployees = Array.from(employeesMap.values());
+
+          console.log(
+            "Processed Employees with allowances:",
+            transformedEmployees.map((emp) => ({
+              id: emp.id,
+              name: emp.name,
+              allowancesCount: emp.allowances?.length || 0,
+              allowances: emp.allowances,
+              resourcesCount: emp.resources?.length || 0,
+            })),
+          );
+
           setEmployees(transformedEmployees);
         }
         setLoading(false);
       } catch (error) {
-        console.error('Error fetching employees:', error);
+        console.error("Error fetching employees:", error);
         setLoading(false);
         setEmployees([]);
       }
     };
 
     fetchEmployees();
-    
+
     // Refresh employees every 60 seconds
     const refreshInterval = setInterval(fetchEmployees, 60000);
     return () => clearInterval(refreshInterval);
@@ -73,16 +203,16 @@ const EmployeeProfile = () => {
 
   const [selectedEmployees, setSelectedEmployees] = useState(new Set());
   const [filters, setFilters] = useState({
-    department: 'all',
-    status: 'all',
-    search: ''
+    department: "all",
+    status: "all",
+    search: "",
   });
-  const [sortBy, setSortBy] = useState('recent');
+  const [sortBy, setSortBy] = useState("recent");
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState(null);
-  const [exportFormat, setExportFormat] = useState('excel');
-  const [bulkAction, setBulkAction] = useState('');
+  const [exportFormat, setExportFormat] = useState("excel");
+  const [bulkAction, setBulkAction] = useState("");
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState(null);
   const [showContactOptions, setShowContactOptions] = useState({});
@@ -92,19 +222,24 @@ const EmployeeProfile = () => {
   // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (showExportDropdown && !event.target.closest('.export-dropdown-container')) {
+      if (
+        showExportDropdown &&
+        !event.target.closest(".export-dropdown-container")
+      ) {
         setShowExportDropdown(false);
       }
-      
-      if (Object.values(showMenuDropdown).some(v => v) && 
-          !event.target.closest('.menu-dropdown-container')) {
+
+      if (
+        Object.values(showMenuDropdown).some((v) => v) &&
+        !event.target.closest(".menu-dropdown-container")
+      ) {
         setShowMenuDropdown({});
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showExportDropdown, showMenuDropdown]);
 
@@ -114,29 +249,22 @@ const EmployeeProfile = () => {
       value: employees.length.toString(),
       badgeColor: "bg-blue-100 text-blue-800 border border-blue-200",
       trend: "+15%",
-      icon: Users
+      icon: Users,
     },
     {
       title: "Active",
-      value: employees.filter(e => e.status === 'active').length.toString(),
+      value: employees.filter((e) => e.status === "active").length.toString(),
       badgeColor: "bg-green-100 text-green-800 border border-green-200",
       trend: "+8%",
-      icon: CheckCircle
+      icon: CheckCircle,
     },
     {
       title: "Inactive",
-      value: employees.filter(e => e.status === 'inactive').length.toString(),
+      value: employees.filter((e) => e.status === "inactive").length.toString(),
       badgeColor: "bg-red-100 text-red-800 border border-red-200",
       trend: "-2%",
-      icon: XCircle
+      icon: XCircle,
     },
-    {
-      title: "Attendance Rate",
-      value: `${Math.round(employees.reduce((acc, emp) => acc + emp.attendance, 0) / employees.length)}%`,
-      badgeColor: "bg-purple-100 text-purple-800 border border-purple-200",
-      trend: "+12%",
-      icon: CalendarDays
-    }
   ];
 
   const getColorClass = (color) => {
@@ -146,7 +274,7 @@ const EmployeeProfile = () => {
       purple: "text-purple-600 bg-purple-500",
       orange: "text-orange-600 bg-orange-500",
       yellow: "text-yellow-600 bg-yellow-500",
-      red: "text-red-600 bg-red-500"
+      red: "text-red-600 bg-red-500",
     };
     return colors[color] || "text-blue-600 bg-blue-500";
   };
@@ -154,24 +282,30 @@ const EmployeeProfile = () => {
   const getBadgeColorClass = (badgeClass) => {
     const badgeClasses = {
       "bg-blue-transparent": "bg-blue-100 text-blue-800 border border-blue-200",
-      "bg-green-transparent": "bg-green-100 text-green-800 border border-green-200",
-      "bg-purple-transparent": "bg-purple-100 text-purple-800 border border-purple-200",
-      "bg-orange-transparent": "bg-orange-100 text-orange-800 border border-orange-200",
+      "bg-green-transparent":
+        "bg-green-100 text-green-800 border border-green-200",
+      "bg-purple-transparent":
+        "bg-purple-100 text-purple-800 border border-purple-200",
+      "bg-orange-transparent":
+        "bg-orange-100 text-orange-800 border border-orange-200",
       "bg-pink-transparent": "bg-pink-100 text-pink-800 border border-pink-200",
-      "bg-red-transparent": "bg-red-100 text-red-800 border border-red-200"
+      "bg-red-transparent": "bg-red-100 text-red-800 border border-red-200",
     };
-    return badgeClasses[badgeClass] || "bg-gray-100 text-gray-800 border border-gray-300";
+    return (
+      badgeClasses[badgeClass] ||
+      "bg-gray-100 text-gray-800 border border-gray-300"
+    );
   };
 
   const getRoleIcon = (role, department) => {
     switch (department) {
-      case 'Development':
+      case "Development":
         return <Code className="h-4 w-4 text-orange-600" />;
-      case 'Sales':
+      case "Sales":
         return <Target className="h-4 w-4 text-green-600" />;
-      case 'Human Resources':
+      case "Human Resources":
         return <Shield className="h-4 w-4 text-blue-600" />;
-      case 'Design':
+      case "Design":
         return <Palette className="h-4 w-4 text-purple-600" />;
       default:
         return <Briefcase className="h-4 w-4 text-gray-600" />;
@@ -180,25 +314,53 @@ const EmployeeProfile = () => {
 
   const getStatusBadge = (status) => {
     switch (status) {
-      case 'active':
-        return <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800 border border-green-200 flex items-center gap-1"><CheckCircle className="h-3 w-3" /> Active</span>;
-      case 'inactive':
-        return <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800 border border-red-200 flex items-center gap-1"><XCircle className="h-3 w-3" /> Inactive</span>;
+      case "active":
+        return (
+          <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800 border border-green-200 flex items-center gap-1">
+            <CheckCircle className="h-3 w-3" /> Active
+          </span>
+        );
+      case "inactive":
+        return (
+          <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800 border border-red-200 flex items-center gap-1">
+            <XCircle className="h-3 w-3" /> Inactive
+          </span>
+        );
       default:
-        return <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800 border border-gray-200">Unknown</span>;
+        return (
+          <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800 border border-gray-200">
+            Unknown
+          </span>
+        );
     }
   };
 
   const getPerformanceBadge = (performance) => {
     switch (performance) {
-      case 'Top Performer':
-        return <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800 border border-yellow-200 flex items-center gap-1"><Star className="h-3 w-3" /> Top Performer</span>;
-      case 'Excellent':
-        return <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800 border border-green-200 flex items-center gap-1"><Zap className="h-3 w-3" /> Excellent</span>;
-      case 'Good':
-        return <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800 border border-blue-200 flex items-center gap-1"><Activity className="h-3 w-3" /> Good</span>;
-      case 'Average':
-        return <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800 border border-gray-200">Average</span>;
+      case "Top Performer":
+        return (
+          <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800 border border-yellow-200 flex items-center gap-1">
+            <Star className="h-3 w-3" /> Top Performer
+          </span>
+        );
+      case "Excellent":
+        return (
+          <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800 border border-green-200 flex items-center gap-1">
+            <Zap className="h-3 w-3" /> Excellent
+          </span>
+        );
+      case "Good":
+        return (
+          <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800 border border-blue-200 flex items-center gap-1">
+            <Activity className="h-3 w-3" /> Good
+          </span>
+        );
+      case "Average":
+        return (
+          <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800 border border-gray-200">
+            Average
+          </span>
+        );
       default:
         return null;
     }
@@ -206,15 +368,35 @@ const EmployeeProfile = () => {
 
   const getSkillIcon = (skill) => {
     const skillLower = skill.toLowerCase();
-    if (skillLower.includes('react') || skillLower.includes('javascript') || skillLower.includes('node')) {
+    if (
+      skillLower.includes("react") ||
+      skillLower.includes("javascript") ||
+      skillLower.includes("node")
+    ) {
       return <Code className="h-3 w-3" />;
-    } else if (skillLower.includes('aws') || skillLower.includes('docker') || skillLower.includes('postgres')) {
+    } else if (
+      skillLower.includes("aws") ||
+      skillLower.includes("docker") ||
+      skillLower.includes("postgres")
+    ) {
       return <Database className="h-3 w-3" />;
-    } else if (skillLower.includes('adobe') || skillLower.includes('photoshop') || skillLower.includes('figma')) {
+    } else if (
+      skillLower.includes("adobe") ||
+      skillLower.includes("photoshop") ||
+      skillLower.includes("figma")
+    ) {
       return <Palette className="h-3 w-3" />;
-    } else if (skillLower.includes('sales') || skillLower.includes('crm') || skillLower.includes('lead')) {
+    } else if (
+      skillLower.includes("sales") ||
+      skillLower.includes("crm") ||
+      skillLower.includes("lead")
+    ) {
       return <Target className="h-3 w-3" />;
-    } else if (skillLower.includes('hr') || skillLower.includes('training') || skillLower.includes('recruitment')) {
+    } else if (
+      skillLower.includes("hr") ||
+      skillLower.includes("training") ||
+      skillLower.includes("recruitment")
+    ) {
       return <Shield className="h-3 w-3" />;
     }
     return <Layers className="h-3 w-3" />;
@@ -222,13 +404,13 @@ const EmployeeProfile = () => {
 
   const getDepartmentIcon = (department) => {
     switch (department) {
-      case 'Development':
+      case "Development":
         return <Cpu className="h-4 w-4 text-orange-500" />;
-      case 'Sales':
+      case "Sales":
         return <Target className="h-4 w-4 text-green-500" />;
-      case 'Human Resources':
+      case "Human Resources":
         return <Shield className="h-4 w-4 text-blue-500" />;
-      case 'Design':
+      case "Design":
         return <Palette className="h-4 w-4 text-purple-500" />;
       default:
         return <Building className="h-4 w-4 text-gray-500" />;
@@ -250,170 +432,136 @@ const EmployeeProfile = () => {
     if (selectedEmployees.size === filteredEmployees.length) {
       setSelectedEmployees(new Set());
     } else {
-      setSelectedEmployees(new Set(filteredEmployees.map(emp => emp.id)));
+      setSelectedEmployees(new Set(filteredEmployees.map((emp) => emp.id)));
     }
   };
 
   // CRUD Operations
   const handleAddEmployee = (employeeData) => {
     const newEmployee = {
-      id: Math.max(...employees.map(e => e.id)) + 1,
+      id: Math.max(...employees.map((e) => e.id)) + 1,
       ...employeeData,
       selected: false,
       attendance: Math.floor(Math.random() * 30) + 70,
       // Role-specific default metrics
-      ...(employeeData.department === 'Development' ? {
-        projects: Math.floor(Math.random() * 20) + 15,
-        projectdone: Math.floor(Math.random() * 200) + 100,
-        pullRequests: Math.floor(Math.random() * 50) + 20,
-        bugsFixed: Math.floor(Math.random() * 80) + 40
-      } : employeeData.department === 'Sales' ? {
-        target: Math.floor(Math.random() * 100000) + 100000,
-        achieved: Math.floor(Math.random() * 150000) + 50000,
-        dealsClosed: Math.floor(Math.random() * 30) + 15,
-        newClients: Math.floor(Math.random() * 15) + 5
-      } : employeeData.department === 'Human Resources' ? {
-        projects: Math.floor(Math.random() * 10) + 8,
-        candidates: Math.floor(Math.random() * 50) + 30,
-        interviews: Math.floor(Math.random() * 30) + 15,
-        hires: Math.floor(Math.random() * 10) + 5
-      } : employeeData.department === 'Design' ? {
-        projects: Math.floor(Math.random() * 15) + 10,
-        designs: Math.floor(Math.random() * 40) + 20,
-        revisions: Math.floor(Math.random() * 20) + 5
-      } : {
-        projects: Math.floor(Math.random() * 15) + 10,
-        done: Math.floor(Math.random() * 12) + 5,
-        progress: Math.floor(Math.random() * 8) + 2
-      }),
-      performance: ['Good', 'Average', 'Excellent'][Math.floor(Math.random() * 3)],
+      ...(employeeData.department === "Development"
+        ? {
+            projects: Math.floor(Math.random() * 20) + 15,
+            projectdone: Math.floor(Math.random() * 200) + 100,
+            pullRequests: Math.floor(Math.random() * 50) + 20,
+            bugsFixed: Math.floor(Math.random() * 80) + 40,
+          }
+        : employeeData.department === "Sales"
+          ? {
+              target: Math.floor(Math.random() * 100000) + 100000,
+              achieved: Math.floor(Math.random() * 150000) + 50000,
+              dealsClosed: Math.floor(Math.random() * 30) + 15,
+              newClients: Math.floor(Math.random() * 15) + 5,
+            }
+          : employeeData.department === "Human Resources"
+            ? {
+                projects: Math.floor(Math.random() * 10) + 8,
+                candidates: Math.floor(Math.random() * 50) + 30,
+                interviews: Math.floor(Math.random() * 30) + 15,
+                hires: Math.floor(Math.random() * 10) + 5,
+              }
+            : employeeData.department === "Design"
+              ? {
+                  projects: Math.floor(Math.random() * 15) + 10,
+                  designs: Math.floor(Math.random() * 40) + 20,
+                  revisions: Math.floor(Math.random() * 20) + 5,
+                }
+              : {
+                  projects: Math.floor(Math.random() * 15) + 10,
+                  done: Math.floor(Math.random() * 12) + 5,
+                  progress: Math.floor(Math.random() * 8) + 2,
+                }),
+      performance: ["Good", "Average", "Excellent"][
+        Math.floor(Math.random() * 3)
+      ],
       color: getRoleColor(employeeData.role),
       badgeClass: getRoleBadgeClass(employeeData.role),
       skills: employeeData.skills || getDefaultSkills(employeeData.role),
-      email: `${employeeData.name.toLowerCase().replace(/\s+/g, '.')}@company.com`,
-      phone: `+1 (555) ${Math.floor(100 + Math.random() * 900)}-${Math.floor(1000 + Math.random() * 9000)}`,
-      username: employeeData.username || employeeData.name.toLowerCase().replace(/\s+/g, '.')
+      email: `${employeeData.name
+        .toLowerCase()
+        .replace(/\s+/g, ".")}@company.com`,
+      phone: `+1 (555) ${Math.floor(100 + Math.random() * 900)}-${Math.floor(
+        1000 + Math.random() * 9000,
+      )}`,
+      username:
+        employeeData.username ||
+        employeeData.name.toLowerCase().replace(/\s+/g, "."),
     };
-    setEmployees(prev => [...prev, newEmployee]);
+    setEmployees((prev) => [...prev, newEmployee]);
     setShowAddModal(false);
   };
 
   const getRoleColor = (role) => {
     switch (role.toLowerCase()) {
-      case 'hr manager':
-      case 'hr specialist':
-        return 'blue';
-      case 'sales executive':
-        return 'green';
-      case 'graphic designer':
-        return 'purple';
-      case 'developer':
-        return 'orange';
+      case "hr manager":
+      case "hr specialist":
+        return "blue";
+      case "sales executive":
+        return "green";
+      case "graphic designer":
+        return "purple";
+      case "developer":
+        return "orange";
       default:
-        return 'blue';
+        return "blue";
     }
   };
 
   const getRoleBadgeClass = (role) => {
     switch (role.toLowerCase()) {
-      case 'hr manager':
-      case 'hr specialist':
-        return 'bg-blue-transparent';
-      case 'sales executive':
-        return 'bg-green-transparent';
-      case 'graphic designer':
-        return 'bg-purple-transparent';
-      case 'developer':
-        return 'bg-orange-transparent';
+      case "hr manager":
+      case "hr specialist":
+        return "bg-blue-transparent";
+      case "sales executive":
+        return "bg-green-transparent";
+      case "graphic designer":
+        return "bg-purple-transparent";
+      case "developer":
+        return "bg-orange-transparent";
       default:
-        return 'bg-blue-transparent';
+        return "bg-blue-transparent";
     }
   };
 
   const getDefaultSkills = (role) => {
     switch (role.toLowerCase()) {
-      case 'hr manager':
-      case 'hr specialist':
-        return ['Recruitment', 'Employee Relations', 'HR Policies', 'Training'];
-      case 'sales executive':
-        return ['Sales Strategy', 'Client Relations', 'Negotiation', 'CRM'];
-      case 'graphic designer':
-        return ['Adobe Creative Suite', 'UI/UX Design', 'Branding', 'Illustration'];
-      case 'developer':
-        return ['JavaScript', 'React', 'Node.js', 'TypeScript', 'Git'];
+      case "hr manager":
+      case "hr specialist":
+        return ["Recruitment", "Employee Relations", "HR Policies", "Training"];
+      case "sales executive":
+        return ["Sales Strategy", "Client Relations", "Negotiation", "CRM"];
+      case "graphic designer":
+        return [
+          "Adobe Creative Suite",
+          "UI/UX Design",
+          "Branding",
+          "Illustration",
+        ];
+      case "developer":
+        return ["JavaScript", "React", "Node.js", "TypeScript", "Git"];
       default:
-        return ['Communication', 'Teamwork', 'Problem Solving'];
+        return ["Communication", "Teamwork", "Problem Solving"];
     }
   };
 
-  const handleEditEmployee = async (employeeData) => {
-    try {
-      // Prepare the data to send to backend
-      const updatePayload = {
-        name: employeeData.name,
-        email: employeeData.email,
-        phone: employeeData.phone,
-        cnic: employeeData.cnic,
-        department: employeeData.department,
-        designation: employeeData.role,
-        address: employeeData.location,
-        emergency_contact: employeeData.phone,
-        bank_account: employeeData.bankAccount,
-        tax_id: employeeData.taxId,
-        status: employeeData.status === 'active' ? 'Active' : 'Inactive',
-        // Resources
-        laptop: employeeData.resources?.laptop?.allocated || false,
-        laptop_serial: employeeData.resources?.laptop?.serialNumber || null,
-        charger: employeeData.resources?.charger?.allocated || false,
-        charger_serial: employeeData.resources?.charger?.serialNumber || null,
-        mouse: employeeData.resources?.mouse?.allocated || false,
-        mouse_serial: employeeData.resources?.mouse?.serialNumber || null,
-        keyboard: employeeData.resources?.keyboard?.allocated || false,
-        keyboard_serial: employeeData.resources?.keyboard?.serialNumber || null,
-        monitor: employeeData.resources?.monitor?.allocated || false,
-        monitor_serial: employeeData.resources?.monitor?.serialNumber || null,
-        mobile: employeeData.resources?.mobile?.allocated || false,
-        mobile_serial: employeeData.resources?.mobile?.serialNumber || null,
-        resources_note: employeeData.resources?.resourceNotes || null,
-        // Allowances
-        allowances: Object.entries(employeeData.allowances || {}).map(([name, amount]) => ({
-          name,
-          amount: parseFloat(amount) || 0
-        }))
-      };
-
-      console.log('📤 Sending update payload:', updatePayload);
-
-      const response = await fetch(endpoints.employees.update(employeeData.id), {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(updatePayload)
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        // Update local state
-        setEmployees(prev => prev.map(emp => 
-          emp.id === employeeData.id ? { ...emp, ...employeeData } : emp
-        ));
-        setShowEditModal(false);
-        setEditingEmployee(null);
-        alert('✅ Employee updated successfully!');
-      } else {
-        alert('❌ Error updating employee: ' + (result.message || 'Unknown error'));
-      }
-    } catch (error) {
-      console.error('❌ Error updating employee:', error);
-      alert('❌ Failed to update employee: ' + error.message);
-    }
+  const handleEditEmployee = (employeeData) => {
+    setEmployees((prev) =>
+      prev.map((emp) =>
+        emp.id === employeeData.id ? { ...emp, ...employeeData } : emp,
+      ),
+    );
+    setShowEditModal(false);
+    setEditingEmployee(null);
   };
 
   const handleDeleteEmployee = (id) => {
-    if (window.confirm('Are you sure you want to delete this employee?')) {
-      setEmployees(prev => prev.filter(emp => emp.id !== id));
+    if (window.confirm("Are you sure you want to delete this employee?")) {
+      setEmployees((prev) => prev.filter((emp) => emp.id !== id));
       const newSelected = new Set(selectedEmployees);
       newSelected.delete(id);
       setSelectedEmployees(newSelected);
@@ -422,143 +570,123 @@ const EmployeeProfile = () => {
 
   // Status Management
   const handleToggleStatus = (id) => {
-    setEmployees(prev => prev.map(emp => 
-      emp.id === id ? { ...emp, status: emp.status === 'active' ? 'inactive' : 'active' } : emp
-    ));
+    setEmployees((prev) =>
+      prev.map((emp) =>
+        emp.id === id
+          ? { ...emp, status: emp.status === "active" ? "inactive" : "active" }
+          : emp,
+      ),
+    );
   };
 
   // Contact Functions
   const handleSendEmail = (email) => {
-    window.open(`mailto:${email}`, '_blank');
+    window.open(`mailto:${email}`, "_blank");
   };
 
   const handleCall = (phone) => {
-    window.open(`tel:${phone.replace(/\D/g, '')}`, '_blank');
+    window.open(`tel:${phone.replace(/\D/g, "")}`, "_blank");
   };
 
   const toggleContactOptions = (id) => {
-    setShowContactOptions(prev => ({
+    setShowContactOptions((prev) => ({
       ...prev,
-      [id]: !prev[id]
+      [id]: !prev[id],
     }));
   };
 
   const handleCopyEmail = (email) => {
     navigator.clipboard.writeText(email);
-    alert('Email copied to clipboard!');
+    alert("Email copied to clipboard!");
   };
 
   const handleCopyPhone = (phone) => {
     navigator.clipboard.writeText(phone);
-    alert('Phone number copied to clipboard!');
+    alert("Phone number copied to clipboard!");
   };
 
   // Menu dropdown function
   const toggleMenuDropdown = (id) => {
-    setShowMenuDropdown(prev => ({
+    setShowMenuDropdown((prev) => ({
       ...prev,
-      [id]: !prev[id]
+      [id]: !prev[id],
     }));
   };
 
   // Bulk Operations
   const handleBulkAction = (action) => {
     switch (action) {
-      case 'activate':
-        setEmployees(prev => prev.map(emp => 
-          selectedEmployees.has(emp.id) ? { ...emp, status: 'active' } : emp
-        ));
+      case "activate":
+        setEmployees((prev) =>
+          prev.map((emp) =>
+            selectedEmployees.has(emp.id) ? { ...emp, status: "active" } : emp,
+          ),
+        );
         break;
-      case 'deactivate':
-        setEmployees(prev => prev.map(emp => 
-          selectedEmployees.has(emp.id) ? { ...emp, status: 'inactive' } : emp
-        ));
+      case "deactivate":
+        setEmployees((prev) =>
+          prev.map((emp) =>
+            selectedEmployees.has(emp.id)
+              ? { ...emp, status: "inactive" }
+              : emp,
+          ),
+        );
         break;
-      case 'delete':
-        if (window.confirm(`Delete ${selectedEmployees.size} selected employees?`)) {
-          setEmployees(prev => prev.filter(emp => !selectedEmployees.has(emp.id)));
+      case "delete":
+        if (
+          window.confirm(`Delete ${selectedEmployees.size} selected employees?`)
+        ) {
+          setEmployees((prev) =>
+            prev.filter((emp) => !selectedEmployees.has(emp.id)),
+          );
           setSelectedEmployees(new Set());
         }
         break;
-      case 'export':
+      case "export":
         handleExportSelected();
         break;
       default:
         break;
     }
-    setBulkAction('');
+    setBulkAction("");
   };
 
   // Export Functions
   const handleExportSelected = () => {
-    const selected = employees.filter(emp => selectedEmployees.has(emp.id));
-    alert(`Exported ${selected.length} employees to ${exportFormat.toUpperCase()}`);
+    const selected = employees.filter((emp) => selectedEmployees.has(emp.id));
+    alert(
+      `Exported ${selected.length} employees to ${exportFormat.toUpperCase()}`,
+    );
   };
 
   const handleExportAll = () => {
-    alert(`Exported all ${filteredEmployees.length} employees to ${exportFormat.toUpperCase()}`);
+    alert(
+      `Exported all ${
+        filteredEmployees.length
+      } employees to ${exportFormat.toUpperCase()}`,
+    );
   };
 
   // Search and Filter Functions
   const handleSearch = (value) => {
-    setFilters(prev => ({ ...prev, search: value }));
+    setFilters((prev) => ({ ...prev, search: value }));
   };
 
   const handleFilterChange = (key, value) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+    setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
   const clearFilters = () => {
     setFilters({
-      department: 'all',
-      status: 'all',
-      search: ''
+      department: "all",
+      status: "all",
+      search: "",
     });
   };
 
   // View Profile Function
-  const handleViewProfile = async (employee) => {
-    try {
-      // Fetch full employee details including resources and allowances
-      const response = await fetch(endpoints.employees.getById(employee.id));
-      const data = await response.json();
-      
-      if (data.success && data.data) {
-        // Merge fetched data with local employee data
-        const fullEmployee = {
-          ...employee,
-          ...data.data,
-          // Ensure compatibility with existing fields
-          name: data.data.name || employee.name,
-          email: data.data.email || employee.email,
-          phone: data.data.phone || employee.phone,
-          department: data.data.department || employee.department,
-          designation: data.data.designation || data.data.sub_department || data.data.position || employee.role,
-          employee_id: data.data.employee_id || employee.id,
-          allowances: data.data.allowances || employee.allowances || [],
-          laptop: data.data.laptop || false,
-          charger: data.data.charger || false,
-          mouse: data.data.mouse || false,
-          keyboard: data.data.keyboard || false,
-          monitor: data.data.monitor || false,
-          mobile: data.data.mobile || false,
-          laptop_serial: data.data.laptop_serial || '',
-          charger_serial: data.data.charger_serial || '',
-          mouse_serial: data.data.mouse_serial || '',
-          keyboard_serial: data.data.keyboard_serial || '',
-          monitor_serial: data.data.monitor_serial || '',
-          mobile_serial: data.data.mobile_serial || '',
-          resources_note: data.data.resources_note || ''
-        };
-        setSelectedProfile(fullEmployee);
-      } else {
-        setSelectedProfile(employee);
-      }
-    } catch (error) {
-      console.error('Error fetching full employee details:', error);
-      setSelectedProfile(employee);
-    }
-    
+  const handleViewProfile = (employee) => {
+    setSelectedProfile(employee);
     setShowProfileModal(true);
   };
 
@@ -568,55 +696,87 @@ const EmployeeProfile = () => {
   };
 
   // Filter and sort employees
-  const filteredEmployees = employees.filter(employee => {
-    const matchesDepartment = filters.department === 'all' || employee.department === filters.department;
-    const matchesStatus = filters.status === 'all' || employee.status === filters.status;
-    const matchesSearch = !filters.search || 
+  const filteredEmployees = employees.filter((employee) => {
+    const matchesDepartment =
+      filters.department === "all" ||
+      employee.department === filters.department;
+    const matchesStatus =
+      filters.status === "all" || employee.status === filters.status;
+    const matchesSearch =
+      !filters.search ||
       employee.name.toLowerCase().includes(filters.search.toLowerCase()) ||
       employee.email.toLowerCase().includes(filters.search.toLowerCase()) ||
       employee.role.toLowerCase().includes(filters.search.toLowerCase()) ||
-      employee.skills.some(skill => skill.toLowerCase().includes(filters.search.toLowerCase()));
-    
+      employee.skills.some((skill) =>
+        skill.toLowerCase().includes(filters.search.toLowerCase()),
+      );
+
     return matchesDepartment && matchesStatus && matchesSearch;
   });
 
   const sortedEmployees = [...filteredEmployees].sort((a, b) => {
     switch (sortBy) {
-      case 'name':
+      case "name":
         return a.name.localeCompare(b.name);
-      case 'attendance':
+      case "attendance":
         return b.attendance - a.attendance;
-      case 'projects':
+      case "projects":
         return b.projects - a.projects;
-      case 'recent':
+      case "recent":
         return b.id - a.id;
-      case 'performance':
-        const performanceOrder = ['Top Performer', 'Excellent', 'Good', 'Average'];
-        return performanceOrder.indexOf(a.performance) - performanceOrder.indexOf(b.performance);
-      case 'revenue':
-        if (a.department === 'Sales' && b.department === 'Sales') {
+      case "performance":
+        const performanceOrder = [
+          "Top Performer",
+          "Excellent",
+          "Good",
+          "Average",
+        ];
+        return (
+          performanceOrder.indexOf(a.performance) -
+          performanceOrder.indexOf(b.performance)
+        );
+      case "revenue":
+        if (a.department === "Sales" && b.department === "Sales") {
           return (b.achieved || 0) - (a.achieved || 0);
         }
-        return a.department === 'Sales' ? -1 : b.department === 'Sales' ? 1 : 0;
-      case 'projectdones':
-        if (a.department === 'Development' && b.department === 'Development') {
+        return a.department === "Sales" ? -1 : b.department === "Sales" ? 1 : 0;
+      case "projectdones":
+        if (a.department === "Development" && b.department === "Development") {
           return (b.projectdone || 0) - (a.projectdone || 0);
         }
-        return a.department === 'Development' ? -1 : b.department === 'Development' ? 1 : 0;
-      case 'hires':
-        if (a.department === 'Human Resources' && b.department === 'Human Resources') {
+        return a.department === "Development"
+          ? -1
+          : b.department === "Development"
+            ? 1
+            : 0;
+      case "hires":
+        if (
+          a.department === "Human Resources" &&
+          b.department === "Human Resources"
+        ) {
           return (b.hires || 0) - (a.hires || 0);
         }
-        return a.department === 'Human Resources' ? -1 : b.department === 'Human Resources' ? 1 : 0;
-      case 'designs':
-        if (a.department === 'Design' && b.department === 'Design') {
+        return a.department === "Human Resources"
+          ? -1
+          : b.department === "Human Resources"
+            ? 1
+            : 0;
+      case "designs":
+        if (a.department === "Design" && b.department === "Design") {
           return (b.designs || 0) - (a.designs || 0);
         }
-        return a.department === 'Design' ? -1 : b.department === 'Design' ? 1 : 0;
+        return a.department === "Design"
+          ? -1
+          : b.department === "Design"
+            ? 1
+            : 0;
       default:
         return b.id - a.id;
     }
   });
+
+  // Log all employees data to the console for debugging
+  console.log("All Employees Data:", employees);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
@@ -650,13 +810,17 @@ const EmployeeProfile = () => {
         <div className="mb-8">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Employee Profiles</h1>
-              <p className="text-gray-600">Manage HR, Sales, Design, and Development teams</p>
+              <h1 className="text-2xl font-bold text-gray-900">
+                Employee Profiles
+              </h1>
+              <p className="text-gray-600">
+                Manage HR, Sales, Design, and Development teams
+              </p>
             </div>
             <div className="flex items-center gap-3">
               {/* Export Dropdown */}
               <div className="relative export-dropdown-container">
-                <button 
+                <button
                   onClick={() => setShowExportDropdown(!showExportDropdown)}
                   className="flex items-center gap-1 px-4 py-2 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition duration-200 shadow-sm"
                 >
@@ -667,7 +831,7 @@ const EmployeeProfile = () => {
                 {showExportDropdown && (
                   <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg z-50 animate-fadeIn">
                     <div className="p-2">
-                      <button 
+                      <button
                         onClick={() => {
                           handleExportAll();
                           setShowExportDropdown(false);
@@ -677,21 +841,25 @@ const EmployeeProfile = () => {
                         <FileText className="h-4 w-4" />
                         Export All
                       </button>
-                      <button 
+                      <button
                         onClick={() => {
                           if (selectedEmployees.size > 0) {
-                            handleBulkAction('export');
+                            handleBulkAction("export");
                             setShowExportDropdown(false);
                           }
                         }}
                         disabled={selectedEmployees.size === 0}
-                        className={`flex items-center gap-2 p-2 w-full text-left rounded-lg transition duration-200 ${selectedEmployees.size === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'}`}
+                        className={`flex items-center gap-2 p-2 w-full text-left rounded-lg transition duration-200 ${
+                          selectedEmployees.size === 0
+                            ? "opacity-50 cursor-not-allowed"
+                            : "hover:bg-gray-100"
+                        }`}
                       >
                         <Download className="h-4 w-4" />
                         Export Selected ({selectedEmployees.size})
                       </button>
                       <div className="border-t border-gray-200 my-2"></div>
-                      <select 
+                      <select
                         value={exportFormat}
                         onChange={(e) => setExportFormat(e.target.value)}
                         className="w-full px-2 py-1 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#349dff]"
@@ -706,8 +874,9 @@ const EmployeeProfile = () => {
               </div>
 
               {/* Add Employee Button */}
-              <button 
-                onClick={() => setShowAddModal(true)}
+              <button
+                // onClick={() => setShowAddModal(true)}
+                onClick={() => navigate("/add-employees")}
                 className="flex items-center gap-2 px-4 py-2 bg-[#349dff] text-white rounded-xl hover:bg-[#2980db] transition duration-200 shadow-sm"
               >
                 <Plus className="h-4 w-4" />
@@ -725,13 +894,17 @@ const EmployeeProfile = () => {
               <ChevronRight className="h-4 w-4" />
               <span>Employee</span>
               <ChevronRight className="h-4 w-4" />
-              <span className="text-[#349dff] font-medium">Employee Profiles</span>
+              <span className="text-[#349dff] font-medium">
+                Employee Profiles
+              </span>
             </div>
             <div className="flex items-center gap-2">
               {selectedEmployees.size > 0 && (
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600">{selectedEmployees.size} selected</span>
-                  <select 
+                  <span className="text-sm text-gray-600">
+                    {selectedEmployees.size} selected
+                  </span>
+                  <select
                     value={bulkAction}
                     onChange={(e) => handleBulkAction(e.target.value)}
                     className="text-sm border border-gray-300 rounded-lg px-3 py-1 focus:outline-none focus:ring-2 focus:ring-[#349dff]"
@@ -749,20 +922,39 @@ const EmployeeProfile = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
           {stats.map((stat, index) => (
-            <div key={index} className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm hover:shadow-md transition-all duration-300">
+            <div
+              key={index}
+              className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm hover:shadow-md transition-all duration-300"
+            >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className={`p-3 rounded-full ${index === 0 ? 'bg-blue-100 text-blue-600' : index === 1 ? 'bg-green-100 text-green-600' : index === 2 ? 'bg-red-100 text-red-600' : 'bg-purple-100 text-purple-600'}`}>
+                  <div
+                    className={`p-3 rounded-full ${
+                      index === 0
+                        ? "bg-blue-100 text-blue-600"
+                        : index === 1
+                          ? "bg-green-100 text-green-600"
+                          : index === 2
+                            ? "bg-red-100 text-red-600"
+                            : "bg-purple-100 text-purple-600"
+                    }`}
+                  >
                     <stat.icon className="h-6 w-6" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs font-medium text-gray-500 truncate">{stat.title}</p>
-                    <h4 className="text-2xl font-bold text-gray-900">{stat.value}</h4>
+                    <p className="text-xs font-medium text-gray-500 truncate">
+                      {stat.title}
+                    </p>
+                    <h4 className="text-2xl font-bold text-gray-900">
+                      {stat.value}
+                    </h4>
                   </div>
                 </div>
-                <div className={`px-2 py-1 rounded-full text-xs ${stat.badgeColor}`}>
+                <div
+                  className={`px-2 py-1 rounded-full text-xs ${stat.badgeColor}`}
+                >
                   <div className="flex items-center gap-1">
                     <TrendingUp className="h-3 w-3" />
                     {stat.trend}
@@ -771,7 +963,7 @@ const EmployeeProfile = () => {
               </div>
             </div>
           ))}
-        </div>
+        </div> */}
 
         {/* Search and Filter Section */}
         <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm mb-6">
@@ -788,12 +980,14 @@ const EmployeeProfile = () => {
                 />
               </div>
             </div>
-            
+
             <div className="flex items-center gap-3">
               {/* Department Filter */}
-              <select 
+              {/* <select
                 value={filters.department}
-                onChange={(e) => handleFilterChange('department', e.target.value)}
+                onChange={(e) =>
+                  handleFilterChange("department", e.target.value)
+                }
                 className="px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#349dff]"
               >
                 <option value="all">All Departments</option>
@@ -801,12 +995,12 @@ const EmployeeProfile = () => {
                 <option value="Sales">Sales Department</option>
                 <option value="Design">Design Department</option>
                 <option value="Development">Development Department</option>
-              </select>
+              </select> */}
 
               {/* Status Filter */}
-              <select 
+              <select
                 value={filters.status}
-                onChange={(e) => handleFilterChange('status', e.target.value)}
+                onChange={(e) => handleFilterChange("status", e.target.value)}
                 className="px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#349dff]"
               >
                 <option value="all">All Status</option>
@@ -815,7 +1009,7 @@ const EmployeeProfile = () => {
               </select>
 
               {/* Sort Options */}
-              <select 
+              <select
                 value={sortBy}
                 onChange={(e) => handleSortChange(e.target.value)}
                 className="px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#349dff]"
@@ -832,8 +1026,10 @@ const EmployeeProfile = () => {
               </select>
 
               {/* Clear Filters Button */}
-              {(filters.search || filters.department !== 'all' || filters.status !== 'all') && (
-                <button 
+              {(filters.search ||
+                filters.department !== "all" ||
+                filters.status !== "all") && (
+                <button
                   onClick={clearFilters}
                   className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900"
                 >
@@ -847,11 +1043,14 @@ const EmployeeProfile = () => {
         {/* Employee Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {sortedEmployees.map((employee) => (
-            <div key={employee.id} className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 group">
+            <div
+              key={employee.id}
+              className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 group"
+            >
               <div className="p-4">
                 {/* Header with checkbox, avatar, and dropdown */}
                 <div className="flex justify-between items-start mb-4">
-                  <button 
+                  <button
                     onClick={() => handleSelectEmployee(employee.id)}
                     className="p-1"
                   >
@@ -861,21 +1060,68 @@ const EmployeeProfile = () => {
                       <Square className="h-4 w-4 text-gray-400" />
                     )}
                   </button>
-                  
+
                   <div className="relative">
-                    <div className="w-16 h-16 rounded-full border-2 border-blue-100 p-1 mx-auto cursor-pointer hover:border-blue-300 transition duration-200"
-                         onClick={() => handleViewProfile(employee)}>
-                      <div className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center group-hover:from-blue-200 group-hover:to-blue-300 transition duration-200">
-                        <span className="text-gray-700 text-lg font-bold">
-                          {employee.name.split(' ').map(n => n[0]).join('')}
-                        </span>
-                      </div>
+                    <div
+                      className="w-16 h-16 rounded-full border-2 border-blue-100 p-1 mx-auto cursor-pointer hover:border-blue-300 transition duration-200"
+                      onClick={() => handleViewProfile(employee)}
+                    >
+                      {/* ✅ SHOW PROFILE PICTURE FROM DATABASE */}
+                      {employee.profile_picture ? (
+                        <img
+                          src={employee.profile_picture}
+                          alt={employee.name}
+                          className="w-full h-full rounded-full object-cover"
+                          onError={(e) => {
+                            // If image fails to load, show initials
+                            e.target.style.display = "none";
+                            const initialsDiv = e.target.parentElement;
+                            initialsDiv.innerHTML = `
+            <div class="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center group-hover:from-blue-200 group-hover:to-blue-300 transition duration-200">
+              <span class="text-gray-700 text-lg font-bold">
+                ${employee.name
+                  .split(" ")
+                  .map((n) => n[0])
+                  .join("")}
+              </span>
+            </div>
+          `;
+                          }}
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center group-hover:from-blue-200 group-hover:to-blue-300 transition duration-200">
+                          <span className="text-gray-700 text-lg font-bold">
+                            {employee.name
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")}
+                          </span>
+                        </div>
+                      )}
                     </div>
-                    <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-white ${employee.status === 'active' ? 'bg-green-500' : 'bg-red-500'}`}></div>
                   </div>
-                  
+                  <div
+                    className={`absolute -top-1 -right-1 w-3 h-3 rounded-full ${
+                      employee.status === "active"
+                        ? "bg-green-500"
+                        : "bg-red-500"
+                    }`}
+                  ></div>
+
+                  <div
+                    className={`absolute -top-1 -right-1 w-3 h-3 rounded-full ${
+                      employee.performance === "Top Performer"
+                        ? "bg-yellow-500"
+                        : employee.performance === "Excellent"
+                          ? "bg-green-500"
+                          : employee.performance === "Good"
+                            ? "bg-blue-500"
+                            : "bg-gray-300"
+                    }`}
+                  ></div>
+
                   <div className="relative menu-dropdown-container">
-                    <button 
+                    <button
                       onClick={() => toggleMenuDropdown(employee.id)}
                       className="p-1 hover:bg-gray-100 rounded-full transition duration-200"
                     >
@@ -884,46 +1130,64 @@ const EmployeeProfile = () => {
                     {showMenuDropdown[employee.id] && (
                       <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg z-20 animate-fadeIn">
                         <div className="p-2">
-                          <button 
+                          <button
                             onClick={() => {
                               handleViewProfile(employee);
-                              setShowMenuDropdown(prev => ({...prev, [employee.id]: false}));
+                              setShowMenuDropdown((prev) => ({
+                                ...prev,
+                                [employee.id]: false,
+                              }));
                             }}
                             className="flex items-center gap-2 p-2 w-full text-left rounded-lg hover:bg-gray-100 transition duration-200"
                           >
                             <Eye className="h-4 w-4 text-gray-500" />
                             View Profile
                           </button>
-                          <button 
+                          <button
                             onClick={() => {
                               setEditingEmployee(employee);
                               setShowEditModal(true);
-                              setShowMenuDropdown(prev => ({...prev, [employee.id]: false}));
+                              setShowMenuDropdown((prev) => ({
+                                ...prev,
+                                [employee.id]: false,
+                              }));
                             }}
                             className="flex items-center gap-2 p-2 w-full text-left rounded-lg hover:bg-gray-100 transition duration-200"
                           >
                             <Edit className="h-4 w-4 text-gray-500" />
                             Edit
                           </button>
-                          <button 
+                          {/* <button
                             onClick={() => {
                               handleToggleStatus(employee.id);
-                              setShowMenuDropdown(prev => ({...prev, [employee.id]: false}));
+                              setShowMenuDropdown((prev) => ({
+                                ...prev,
+                                [employee.id]: false,
+                              }));
                             }}
                             className="flex items-center gap-2 p-2 w-full text-left rounded-lg hover:bg-gray-100 transition duration-200"
                           >
-                            {employee.status === 'active' ? (
-                              <><XCircle className="h-4 w-4 text-gray-500" /> Deactivate</>
+                            {employee.status === "active" ? (
+                              <>
+                                <XCircle className="h-4 w-4 text-gray-500" />{" "}
+                                Deactivate
+                              </>
                             ) : (
-                              <><CheckCircle className="h-4 w-4 text-gray-500" /> Activate</>
+                              <>
+                                <CheckCircle className="h-4 w-4 text-gray-500" />{" "}
+                                Activate
+                              </>
                             )}
-                          </button>
-                        
+                          </button> */}
+
                           <div className="border-t border-gray-200 my-2"></div>
-                          <button 
+                          <button
                             onClick={() => {
                               handleDeleteEmployee(employee.id);
-                              setShowMenuDropdown(prev => ({...prev, [employee.id]: false}));
+                              setShowMenuDropdown((prev) => ({
+                                ...prev,
+                                [employee.id]: false,
+                              }));
                             }}
                             className="flex items-center gap-2 p-2 w-full text-left rounded-lg hover:bg-red-50 text-red-600 transition duration-200"
                           >
@@ -939,14 +1203,18 @@ const EmployeeProfile = () => {
                 {/* Employee Info */}
                 <div className="text-center mb-4">
                   <h6 className="font-semibold text-lg mb-1">
-                    <button 
+                    <button
                       onClick={() => handleViewProfile(employee)}
                       className="hover:text-[#349dff] transition duration-200"
                     >
                       {employee.name}
                     </button>
                   </h6>
-                  <span className={`text-xs font-medium px-3 py-1 rounded-full ${getBadgeColorClass(employee.badgeClass)} flex items-center justify-center gap-2`}>
+                  <span
+                    className={`text-xs font-medium px-3 py-1 rounded-full ${getBadgeColorClass(
+                      employee.badgeClass,
+                    )} flex items-center justify-center gap-2`}
+                  >
                     {getRoleIcon(employee.role, employee.department)}
                     {employee.role}
                   </span>
@@ -957,77 +1225,109 @@ const EmployeeProfile = () => {
                 </div>
 
                 {/* Role-specific Stats */}
-                {employee.department === 'Development' ? (
+                {employee.department === "Development" ? (
                   <div className="grid grid-cols-3 text-center mb-4 border-t border-b border-gray-100 py-3">
                     <div>
                       <p className="text-xs text-gray-500 mb-1">Projects</p>
-                      <h6 className="font-semibold text-lg">{employee.projects}</h6>
+                      <h6 className="font-semibold text-lg">
+                        {employee.projects}
+                      </h6>
                     </div>
                     <div>
                       <p className="text-xs text-gray-500 mb-1">projectdones</p>
-                      <h6 className="font-semibold text-lg text-green-600">{employee.projectdone}</h6>
+                      <h6 className="font-semibold text-lg text-green-600">
+                        {employee.projectdone}
+                      </h6>
                     </div>
                     <div>
                       <p className="text-xs text-gray-500 mb-1">On Progress</p>
-                      <h6 className="font-semibold text-lg text-blue-600">{employee.bugsFixed}</h6>
+                      <h6 className="font-semibold text-lg text-blue-600">
+                        {employee.bugsFixed}
+                      </h6>
                     </div>
                   </div>
-                ) : employee.department === 'Sales' ? (
+                ) : employee.department === "Sales" ? (
                   <div className="grid grid-cols-2 text-center mb-4 border-t border-b border-gray-100 py-3">
                     <div>
                       <p className="text-xs text-gray-500 mb-1">Target</p>
-                      <h6 className="font-semibold text-lg">${(employee.target / 1000).toFixed(0)}K</h6>
+                      <h6 className="font-semibold text-lg">
+                        ${(employee.target / 1000).toFixed(0)}K
+                      </h6>
                     </div>
                     <div>
                       <p className="text-xs text-gray-500 mb-1">Achieved</p>
-                      <h6 className={`font-semibold text-lg ${employee.achieved >= employee.target ? 'text-green-600' : 'text-orange-600'}`}>
+                      <h6
+                        className={`font-semibold text-lg ${
+                          employee.achieved >= employee.target
+                            ? "text-green-600"
+                            : "text-orange-600"
+                        }`}
+                      >
                         ${(employee.achieved / 1000).toFixed(0)}K
                       </h6>
                     </div>
                   </div>
-                ) : employee.department === 'Human Resources' ? (
+                ) : employee.department === "Human Resources" ? (
                   <div className="grid grid-cols-3 text-center mb-4 border-t border-b border-gray-100 py-3">
                     <div>
                       <p className="text-xs text-gray-500 mb-1">Hires</p>
-                      <h6 className="font-semibold text-lg">{employee.hires}</h6>
+                      <h6 className="font-semibold text-lg">
+                        {employee.hires}
+                      </h6>
                     </div>
                     <div>
                       <p className="text-xs text-gray-500 mb-1">Candidates</p>
-                      <h6 className="font-semibold text-lg text-green-600">{employee.candidates}</h6>
+                      <h6 className="font-semibold text-lg text-green-600">
+                        {employee.candidates}
+                      </h6>
                     </div>
                     <div>
                       <p className="text-xs text-gray-500 mb-1">Interviews</p>
-                      <h6 className="font-semibold text-lg text-blue-600">{employee.interviews}</h6>
+                      <h6 className="font-semibold text-lg text-blue-600">
+                        {employee.interviews}
+                      </h6>
                     </div>
                   </div>
-                ) : employee.department === 'Design' ? (
+                ) : employee.department === "Design" ? (
                   <div className="grid grid-cols-3 text-center mb-4 border-t border-b border-gray-100 py-3">
                     <div>
                       <p className="text-xs text-gray-500 mb-1">Designs</p>
-                      <h6 className="font-semibold text-lg">{employee.designs}</h6>
+                      <h6 className="font-semibold text-lg">
+                        {employee.designs}
+                      </h6>
                     </div>
                     <div>
                       <p className="text-xs text-gray-500 mb-1">Projects</p>
-                      <h6 className="font-semibold text-lg text-purple-600">{employee.projects}</h6>
+                      <h6 className="font-semibold text-lg text-purple-600">
+                        {employee.projects}
+                      </h6>
                     </div>
                     <div>
                       <p className="text-xs text-gray-500 mb-1">Revisions</p>
-                      <h6 className="font-semibold text-lg text-orange-600">{employee.revisions}</h6>
+                      <h6 className="font-semibold text-lg text-orange-600">
+                        {employee.revisions}
+                      </h6>
                     </div>
                   </div>
                 ) : (
                   <div className="grid grid-cols-3 text-center mb-4 border-t border-b border-gray-100 py-3">
                     <div>
                       <p className="text-xs text-gray-500 mb-1">Projects</p>
-                      <h6 className="font-semibold text-lg">{employee.projects}</h6>
+                      <h6 className="font-semibold text-lg">
+                        {employee.projects}
+                      </h6>
                     </div>
                     <div>
                       <p className="text-xs text-gray-500 mb-1">Done</p>
-                      <h6 className="font-semibold text-lg text-green-600">{employee.done}</h6>
+                      <h6 className="font-semibold text-lg text-green-600">
+                        {employee.done}
+                      </h6>
                     </div>
                     <div>
                       <p className="text-xs text-gray-500 mb-1">Progress</p>
-                      <h6 className="font-semibold text-lg text-blue-600">{employee.progress}</h6>
+                      <h6 className="font-semibold text-lg text-blue-600">
+                        {employee.progress}
+                      </h6>
                     </div>
                   </div>
                 )}
@@ -1083,14 +1383,14 @@ const EmployeeProfile = () => {
 
       {/* Modals */}
       {showAddModal && (
-        <AddEmployeeModal 
+        <AddEmployeeModal
           onClose={() => setShowAddModal(false)}
           onSave={handleAddEmployee}
         />
       )}
 
       {showEditModal && editingEmployee && (
-        <EditEmployeeModal 
+        <EditEmployeeModal
           employee={editingEmployee}
           onClose={() => {
             setShowEditModal(false);
@@ -1101,7 +1401,7 @@ const EmployeeProfile = () => {
       )}
 
       {showProfileModal && selectedProfile && (
-        <ProfileDetailModal 
+        <ProfileDetailModal
           employee={selectedProfile}
           onClose={() => {
             setShowProfileModal(false);
@@ -1127,28 +1427,28 @@ const EmployeeProfile = () => {
 // Modal Components
 const AddEmployeeModal = ({ onClose, onSave }) => {
   const [formData, setFormData] = useState({
-    name: '',
-    username: '',
-    role: '',
-    department: '',
-    email: '',
-    phone: '',
-    location: '',
-    experience: '',
-    joiningDate: new Date().toISOString().split('T')[0],
-    status: 'active',
+    name: "",
+    username: "",
+    role: "",
+    department: "",
+    email: "",
+    phone: "",
+    location: "",
+    experience: "",
+    joiningDate: new Date().toISOString().split("T")[0],
+    status: "active",
     skills: [],
-    password: '',
-    confirmPassword: ''
+    password: "",
+    confirmPassword: "",
   });
-  const [currentSkill, setCurrentSkill] = useState('');
+  const [currentSkill, setCurrentSkill] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match!');
+      alert("Passwords do not match!");
       return;
     }
     onSave(formData);
@@ -1156,50 +1456,52 @@ const AddEmployeeModal = ({ onClose, onSave }) => {
 
   const handleRoleChange = (role) => {
     const departmentMap = {
-      'HR Manager': 'Human Resources',
-      'HR Specialist': 'Human Resources',
-      'Sales Executive': 'Sales',
-      'Graphic Designer': 'Design',
-      'Developer': 'Development'
+      "HR Manager": "Human Resources",
+      "HR Specialist": "Human Resources",
+      "Sales Executive": "Sales",
+      "Graphic Designer": "Design",
+      Developer: "Development",
     };
 
     const defaultSkills = {
-      'HR Manager': ['Recruitment', 'Employee Relations', 'HR Policies'],
-      'HR Specialist': ['Onboarding', 'Training', 'Benefits Administration'],
-      'Sales Executive': ['Sales Strategy', 'Client Relations', 'Negotiation'],
-      'Graphic Designer': ['Adobe Creative Suite', 'UI/UX Design', 'Branding'],
-      'Developer': ['JavaScript', 'React', 'Node.js']
+      "HR Manager": ["Recruitment", "Employee Relations", "HR Policies"],
+      "HR Specialist": ["Onboarding", "Training", "Benefits Administration"],
+      "Sales Executive": ["Sales Strategy", "Client Relations", "Negotiation"],
+      "Graphic Designer": ["Adobe Creative Suite", "UI/UX Design", "Branding"],
+      Developer: ["JavaScript", "React", "Node.js"],
     };
 
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       role,
-      department: departmentMap[role] || '',
-      email: role ? `${prev.name.toLowerCase().replace(/\s+/g, '.')}@company.com` : '',
-      username: role ? prev.name.toLowerCase().replace(/\s+/g, '.') : '',
-      skills: defaultSkills[role] || []
+      department: departmentMap[role] || "",
+      email: role
+        ? `${prev.name.toLowerCase().replace(/\s+/g, ".")}@company.com`
+        : "",
+      username: role ? prev.name.toLowerCase().replace(/\s+/g, ".") : "",
+      skills: defaultSkills[role] || [],
     }));
   };
 
   const addSkill = () => {
     if (currentSkill.trim() && !formData.skills.includes(currentSkill.trim())) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        skills: [...prev.skills, currentSkill.trim()]
+        skills: [...prev.skills, currentSkill.trim()],
       }));
-      setCurrentSkill('');
+      setCurrentSkill("");
     }
   };
 
   const removeSkill = (index) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      skills: prev.skills.filter((_, i) => i !== index)
+      skills: prev.skills.filter((_, i) => i !== index),
     }));
   };
 
   const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       e.preventDefault();
       addSkill();
     }
@@ -1209,19 +1511,32 @@ const AddEmployeeModal = ({ onClose, onSave }) => {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center p-6 border-b border-gray-200 sticky top-0 bg-white">
-          <h3 className="text-lg font-semibold text-gray-900">Add New Employee</h3>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg">
+          <h3 className="text-lg font-semibold text-gray-900">
+            Add New Employee
+          </h3>
+          <button
+            onClick={onClose}
+            className="p-1 hover:bg-gray-100 rounded-lg"
+          >
             <X className="h-5 w-5" />
           </button>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
-            <input 
-              type="text" 
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Full Name *
+            </label>
+            <input
+              type="text"
               value={formData.name}
-              onChange={(e) => setFormData(prev => ({...prev, name: e.target.value, username: e.target.value.toLowerCase().replace(/\s+/g, '.')}))}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  name: e.target.value,
+                  username: e.target.value.toLowerCase().replace(/\s+/g, "."),
+                }))
+              }
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#349dff]"
               placeholder="Enter full name"
@@ -1229,20 +1544,26 @@ const AddEmployeeModal = ({ onClose, onSave }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Username *</label>
-            <input 
-              type="text" 
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Username *
+            </label>
+            <input
+              type="text"
               value={formData.username}
-              onChange={(e) => setFormData(prev => ({...prev, username: e.target.value}))}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, username: e.target.value }))
+              }
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#349dff]"
               placeholder="Enter username"
             />
           </div>
-          
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Role *</label>
-            <select 
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Role *
+            </label>
+            <select
               value={formData.role}
               onChange={(e) => handleRoleChange(e.target.value)}
               required
@@ -1256,11 +1577,13 @@ const AddEmployeeModal = ({ onClose, onSave }) => {
               <option value="Developer">Developer</option>
             </select>
           </div>
-          
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Department *</label>
-            <input 
-              type="text" 
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Department *
+            </label>
+            <input
+              type="text"
               value={formData.department}
               readOnly
               className="w-full px-3 py-2 border border-gray-300 bg-gray-50 rounded-xl"
@@ -1268,11 +1591,15 @@ const AddEmployeeModal = ({ onClose, onSave }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
-            <input 
-              type="email" 
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Email *
+            </label>
+            <input
+              type="email"
               value={formData.email}
-              onChange={(e) => setFormData(prev => ({...prev, email: e.target.value}))}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, email: e.target.value }))
+              }
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#349dff]"
               placeholder="employee@company.com"
@@ -1280,11 +1607,15 @@ const AddEmployeeModal = ({ onClose, onSave }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Phone *</label>
-            <input 
-              type="tel" 
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Phone *
+            </label>
+            <input
+              type="tel"
               value={formData.phone}
-              onChange={(e) => setFormData(prev => ({...prev, phone: e.target.value}))}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, phone: e.target.value }))
+              }
               required
               placeholder="+1 (555) 123-4567"
               className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#349dff]"
@@ -1293,64 +1624,94 @@ const AddEmployeeModal = ({ onClose, onSave }) => {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Password *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Password *
+              </label>
               <div className="relative">
-                <input 
+                <input
                   type={showPassword ? "text" : "password"}
                   value={formData.password}
-                  onChange={(e) => setFormData(prev => ({...prev, password: e.target.value}))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      password: e.target.value,
+                    }))
+                  }
                   required
                   className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#349dff] pr-10"
                   placeholder="Enter password"
                 />
-                <button 
+                <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
                 </button>
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Confirm Password *
+              </label>
               <div className="relative">
-                <input 
+                <input
                   type={showConfirmPassword ? "text" : "password"}
                   value={formData.confirmPassword}
-                  onChange={(e) => setFormData(prev => ({...prev, confirmPassword: e.target.value}))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      confirmPassword: e.target.value,
+                    }))
+                  }
                   required
                   className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#349dff] pr-10"
                   placeholder="Confirm password"
                 />
-                <button 
+                <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
                 >
-                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showConfirmPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
                 </button>
               </div>
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
-            <input 
-              type="text" 
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Location
+            </label>
+            <input
+              type="text"
               value={formData.location}
-              onChange={(e) => setFormData(prev => ({...prev, location: e.target.value}))}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, location: e.target.value }))
+              }
               placeholder="City, Country"
               className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#349dff]"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Experience</label>
-            <select 
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Experience
+            </label>
+            <select
               value={formData.experience}
-              onChange={(e) => setFormData(prev => ({...prev, experience: e.target.value}))}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, experience: e.target.value }))
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#349dff]"
             >
               <option value="">Select Experience</option>
@@ -1363,11 +1724,13 @@ const AddEmployeeModal = ({ onClose, onSave }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Skills</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Skills
+            </label>
             <div className="space-y-2">
               <div className="flex gap-2">
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={currentSkill}
                   onChange={(e) => setCurrentSkill(e.target.value)}
                   onKeyPress={handleKeyPress}
@@ -1382,15 +1745,17 @@ const AddEmployeeModal = ({ onClose, onSave }) => {
                   <PlusCircle className="h-5 w-5" />
                 </button>
               </div>
-              
+
               {formData.skills.length > 0 && (
                 <div className="mt-2">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-gray-600">Added Skills ({formData.skills.length})</span>
+                    <span className="text-sm text-gray-600">
+                      Added Skills ({formData.skills.length})
+                    </span>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {formData.skills.map((skill, index) => (
-                      <span 
+                      <span
                         key={index}
                         className="inline-flex items-center gap-1 px-3 py-1 text-sm bg-blue-100 text-blue-800 rounded-full"
                       >
@@ -1412,14 +1777,14 @@ const AddEmployeeModal = ({ onClose, onSave }) => {
           </div>
 
           <div className="flex gap-3 pt-4">
-            <button 
+            <button
               type="button"
               onClick={onClose}
               className="flex-1 px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition duration-200"
             >
               Cancel
             </button>
-            <button 
+            <button
               type="submit"
               className="flex-1 px-4 py-2 text-sm text-white bg-[#349dff] rounded-xl hover:bg-[#2980db] transition duration-200"
             >
@@ -1433,344 +1798,317 @@ const AddEmployeeModal = ({ onClose, onSave }) => {
 };
 
 const EditEmployeeModal = ({ employee, onClose, onSave }) => {
-  // Transform employee data for form compatibility
-  const transformEmployeeData = (emp) => {
-    // Handle allowances - convert from API format (array) to form format (object) or keep as is
-    let formattedAllowances = {};
-    if (Array.isArray(emp.allowances)) {
-      emp.allowances.forEach(allowance => {
-        formattedAllowances[allowance.name?.toLowerCase().replace(/\s+/g, '_') || 'allowance'] = allowance.amount || 0;
-      });
-    } else if (typeof emp.allowances === 'object') {
-      formattedAllowances = emp.allowances;
-    } else {
-      formattedAllowances = { medical: 0, housing: 0, transport: 0 };
-    }
-
-    // Handle resources - convert from API format to form format
-    let formattedResources = {
-      laptop: { allocated: emp.laptop || false, serialNumber: emp.laptop_serial || '' },
-      charger: { allocated: emp.charger || false, serialNumber: emp.charger_serial || '' },
-      mouse: { allocated: emp.mouse || false, serialNumber: emp.mouse_serial || '' },
-      keyboard: { allocated: emp.keyboard || false, serialNumber: emp.keyboard_serial || '' },
-      monitor: { allocated: emp.monitor || false, serialNumber: emp.monitor_serial || '' },
-      mobile: { allocated: emp.mobile || false, serialNumber: emp.mobile_serial || '' },
-      resourceNotes: emp.resources_note || ''
-    };
-
-    return {
-      ...emp,
-      firstName: emp.name?.split(' ')[0] || 'First',
-      lastName: emp.name?.split(' ').slice(1).join(' ') || 'Last',
-      username: emp.username || emp.employee_id || emp.email?.split('@')[0] || 'username',
-      password: '',
-      confirmPassword: '',
-      company: emp.company || 'Company',
-      employeeId: emp.employee_id || emp.id || `EMP-${String(emp.id).padStart(4, '0')}`,
-      about: emp.about || `Experienced ${emp.designation || emp.role} with experience in the ${emp.department} department.`,
-      role: emp.designation || emp.role || 'Employee',
-      joiningDate: emp.join_date || emp.joiningDate || new Date().toISOString().split('T')[0],
-      skills: emp.skills || [],
-      resources: formattedResources,
-      allowances: formattedAllowances
-    };
-  };
-
-  const initialData = transformEmployeeData(employee);
-
   const [formData, setFormData] = useState({
-    ...initialData,
-    permissions: {
-      holidays: { enabled: true, read: true, write: false, create: false, delete: true, import: false, export: false },
-      leaves: { enabled: false, read: false, write: false, create: false, delete: false, import: false, export: false },
-      clients: { enabled: false, read: false, write: false, create: false, delete: false, import: false, export: false },
-      projects: { enabled: false, read: false, write: false, create: false, delete: false, import: false, export: false },
-      tasks: { enabled: false, read: false, write: false, create: false, delete: false, import: false, export: false },
-      chats: { enabled: false, read: false, write: false, create: false, delete: false, import: false, export: false },
-      assets: { enabled: true, read: false, write: false, create: true, delete: false, import: true, export: false },
-      timingSheets: { enabled: false, read: false, write: false, create: false, delete: false, import: false, export: false }
-    }
+    ...employee,
+    firstName: employee.name.split(" ")[0],
+    lastName: employee.name.split(" ").slice(1).join(" "),
+    employeeId: `EMP-${String(employee.id).padStart(4, "0")}`,
+    about: `Experienced ${employee.role} with ${employee.experience} in the ${employee.department} department.`,
+    // Profile image
+    profile_picture: employee.profile_picture || "",
+    profileImageFile: null,
+    profileImagePreview: employee.profile_picture || "",
+
+    // Allowances (array format)
+    allowances: employee.allowances || [
+      {
+        allowance_name: employee.allowance_name || "",
+        allowance_amount: employee.allowance_amount || 0,
+      },
+    ],
+
+    // Resources
+    resources: employee.resources || [
+      {
+        resource_name: employee.resource_name || "",
+        resource_serial: employee.resource_serial || "",
+      },
+    ],
+
+    // Other fields
+    base_salary: employee.base_salary || 0,
+    total_salary: employee.total_salary || 0,
+    cnic: employee.cnic || "",
+    designation: employee.designation || "",
+    department: employee.department || "",
+    role: employee.role || "",
+    phone: employee.phone || "",
+    address: employee.address || "",
+    join_date:
+      employee.joiningDate ||
+      employee.join_date ||
+      new Date().toISOString().split("T")[0],
+    status: employee.status || "active",
+    experience: employee.experience || "-- years",
   });
-  const [currentSkill, setCurrentSkill] = useState('');
-  const [activeTab, setActiveTab] = useState('basic');
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [newAllowanceName, setNewAllowanceName] = useState('');
-  const [newAllowanceAmount, setNewAllowanceAmount] = useState('');
-  const [newResourceName, setNewResourceName] = useState('');
-  const [newResourceSerial, setNewResourceSerial] = useState('');
 
-  const handleSubmit = (e) => {
+  const [activeTab, setActiveTab] = useState("basic");
+  const [loading, setLoading] = useState(false);
+  const [profileImageFile, setProfileImageFile] = useState(null);
+  const [profileImagePreview, setProfileImagePreview] = useState(
+    employee.profile_picture || "",
+  );
+
+  // Add this function to convert file to base64
+  const convertFileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (formData.password && formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match!');
-      return;
-    }
-    const updatedEmployee = {
-      ...formData,
-      name: `${formData.firstName} ${formData.lastName}`,
-      skills: formData.skills,
-      // Role-specific metrics
-      ...(formData.department === 'Development' ? {
-        projectdone: formData.projectdone || employee.projectdone || 0,
-        pullRequests: formData.pullRequests || employee.pullRequests || 0,
-        bugsFixed: formData.bugsFixed || employee.bugsFixed || 0
-      } : formData.department === 'Sales' ? {
-        target: formData.target || employee.target || 0,
-        achieved: formData.achieved || employee.achieved || 0,
-        dealsClosed: formData.dealsClosed || employee.dealsClosed || 0,
-        newClients: formData.newClients || employee.newClients || 0
-      } : formData.department === 'Human Resources' ? {
-        candidates: formData.candidates || employee.candidates || 0,
-        interviews: formData.interviews || employee.interviews || 0,
-        hires: formData.hires || employee.hires || 0
-      } : formData.department === 'Design' ? {
-        designs: formData.designs || employee.designs || 0,
-        revisions: formData.revisions || employee.revisions || 0
-      } : {})
-    };
-    
-    // Include resources and allowances
-    updatedEmployee.resources = formData.resources;
-    updatedEmployee.allowances = formData.allowances;
-    
-    // Remove unnecessary fields
-    delete updatedEmployee.firstName;
-    delete updatedEmployee.lastName;
-    delete updatedEmployee.username;
-    delete updatedEmployee.password;
-    delete updatedEmployee.confirmPassword;
-    delete updatedEmployee.company;
-    delete updatedEmployee.employeeId;
-    delete updatedEmployee.about;
-    delete updatedEmployee.permissions;
-    
-    onSave(updatedEmployee);
-  };
+    setLoading(true);
 
-  const addSkill = () => {
-    if (currentSkill.trim() && !formData.skills.includes(currentSkill.trim())) {
-      setFormData(prev => ({
-        ...prev,
-        skills: [...prev.skills, currentSkill.trim()]
-      }));
-      setCurrentSkill('');
-    }
-  };
+    try {
+      let profilePictureBase64 =
+        formData.profile_picture || employee.profile_picture;
 
-  const removeSkill = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      skills: prev.skills.filter((_, i) => i !== index)
-    }));
-  };
-
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      addSkill();
-    }
-  };
-
-  const handlePermissionChange = (module, field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      permissions: {
-        ...prev.permissions,
-        [module]: {
-          ...prev.permissions[module],
-          [field]: value
-        }
+      // Convert new image file to base64 if exists
+      if (profileImageFile) {
+        profilePictureBase64 = await convertFileToBase64(profileImageFile);
       }
-    }));
-  };
+      // Prepare form data for API (with allowance IDs)
+      const updatedEmployee = {
+        name: `${formData.firstName} ${formData.lastName}`,
+        email: employee.email,
+        phone: formData.phone,
+        address: formData.address,
+        cnic: formData.cnic,
+        designation: formData.designation,
+        role: formData.role,
+        department: formData.department,
+        status: formData.status,
+        join_date: formData.join_date,
+        experience: formData.experience,
+        profile_picture: profilePictureBase64, // Use the base64 string
 
-  const handleSelectAll = (value) => {
-    const updatedPermissions = { ...formData.permissions };
-    Object.keys(updatedPermissions).forEach(module => {
-      updatedPermissions[module] = {
-        ...updatedPermissions[module],
-        read: value,
-        write: value,
-        create: value,
-        delete: value,
-        import: value,
-        export: value
+        // salary
+        salary: {
+          base_salary: parseFloat(formData.base_salary) || 0,
+          total_salary: parseFloat(formData.total_salary) || 0,
+        },
+
+        // allowances WITH IDs for existing ones
+        allowances: formData.allowances.map((a) => ({
+          id: a.id || null, // Send existing ID or null for new
+          allowance_name: a.allowance_name,
+          allowance_amount: parseFloat(a.allowance_amount) || 0,
+        })),
+
+        // dynamic resources
+        dynamic_resources: formData.resources.map((dr) => ({
+          resource_name: dr.resource_name || "",
+          resource_serial: dr.resource_serial || "",
+        })),
       };
-    });
-    setFormData(prev => ({
+
+      console.log("Sending to API:", {
+        ...updatedEmployee,
+        profile_picture: profilePictureBase64
+          ? "BASE64_IMAGE_PRESENT"
+          : "NO_IMAGE",
+      });
+
+      // Call API to update employee
+      const response = await fetch(
+        `${endpoints.employees.base}/${employee.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(updatedEmployee),
+        },
+      );
+
+      const data = await response.json();
+
+      if (data.success) {
+        // SUCCESS ALERT - Method 1: Sweet Alert Style
+        showSuccessAlert("Employee details updated successfully!");
+
+        // Update local state with new profile picture URL if returned
+        if (data.profile_picture_url) {
+          setProfileImagePreview(data.profile_picture_url);
+          setFormData((prev) => ({
+            ...prev,
+            profile_picture: data.profile_picture_url,
+          }));
+        }
+
+        onSave({
+          ...employee,
+          ...data.employee,
+          ...updatedEmployee,
+          name: `${formData.firstName} ${formData.lastName}`,
+          profile_picture:
+            data.profile_picture_url ||
+            data.employee?.profile_picture ||
+            profilePictureBase64,
+        });
+      } else {
+        alert(
+          "Failed to update employee: " + (data.message || "Unknown error"),
+        );
+      }
+    } catch (error) {
+      console.error("Error updating employee:", error);
+      alert("Image should be below 100x100 1mb");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const showSuccessAlert = (message) => {
+    // Create alert element
+    const alertEl = document.createElement("div");
+    alertEl.className = "fixed top-4 right-4 z-[100] animate-slideIn";
+    alertEl.innerHTML = `
+    <div class="bg-green-50 border-l-4 border-green-500 p-4 rounded-lg shadow-lg">
+      <div class="flex items-center">
+        <div class="flex-shrink-0">
+          <CheckCircle className="h-5 w-5 text-green-400" />
+        </div>
+        <div class="ml-3">
+          <p class="text-sm font-medium text-green-800">${message}</p>
+        </div>
+        <div class="ml-auto pl-3">
+          <button onclick="this.parentElement.parentElement.parentElement.remove()" class="text-green-400 hover:text-green-600">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+
+    // Add to DOM
+    document.body.appendChild(alertEl);
+
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+      if (alertEl.parentNode) {
+        alertEl.remove();
+      }
+    }, 5000);
+  };
+
+  const uploadProfileImage = async (employeeId, file) => {
+    const formData = new FormData();
+    formData.append("profile_picture", file);
+
+    try {
+      const response = await fetch(
+        `${endpoints.employees.base}/${employeeId}/profile-picture`,
+        {
+          method: "POST",
+          body: formData,
+        },
+      );
+
+      const data = await response.json();
+      return data.success;
+    } catch (error) {
+      console.error("Error uploading profile image:", error);
+      return false;
+    }
+  };
+
+  const handleProfileImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setProfileImageFile(file);
+
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfileImagePreview(reader.result);
+        setFormData((prev) => ({
+          ...prev,
+          profile_picture: reader.result,
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleAddAllowance = () => {
+    setFormData((prev) => ({
       ...prev,
-      permissions: updatedPermissions
+      allowances: [
+        ...prev.allowances,
+        { allowance_name: "", allowance_amount: 0 },
+      ],
     }));
   };
 
-  const handleEnableAll = (value) => {
-    const updatedPermissions = { ...formData.permissions };
-    Object.keys(updatedPermissions).forEach(module => {
-      updatedPermissions[module].enabled = value;
-    });
-    setFormData(prev => ({
+  const handleRemoveAllowance = (index) => {
+    setFormData((prev) => ({
       ...prev,
-      permissions: updatedPermissions
+      allowances: prev.allowances.filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleAllowanceChange = (index, field, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      allowances: prev.allowances.map((allowance, i) =>
+        i === index ? { ...allowance, [field]: value } : allowance,
+      ),
+    }));
+  };
+
+  const handleAddResource = () => {
+    setFormData((prev) => ({
+      ...prev,
+      resources: [
+        ...prev.resources,
+        { resource_name: "", resource_serial: "" },
+      ],
+    }));
+  };
+
+  const handleRemoveResource = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      resources: prev.resources.filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleResourceChange = (index, field, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      resources: prev.resources.map((resource, i) =>
+        i === index ? { ...resource, [field]: value } : resource,
+      ),
     }));
   };
 
   const departments = [
-    'All Department',
-    'Human Resources',
-    'Sales',
-    'Design',
-    'Development',
-    'Finance',
-    'Marketing',
-    'Operations'
+    "Human Resources",
+    "Sales",
+    "Design",
+    "Development",
+    "Finance",
+    "Marketing",
+    "Operations",
   ];
 
   const designations = [
-    'Finance',
-    'HR Manager',
-    'Sales Executive',
-    'Developer',
-    'Graphic Designer',
-    'Project Manager',
-    'Team Lead',
-    'Analyst'
+    "HR Manager",
+    "HR Specialist",
+    "Sales Executive",
+    "Developer",
+    "Graphic Designer",
+    "Project Manager",
+    "Team Lead",
+    "Analyst",
+    "Finance Manager",
+    "Marketing Executive",
   ];
-
-  const renderRoleSpecificFields = () => {
-    switch (formData.department) {
-      case 'Development':
-        return (
-          <div className="grid grid-cols-3 gap-4 mb-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Project Done</label>
-              <input 
-                type="number"
-                value={formData.projectdone || employee.projectdone || 0}
-                onChange={(e) => setFormData(prev => ({...prev, projectdone: parseInt(e.target.value) || 0}))}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Pending</label>
-              <input 
-                type="number"
-                value={formData.pullRequests || employee.pullRequests || 0}
-                onChange={(e) => setFormData(prev => ({...prev, pullRequests: parseInt(e.target.value) || 0}))}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">On Progress</label>
-              <input 
-                type="number"
-                value={formData.bugsFixed || employee.bugsFixed || 0}
-                onChange={(e) => setFormData(prev => ({...prev, bugsFixed: parseInt(e.target.value) || 0}))}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-          </div>
-        );
-      case 'Sales':
-        return (
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Target ($)</label>
-              <input 
-                type="number"
-                value={formData.target || employee.target || 0}
-                onChange={(e) => setFormData(prev => ({...prev, target: parseInt(e.target.value) || 0}))}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Achieved ($)</label>
-              <input 
-                type="number"
-                value={formData.achieved || employee.achieved || 0}
-                onChange={(e) => setFormData(prev => ({...prev, achieved: parseInt(e.target.value) || 0}))}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Deals Closed</label>
-              <input 
-                type="number"
-                value={formData.dealsClosed || employee.dealsClosed || 0}
-                onChange={(e) => setFormData(prev => ({...prev, dealsClosed: parseInt(e.target.value) || 0}))}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">New Clients</label>
-              <input 
-                type="number"
-                value={formData.newClients || employee.newClients || 0}
-                onChange={(e) => setFormData(prev => ({...prev, newClients: parseInt(e.target.value) || 0}))}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-          </div>
-        );
-      case 'Human Resources':
-        return (
-          <div className="grid grid-cols-3 gap-4 mb-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Candidates</label>
-              <input 
-                type="number"
-                value={formData.candidates || employee.candidates || 0}
-                onChange={(e) => setFormData(prev => ({...prev, candidates: parseInt(e.target.value) || 0}))}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Interviews</label>
-              <input 
-                type="number"
-                value={formData.interviews || employee.interviews || 0}
-                onChange={(e) => setFormData(prev => ({...prev, interviews: parseInt(e.target.value) || 0}))}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Hires</label>
-              <input 
-                type="number"
-                value={formData.hires || employee.hires || 0}
-                onChange={(e) => setFormData(prev => ({...prev, hires: parseInt(e.target.value) || 0}))}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-          </div>
-        );
-      case 'Design':
-        return (
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Designs Created</label>
-              <input 
-                type="number"
-                value={formData.designs || employee.designs || 0}
-                onChange={(e) => setFormData(prev => ({...prev, designs: parseInt(e.target.value) || 0}))}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Revisions</label>
-              <input 
-                type="number"
-                value={formData.revisions || employee.revisions || 0}
-                onChange={(e) => setFormData(prev => ({...prev, revisions: parseInt(e.target.value) || 0}))}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-          </div>
-        );
-      default:
-        return null;
-    }
-  };
 
   const renderBasicInfoTab = () => (
     <>
@@ -1779,50 +2117,123 @@ const EditEmployeeModal = ({ employee, onClose, onSave }) => {
           <div className="col-span-12">
             <div className="flex items-center flex-wrap gap-3 bg-gray-50 w-full rounded-2xl p-4 mb-6">
               <div className="flex items-center justify-center w-24 h-24 rounded-full border-2 border-dashed border-gray-300 mr-4 flex-shrink-0">
-                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
-                  <span className="text-gray-700 text-2xl font-bold">
-                    {formData.firstName[0]}{formData.lastName[0]}
-                  </span>
-                </div>
+                {/* ✅ SHOW ACTUAL PROFILE PICTURE OR INITIALS */}
+                {profileImagePreview ? (
+                  <img
+                    src={profileImagePreview}
+                    alt="Profile Preview"
+                    className="w-20 h-20 rounded-full object-cover"
+                    onError={(e) => {
+                      // If image fails to load, show initials
+                      e.target.style.display = "none";
+                      const initialsDiv = e.target.parentElement;
+                      initialsDiv.innerHTML = `
+                      <div class="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center">
+                        <span class="text-gray-700 text-2xl font-bold">
+                          ${formData.firstName?.[0] || ""}${formData.lastName?.[0] || ""}
+                        </span>
+                      </div>
+                    `;
+                    }}
+                  />
+                ) : employee.profile_picture ? (
+                  <img
+                    src={employee.profile_picture}
+                    alt={employee.name}
+                    className="w-20 h-20 rounded-full object-cover"
+                    onError={(e) => {
+                      // If image fails to load, show initials
+                      e.target.style.display = "none";
+                      const initialsDiv = e.target.parentElement;
+                      initialsDiv.innerHTML = `
+                      <div class="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center">
+                        <span class="text-gray-700 text-2xl font-bold">
+                          ${formData.firstName?.[0] || ""}${formData.lastName?.[0] || ""}
+                        </span>
+                      </div>
+                    `;
+                    }}
+                  />
+                ) : (
+                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
+                    <span className="text-gray-700 text-2xl font-bold">
+                      {formData.firstName?.[0] || ""}
+                      {formData.lastName?.[0] || ""}
+                    </span>
+                  </div>
+                )}
               </div>
               <div className="profile-upload flex-1">
                 <div className="mb-2">
-                  <h6 className="font-semibold text-gray-900 mb-1">Upload Profile Image</h6>
-                  <p className="text-sm text-gray-500">Image should be below 4 mb</p>
+                  <h6 className="font-semibold text-gray-900 mb-1">
+                    Upload Profile Image
+                  </h6>
+                  <p className="text-sm text-gray-500">
+                    Image should be below 100x100 1mb
+                  </p>
                 </div>
                 <div className="profile-uploader flex items-center">
-                  <button className="relative px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200 text-sm mr-3">
+                  <button
+                    type="button"
+                    className="relative px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200 text-sm mr-3"
+                    onClick={() =>
+                      document.getElementById("profileImageInput").click()
+                    }
+                  >
                     Upload
-                    <input 
-                      type="file" 
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" 
-                      accept="image/*"
-                    />
                   </button>
-                  <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition duration-200 text-sm">
-                    Cancel
+                  <input
+                    id="profileImageInput"
+                    type="file"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleProfileImageChange}
+                  />
+                  <button
+                    type="button"
+                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition duration-200 text-sm"
+                    onClick={() => {
+                      setProfileImagePreview("");
+                      setProfileImageFile(null);
+                      setFormData((prev) => ({ ...prev, profile_picture: "" }));
+                    }}
+                  >
+                    Remove
                   </button>
                 </div>
               </div>
             </div>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">First Name <span className="text-red-500">*</span></label>
-              <input 
-                type="text" 
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                First Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
                 value={formData.firstName}
-                onChange={(e) => setFormData(prev => ({...prev, firstName: e.target.value}))}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    firstName: e.target.value,
+                  }))
+                }
+                required
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
-              <input 
-                type="text" 
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Last Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
                 value={formData.lastName}
-                onChange={(e) => setFormData(prev => ({...prev, lastName: e.target.value}))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, lastName: e.target.value }))
+                }
+                required
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
@@ -1830,106 +2241,83 @@ const EditEmployeeModal = ({ employee, onClose, onSave }) => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Employee ID <span className="text-red-500">*</span></label>
-              <input 
-                type="text" 
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Employee ID <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
                 value={formData.employeeId}
-                onChange={(e) => setFormData(prev => ({...prev, employeeId: e.target.value}))}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                readOnly
+                className="w-full px-4 py-3 border border-gray-300 bg-gray-50 rounded-xl"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Joining Date <span className="text-red-500">*</span></label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Joining Date <span className="text-red-500">*</span>
+              </label>
               <div className="relative">
-                <input 
-                  type="date" 
-                  value={formData.joiningDate}
-                  onChange={(e) => setFormData(prev => ({...prev, joiningDate: e.target.value}))}
+                <input
+                  type="date"
+                  value={(() => {
+                    // Direct conversion in input value
+                    const dateValue =
+                      employee.joiningDate || employee.join_date;
+
+                    if (!dateValue) return "";
+
+                    try {
+                      const date = new Date(dateValue);
+                      if (isNaN(date.getTime())) return "";
+
+                      const year = date.getFullYear();
+                      const month = String(date.getMonth() + 1).padStart(
+                        2,
+                        "0",
+                      );
+                      const day = String(date.getDate()).padStart(2, "0");
+
+                      return `${year}-${month}-${day}`;
+                    } catch (error) {
+                      console.error("Date conversion error:", error);
+                      return "";
+                    }
+                  })()}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      join_date: e.target.value,
+                    }))
+                  }
+                  required
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
-                <Calendar className="h-5 w-5 absolute right-3 top-3.5 text-gray-400" />
               </div>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Username <span className="text-red-500">*</span></label>
-              <input 
-                type="text" 
-                value={formData.username}
-                onChange={(e) => setFormData(prev => ({...prev, username: e.target.value}))}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Email <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="email"
+                value={employee.email}
+                readOnly
+                className="w-full px-4 py-3 border border-gray-300 bg-gray-50 rounded-xl"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Email <span className="text-red-500">*</span></label>
-              <input 
-                type="email" 
-                value={formData.email}
-                onChange={(e) => setFormData(prev => ({...prev, email: e.target.value}))}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Password <span className="text-red-500">*</span></label>
-              <div className="relative">
-                <input 
-                  type={showPassword ? "text" : "password"}
-                  value={formData.password}
-                  onChange={(e) => setFormData(prev => ({...prev, password: e.target.value}))}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10"
-                  placeholder="Leave blank to keep current"
-                />
-                <button 
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600"
-                >
-                  <Eye className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Confirm Password <span className="text-red-500">*</span></label>
-              <div className="relative">
-                <input 
-                  type={showConfirmPassword ? "text" : "password"}
-                  value={formData.confirmPassword}
-                  onChange={(e) => setFormData(prev => ({...prev, confirmPassword: e.target.value}))}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10"
-                  placeholder="Leave blank to keep current"
-                />
-                <button 
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600"
-                >
-                  <Eye className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number <span className="text-red-500">*</span></label>
-              <input 
-                type="tel" 
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Phone Number <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="tel"
                 value={formData.phone}
-                onChange={(e) => setFormData(prev => ({...prev, phone: e.target.value}))}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Company <span className="text-red-500">*</span></label>
-              <input 
-                type="text" 
-                value={formData.company}
-                onChange={(e) => setFormData(prev => ({...prev, company: e.target.value}))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, phone: e.target.value }))
+                }
+                required
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
@@ -1937,499 +2325,321 @@ const EditEmployeeModal = ({ employee, onClose, onSave }) => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
-              <select 
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                CNIC <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={formData.cnic}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, cnic: e.target.value }))
+                }
+                required
+                placeholder="XXXXX-XXXXXXX-X"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Address <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={formData.address}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, address: e.target.value }))
+                }
+                required
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Department <span className="text-red-500">*</span>
+              </label>
+              <select
                 value={formData.department}
-                onChange={(e) => setFormData(prev => ({...prev, department: e.target.value}))}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    department: e.target.value,
+                  }))
+                }
+                required
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                {departments.map(dept => (
-                  <option key={dept} value={dept}>{dept}</option>
+                <option value="">Select Department</option>
+                {departments.map((dept) => (
+                  <option key={dept} value={dept}>
+                    {dept}
+                  </option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Designation</label>
-              <select 
-                value={formData.role}
-                onChange={(e) => setFormData(prev => ({...prev, role: e.target.value}))}
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Designation <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={formData.designation}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    designation: e.target.value,
+                  }))
+                }
+                required
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                {designations.map(des => (
-                  <option key={des} value={des}>{des}</option>
+                <option value="">Select Designation</option>
+                {designations.map((des) => (
+                  <option key={des} value={des}>
+                    {des}
+                  </option>
                 ))}
               </select>
             </div>
           </div>
 
-          {/* Role-specific fields */}
-          {renderRoleSpecificFields()}
-
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">About <span className="text-red-500">*</span></label>
-            <textarea 
-              value={formData.about}
-              onChange={(e) => setFormData(prev => ({...prev, about: e.target.value}))}
-              rows="3"
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Skills</label>
-            <div className="space-y-2">
-              <div className="flex gap-2">
-                <input 
-                  type="text" 
-                  value={currentSkill}
-                  onChange={(e) => setCurrentSkill(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder="Add a new skill"
-                  className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-                <button
-                  type="button"
-                  onClick={addSkill}
-                  className="px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition duration-200"
-                >
-                  <PlusCircle className="h-5 w-5" />
-                </button>
-              </div>
-              
-              {formData.skills.length > 0 && (
-                <div className="mt-2">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-gray-600">Skills ({formData.skills.length})</span>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {formData.skills.map((skill, index) => (
-                      <span 
-                        key={index}
-                        className="inline-flex items-center gap-1 px-3 py-2 text-sm bg-blue-100 text-blue-800 rounded-full"
-                      >
-                        <Tag className="h-3 w-3" />
-                        {skill}
-                        <button
-                          type="button"
-                          onClick={() => removeSkill(index)}
-                          className="ml-1 text-blue-600 hover:text-blue-800"
-                        >
-                          <MinusCircle className="h-3 w-3" />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
+          {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Experience
+              </label>
+              <input
+                type="text"
+                value={formData.experience}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    experience: e.target.value,
+                  }))
+                }
+                placeholder="e.g., 3 years"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
             </div>
-          </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Status <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={formData.status}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, status: e.target.value }))
+                }
+                required
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+            </div>
+          </div> */}
         </div>
-      </div>
-      <div className="modal-footer p-6 border-t border-gray-200">
-        <button 
-          type="button"
-          onClick={onClose}
-          className="px-6 py-3 text-sm text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition duration-200 border border-gray-300 mr-3"
-        >
-          Cancel
-        </button>
-        <button 
-          type="button"
-          onClick={handleSubmit}
-          className="px-6 py-3 text-sm text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition duration-200"
-        >
-          Save
-        </button>
       </div>
     </>
   );
 
-  const renderResourcesAllowancesTab = () => (
+  const renderSalaryTab = () => (
     <>
       <div className="modal-body pb-0 px-6 pt-6">
-        {/* Resources Allocated Section */}
-        <div className="mb-8">
-          <h5 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center">
-              <span className="text-yellow-600 text-lg">📦</span>
-            </div>
-            Resources Allocated
-          </h5>
-          
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            {Object.entries(formData.resources).map(([key, value]) => {
-              // Skip the resourceNotes field
-              if (key === 'resourceNotes' || typeof value !== 'object' || !value.allocated !== undefined) return null;
-              
-              return (
-                <div key={key} className="border border-gray-200 rounded-xl p-4 relative">
-                  <div className="flex items-center justify-between gap-2 mb-3">
-                    <div className="flex items-center gap-2">
-                      <input 
-                        type="checkbox" 
-                        checked={value.allocated || false}
-                        onChange={(e) => setFormData(prev => ({
-                          ...prev,
-                          resources: {
-                            ...prev.resources,
-                            [key]: { ...value, allocated: e.target.checked }
-                          }
-                        }))}
-                        className="w-4 h-4 text-blue-600 rounded"
-                      />
-                      <label className="text-sm font-medium text-gray-700 capitalize">
-                        {key.replace(/_/g, ' ')}
-                      </label>
-                    </div>
-                    {/* Delete button for custom resources (not default ones) */}
-                    {!['laptop', 'charger', 'mouse', 'keyboard', 'monitor', 'mobile'].includes(key) && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const updatedResources = { ...formData.resources };
-                          delete updatedResources[key];
-                          setFormData(prev => ({
-                            ...prev,
-                            resources: updatedResources
-                          }));
-                        }}
-                        className="text-red-600 hover:text-red-800 p-1"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    )}
-                  </div>
-                  {(value.allocated || value.serialNumber) && (
-                    <input 
-                      type="text" 
-                      placeholder="Serial #"
-                      value={value.serialNumber || ''}
-                      onChange={(e) => setFormData(prev => ({
-                        ...prev,
-                        resources: {
-                          ...prev.resources,
-                          [key]: { ...value, serialNumber: e.target.value }
-                        }
-                      }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Resources Note */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Resources Note</label>
-            <textarea 
-              placeholder="Add any notes about resources..."
-              value={formData.resources.resourceNotes}
-              onChange={(e) => setFormData(prev => ({
-                ...prev,
-                resources: {
-                  ...prev.resources,
-                  resourceNotes: e.target.value
+        <div className="space-y-6">
+          {/* Base Salary */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Base Salary (PKR) <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                value={formData.base_salary}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    base_salary: e.target.value,
+                    total_salary:
+                      parseFloat(e.target.value || 0) +
+                      formData.allowances.reduce(
+                        (sum, allowance) =>
+                          sum + (parseFloat(allowance.allowance_amount) || 0),
+                        0,
+                      ),
+                  }))
                 }
-              }))}
-              rows="3"
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
+                required
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Total Salary (PKR)
+              </label>
+              <input
+                type="number"
+                value={formData.total_salary}
+                readOnly
+                className="w-full px-4 py-3 border border-gray-300 bg-gray-50 rounded-xl"
+              />
+              <p className="text-sm text-gray-500 mt-1">
+                Base Salary + Allowances
+              </p>
+            </div>
           </div>
 
-          {/* Add New Resource */}
-          <div className="mt-6 bg-yellow-50 rounded-xl p-4">
-            <h6 className="text-sm font-semibold text-gray-900 mb-3">Add New Resource</h6>
-            <div className="flex gap-3">
-              <input 
-                type="text"
-                placeholder="Resource name (e.g., Desk, Chair, Headset)"
-                value={newResourceName}
-                onChange={(e) => setNewResourceName(e.target.value)}
-                className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-              />
-              <input 
-                type="text"
-                placeholder="Serial #"
-                value={newResourceSerial}
-                onChange={(e) => setNewResourceSerial(e.target.value)}
-                className="w-40 px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-              />
+          {/* Allowances */}
+          <div>
+            <div className="flex justify-between items-center mb-4">
+              <h4 className="font-semibold text-gray-900">Allowances</h4>
               <button
                 type="button"
-                onClick={() => {
-                  if (newResourceName.trim() && newResourceSerial.trim()) {
-                    setFormData(prev => ({
-                      ...prev,
-                      resources: {
-                        ...prev.resources,
-                        [newResourceName.toLowerCase().replace(/\s+/g, '_')]: {
-                          allocated: true,
-                          serialNumber: newResourceSerial
-                        }
-                      }
-                    }));
-                    setNewResourceName('');
-                    setNewResourceSerial('');
-                  }
-                }}
-                className="px-4 py-3 bg-yellow-600 text-white rounded-xl hover:bg-yellow-700 transition duration-200 flex items-center gap-2 whitespace-nowrap"
+                onClick={handleAddAllowance}
+                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition duration-200 text-sm"
               >
                 <Plus className="h-4 w-4" />
-                Add
+                Add Allowance
               </button>
             </div>
-          </div>
-        </div>
 
-        {/* Allowances Section */}
-        <div className="mb-6">
-          <h5 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-              <span className="text-green-600 text-lg">💰</span>
-            </div>
-            Allowances
-          </h5>
-          
-          {/* Existing Allowances */}
-          <div className="space-y-3 mb-6">
-            {Object.entries(formData.allowances).map(([key, value]) => (
-              <div key={key} className="flex items-end gap-3">
+            {formData.allowances.map((allowance, index) => (
+              <div key={index} className="flex items-end gap-4 mb-4">
                 <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-700 mb-2 capitalize">
-                    {key} <span className="text-gray-500">PKR</span>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Allowance Name
                   </label>
-                  <input 
-                    type="number"
-                    value={value}
-                    onChange={(e) => setFormData(prev => ({
-                      ...prev,
-                      allowances: {
-                        ...prev.allowances,
-                        [key]: parseFloat(e.target.value) || 0
-                      }
-                    }))}
+                  <input
+                    type="text"
+                    value={allowance.allowance_name}
+                    onChange={(e) =>
+                      handleAllowanceChange(
+                        index,
+                        "allowance_name",
+                        e.target.value,
+                      )
+                    }
+                    placeholder="e.g., Travel Allowance"
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder={`Enter ${key} allowance`}
                   />
                 </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const updatedAllowances = { ...formData.allowances };
-                    delete updatedAllowances[key];
-                    setFormData(prev => ({
-                      ...prev,
-                      allowances: updatedAllowances
-                    }));
-                  }}
-                  className="px-3 py-3 text-red-600 hover:bg-red-50 rounded-lg transition duration-200"
-                >
-                  <X className="h-5 w-5" />
-                </button>
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Amount (PKR)
+                  </label>
+                  <input
+                    type="number"
+                    value={allowance.allowance_amount}
+                    onChange={(e) => {
+                      handleAllowanceChange(
+                        index,
+                        "allowance_amount",
+                        e.target.value,
+                      );
+                      // Update total salary
+                      const totalAllowances = formData.allowances.reduce(
+                        (sum, a, i) =>
+                          sum +
+                          (i === index
+                            ? parseFloat(e.target.value || 0)
+                            : parseFloat(a.allowance_amount || 0)),
+                        0,
+                      );
+                      setFormData((prev) => ({
+                        ...prev,
+                        total_salary:
+                          parseFloat(prev.base_salary || 0) + totalAllowances,
+                      }));
+                    }}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+                {formData.allowances.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveAllowance(index)}
+                    className="px-4 py-3 bg-red-100 text-red-600 rounded-xl hover:bg-red-200 transition duration-200"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                )}
               </div>
             ))}
           </div>
-
-          {/* Add New Allowance */}
-          <div className="bg-blue-50 rounded-xl p-4">
-            <h6 className="text-sm font-semibold text-gray-900 mb-3">Add New Allowance</h6>
-            <div className="flex gap-3">
-              <input 
-                type="text"
-                placeholder="Allowance name (e.g., Housing, Transport)"
-                value={newAllowanceName}
-                onChange={(e) => setNewAllowanceName(e.target.value)}
-                className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-              />
-              <input 
-                type="number"
-                placeholder="Amount (PKR)"
-                value={newAllowanceAmount}
-                onChange={(e) => setNewAllowanceAmount(e.target.value)}
-                className="w-32 px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-              />
-              <button
-                type="button"
-                onClick={() => {
-                  if (newAllowanceName.trim()) {
-                    setFormData(prev => ({
-                      ...prev,
-                      allowances: {
-                        ...prev.allowances,
-                        [newAllowanceName.toLowerCase().replace(/\s+/g, '_')]: parseFloat(newAllowanceAmount) || 0
-                      }
-                    }));
-                    setNewAllowanceName('');
-                    setNewAllowanceAmount('');
-                  }
-                }}
-                className="px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition duration-200 flex items-center gap-2 whitespace-nowrap"
-              >
-                <Plus className="h-4 w-4" />
-                Add
-              </button>
-            </div>
-          </div>
         </div>
-      </div>
-      <div className="modal-footer p-6 border-t border-gray-200">
-        <button 
-          type="button"
-          onClick={onClose}
-          className="px-6 py-3 text-sm text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition duration-200 border border-gray-300 mr-3"
-        >
-          Cancel
-        </button>
-        <button 
-          type="button"
-          onClick={handleSubmit}
-          className="px-6 py-3 text-sm text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition duration-200"
-        >
-          Save
-        </button>
       </div>
     </>
   );
 
-  const renderPermissionsTab = () => (
+  const renderResourcesTab = () => (
     <>
       <div className="modal-body pb-0 px-6 pt-6">
-        <div className="card bg-gray-50 rounded-2xl shadow-none mb-6">
-          <div className="card-body flex items-center justify-between flex-wrap gap-3">
-            <h6 className="font-semibold text-gray-900">Enable Options</h6>
-            <div className="flex items-center justify-end gap-4">
-              <div className="flex items-center">
-                <label className="inline-flex items-center cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    className="sr-only peer"
-                    onChange={(e) => handleEnableAll(e.target.checked)}
-                  />
-                  <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                  <span className="ms-3 text-sm font-medium text-gray-700">Enable all Module</span>
-                </label>
-              </div>
-              <div className="flex items-center">
-                <label className="inline-flex items-center cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-                    onChange={(e) => handleSelectAll(e.target.checked)}
-                  />
-                  <span className="ms-2 text-sm font-medium text-gray-700">Select All</span>
-                </label>
-              </div>
-            </div>
+        <div className="space-y-6">
+          <div className="flex justify-between items-center mb-4">
+            <h4 className="font-semibold text-gray-900">Resources</h4>
+            <button
+              type="button"
+              onClick={handleAddResource}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200 text-sm"
+            >
+              <Plus className="h-4 w-4" />
+              Add Resource
+            </button>
           </div>
-        </div>
 
-        <div className="table-responsive border border-gray-200 rounded-2xl overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <tbody className="divide-y divide-gray-200">
-              {Object.entries(formData.permissions).map(([module, permissions]) => (
-                <tr key={module} className="hover:bg-gray-50">
-                  <td className="px-4 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <label className="inline-flex items-center cursor-pointer">
-                        <input 
-                          type="checkbox" 
-                          className="sr-only peer"
-                          checked={permissions.enabled}
-                          onChange={(e) => handlePermissionChange(module, 'enabled', e.target.checked)}
-                        />
-                        <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                        <span className="ms-3 text-sm font-medium text-gray-900 capitalize">{module}</span>
-                      </label>
-                    </div>
-                  </td>
-                  <td className="px-4 py-4 whitespace-nowrap">
-                    <label className="inline-flex items-center cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-                        checked={permissions.read}
-                        onChange={(e) => handlePermissionChange(module, 'read', e.target.checked)}
-                      />
-                      <span className="ms-2 text-sm text-gray-700">Read</span>
-                    </label>
-                  </td>
-                  <td className="px-4 py-4 whitespace-nowrap">
-                    <label className="inline-flex items-center cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-                        checked={permissions.write}
-                        onChange={(e) => handlePermissionChange(module, 'write', e.target.checked)}
-                      />
-                      <span className="ms-2 text-sm text-gray-700">Write</span>
-                    </label>
-                  </td>
-                  <td className="px-4 py-4 whitespace-nowrap">
-                    <label className="inline-flex items-center cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-                        checked={permissions.create}
-                        onChange={(e) => handlePermissionChange(module, 'create', e.target.checked)}
-                      />
-                      <span className="ms-2 text-sm text-gray-700">Create</span>
-                    </label>
-                  </td>
-                  <td className="px-4 py-4 whitespace-nowrap">
-                    <label className="inline-flex items-center cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-                        checked={permissions.delete}
-                        onChange={(e) => handlePermissionChange(module, 'delete', e.target.checked)}
-                      />
-                      <span className="ms-2 text-sm text-gray-700">Delete</span>
-                    </label>
-                  </td>
-                  <td className="px-4 py-4 whitespace-nowrap">
-                    <label className="inline-flex items-center cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-                        checked={permissions.import}
-                        onChange={(e) => handlePermissionChange(module, 'import', e.target.checked)}
-                      />
-                      <span className="ms-2 text-sm text-gray-700">Import</span>
-                    </label>
-                  </td>
-                  <td className="px-4 py-4 whitespace-nowrap">
-                    <label className="inline-flex items-center cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-                        checked={permissions.export}
-                        onChange={(e) => handlePermissionChange(module, 'export', e.target.checked)}
-                      />
-                      <span className="ms-2 text-sm text-gray-700">Export</span>
-                    </label>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          {formData.resources.map((resource, index) => (
+            <div
+              key={index}
+              className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 p-4 bg-gray-50 rounded-xl"
+            >
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Resource Name
+                </label>
+                <input
+                  type="text"
+                  value={resource.resource_name}
+                  onChange={(e) =>
+                    handleResourceChange(index, "resource_name", e.target.value)
+                  }
+                  placeholder="e.g., Laptop, Monitor, etc."
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Serial Number
+                </label>
+                <input
+                  type="text"
+                  value={resource.resource_serial}
+                  onChange={(e) =>
+                    handleResourceChange(
+                      index,
+                      "resource_serial",
+                      e.target.value,
+                    )
+                  }
+                  placeholder="Serial number"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              {formData.resources.length > 1 && (
+                <div className="col-span-2 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveResource(index)}
+                    className="flex items-center gap-2 px-4 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition duration-200"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Remove Resource
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
         </div>
-      </div>
-      <div className="modal-footer p-6 border-t border-gray-200">
-        <button 
-          type="button"
-          onClick={onClose}
-          className="px-6 py-3 text-sm text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition duration-200 border border-gray-300 mr-3"
-        >
-          Cancel
-        </button>
-        <button 
-          type="button"
-          onClick={handleSubmit}
-          className="px-6 py-3 text-sm text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition duration-200"
-        >
-          Save
-        </button>
       </div>
     </>
   );
@@ -2439,49 +2649,96 @@ const EditEmployeeModal = ({ employee, onClose, onSave }) => {
       <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center p-6 border-b border-gray-200 sticky top-0 bg-white">
           <div className="flex items-center">
-            <h4 className="text-lg font-semibold text-gray-900 mr-3">Edit Employee</h4>
-            <span className="text-sm text-gray-600">Employee ID : {formData.employeeId}</span>
+            <h4 className="text-lg font-semibold text-gray-900 mr-3">
+              Edit Employee
+            </h4>
+            <span className="text-sm text-gray-600">
+              Employee ID: {formData.employeeId}
+            </span>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 rounded-lg"
+            disabled={loading}
+          >
             <X className="h-5 w-5" />
           </button>
         </div>
-        
+
         <form onSubmit={handleSubmit}>
           <div className="px-6 pt-6">
             <ul className="flex border-b border-gray-200" role="tablist">
               <li className="mr-2" role="presentation">
                 <button
-                  className={`px-4 py-3 text-sm font-medium rounded-t-lg ${activeTab === 'basic' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-                  onClick={() => setActiveTab('basic')}
                   type="button"
+                  className={`px-4 py-3 text-sm font-medium rounded-t-lg ${
+                    activeTab === "basic"
+                      ? "text-blue-600 border-b-2 border-blue-600"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                  onClick={() => setActiveTab("basic")}
                 >
                   Basic Information
                 </button>
               </li>
               <li className="mr-2" role="presentation">
                 <button
-                  className={`px-4 py-3 text-sm font-medium rounded-t-lg ${activeTab === 'resources' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-                  onClick={() => setActiveTab('resources')}
                   type="button"
+                  className={`px-4 py-3 text-sm font-medium rounded-t-lg ${
+                    activeTab === "salary"
+                      ? "text-blue-600 border-b-2 border-blue-600"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                  onClick={() => setActiveTab("salary")}
                 >
-                  Resources & Allowances
+                  Salary & Allowances
                 </button>
               </li>
               <li role="presentation">
                 <button
-                  className={`px-4 py-3 text-sm font-medium rounded-t-lg ${activeTab === 'permissions' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-                  onClick={() => setActiveTab('permissions')}
                   type="button"
+                  className={`px-4 py-3 text-sm font-medium rounded-t-lg ${
+                    activeTab === "resources"
+                      ? "text-blue-600 border-b-2 border-blue-600"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                  onClick={() => setActiveTab("resources")}
                 >
-                  Permissions
+                  Resources
                 </button>
               </li>
             </ul>
           </div>
-          
+
           <div className="tab-content">
-            {activeTab === 'basic' ? renderBasicInfoTab() : activeTab === 'resources' ? renderResourcesAllowancesTab() : renderPermissionsTab()}
+            {activeTab === "basic" && renderBasicInfoTab()}
+            {activeTab === "salary" && renderSalaryTab()}
+            {activeTab === "resources" && renderResourcesTab()}
+          </div>
+
+          <div className="modal-footer flex justify-center p-6 border-t border-gray-200 sticky bottom-0 bg-white">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-6 py-3 text-sm text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition duration-200 border border-gray-300 mr-3"
+              disabled={loading}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-6 py-3 text-sm text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition duration-200 flex items-center gap-2"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save Changes"
+              )}
+            </button>
           </div>
         </form>
       </div>
@@ -2490,52 +2747,140 @@ const EditEmployeeModal = ({ employee, onClose, onSave }) => {
 };
 
 // Updated ProfileDetailModal component
-const ProfileDetailModal = ({ employee, onClose, onEdit, onToggleStatus, onDelete, onSendEmail, onCall, onCopyEmail, onCopyPhone }) => {
-  // Define getSkillIcon function inside the ProfileDetailModal component
+const ProfileDetailModal = ({
+  employee,
+  onClose,
+  onEdit,
+  onToggleStatus,
+  onDelete,
+  onSendEmail,
+  onCall,
+  onCopyEmail,
+  onCopyPhone,
+}) => {
+  // Status badge function
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case "active":
+        return (
+          <span className="px-3 py-1 text-sm rounded-full bg-green-100 text-green-800 border border-green-200 flex items-center gap-1">
+            <CheckCircle className="h-3 w-3" /> Active
+          </span>
+        );
+      case "inactive":
+        return (
+          <span className="px-3 py-1 text-sm rounded-full bg-red-100 text-red-800 border border-red-200 flex items-center gap-1">
+            <XCircle className="h-3 w-3" /> Inactive
+          </span>
+        );
+      default:
+        return (
+          <span className="px-3 py-1 text-sm rounded-full bg-gray-100 text-gray-800 border border-gray-200">
+            Unknown
+          </span>
+        );
+    }
+  };
+
+  // Performance badge function
+  const getPerformanceBadge = (performance) => {
+    switch (performance) {
+      case "Top Performer":
+        return (
+          <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800 border border-yellow-200 flex items-center gap-1">
+            <Star className="h-3 w-3" /> Top Performer
+          </span>
+        );
+      case "Excellent":
+        return (
+          <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800 border border-green-200 flex items-center gap-1">
+            <Zap className="h-3 w-3" /> Excellent
+          </span>
+        );
+      case "Good":
+        return (
+          <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800 border border-blue-200 flex items-center gap-1">
+            <Activity className="h-3 w-3" /> Good
+          </span>
+        );
+      default:
+        return null;
+    }
+  };
+
+  // Skill icon function
   const getSkillIcon = (skill) => {
     const skillLower = skill.toLowerCase();
-    if (skillLower.includes('react') || skillLower.includes('javascript') || skillLower.includes('node')) {
+    if (
+      skillLower.includes("react") ||
+      skillLower.includes("javascript") ||
+      skillLower.includes("node")
+    ) {
       return <Code className="h-3 w-3" />;
-    } else if (skillLower.includes('aws') || skillLower.includes('docker') || skillLower.includes('postgres')) {
+    } else if (
+      skillLower.includes("aws") ||
+      skillLower.includes("docker") ||
+      skillLower.includes("postgres")
+    ) {
       return <Database className="h-3 w-3" />;
-    } else if (skillLower.includes('adobe') || skillLower.includes('photoshop') || skillLower.includes('figma')) {
+    } else if (
+      skillLower.includes("adobe") ||
+      skillLower.includes("photoshop") ||
+      skillLower.includes("figma")
+    ) {
       return <Palette className="h-3 w-3" />;
-    } else if (skillLower.includes('sales') || skillLower.includes('crm') || skillLower.includes('lead')) {
+    } else if (
+      skillLower.includes("sales") ||
+      skillLower.includes("crm") ||
+      skillLower.includes("lead")
+    ) {
       return <Target className="h-3 w-3" />;
-    } else if (skillLower.includes('hr') || skillLower.includes('training') || skillLower.includes('recruitment')) {
+    } else if (
+      skillLower.includes("hr") ||
+      skillLower.includes("training") ||
+      skillLower.includes("recruitment")
+    ) {
       return <Shield className="h-3 w-3" />;
     }
     return <Layers className="h-3 w-3" />;
   };
 
+  // Role specific metrics
   const renderRoleSpecificMetrics = () => {
     switch (employee.department) {
-      case 'Development':
+      case "Development":
         return (
           <>
             <div className="bg-green-50 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-1">
+                <CheckCircle className="h-4 w-4 text-green-600" />
                 <div className="text-sm text-green-600">Project Done</div>
               </div>
-              <div className="text-2xl font-bold">{employee.projectdone || 0}</div>
+              <div className="text-2xl font-bold">
+                {employee.projectdone || 0}
+              </div>
             </div>
             <div className="bg-orange-50 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-1">
                 <GitBranch className="h-4 w-4 text-orange-600" />
                 <div className="text-sm text-orange-600">Pending</div>
               </div>
-              <div className="text-2xl font-bold">{employee.pullRequests || 0}</div>
+              <div className="text-2xl font-bold">
+                {employee.pullRequests || 0}
+              </div>
             </div>
             <div className="bg-purple-50 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-1">
                 <Bug className="h-4 w-4 text-purple-600" />
                 <div className="text-sm text-purple-600">On Progress</div>
               </div>
-              <div className="text-2xl font-bold">{employee.bugsFixed || 0}</div>
+              <div className="text-2xl font-bold">
+                {employee.bugsFixed || 0}
+              </div>
             </div>
           </>
         );
-      case 'Sales':
+      case "Sales":
         return (
           <>
             <div className="bg-green-50 rounded-xl p-4">
@@ -2543,14 +2888,22 @@ const ProfileDetailModal = ({ employee, onClose, onEdit, onToggleStatus, onDelet
                 <Target className="h-4 w-4 text-green-600" />
                 <div className="text-sm text-green-600">Revenue Target</div>
               </div>
-              <div className="text-2xl font-bold">${(employee.target || 0).toLocaleString()}</div>
+              <div className="text-2xl font-bold">
+                ${(employee.target || 0).toLocaleString()}
+              </div>
             </div>
             <div className="bg-blue-50 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-1">
                 <Dollar className="h-4 w-4 text-blue-600" />
                 <div className="text-sm text-blue-600">Revenue Achieved</div>
               </div>
-              <div className={`text-2xl font-bold ${employee.achieved >= employee.target ? 'text-green-600' : 'text-orange-600'}`}>
+              <div
+                className={`text-2xl font-bold ${
+                  employee.achieved >= employee.target
+                    ? "text-green-600"
+                    : "text-orange-600"
+                }`}
+              >
                 ${(employee.achieved || 0).toLocaleString()}
               </div>
             </div>
@@ -2559,11 +2912,13 @@ const ProfileDetailModal = ({ employee, onClose, onEdit, onToggleStatus, onDelet
                 <FileText className="h-4 w-4 text-purple-600" />
                 <div className="text-sm text-purple-600">Deals Closed</div>
               </div>
-              <div className="text-2xl font-bold">{employee.dealsClosed || 0}</div>
+              <div className="text-2xl font-bold">
+                {employee.dealsClosed || 0}
+              </div>
             </div>
           </>
         );
-      case 'Human Resources':
+      case "Human Resources":
         return (
           <>
             <div className="bg-green-50 rounded-xl p-4">
@@ -2578,18 +2933,22 @@ const ProfileDetailModal = ({ employee, onClose, onEdit, onToggleStatus, onDelet
                 <Users className="h-4 w-4 text-blue-600" />
                 <div className="text-sm text-blue-600">Candidates</div>
               </div>
-              <div className="text-2xl font-bold">{employee.candidates || 0}</div>
+              <div className="text-2xl font-bold">
+                {employee.candidates || 0}
+              </div>
             </div>
             <div className="bg-orange-50 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-1">
                 <ClipboardList className="h-4 w-4 text-orange-600" />
                 <div className="text-sm text-orange-600">Interviews</div>
               </div>
-              <div className="text-2xl font-bold">{employee.interviews || 0}</div>
+              <div className="text-2xl font-bold">
+                {employee.interviews || 0}
+              </div>
             </div>
           </>
         );
-      case 'Design':
+      case "Design":
         return (
           <>
             <div className="bg-green-50 rounded-xl p-4">
@@ -2604,7 +2963,9 @@ const ProfileDetailModal = ({ employee, onClose, onEdit, onToggleStatus, onDelet
                 <RefreshCw className="h-4 w-4 text-orange-600" />
                 <div className="text-sm text-orange-600">Revisions</div>
               </div>
-              <div className="text-2xl font-bold">{employee.revisions || 0}</div>
+              <div className="text-2xl font-bold">
+                {employee.revisions || 0}
+              </div>
             </div>
             <div className="bg-purple-50 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-1">
@@ -2635,206 +2996,397 @@ const ProfileDetailModal = ({ employee, onClose, onEdit, onToggleStatus, onDelet
     }
   };
 
+  // Format date function
+  const formatDate = (dateString) => {
+    try {
+      return format(new Date(dateString), "MMMM d, yyyy");
+    } catch (error) {
+      return dateString || "N/A";
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+        {/* Header */}
         <div className="flex justify-between items-center p-6 border-b border-gray-200 sticky top-0 bg-white">
-          <h3 className="text-lg font-semibold text-gray-900">Employee Profile Details</h3>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg">
+          <h3 className="text-lg font-semibold text-gray-900">
+            Employee Profile Details
+          </h3>
+          <button
+            onClick={onClose}
+            className="p-1 hover:bg-gray-100 rounded-lg"
+          >
             <X className="h-5 w-5" />
           </button>
         </div>
-        
+
         <div className="p-6">
-          <div className="flex flex-col md:flex-row gap-6">
-            {/* Left Column - Profile Info */}
-            <div className="md:w-1/3">
-              <div className="text-center">
-                <div className="w-32 h-32 rounded-full border-4 border-blue-100 p-1 mx-auto mb-4">
-                  <div className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center">
-                    <span className="text-gray-700 text-3xl font-bold">
-                      {employee.name.split(' ').map(n => n[0]).join('')}
-                    </span>
-                  </div>
-                </div>
-                <h2 className="text-2xl font-bold text-gray-900">{employee.name}</h2>
-                <p className="text-gray-600">{employee.role}</p>
-              </div>
-
-              <div className="mt-6 space-y-4">
-                <div className="flex items-center gap-3">
-                  <Mail className="h-4 w-4 text-gray-400" />
-                  <div>
-                    <div className="text-gray-600">{employee.email}</div>
-                    <div className="flex gap-2 mt-1">
-                      <button 
-                        onClick={onSendEmail}
-                        className="text-xs text-blue-600 hover:text-blue-800"
-                      >
-                        Email
-                      </button>
-                      <button 
-                        onClick={onCopyEmail}
-                        className="text-xs text-gray-600 hover:text-gray-800"
-                      >
-                        Copy
-                      </button>
+          {/* Top Section: Profile Header */}
+          <div className="flex flex-col md:flex-row gap-6 mb-8">
+            {/* Profile Image and Basic Info */}
+            <div className="flex flex-col items-center md:items-start md:flex-row md:gap-6">
+              <div className="relative mb-4 md:mb-0">
+                <div className="w-24 h-24 rounded-full border-4 border-blue-100 p-1">
+                  {/* ✅ SHOW PROFILE PICTURE FROM DATABASE */}
+                  {employee.profile_picture ? (
+                    <img
+                      src={employee.profile_picture}
+                      alt={employee.name}
+                      className="w-full h-full rounded-full object-cover"
+                      onError={(e) => {
+                        // If image fails to load, show initials
+                        e.target.style.display = "none";
+                        const initialsDiv = e.target.parentElement;
+                        initialsDiv.innerHTML = `
+                          <div class="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center">
+                            <span class="text-gray-700 text-xl font-bold">
+                              ${employee.name
+                                .split(" ")
+                                .map((n) => n[0])
+                                .join("")}
+                            </span>
+                          </div>
+                        `;
+                      }}
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center">
+                      <span className="text-gray-700 text-xl font-bold">
+                        {employee.name
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")}
+                      </span>
                     </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Phone className="h-4 w-4 text-gray-400" />
-                  <div>
-                    <div className="text-gray-600">{employee.phone}</div>
-                    <div className="flex gap-2 mt-1">
-                      <button 
-                        onClick={onCall}
-                        className="text-xs text-green-600 hover:text-green-800"
-                      >
-                        Call
-                      </button>
-                      <button 
-                        onClick={onCopyPhone}
-                        className="text-xs text-gray-600 hover:text-gray-800"
-                      >
-                        Copy
-                      </button>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Building className="h-4 w-4 text-gray-400" />
-                  <span className="text-gray-600">{employee.department}</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Globe className="h-4 w-4 text-gray-400" />
-                  <span className="text-gray-600">{employee.location}</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Calendar className="h-4 w-4 text-gray-400" />
-                  <span className="text-gray-600">Joined {employee.joiningDate}</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Clock className="h-4 w-4 text-gray-400" />
-                  <span className="text-gray-600">{employee.experience}</span>
+                  )}
                 </div>
               </div>
 
-              <div className="mt-6">
-                <h4 className="font-semibold text-gray-900 mb-2">Quick Actions</h4>
-                <div className="space-y-2">
-                  <button 
+              <div className="text-center md:text-left">
+                <div className="flex flex-col md:flex-row md:items-center gap-3 mb-2">
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    {employee.name}
+                  </h2>
+                  {/* {getStatusBadge(employee.status)}
+                  {getPerformanceBadge(employee.performance)} */}
+                </div>
+                <div className="flex flex-wrap gap-3 mb-3">
+                  <span className="flex items-center gap-2 text-gray-600">
+                    <Briefcase className="h-4 w-4" />
+                    {employee.role}
+                  </span>
+                  <span className="flex items-center gap-2 text-gray-600">
+                    <Building className="h-4 w-4" />
+                    {employee.department}
+                  </span>
+                  <span className="flex items-center gap-2 text-gray-600">
+                    <Calendar className="h-4 w-4" />
+                    Joined {formatDate(employee.joiningDate)}
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-4">
+                  <button
                     onClick={onEdit}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition duration-200"
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition duration-200"
                   >
                     <Edit className="h-4 w-4" />
-                    Edit Profile
+                    Edit
                   </button>
-                  <button 
+                  {/* <button
                     onClick={onToggleStatus}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-yellow-50 text-yellow-600 rounded-xl hover:bg-yellow-100 transition duration-200"
+                    className="flex items-center gap-2 px-4 py-2 bg-yellow-50 text-yellow-600 rounded-xl hover:bg-yellow-100 transition duration-200"
                   >
                     <RefreshCw className="h-4 w-4" />
-                    {employee.status === 'active' ? 'Deactivate' : 'Activate'}
-                  </button>
-                  <button 
-                    onClick={onSendEmail}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-50 text-green-600 rounded-xl hover:bg-green-100 transition duration-200"
-                  >
-                    <MessageSquare className="h-4 w-4" />
-                    Send Message
-                  </button>
-                  <button 
+                    {employee.status === "active" ? "Deactivate" : "Activate"}
+                  </button> */}
+                  <button
                     onClick={onDelete}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition duration-200"
+                    className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition duration-200"
                   >
                     <Trash2 className="h-4 w-4" />
-                    Delete Profile
+                    Delete
                   </button>
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* Right Column - Detailed Info */}
-            <div className="md:w-2/3">
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="bg-blue-50 rounded-xl p-4">
-                  <div className="flex items-center gap-2 mb-1">
-                    <CalendarDays className="h-4 w-4 text-blue-600" />
-                    <div className="text-sm text-blue-600">Attendance</div>
-                  </div>
-                  <div className="text-2xl font-bold">{employee.attendance}%</div>
-                </div>
-                {renderRoleSpecificMetrics()}
-              </div>
-
-              {employee.department === 'Sales' && (
-                <div className="mb-6">
-                  <h4 className="font-semibold text-gray-900 mb-2">Sales Performance</h4>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-gray-600">Target Achievement</span>
-                    <span className={`font-bold ${(employee.achieved / employee.target * 100) >= 100 ? 'text-green-600' : 'text-orange-600'}`}>
-                      {Math.round(employee.achieved / employee.target * 100)}%
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
-                    <div 
-                      className={`h-2 rounded-full ${(employee.achieved / employee.target * 100) >= 100 ? 'bg-green-500' : 'bg-orange-500'}`}
-                      style={{ width: `${Math.min(employee.achieved / employee.target * 100, 100)}%` }}
-                    ></div>
-                  </div>
-                  <div className="flex justify-between text-sm text-gray-600">
-                    <div>
-                      <div className="font-medium">Deals Closed</div>
-                      <div className="text-lg font-bold">{employee.dealsClosed}</div>
-                    </div>
-                    <div>
-                      <div className="font-medium">New Clients</div>
-                      <div className="text-lg font-bold">{employee.newClients}</div>
+          {/* Main Content Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Left Column: Contact & Personal Info */}
+            <div className="space-y-6">
+              {/* Contact Information */}
+              <div className="bg-gray-50 rounded-2xl p-5">
+                <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <Mail className="h-5 w-5 text-gray-500" />
+                  Contact Information
+                </h4>
+                <div className="space-y-4">
+                  <div className="flex items-start">
+                    <div className="w-32 text-gray-600">Email:</div>
+                    <div className="flex-1">
+                      <div className="font-medium">{employee.email}</div>
+                      <div className="flex gap-3 mt-1">
+                        <button
+                          onClick={onSendEmail}
+                          className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                        >
+                          <Mail className="h-3 w-3" /> Email
+                        </button>
+                        <button
+                          onClick={onCopyEmail}
+                          className="text-sm text-gray-600 hover:text-gray-800 flex items-center gap-1"
+                        >
+                          <Copy className="h-3 w-3" /> Copy
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
 
-              <div className="mb-6">
-                <h4 className="font-semibold text-gray-900 mb-2">Skills & Expertise</h4>
-                <div className="flex flex-wrap gap-2">
-                  {employee.skills.map((skill, index) => (
-                    <span key={index} className="inline-flex items-center gap-1 px-3 py-2 bg-gray-100 text-gray-800 rounded-lg">
-                      {getSkillIcon(skill)}
-                      {skill}
+                  <div className="flex items-start">
+                    <div className="w-32 text-gray-600">Phone:</div>
+                    <div className="flex-1">
+                      <div className="font-medium">{employee.phone}</div>
+                      <div className="flex gap-3 mt-1">
+                        <button
+                          onClick={onCall}
+                          className="text-sm text-green-600 hover:text-green-800 flex items-center gap-1"
+                        >
+                          <Phone className="h-3 w-3" /> Call
+                        </button>
+                        <button
+                          onClick={onCopyPhone}
+                          className="text-sm text-gray-600 hover:text-gray-800 flex items-center gap-1"
+                        >
+                          <Copy className="h-3 w-3" /> Copy
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center">
+                    <div className="w-32 text-gray-600">Address:</div>
+                    <div className="flex-1 font-medium">{employee.address}</div>
+                  </div>
+
+                  <div className="flex items-center">
+                    <div className="w-32 text-gray-600">CNIC:</div>
+                    <div className="flex-1 font-medium">{employee.cnic}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Job Information */}
+              <div className="bg-gray-50 rounded-2xl p-5">
+                <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <Briefcase className="h-5 w-5 text-gray-500" />
+                  Job Information
+                </h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <div className="text-sm text-gray-500 mb-1">
+                      Designation
+                    </div>
+                    <div className="font-medium">{employee.designation}</div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-gray-500 mb-1">Department</div>
+                    <div className="font-medium">{employee.department}</div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-gray-500 mb-1">Experience</div>
+                    <div className="font-medium">{employee.experience}</div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-gray-500 mb-1">
+                      Joining Date
+                    </div>
+                    <div className="font-medium">
+                      {formatDate(employee.joiningDate)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column: Salary & Resources */}
+            <div className="space-y-6">
+              {/* Salary Information */}
+              <div className="bg-gray-50 rounded-2xl p-5">
+                <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  {/* <DollarSign className="h-5 w-5 text-gray-500" /> */}
+                  (PKR) Salary Information
+                </h4>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center pb-3 border-b border-gray-200">
+                    <span className="text-gray-600">Base Salary</span>
+                    <span className="font-semibold text-lg">
+                      PKR {employee.base_salary?.toLocaleString() || "0"}
                     </span>
-                  ))}
+                  </div>
+                  {/* Show all allowances */}
+                  {employee.allowances && employee.allowances.length > 0 ? (
+                    <>
+                      <div className="pb-3 border-b border-gray-200">
+                        <div className="text-gray-600 mb-2">Allowances</div>
+                        <div className="space-y-2">
+                          {employee.allowances.map((allowance, index) => (
+                            <div
+                              key={index}
+                              className="flex justify-between items-center"
+                            >
+                              <div className="text-sm text-gray-500">
+                                {allowance.allowance_name}
+                              </div>
+                              <span className="font-semibold">
+                                PKR{" "}
+                                {allowance.allowance_amount?.toLocaleString() ||
+                                  "0"}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex justify-between items-center pb-3 border-b border-gray-200">
+                      <div>
+                        <div className="text-gray-600">Allowance</div>
+                        <div className="text-sm text-gray-500">
+                          {employee.allowance_name || "No allowances"}
+                        </div>
+                      </div>
+                      <span className="font-semibold text-lg">
+                        PKR {employee.allowance_amount?.toLocaleString() || "0"}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex justify-between items-center pt-2">
+                    <span className="text-gray-800 font-medium text-lg">
+                      Total Salary
+                    </span>
+                    <span className="text-xl font-bold text-green-600">
+                      PKR {employee.total_salary?.toLocaleString() || "0"}
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              <div className="mb-6">
-                <h4 className="font-semibold text-gray-900 mb-2">Attendance Trend</h4>
-                <div className="flex items-center justify-between mb-2">
-                  <span>Current Rate</span>
-                  <span className="font-bold text-blue-600">{employee.attendance}%</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-3">
-                  <div 
-                    className="bg-blue-500 h-3 rounded-full"
-                    style={{ width: `${employee.attendance}%` }}
-                  ></div>
-                </div>
-              </div>
+              {/* Resource Information */}
+              {/* <div className="bg-gray-50 rounded-2xl p-5">
+                <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <Database className="h-5 w-5 text-gray-500" />
+                  Resource Information
+                  {employee.resources && employee.resources.length > 0 && (
+                    <span className="text-sm text-gray-500">
+                      ({employee.resources.length} resource(s))
+                    </span>
+                  )}
+                </h4>
 
-              <div className="flex gap-3">
-                <button 
-                  onClick={onToggleStatus}
-                  className="flex-1 px-4 py-2 text-sm border border-gray-300 rounded-xl hover:bg-gray-50 transition duration-200"
-                >
-                  {employee.status === 'active' ? 'Deactivate' : 'Activate'}
-                </button>
-                <button 
-                  onClick={onDelete}
-                  className="flex-1 px-4 py-2 text-sm bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition duration-200"
-                >
-                  Delete Profile
-                </button>
+                <div className="space-y-4">
+                  {employee.resources && employee.resources.length > 0 ? (
+                    <div className="space-y-3">
+                      {employee.resources.map((resource, index) => (
+                        <div
+                          key={index}
+                          className="bg-white p-3 rounded-lg border border-gray-200 hover:border-blue-200 transition duration-200"
+                        >
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="text-gray-800 font-medium">
+                              {resource.resource_name || "Unnamed Resource"}
+                            </span>
+                            <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
+                              #{index + 1}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-gray-600">
+                              Serial Number
+                            </span>
+                            <span className="font-medium text-gray-800">
+                              {resource.resource_serial || "Not specified"}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    // Agar resources nahi hain
+                    <div className="text-center py-4">
+                      <Database className="h-10 w-10 text-gray-300 mx-auto mb-2" />
+                      <p className="text-gray-500">No resources assigned</p>
+                      <p className="text-sm text-gray-400 mt-1">
+                        Add resources from the edit section
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div> */}
+
+              {/* Resource Information - Table Format */}
+              <div className="bg-gray-50 rounded-2xl p-5">
+                <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <Database className="h-5 w-5 text-gray-500" />
+                  Assigned Resources
+                  {employee.resources && employee.resources.length > 0 && (
+                    <span className="ml-2 text-sm px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
+                      {employee.resources.length} items
+                    </span>
+                  )}
+                </h4>
+                {employee.resources && employee.resources.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse">
+                      <thead>
+                        <tr className="bg-gray-100">
+                          <th className="text-left p-3 text-sm font-medium text-gray-700 border-b border-gray-200">
+                            #
+                          </th>
+                          <th className="text-left p-3 text-sm font-medium text-gray-700 border-b border-gray-200">
+                            Resource Name
+                          </th>
+                          <th className="text-left p-3 text-sm font-medium text-gray-700 border-b border-gray-200">
+                            Serial Number
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {employee.resources.map((resource, index) => (
+                          <tr
+                            key={index}
+                            className="hover:bg-gray-50 transition duration-150"
+                          >
+                            <td className="p-3 border-b border-gray-200 text-sm text-gray-600">
+                              {index + 1}
+                            </td>
+                            <td className="p-3 border-b border-gray-200">
+                              <div className="font-medium text-gray-800">
+                                {resource.resource_name || "Unnamed Resource"}
+                              </div>
+                            </td>
+                            <td className="p-3 border-b border-gray-200">
+                              <div className="font-medium text-gray-800">
+                                {resource.resource_serial || "N/A"}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Database className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                    <p className="text-gray-500 font-medium">
+                      No resources assigned
+                    </p>
+                    <p className="text-sm text-gray-400 mt-1">
+                      Resources will appear here once assigned
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </div>

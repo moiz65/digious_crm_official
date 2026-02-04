@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
-  User, Mail, Phone, Calendar, MapPin, Briefcase,
-  FileCheck, ClipboardList, Plus, Search, Filter,
+  Calendar, MapPin, Briefcase,
+  FileCheck, ClipboardList, Plus, Search,
   Clock, AlertCircle, CheckCircle, X, Download,
   Printer, Share2, Paperclip, Upload, Eye,
   Check, UserPlus, Award, TrendingUp, DollarSign,
@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 
 const ApplicationsMemosEmployee = () => {
-  const [employee, setEmployee] = useState({
+  const [employee] = useState({
     id: 1,
     name: 'John Smith',
     email: 'john.smith@company.com',
@@ -1260,7 +1260,6 @@ const NewMemoModal = ({ onClose, onSave, employee }) => {
 };
 
 // Application Detail Modal (View only for employee)
-// Application Detail Modal (View only for employee)
 const ApplicationDetailModal = ({ application, onClose }) => {
   const getStatusColor = (status) => {
     switch (status) {
@@ -1502,7 +1501,7 @@ const MemoDetailModal = ({ memo, onClose, onMarkAsRead }) => {
                 
                 <div className="flex items-center gap-4 text-sm text-gray-600">
                   <span className="flex items-center gap-1">
-                    <User className="h-3 w-3" />
+                    <Users className="h-3 w-3" />
                     From: {memo.from}
                   </span>
                   <span className="flex items-center gap-1">

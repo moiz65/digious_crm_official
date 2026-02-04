@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import { endpoints } from '../config/api';
 import { 
-  Coffee, Clock, Cigarette, Utensils, Sparkle, Wifi, 
-  AlertCircle, Loader, TrendingUp, RefreshCw
+  Coffee, Cigarette, Utensils, Sparkle, Wifi, 
+  AlertCircle, Loader, RefreshCw
 } from 'lucide-react';
 
 // Break Type Colors
@@ -15,111 +15,7 @@ const BREAK_TYPE_STYLES = {
   prayer: { label: 'Prayer', icon: Sparkle, color: 'text-purple-600', bg: 'bg-purple-50' }
 };
 
-const TodayBreaksSummary = ({ employeeId, refreshInterval = 30000 }) => {
-  const [breakData, setBreakData] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [lastUpdated, setLastUpdated] = useState(null);
-  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const getTodayDate = () => {
-    const today = new Date();
-    return today.toISOString().split('T')[0];
-  };
-
-  const fetchBreakSummary = async (showLoading = true) => {
-    if (showLoading) setLoading(true);
-    setIsRefreshing(true);
-    setError(null);
-    
-    try {
-      const response = await fetch(
-        `${endpoints.attendance.breakSummary}?employee_id=${employeeId}&date=${getTodayDate()}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        }
-      );
-
-      if (!response.ok && response.status !== 404) {
-        throw new Error('Failed to fetch break summary');
-      }
-
-      if (response.status === 404) {
-        // No attendance record yet
-        setBreakData(null);
-      } else {
-        const result = await response.json();
-        if (result.success) {
-          setBreakData(result.data);
-          setLastUpdated(new Date());
-        } else {
-          setError(result.message || 'Failed to load break summary');
-        }
-      }
-    } catch (err) {
-      console.error('Break Summary Error:', err);
-    } finally {
-      setLoading(false);
-      setIsRefreshing(false);
-    }
-  };
-
-  useEffect(() => {
-    if (employeeId) {
-      fetchBreakSummary();
-    }
-  }, [employeeId]);
-
-  // Auto-refresh interval
-  useEffect(() => {
-    if (!employeeId) return;
-
-    const interval = setInterval(() => {
-      fetchBreakSummary(false);
-    }, refreshInterval);
-
-    return () => clearInterval(interval);
-  }, [employeeId, refreshInterval]);
-
-  if (loading && !breakData) {
-    return (
-      <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border border-blue-200 p-6">
-        <div className="flex items-center justify-center gap-2">
-          <Loader className="h-5 w-5 text-blue-600 animate-spin" />
-          <p className="text-blue-700 font-medium">Loading today's breaks...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-        <div className="flex items-center gap-2 text-amber-800">
-          <AlertCircle className="h-5 w-5" />
-          <p className="text-sm">{error}</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!breakData) {
-    return (
-      <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl border border-gray-200 p-6">
-        <div className="flex items-center gap-3">
-          <Coffee className="h-6 w-6 text-gray-400" />
-          <div>
-            <p className="font-semibold text-gray-900">No breaks recorded yet</p>
-            <p className="text-sm text-gray-600">Breaks will appear here as they are recorded</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   const { breakStats } = breakData;
   const { totalBreaks, totalDurationMinutes, totalDurationFormatted, breakdownByType } = breakStats;
@@ -216,4 +112,4 @@ const TodayBreaksSummary = ({ employeeId, refreshInterval = 30000 }) => {
   );
 };
 
-export default TodayBreaksSummary;
+

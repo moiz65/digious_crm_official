@@ -3,11 +3,11 @@
 import { useState, useEffect } from 'react';
 import { endpoints } from '../config/api';
 import BreakSummary from './BreakSummary';
-import TodayBreaksSummary from './TodayBreaksSummary';
+
 import { getPakistanDate } from '../utils/timezone';
 import { 
   Calendar, Users, CheckCircle, XCircle, Clock, FileText, Download, 
-  Filter, Plus, Search, AlertCircle, ChevronDown, Settings, Eye, 
+  Filter, Plus, Search, AlertCircle, ChevronDown, Settings, Eye, Loader,
   Edit3, Trash2, MoreVertical, UserPlus, RotateCcw, BarChart3,
   Send, Mail, Bell, Shield, Zap, Crown, Coffee, Sun, Moon,
   ArrowLeft, ArrowRight, User, Target, PieChart, ChevronUp,
@@ -285,6 +285,18 @@ const StatusDistributionChart = ({ data, title }) => {
 const BreakDetailsModal = ({ isOpen, onClose, breaks, date, employeeName }) => {
   if (!isOpen) return null;
 
+  // Loading state: breaks === null
+  if (breaks === null) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-2xl w-full max-w-2xl p-6 flex flex-col items-center">
+          <Loader className="h-8 w-8 text-blue-600 animate-spin" />
+          <p className="text-gray-600 mt-3">Loading break details...</p>
+        </div>
+      </div>
+    );
+  }
+
   const formatTime = (timeString) => {
     if (!timeString || timeString === '-') return 'N/A';
     return timeString;
@@ -326,8 +338,9 @@ const BreakDetailsModal = ({ isOpen, onClose, breaks, date, employeeName }) => {
 
     return {
       totalBreaks,
-      totalDuration: Math.round(totalDuration),
-      averageDuration: totalBreaks > 0 ? Math.round(totalDuration / totalBreaks) : 0
+      // Use floor so partial minutes don't round up (show 1m 41s as 1m in minute summary)
+      totalDuration: Math.floor(totalDuration),
+      averageDuration: totalBreaks > 0 ? Math.floor(totalDuration / totalBreaks) : 0
     };
   };
 
@@ -1795,11 +1808,46 @@ const EmployeeDetailView = ({
     return breaks;
   };
 
-  const handleViewBreaks = (date) => {
-    const breaks = getEmployeeBreaksForDate(employee.id, date);
-    setSelectedDateBreaks(breaks);
+  const handleViewBreaks = async (date) => {
+    // Show modal and a loading state while we fetch real break records
+    setSelectedDateBreaks(null); // null = loading
     setSelectedBreakDate(date);
     setIsBreakModalOpen(true);
+
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${endpoints.attendance.breakSummary}?employee_id=${employee.id}&date=${date}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!res.ok) throw new Error('Failed to fetch break summary');
+      const json = await res.json();
+
+      if (json.success && json.data && json.data.breakStats && Array.isArray(json.data.breakStats.allBreaks)) {
+        const mapped = json.data.breakStats.allBreaks.map((b, idx) => ({
+          id: b.id || `${employee.id}-${date}-${idx}`,
+          type: b.type || b.break_type || b.label || 'short',
+          breakStart: b.startTime || b.breakStart || b.break_start_time || b.start_time || '-',
+          breakEnd: b.endTime || b.breakEnd || b.break_end_time || b.end_time || '-',
+          notes: b.reason || b.notes || ''
+        }));
+
+        setSelectedDateBreaks(mapped);
+        return;
+      }
+
+      // If API didn't return expected data, fallback to synthetic generation
+      const synthetic = getEmployeeBreaksForDate(employee.id, date);
+      setSelectedDateBreaks(synthetic);
+    } catch (err) {
+      console.error('Error fetching breaks for date', err);
+      const synthetic = getEmployeeBreaksForDate(employee.id, date);
+      setSelectedDateBreaks(synthetic);
+    }
   };
 
   const getEmployeeAttendance = (employeeId) => {
@@ -1944,10 +1992,7 @@ const EmployeeDetailView = ({
           </div>
         </div>
 
-        {/* Today's Breaks Summary */}
-        <div className="mb-8">
-          <TodayBreaksSummary employeeId={employee.id} refreshInterval={30000} />
-        </div>
+
 
         {/* Uninformed Section */}
         {unexplainedAbsences.length > 0 && (
@@ -4033,6 +4078,16 @@ export function HrAttendancePage() {
             attendanceDateStr = attendanceDate.toLocaleDateString('en-CA');
           }
           
+          // Calculate hours: use current_session_minutes if still checked in, otherwise use gross_working_time_minutes
+          let hoursValue = '0.0';
+          if (record.check_out_time) {
+            // Checked out - use finalized gross working time
+            hoursValue = record.gross_working_time_minutes ? (record.gross_working_time_minutes / 60).toFixed(1) : '0.0';
+          } else if (record.current_session_minutes !== undefined) {
+            // Still checked in - use real-time current session
+            hoursValue = (record.current_session_minutes / 60).toFixed(1);
+          }
+          
           return {
             id: record.id,
             employeeId: record.employee_id,
@@ -4042,7 +4097,7 @@ export function HrAttendancePage() {
             status: record.status?.toLowerCase() || 'absent',
             checkIn: record.check_in_time || '-',
             checkOut: record.check_out_time || '-',
-            hours: record.gross_working_time_minutes ? (record.gross_working_time_minutes / 60).toFixed(1) : '0.0',
+            hours: hoursValue,
             breaks: record.total_breaks_taken || 0,
             breakDuration: record.total_break_duration_minutes || 0,
             overtime: record.overtime_hours || '0.0',

@@ -2,11 +2,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { endpoints } from '../config/api';
 import { 
-  Clock, Users, Calendar, Filter, Search, Plus, Download, 
+  Clock, Users, Search, Plus, Download, 
   Edit, Trash2, X, Save, LogIn, LogOut, Upload, Coffee,
   DoorOpen, Star, Users2, FileText, Target,
   TrendingUp, MapPin, 
-  BarChart3, PieChart, Zap, Eye, EyeOff,
+  BarChart3, PieChart, Zap,
   Cigarette,
   ChurchIcon
 } from 'lucide-react';

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import HrSidebar from '../../components/HrSidebar';
 import { DashboardHeader} from '../../components/DashboardComponents';
-import { useAuth } from '../../context/AuthContext';
 import HrLeaveManagement from '../../components/HrLeaveManagement';
 
 const LeaveManagement = () => {

@@ -2,9 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import HrSidebar from '../../components/HrSidebar';
-import { endpoints, config } from '../../config/api';
+import { config } from '../../config/api';
 import { 
-  Users, Search, Plus, Edit, Trash2, Eye, Download, Filter,
+  Users, Search, Plus, Edit, Trash2, Eye, Download,
   Mail, Phone, MapPin, Calendar, Briefcase, X, Loader
 } from 'lucide-react';
 import { generateTablePDF, exportToCSV } from '../../utils/pdfExport';
@@ -28,6 +28,33 @@ const EmployeeManagement = () => {
   const itemsPerPage = 10;
 
   const [employees, setEmployees] = useState([]);
+
+  // Simple toast helper to replace alert()
+  const showToast = (message, type = 'success') => {
+    try {
+      const el = document.createElement('div');
+      const isError = type === 'error';
+      el.className = `fixed top-4 right-4 z-50 max-w-sm p-3 rounded-lg shadow-lg transform transition-opacity duration-300 ${isError ? 'bg-red-50 border-l-4 border-red-500 text-red-800' : 'bg-green-50 border-l-4 border-green-500 text-green-800'}`;
+      el.style.opacity = '0';
+      el.innerHTML = `
+        <div class="flex items-start gap-3">
+          <div class="flex-1 text-sm">${message}</div>
+          <button class="ml-3 text-sm font-medium" aria-label="close">✕</button>
+        </div>
+      `;
+      const btn = el.querySelector('button');
+      btn.addEventListener('click', () => el.remove());
+      document.body.appendChild(el);
+      // fade in
+      requestAnimationFrame(() => { el.style.opacity = '1'; });
+      // auto remove
+      setTimeout(() => { if (el.parentNode) el.remove(); }, 4500);
+    } catch (e) {
+      // fallback
+      console.error('Toast error', e);
+      alert(message);
+    }
+  }
 
   // Fetch employees from API
   useEffect(() => {
@@ -87,11 +114,11 @@ const EmployeeManagement = () => {
         if (response.ok) {
           setEmployees(employees.filter(emp => emp.id !== id));
         } else {
-          alert('Failed to delete employee');
+          showToast('Failed to delete employee', 'error');
         }
       } catch (err) {
         console.error('Error deleting employee:', err);
-        alert('Failed to delete employee');
+        showToast('Failed to delete employee', 'error');
       }
     }
   };
@@ -102,7 +129,7 @@ const EmployeeManagement = () => {
       const dataToExport = employees;
       
       if (dataToExport.length === 0) {
-        alert('No employees to export');
+        showToast('No employees to export', 'error');
         return;
       }
 
@@ -125,7 +152,7 @@ const EmployeeManagement = () => {
       console.log('✅ PDF exported successfully');
     } catch (error) {
       console.error('❌ Export error:', error);
-      alert('Failed to export PDF');
+      showToast('Failed to export PDF', 'error');
     }
   };
 
@@ -135,7 +162,7 @@ const EmployeeManagement = () => {
       const dataToExport = employees;
       
       if (dataToExport.length === 0) {
-        alert('No employees to export');
+        showToast('No employees to export', 'error');
         return;
       }
 
@@ -160,7 +187,7 @@ const EmployeeManagement = () => {
       console.log('✅ CSV exported successfully');
     } catch (error) {
       console.error('❌ Export error:', error);
-      alert('Failed to export CSV');
+      showToast('Failed to export CSV', 'error');
     }
   };
 
@@ -210,6 +237,22 @@ const EmployeeManagement = () => {
     if (!formData.allowances) {
       formData.allowances = [];
     }
+    // Ensure dynamic resources mapping is available
+    if (!formData.dynamicResources && !formData.dynamic_resources) {
+      formData.dynamicResources = [];
+      formData.dynamic_resources = [];
+    } else if (!formData.dynamic_resources && formData.dynamicResources) {
+      formData.dynamic_resources = formData.dynamicResources;
+    } else if (!formData.dynamicResources && formData.dynamic_resources) {
+      formData.dynamicResources = formData.dynamic_resources;
+    }
+
+    // Prepare temp input fields
+    formData.newAllowanceName = '';
+    formData.newAllowanceAmount = '';
+    formData.newResourceName = '';
+    formData.newResourceSerial = '';
+
     setEditFormData(formData);
     setIsEditMode(true);
   };
@@ -221,30 +264,85 @@ const EmployeeManagement = () => {
     }));
   };
 
+  // Add / remove allowances
+  const addAllowance = () => {
+    const name = (editFormData?.newAllowanceName || '').trim();
+    const amount = Number(editFormData?.newAllowanceAmount || 0);
+    if (!name || !amount) { showToast('Provide allowance name and amount', 'error'); return; }
+    const updated = [...(editFormData.allowances || []), { allowance_name: name, allowance_amount: amount }];
+    handleEditFormChange('allowances', updated);
+    handleEditFormChange('newAllowanceName', '');
+    handleEditFormChange('newAllowanceAmount', '');
+  };
+
+  const removeAllowance = (idx) => {
+    const list = [...(editFormData.allowances || [])];
+    list.splice(idx,1);
+    handleEditFormChange('allowances', list);
+  };
+
+  // Add / remove dynamic resources
+  const addDynamicResource = () => {
+    const name = (editFormData?.newResourceName || '').trim();
+    const serial = (editFormData?.newResourceSerial || '').trim();
+    if (!name) { showToast('Provide resource name', 'error'); return; }
+    const base = (editFormData.dynamic_resources || editFormData.dynamicResources || []);
+    const updated = [...base, { resource_name: name, resource_serial: serial }];
+    handleEditFormChange('dynamic_resources', updated);
+    handleEditFormChange('dynamicResources', updated);
+    handleEditFormChange('newResourceName', '');
+    handleEditFormChange('newResourceSerial', '');
+  };
+
+  const removeDynamicResource = (idx) => {
+    const list = [...(editFormData.dynamic_resources || editFormData.dynamicResources || [])];
+    list.splice(idx,1);
+    handleEditFormChange('dynamic_resources', list);
+    handleEditFormChange('dynamicResources', list);
+  };
+
   const handleSaveEmployee = async () => {
     try {
       setIsSaving(true);
+      // Normalize allowances to expected backend shape
+      const normalizedAllowances = (editFormData.allowances || []).map(a => ({ allowance_name: a.allowance_name || a.name, allowance_amount: Number(a.allowance_amount || a.amount || 0) }));
+
+      // Ensure dynamic_resources key is included for backend
+      const dynamicResourcesPayload = editFormData.dynamic_resources || editFormData.dynamicResources || [];
+
+      // Normalize dynamic resources to backend expected shape and filter empty names
+      const normalizedDynamicResources = (dynamicResourcesPayload || []).map(r => ({
+        resource_name: r.resource_name || r.name || r.resourceName || '',
+        resource_serial: r.resource_serial || r.serial || r.resourceSerial || ''
+      })).filter(r => r.resource_name && r.resource_name.trim() !== '');
+
+      const payload = { 
+        ...editFormData, 
+        allowances: normalizedAllowances,
+        dynamic_resources: normalizedDynamicResources
+      };
+
       const response = await fetch(`${API_URL}/employees/${editFormData.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
-        body: JSON.stringify(editFormData)
+        body: JSON.stringify(payload)
       });
 
       if (response.ok) {
         const updatedEmployee = await response.json();
-        setEmployees(employees.map(emp => emp.id === editFormData.id ? editFormData : emp));
-        setSelectedEmployee(editFormData);
+        setEmployees(employees.map(emp => emp.id === editFormData.id ? { ...emp, ...editFormData } : emp));
+        setSelectedEmployee({ ...selectedEmployee, ...editFormData });
         setIsEditMode(false);
-        alert('Employee details updated successfully!');
+        showToast('Employee details updated successfully!', 'success');
       } else {
-        alert('Failed to update employee');
+        showToast('Failed to update employee', 'error');
       }
     } catch (err) {
       console.error('Error updating employee:', err);
-      alert('Failed to update employee');
+      showToast('Failed to update employee', 'error');
     } finally {
       setIsSaving(false);
     }
@@ -677,6 +775,43 @@ const EmployeeManagement = () => {
                     onChange={(val) => handleEditFormChange('cnic', val)}
                   />
                 )}
+
+                {/* New: Date of Birth */}
+                <CompactField
+                  icon={Calendar}
+                  label="Date of Birth"
+                  value={selectedEmployee.dob ? new Date(selectedEmployee.dob).toLocaleDateString() : 'N/A'}
+                  isEditMode={isEditMode}
+                  editValue={editFormData?.dob ? editFormData.dob.split('T')[0] : ''}
+                  onChange={(val) => handleEditFormChange('dob', val)}
+                  type="date"
+                />
+
+                {/* CNIC Issue & Expiry */}
+                <CompactField
+                  label="CNIC Issue"
+                  value={selectedEmployee.cnic_issue_date ? new Date(selectedEmployee.cnic_issue_date).toLocaleDateString() : 'N/A'}
+                  isEditMode={isEditMode}
+                  editValue={editFormData?.cnic_issue_date ? editFormData.cnic_issue_date.split('T')[0] : ''}
+                  onChange={(val) => handleEditFormChange('cnic_issue_date', val)}
+                  type="date"
+                />
+                <CompactField
+                  label="CNIC Expiry"
+                  value={selectedEmployee.cnic_expiry_date ? new Date(selectedEmployee.cnic_expiry_date).toLocaleDateString() : 'N/A'}
+                  isEditMode={isEditMode}
+                  editValue={editFormData?.cnic_expiry_date ? editFormData.cnic_expiry_date.split('T')[0] : ''}
+                  onChange={(val) => handleEditFormChange('cnic_expiry_date', val)}
+                  type="date"
+                />
+
+                {/* CNIC Document Status */}
+                <CompactField
+                  label="CNIC Status"
+                  value={selectedEmployee.cnic_document_status || 'N/A'}
+                  isEditMode={false}
+                />
+
                 {selectedEmployee.emergency_contact && (
                   <CompactField 
                     label="Emergency Contact" 
@@ -728,246 +863,80 @@ const EmployeeManagement = () => {
                 )}
               </div>
 
-
-
-              {/* Resources Section - if any resources allocated */}
-              {(selectedEmployee.laptop || selectedEmployee.charger || selectedEmployee.mouse || selectedEmployee.keyboard || selectedEmployee.monitor || selectedEmployee.mobile || (selectedEmployee.dynamicResources && selectedEmployee.dynamicResources.length > 0)) && (
-                <div className="p-4 sm:p-5 bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border border-amber-200">
-                  <h4 className="text-sm sm:text-base font-bold text-amber-900 mb-3 flex items-center gap-2">
-                    <div className="w-5 h-5 bg-amber-500 rounded-full flex items-center justify-center">
-                      <span className="text-white text-xs">✓</span>
-                    </div>
-                    Resources Allocated
-                  </h4>
-                  
-                  {isEditMode ? (
-                    <div className="space-y-3">
-                      {/* Editable Resources */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-xs font-semibold text-amber-900 mb-1">Laptop</label>
-                          <div className="flex gap-2">
-                            <input 
-                              type="checkbox" 
-                              checked={editFormData?.laptop || false}
-                              onChange={(e) => handleEditFormChange('laptop', e.target.checked)}
-                              className="w-5 h-5 rounded border-amber-300"
-                            />
-                            <input 
-                              type="text"
-                              placeholder="Serial #"
-                              value={editFormData?.laptop_serial || ''}
-                              onChange={(e) => handleEditFormChange('laptop_serial', e.target.value)}
-                              disabled={!editFormData?.laptop}
-                              className="flex-1 px-2 py-1.5 border border-amber-200 rounded bg-white text-sm disabled:bg-gray-100"
-                            />
-                          </div>
-                        </div>
-                        <div>
-                          <label className="block text-xs font-semibold text-amber-900 mb-1">Charger</label>
-                          <div className="flex gap-2">
-                            <input 
-                              type="checkbox" 
-                              checked={editFormData?.charger || false}
-                              onChange={(e) => handleEditFormChange('charger', e.target.checked)}
-                              className="w-5 h-5 rounded border-amber-300"
-                            />
-                            <input 
-                              type="text"
-                              placeholder="Serial #"
-                              value={editFormData?.charger_serial || ''}
-                              onChange={(e) => handleEditFormChange('charger_serial', e.target.value)}
-                              disabled={!editFormData?.charger}
-                              className="flex-1 px-2 py-1.5 border border-amber-200 rounded bg-white text-sm disabled:bg-gray-100"
-                            />
-                          </div>
-                        </div>
-                        <div>
-                          <label className="block text-xs font-semibold text-amber-900 mb-1">Mouse</label>
-                          <div className="flex gap-2">
-                            <input 
-                              type="checkbox" 
-                              checked={editFormData?.mouse || false}
-                              onChange={(e) => handleEditFormChange('mouse', e.target.checked)}
-                              className="w-5 h-5 rounded border-amber-300"
-                            />
-                            <input 
-                              type="text"
-                              placeholder="Serial #"
-                              value={editFormData?.mouse_serial || ''}
-                              onChange={(e) => handleEditFormChange('mouse_serial', e.target.value)}
-                              disabled={!editFormData?.mouse}
-                              className="flex-1 px-2 py-1.5 border border-amber-200 rounded bg-white text-sm disabled:bg-gray-100"
-                            />
-                          </div>
-                        </div>
-                        <div>
-                          <label className="block text-xs font-semibold text-amber-900 mb-1">Keyboard</label>
-                          <div className="flex gap-2">
-                            <input 
-                              type="checkbox" 
-                              checked={editFormData?.keyboard || false}
-                              onChange={(e) => handleEditFormChange('keyboard', e.target.checked)}
-                              className="w-5 h-5 rounded border-amber-300"
-                            />
-                            <input 
-                              type="text"
-                              placeholder="Serial #"
-                              value={editFormData?.keyboard_serial || ''}
-                              onChange={(e) => handleEditFormChange('keyboard_serial', e.target.value)}
-                              disabled={!editFormData?.keyboard}
-                              className="flex-1 px-2 py-1.5 border border-amber-200 rounded bg-white text-sm disabled:bg-gray-100"
-                            />
-                          </div>
-                        </div>
-                        <div>
-                          <label className="block text-xs font-semibold text-amber-900 mb-1">Monitor</label>
-                          <div className="flex gap-2">
-                            <input 
-                              type="checkbox" 
-                              checked={editFormData?.monitor || false}
-                              onChange={(e) => handleEditFormChange('monitor', e.target.checked)}
-                              className="w-5 h-5 rounded border-amber-300"
-                            />
-                            <input 
-                              type="text"
-                              placeholder="Serial #"
-                              value={editFormData?.monitor_serial || ''}
-                              onChange={(e) => handleEditFormChange('monitor_serial', e.target.value)}
-                              disabled={!editFormData?.monitor}
-                              className="flex-1 px-2 py-1.5 border border-amber-200 rounded bg-white text-sm disabled:bg-gray-100"
-                            />
-                          </div>
-                        </div>
-                        <div>
-                          <label className="block text-xs font-semibold text-amber-900 mb-1">Mobile</label>
-                          <div className="flex gap-2">
-                            <input 
-                              type="checkbox" 
-                              checked={editFormData?.mobile || false}
-                              onChange={(e) => handleEditFormChange('mobile', e.target.checked)}
-                              className="w-5 h-5 rounded border-amber-300"
-                            />
-                            <input 
-                              type="text"
-                              placeholder="Serial #"
-                              value={editFormData?.mobile_serial || ''}
-                              onChange={(e) => handleEditFormChange('mobile_serial', e.target.value)}
-                              disabled={!editFormData?.mobile}
-                              className="flex-1 px-2 py-1.5 border border-amber-200 rounded bg-white text-sm disabled:bg-gray-100"
-                            />
-                          </div>
-                        </div>
+              {/* Allowances Section - HR can add/remove allowances */}
+              <div className="col-span-1 sm:col-span-2 lg:col-span-3">
+                <div className="p-4 bg-white rounded-lg border border-gray-100">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-semibold text-gray-900">Allowances</h4>
+                    {isEditMode && (
+                      <div className="flex items-center gap-2">
+                        <input type="text" placeholder="Name" value={editFormData?.newAllowanceName || ''} onChange={(e) => handleEditFormChange('newAllowanceName', e.target.value)} className="px-3 py-2 border rounded" />
+                        <input type="number" placeholder="Amount" value={editFormData?.newAllowanceAmount || ''} onChange={(e) => handleEditFormChange('newAllowanceAmount', e.target.value)} className="px-3 py-2 border rounded w-36" />
+                        <button type="button" onClick={addAllowance} className="px-3 py-2 bg-green-500 text-white rounded">Add</button>
                       </div>
-                      <div>
-                        <label className="block text-xs font-semibold text-amber-900 mb-1">Resources Note</label>
-                        <textarea
-                          value={editFormData?.resources_note || ''}
-                          onChange={(e) => handleEditFormChange('resources_note', e.target.value)}
-                          placeholder="Add any notes about resources..."
-                          className="w-full px-3 py-2 border border-amber-200 rounded bg-white text-sm"
-                          rows="2"
-                        />
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3">
-                        {selectedEmployee.laptop && (
-                          <ResourceItem name="Laptop" serial={selectedEmployee.laptop_serial} />
-                        )}
-                        {selectedEmployee.charger && (
-                          <ResourceItem name="Charger" serial={selectedEmployee.charger_serial} />
-                        )}
-                        {selectedEmployee.mouse && (
-                          <ResourceItem name="Mouse" serial={selectedEmployee.mouse_serial} />
-                        )}
-                        {selectedEmployee.keyboard && (
-                          <ResourceItem name="Keyboard" serial={selectedEmployee.keyboard_serial} />
-                        )}
-                        {selectedEmployee.monitor && (
-                          <ResourceItem name="Monitor" serial={selectedEmployee.monitor_serial} />
-                        )}
-                        {selectedEmployee.mobile && (
-                          <ResourceItem name="Mobile" serial={selectedEmployee.mobile_serial} />
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    {(editFormData?.allowances && editFormData.allowances.length > 0 ? editFormData.allowances : selectedEmployee.allowances || []).map((a, idx) => (
+                      <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded">
+                        <div>
+                          <p className="font-semibold">{a.allowance_name || a.name}</p>
+                          <p className="text-sm text-gray-500">PKR {Number(a.allowance_amount || a.amount).toLocaleString()}</p>
+                        </div>
+                        {isEditMode && (
+                          <div className="flex items-center gap-2">
+                            <button type="button" onClick={() => removeAllowance(idx)} className="text-red-500">Remove</button>
+                          </div>
                         )}
                       </div>
+                    ))}
 
-                      {/* Dynamic Resources */}
-                      {selectedEmployee.dynamicResources && selectedEmployee.dynamicResources.length > 0 && (
-                        <div className="mt-4 pt-4 border-t border-amber-200">
-                          <p className="text-xs font-semibold text-amber-900 mb-2 uppercase tracking-wide">Other Resources</p>
-                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3">
-                            {selectedEmployee.dynamicResources.map((resource) => (
-                              <ResourceItem key={resource.id} name={resource.name} serial={resource.serial} />
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {selectedEmployee.resources_note && (
-                        <p className="text-xs sm:text-sm text-amber-800 mt-3 p-3 bg-white rounded border border-amber-200">
-                          <span className="font-semibold">Note:</span> {selectedEmployee.resources_note}
-                        </p>
-                      )}
-                    </>
-                  )}
+                    {(!editFormData?.allowances || editFormData.allowances.length === 0) && (!selectedEmployee.allowances || selectedEmployee.allowances.length === 0) && (
+                      <p className="text-sm text-gray-500">No allowances assigned.</p>
+                    )}
+                  </div>
                 </div>
-              )}
+              </div>
 
-              {/* Allowances Section - if any allowances exist */}
-              {selectedEmployee.allowances && selectedEmployee.allowances.length > 0 && (
-                <div className="p-4 sm:p-5 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-200">
-                  <h4 className="text-sm sm:text-base font-bold text-green-900 mb-3 flex items-center gap-2">
-                    <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
-                      <span className="text-white text-xs">$</span>
-                    </div>
-                    Allowances
-                  </h4>
-                  {isEditMode ? (
-                    <div className="space-y-2">
-                      {(editFormData?.allowances || selectedEmployee.allowances || []).map((allowance, idx) => (
-                        <div key={idx} className="flex items-center gap-2 p-2 sm:p-3 bg-white rounded-lg border border-green-200">
-                          <input 
-                            type="text"
-                            value={editFormData.allowances[idx]?.name || ''}
-                            onChange={(e) => {
-                              const newAllowances = [...editFormData.allowances];
-                              newAllowances[idx] = { ...newAllowances[idx], name: e.target.value };
-                              handleEditFormChange('allowances', newAllowances);
-                            }}
-                            placeholder="Allowance name"
-                            className="flex-1 px-2 py-1 border border-green-200 rounded text-sm bg-white"
-                          />
-                          <div className="flex items-center gap-1">
-                            <span className="text-xs text-green-700 font-semibold">PKR</span>
-                            <input 
-                              type="number"
-                              value={editFormData.allowances[idx]?.amount || ''}
-                              onChange={(e) => {
-                                const newAllowances = [...editFormData.allowances];
-                                newAllowances[idx] = { ...newAllowances[idx], amount: e.target.value ? parseFloat(e.target.value) : 0 };
-                                handleEditFormChange('allowances', newAllowances);
-                              }}
-                              placeholder="Amount"
-                              className="w-24 px-2 py-1 border border-green-200 rounded text-sm bg-white"
-                            />
+              {/* Dynamic Resources Section - HR can allocate resources */}
+              <div className="col-span-1 sm:col-span-2 lg:col-span-3">
+                <div className="p-4 bg-white rounded-lg border border-gray-100">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-semibold text-gray-900">Resources (Dynamic)</h4>
+                    {isEditMode && (
+                      <div className="flex items-center gap-2">
+                        <input type="text" placeholder="Resource Name" value={editFormData?.newResourceName || ''} onChange={(e) => handleEditFormChange('newResourceName', e.target.value)} className="px-3 py-2 border rounded" />
+                        <input type="text" placeholder="Serial (optional)" value={editFormData?.newResourceSerial || ''} onChange={(e) => handleEditFormChange('newResourceSerial', e.target.value)} className="px-3 py-2 border rounded w-36" />
+                        <button type="button" onClick={addDynamicResource} className="px-3 py-2 bg-green-500 text-white rounded">Allocate</button>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    {(editFormData?.dynamic_resources && editFormData.dynamic_resources.length > 0 ? editFormData.dynamic_resources : (editFormData?.dynamicResources && editFormData.dynamicResources.length > 0 ? editFormData.dynamicResources : selectedEmployee.dynamicResources || [])).map((r, idx) => (
+                      <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded">
+                        <div>
+                          <p className="font-semibold">{r.resource_name || r.name}</p>
+                          {r.resource_serial && <p className="text-sm text-gray-500">SN: {r.resource_serial || r.serial}</p>}
+                        </div>
+                        {isEditMode && (
+                          <div className="flex items-center gap-2">
+                            <button type="button" onClick={() => removeDynamicResource(idx)} className="text-red-500">Remove</button>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {selectedEmployee.allowances.map((allowance, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-2 sm:p-3 bg-white rounded-lg border border-green-100">
-                          <span className="text-sm font-medium text-gray-700">{allowance.name}</span>
-                          <span className="text-sm font-bold text-green-600">PKR {Number(allowance.amount).toLocaleString()}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                        )}
+                      </div>
+                    ))}
+
+                    {((!editFormData?.dynamic_resources || editFormData.dynamic_resources.length === 0) && (!selectedEmployee.dynamicResources || selectedEmployee.dynamicResources.length === 0)) && (
+                      <p className="text-sm text-gray-500">No dynamic resources allocated.</p>
+                    )}
+                  </div>
                 </div>
-              )}
+              </div>
+
+
+
 
               {/* Action Buttons - Sticky Footer */}
               <div className="sticky bottom-0 flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 mt-6 pt-4 border-t border-gray-200 bg-white">

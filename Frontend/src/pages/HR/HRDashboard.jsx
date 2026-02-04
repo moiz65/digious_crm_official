@@ -3,7 +3,7 @@ import HrSidebar from '../../components/HrSidebar';
 import { DashboardHeader, RoleBasedNav } from '../../components/DashboardComponents';
 import { useAuth } from '../../context/AuthContext';
 import { endpoints } from '../../config/api';
-import { Users, Calendar, Clock, AlertCircle, TrendingUp, CheckCircle, XCircle, RefreshCw } from 'lucide-react';
+import { Clock, TrendingUp, CheckCircle, XCircle, RefreshCw } from 'lucide-react';
 import { getPakistanDateString } from '../../utils/timezone';
 
 const HRDashboard = () => {

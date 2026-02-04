@@ -1,7 +1,7 @@
 // components/LoginPage.jsx
 //
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { prepareLoginDeviceInfo, collectAdditionalDeviceInfoBackground } from '../utils/systemDeviceInfo';
 import { endpoints } from '../config/api';

@@ -4,8 +4,8 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
-import { InactivityWarning } from './components/InactivityWarning';
-import { useInactivityLogout } from './hooks/useInactivityLogout';
+// import { InactivityWarning } from './components/InactivityWarning';
+// import { useInactivityLogout } from './hooks/useInactivityLogout';
 
 // Login & Signup
 import LoginPage from './components/LoginPage';
@@ -39,12 +39,12 @@ import EmployeeDetails from './pages/Employees/EmployeeDetails';
 import ApplicationandMemoEmployees from './pages/Employees/ApplicationandMemoEmployees';
 
 function AppContent() {
-  // Setup inactivity logout (15 minutes)
-  useInactivityLogout(15);
+  // Setup inactivity logout (15 minutes) - DISABLED
+  // useInactivityLogout(15);
 
   return (
     <div className="App">
-      <InactivityWarning />
+      {/* <InactivityWarning /> */}
       <Routes>
             {/* Public routes */}
             <Route path="/login" element={<LoginPage />} />
@@ -227,7 +227,10 @@ function AppContent() {
             <Route path="/activity-tracker" element={<ActivityTracker />} />
             <Route path="/testdashboard" element={<ActivityTracker />} /> 
             <Route path="/employeeattendance" element={<EmployeeAttendance />} /> 
+            {/* superAdmin */}
             <Route path="/employees" element={<Employees />} /> 
+            <Route path="/add-employees" element={<EmployeeOnboarding />} />
+            {/* superAdmin */}
             <Route path="/employeedetails" element={<EmployeeDetails />} />
             <Route path="/application-memos" element={<ApplicationandMemos />} />
             <Route path="/applications-memos" element={<ApplicationandMemoEmployees />} />
@@ -252,7 +255,5 @@ function App() {
     </Router>
   );
 }
-
-
 
 export default App;

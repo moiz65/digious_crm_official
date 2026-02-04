@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { endpoints } from '../config/api';
+import { useAuth } from '../context/AuthContext';
 import { 
   Coffee, Clock, Cigarette, Utensils, Sparkle, Wifi, 
-  AlertCircle, Loader, TrendingUp, Zap
+  AlertCircle, Loader, Zap, TrendingUp
 } from 'lucide-react';
 
 // Break Type Icons and Colors Mapping
@@ -54,22 +55,48 @@ const BreakSummary = ({ employeeId, date, autoRefresh = true, refreshInterval = 
   // Use provided date or default to today
   const displayDate = date || getTodayDate();
 
+  // Auth & local visibility state (HR users can hide the widget)
+  const { role } = useAuth();
+  const isHR = role && String(role).toLowerCase().includes('hr');
+  const [hidden, setHidden] = useState(() => {
+    try {
+      return localStorage.getItem(`hideBreakSummary_${employeeId}_${displayDate}`) === 'true';
+    } catch (e) {
+      return false;
+    }
+  });
+
   useEffect(() => {
-    if (employeeId) {
+    if (employeeId && !hidden) {
       fetchBreakSummary();
     }
-  }, [employeeId, displayDate]);
+  }, [employeeId, displayDate, hidden]);
+
+  // Auto-hide/Show handlers (persisted to localStorage)
+  const handleHide = () => {
+    try {
+      localStorage.setItem(`hideBreakSummary_${employeeId}_${displayDate}`, 'true');
+    } catch (e) {}
+    setHidden(true);
+  };
+
+  const handleShow = () => {
+    try {
+      localStorage.removeItem(`hideBreakSummary_${employeeId}_${displayDate}`);
+    } catch (e) {}
+    setHidden(false);
+  };
 
   // Auto-refresh interval for real-time updates
   useEffect(() => {
-    if (!autoRefresh || !employeeId) return;
+    if (!autoRefresh || !employeeId || hidden) return;
 
     const interval = setInterval(() => {
       fetchBreakSummary();
     }, refreshInterval);
 
     return () => clearInterval(interval);
-  }, [autoRefresh, refreshInterval, employeeId, displayDate]);
+  }, [autoRefresh, refreshInterval, employeeId, displayDate, hidden]);
 
   const fetchBreakSummary = async () => {
     setLoading(true);
@@ -104,6 +131,18 @@ const BreakSummary = ({ employeeId, date, autoRefresh = true, refreshInterval = 
       setLoading(false);
     }
   };
+
+  // If user (HR) hid the summary, show a compact placeholder with a Show button
+  if (hidden) {
+    return (
+      <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
+        <p className="text-sm text-gray-600">Break summary is hidden.</p>
+        <div className="mt-3">
+          <button onClick={handleShow} className="px-3 py-1 bg-blue-600 text-white rounded-md text-sm">Show Break Summary</button>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -171,8 +210,13 @@ const BreakSummary = ({ employeeId, date, autoRefresh = true, refreshInterval = 
               </span>}
             </p>
           </div>
-          <div className={`px-4 py-2 rounded-full border text-sm font-medium ${statusColor}`}>
-            {breakData.attendanceStatus}
+          <div className="flex items-center gap-3">
+            <div className={`px-4 py-2 rounded-full border text-sm font-medium ${statusColor}`}>
+              {breakData.attendanceStatus}
+            </div>
+            {isHR && (
+              <button onClick={handleHide} className="text-sm text-gray-500 hover:text-gray-700">Hide</button>
+            )}
           </div>
         </div>
 
