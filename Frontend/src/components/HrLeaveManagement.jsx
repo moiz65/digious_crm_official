@@ -1,21 +1,4 @@
-import { useState, useMemo } from "react";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Legend,
-  BarChart,
-  Bar,
-  CartesianGrid,
-  Area,
-  AreaChart,
-} from "recharts";
+import React, { useState, useMemo } from "react";
 import {
   Calendar,
   Download,
@@ -41,26 +24,38 @@ import {
   PieChart as PieChartIcon,
   RefreshCw,
   FileText,
+  Briefcase,
+  Building,
+  GraduationCap,
+  DollarSign,
+  MapPin,
+  Link,
+  MessageSquare,
+  CheckSquare,
+  FileCheck,
+  Archive,
+  Send,
+  Bell,
+  Star,
+  Inbox,
+  FileUp,
+  FileDown,
+  Printer,
+  Share2,
+  Copy,
+  Tag,
+  Folder,
+  FolderOpen,
+  X,
+  User,
+  Paperclip,
+  Check,
+  ExternalLink,
+  ArrowUpRight,
+  FilePlus,
+  MailIcon,
+  CloudUpload,
 } from "lucide-react";
-
-// Mock Data
-const departments = [
-  { name: "Production", totalEmployees: 45, onLeave: 8, leaveUtilization: 0.65, upcomingLeaves: 12 },
-  { name: "Marketing", totalEmployees: 28, onLeave: 4, leaveUtilization: 0.45, upcomingLeaves: 7 },
-  { name: "Sales", totalEmployees: 35, onLeave: 6, leaveUtilization: 0.72, upcomingLeaves: 9 },
-  { name: "HR", totalEmployees: 15, onLeave: 2, leaveUtilization: 0.38, upcomingLeaves: 3 },
-  { name: "Finance", totalEmployees: 22, onLeave: 3, leaveUtilization: 0.51, upcomingLeaves: 5 },
-  { name: "Operations", totalEmployees: 38, onLeave: 7, leaveUtilization: 0.68, upcomingLeaves: 10 },
-];
-
-const leaveTypes = [
-  { id: "annual", name: "Annual", color: "#2563eb", icon: "🏖️", maxDays: 20, requiresApproval: true },
-  { id: "sick", name: "Sick", color: "#10b981", icon: "🏥", maxDays: 10, requiresApproval: false },
-  { id: "casual", name: "Casual", color: "#f59e0b", icon: "☕", maxDays: 8, requiresApproval: true },
-  { id: "Unpaid", name: "Unpaid", color: "#8b5cf6", icon: "👶", maxDays: 180, requiresApproval: true },
-  { id: "Unpaid", name: "Unpaid", color: "#3b82f6", icon: "👨‍👦", maxDays: 15, requiresApproval: true },
-  { id: "unpaid", name: "Unpaid", color: "#6b7280", icon: "💼", maxDays: 30, requiresApproval: true },
-];
 
 // Simple date formatting function
 const formatDate = (dateString) => {
@@ -80,467 +75,640 @@ const getEndOfMonth = () => {
   return new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString().split('T')[0];
 };
 
-// Advanced leave analytics data
-const generateLeaveData = () => {
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  return months.map(month => ({
-    month,
-    applied: Math.floor(Math.random() * 20) + 10,
-    approved: Math.floor(Math.random() * 18) + 8,
-    rejected: Math.floor(Math.random() * 5) + 1,
-    onLeave: Math.floor(Math.random() * 15) + 5,
-  }));
-};
-
-// Detailed employees on leave
-const employeesOnLeave = [
+// Applied Applications (Applications submitted by users)
+const appliedApplications = [
   {
-    id: 1,
-    name: "John Doe",
-    avatar: "JD",
-    department: "Production",
-    position: "Senior Developer",
-    email: "john@company.com",
-    phone: "+1 (555) 123-4567",
-    leaveBalance: { annual: 8, sick: 7, casual: 4, },
-    onLeave: true,
-    leaveUntil: "2026-05-10",
+    id: 201,
+    applicationNumber: "APP-2026-201",
+    department: "Human Resources",
+    applicantName: "John Doe",
+    applicantId: "EMP-001",
+    applicantDesignation: "HR Manager",
+    applicationType: "Annual Leave Request",
+    subject: "Annual Leave Application - 2 Weeks",
+    appliedDate: "2026-04-20",
+    appliedTime: "09:15 AM",
+    status: "submitted",
+    priority: "high",
+    attachments: ["leave_application.pdf"],
+    estimatedProcessingTime: "2 days",
+    currentStatus: "Under Review by Sarah Johnson",
+    lastUpdated: "2026-04-20",
+    trackingId: "TRK-0012345",
+    notes: "Family vacation",
   },
   {
-    id: 2,
-    name: "Sarah Smith",
-    avatar: "SS",
-    department: "Marketing",
-    position: "Marketing Manager",
-    email: "sarah@company.com",
-    phone: "+1 (555) 987-6543",
-    leaveBalance: { annual: 12, sick: 8, casual: 6, },
-    onLeave: true,
-    leaveUntil: "2026-05-05",
+    id: 202,
+    applicationNumber: "APP-2026-202",
+    department: "Finance",
+    applicantName: "Sarah Smith",
+    applicantId: "EMP-002",
+    applicantDesignation: "Finance Executive",
+    applicationType: "Business Trip Request",
+    subject: "Business Trip - Client Meeting in NYC",
+    appliedDate: "2026-04-18",
+    appliedTime: "11:30 AM",
+    status: "in-progress",
+    priority: "medium",
+    attachments: ["travel_request.pdf", "flight_quotes.pdf"],
+    estimatedProcessingTime: "3 days",
+    currentStatus: "Approval Pending from Finance Director",
+    lastUpdated: "2026-04-19",
+    trackingId: "TRK-0012346",
+    notes: "Client meeting scheduled",
   },
   {
-    id: 3,
-    name: "Michael Brown",
-    avatar: "MB",
-    department: "Sales",
-    position: "Sales Executive",
-    email: "michael@company.com",
-    phone: "+1 (555) 456-7890",
-    leaveBalance: { annual: 6, sick: 9, casual: 3, },
-    onLeave: true,
-    leaveUntil: "2026-05-15",
-  },
-  {
-    id: 4,
-    name: "Emma Wilson",
-    avatar: "EW",
-    department: "HR",
-    position: "HR Manager",
-    email: "emma@company.com",
-    phone: "+1 (555) 234-5678",
-    leaveBalance: { annual: 15, sick: 10, casual: 5, },
-    onLeave: true,
-    leaveUntil: "2026-06-01",
-  },
-  {
-    id: 5,
-    name: "Robert Chen",
-    avatar: "RC",
-    department: "Production",
-    position: "DevOps Engineer",
-    email: "robert@company.com",
-    phone: "+1 (555) 876-5432",
-    leaveBalance: { annual: 10, sick: 6, casual: 4, },
-    onLeave: false,
-  },
-];
-
-// Applied leaves with detailed information
-const appliedLeaves = [
-  {
-    id: 1,
-    employee: {
-      id: 1,
-      name: "John Doe",
-      avatar: "JD",
-      department: "Production",
-      position: "Senior Developer",
-      email: "john@company.com",
-    },
-    type: "Annual",
-    startDate: "2026-05-01",
-    endDate: "2026-05-05",
-    duration: 5,
+    id: 203,
+    applicationNumber: "APP-2026-203",
+    department: "Operations",
+    applicantName: "Michael Brown",
+    applicantId: "EMP-003",
+    applicantDesignation: "Operations Head",
+    applicationType: "Purchase Request",
+    subject: "New Office Equipment Purchase",
+    appliedDate: "2026-04-22",
+    appliedTime: "02:45 PM",
     status: "approved",
-    reason: "Family vacation",
-    submittedAt: "2026-04-20",
-    approvedBy: "Jane Manager",
-    approvedAt: "2026-04-21",
-    attachments: ["flight_tickets.pdf", "hotel_booking.pdf"],
+    priority: "high",
+    attachments: ["purchase_request.pdf", "quotes.xlsx"],
+    estimatedProcessingTime: "7 days",
+    currentStatus: "Approved by Emma Wilson",
+    lastUpdated: "2026-04-25",
+    trackingId: "TRK-0012347",
+    approvedDate: "2026-04-25",
+    approvedBy: "Emma Wilson",
+    notes: "For new hires",
   },
   {
-    id: 2,
-    employee: {
-      id: 2,
-      name: "Sarah Smith",
-      avatar: "SS",
-      department: "Marketing",
-      position: "Marketing Manager",
-      email: "sarah@company.com",
-    },
-    type: "Sick",
-    startDate: "2026-05-02",
-    endDate: "2026-05-02",
-    duration: 1,
-    status: "pending",
-    reason: "Doctor appointment",
-    submittedAt: "2026-05-01",
-  },
-  {
-    id: 3,
-    employee: {
-      id: 3,
-      name: "Michael Brown",
-      avatar: "MB",
-      department: "Sales",
-      position: "Sales Executive",
-      email: "michael@company.com",
-    },
-    type: "Casual",
-    startDate: "2026-05-03",
-    endDate: "2026-05-04",
-    duration: 2,
-    status: "approved",
-    reason: "Personal work",
-    submittedAt: "2026-04-28",
-    approvedBy: "Mark Director",
-    approvedAt: "2026-04-29",
-  },
-  {
-    id: 4,
-    employee: {
-      id: 4,
-      name: "Emma Wilson",
-      avatar: "EW",
-      department: "HR",
-      position: "HR Manager",
-      email: "emma@company.com",
-    },
-    type: "Unpaid",
-    startDate: "2026-05-10",
-    endDate: "2026-11-10",
-    duration: 180,
-    status: "approved",
-    reason: "Unpaid leave",
-    submittedAt: "2026-04-15",
-    approvedBy: "CEO Office",
-    approvedAt: "2026-04-16",
-  },
-  {
-    id: 5,
-    employee: {
-      id: 5,
-      name: "Robert Chen",
-      avatar: "RC",
-      department: "Production",
-      position: "DevOps Engineer",
-      email: "robert@company.com",
-    },
-    type: "Annual",
-    startDate: "2026-05-15",
-    endDate: "2026-05-20",
-    duration: 6,
-    status: "pending",
-    reason: "Wedding ceremony",
-    submittedAt: "2026-05-01",
-  },
-];
-
-// View Leaves - All leaves (historical and current)
-const allLeaves = [
-  {
-    id: 101,
-    employee: {
-      id: 1,
-      name: "John Doe",
-      avatar: "JD",
-      department: "Production",
-      position: "Senior Developer",
-      email: "john@company.com",
-    },
-    type: "Annual",
-    startDate: "2026-03-10",
-    endDate: "2026-03-15",
-    duration: 6,
-    status: "approved",
-    reason: "Personal vacation",
-    submittedAt: "2026-02-28",
-    approvedBy: "Jane Manager",
-  },
-  {
-    id: 102,
-    employee: {
-      id: 2,
-      name: "Sarah Smith",
-      avatar: "SS",
-      department: "Marketing",
-      position: "Marketing Manager",
-      email: "sarah@company.com",
-    },
-    type: "Sick",
-    startDate: "2026-03-20",
-    endDate: "2026-03-21",
-    duration: 2,
-    status: "approved",
-    reason: "Medical appointment",
-    submittedAt: "2026-03-19",
-    approvedBy: "Mark Director",
-  },
-  {
-    id: 103,
-    employee: {
-      id: 3,
-      name: "Michael Brown",
-      avatar: "MB",
-      department: "Sales",
-      position: "Sales Executive",
-      email: "michael@company.com",
-    },
-    type: "Casual",
-    startDate: "2026-04-01",
-    endDate: "2026-04-02",
-    duration: 2,
+    id: 204,
+    applicationNumber: "APP-2026-204",
+    department: "Administration",
+    applicantName: "Emma Wilson",
+    applicantId: "EMP-004",
+    applicantDesignation: "Admin Manager",
+    applicationType: "Expense Claim",
+    subject: "Monthly Team Lunch Expenses",
+    appliedDate: "2026-04-15",
+    appliedTime: "10:00 AM",
     status: "rejected",
-    reason: "Personal work",
-    submittedAt: "2026-03-30",
-    approvedBy: "HR Manager",
+    priority: "low",
+    attachments: ["expense_report.pdf", "receipts.pdf"],
+    estimatedProcessingTime: "5 days",
+    currentStatus: "Rejected - Insufficient documentation",
+    lastUpdated: "2026-04-18",
+    trackingId: "TRK-0012348",
+    rejectedDate: "2026-04-18",
+    rejectedBy: "Robert Chen",
+    rejectionReason: "Missing original receipts",
+    notes: "Team bonding activity",
   },
   {
-    id: 104,
-    employee: {
-      id: 6,
+    id: 205,
+    applicationNumber: "APP-2026-205",
+    department: "IT Support",
+    applicantName: "Robert Chen",
+    applicantId: "EMP-005",
+    applicantDesignation: "IT Support Lead",
+    applicationType: "Maintenance Request",
+    subject: "Server Room AC Repair",
+    appliedDate: "2026-04-25",
+    appliedTime: "08:30 AM",
+    status: "completed",
+    priority: "high",
+    attachments: ["maintenance_form.pdf"],
+    estimatedProcessingTime: "2 days",
+    currentStatus: "Completed - Maintenance done",
+    lastUpdated: "2026-04-27",
+    trackingId: "TRK-0012349",
+    completedDate: "2026-04-27",
+    completedBy: "Lisa Taylor",
+    notes: "Urgent repair needed",
+  },
+];
+
+// Receiving Applications (Applications received for processing)
+const receivingApplications = [
+  {
+    id: 1,
+    applicationNumber: "APP-2026-001",
+    department: "Human Resources",
+    applicantName: "John Doe",
+    applicantDesignation: "HR Manager",
+    applicationType: "Annual Leave Request",
+    subject: "Annual Leave Application - 2 Weeks",
+    receivedDate: "2026-04-20",
+    receivedTime: "09:15 AM",
+    priority: "high",
+    status: "received",
+    attachments: ["leave_application.pdf"],
+    estimatedProcessingTime: "2 days",
+    assignedTo: "Sarah Johnson",
+    dueDate: "2026-04-22",
+    actionRequired: "Review and initial approval",
+    notes: "Annual leave request",
+  },
+  {
+    id: 2,
+    applicationNumber: "APP-2026-002",
+    department: "Finance",
+    applicantName: "Sarah Smith",
+    applicantDesignation: "Finance Executive",
+    applicationType: "Business Trip Request",
+    subject: "Business Trip - Client Meeting in NYC",
+    receivedDate: "2026-04-18",
+    receivedTime: "11:30 AM",
+    priority: "medium",
+    status: "processing",
+    attachments: ["travel_request.pdf", "flight_quotes.pdf"],
+    estimatedProcessingTime: "3 days",
+    assignedTo: "Michael Brown",
+    dueDate: "2026-04-21",
+    actionRequired: "Verify budget allocation",
+    notes: "Important client meeting",
+  },
+  {
+    id: 3,
+    applicationNumber: "APP-2026-003",
+    department: "Operations",
+    applicantName: "Michael Brown",
+    applicantDesignation: "Operations Head",
+    applicationType: "Purchase Request",
+    subject: "New Office Equipment Purchase",
+    receivedDate: "2026-04-22",
+    receivedTime: "02:45 PM",
+    priority: "high",
+    status: "pending-approval",
+    attachments: ["purchase_request.pdf", "quotes.xlsx"],
+    estimatedProcessingTime: "7 days",
+    assignedTo: "Emma Wilson",
+    dueDate: "2026-04-29",
+    actionRequired: "Director level approval needed",
+    notes: "New hires equipment",
+  },
+  {
+    id: 4,
+    applicationNumber: "APP-2026-004",
+    department: "Administration",
+    applicantName: "Emma Wilson",
+    applicantDesignation: "Admin Manager",
+    applicationType: "Expense Claim",
+    subject: "Monthly Team Lunch Expenses",
+    receivedDate: "2026-04-15",
+    receivedTime: "10:00 AM",
+    priority: "low",
+    status: "approved",
+    attachments: ["expense_report.pdf", "receipts.pdf"],
+    estimatedProcessingTime: "5 days",
+    assignedTo: "Robert Chen",
+    dueDate: "2026-04-20",
+    processedDate: "2026-04-19",
+    approvedBy: "David Lee",
+    actionRequired: "Payment processing",
+    notes: "Team lunch reimbursement",
+  },
+  {
+    id: 5,
+    applicationNumber: "APP-2026-005",
+    department: "IT Support",
+    applicantName: "Robert Chen",
+    applicantDesignation: "IT Support Lead",
+    applicationType: "Maintenance Request",
+    subject: "Server Room AC Repair",
+    receivedDate: "2026-04-25",
+    receivedTime: "08:30 AM",
+    priority: "high",
+    status: "processing",
+    attachments: ["maintenance_form.pdf"],
+    estimatedProcessingTime: "2 days",
+    assignedTo: "Lisa Taylor",
+    dueDate: "2026-04-27",
+    actionRequired: "Assign to maintenance team",
+    notes: "Server overheating issue",
+  },
+];
+
+// Active memos/notes
+const activeMemos = [
+  {
+    id: 1,
+    memoNumber: "MEMO-2024-001",
+    title: "New Leave Application Process",
+    from: "HR Department",
+    author: {
+      id: 1,
+      name: "Jane Manager",
+      avatar: "JM",
+      department: "Human Resources",
+      position: "HR Director",
+      email: "jane@company.com",
+    },
+    type: "process",
+    category: "HR",
+    date: "2024-01-15",
+    createdDate: "2024-01-15",
+    lastUpdated: "2024-01-15",
+    status: "active",
+    priority: "high",
+    content: "Updated leave application submission and approval process effective from May 2026...",
+    summary: "Updated guidelines for remote work arrangements effective February 1st.",
+    attachments: ["leave_process_v2.pdf", "approval_flow.pdf"],
+    readers: 45,
+    comments: 12,
+    actionsRequired: true,
+    deadline: "2024-01-25"
+  },
+  {
+    id: 2,
+    memoNumber: "MEMO-2024-002",
+    title: "Expense Claim Guidelines",
+    from: "Finance Department",
+    author: {
+      id: 2,
+      name: "Mark Director",
+      avatar: "MD",
+      department: "Finance",
+      position: "Finance Director",
+      email: "mark@company.com",
+    },
+    type: "guideline",
+    category: "Finance",
+    date: "2024-01-14",
+    createdDate: "2024-01-14",
+    lastUpdated: "2024-01-14",
+    status: "active",
+    priority: "high",
+    content: "Updated expense claim submission guidelines and approval matrix...",
+    summary: "Updated expense claim submission guidelines and approval matrix...",
+    attachments: ["expense_guidelines.pdf"],
+    readers: 38,
+    comments: 8,
+    actionsRequired: false,
+    deadline: "2024-01-20"
+  },
+  {
+    id: 3,
+    memoNumber: "MEMO-2024-003",
+    title: "Office Maintenance Request Process",
+    from: "IT Security Team",
+    author: {
+      id: 3,
       name: "Lisa Taylor",
       avatar: "LT",
-      department: "Finance",
-      position: "Accountant",
+      department: "Facilities",
+      position: "Facilities Manager",
       email: "lisa@company.com",
     },
-    type: "Unpaid",
-    startDate: "2026-01-15",
-    endDate: "2026-07-15",
-    duration: 180,
-    status: "approved",
-    reason: "Unpaid leave",
-    submittedAt: "2026-12-20",
-    approvedBy: "CEO Office",
-  },
-  {
-    id: 105,
-    employee: {
-      id: 7,
-      name: "David Kim",
-      avatar: "DK",
-      department: "Operations",
-      position: "Operations Manager",
-      email: "david@company.com",
-    },
-    type: "Unpaid",
-    startDate: "2026-04-10",
-    endDate: "2026-04-25",
-    duration: 15,
-    status: "approved",
-    reason: "Unpaid leave",
-    submittedAt: "2026-03-28",
-    approvedBy: "HR Manager",
-  },
-  {
-    id: 106,
-    employee: {
-      id: 8,
-      name: "Maria Garcia",
-      avatar: "MG",
-      department: "HR",
-      position: "HR Specialist",
-      email: "maria@company.com",
-    },
-    type: "Unpaid",
-    startDate: "2026-02-01",
-    endDate: "2026-02-15",
-    duration: 15,
-    status: "approved",
-    reason: "Personal reasons",
-    submittedAt: "2026-01-25",
-    approvedBy: "HR Director",
+    type: "process",
+    category: "Security",
+    date: "2024-01-12",
+    createdDate: "2024-01-12",
+    lastUpdated: "2024-01-12",
+    status: "active",
+    priority: "urgent",
+    content: "Standard operating procedure for submitting and tracking maintenance requests...",
+    summary: "Important security updates required for all development environments.",
+    attachments: ["maintenance_process.pdf", "request_form.docx"],
+    readers: 25,
+    comments: 5,
+    actionsRequired: true,
+    deadline: "2024-01-14"
   },
 ];
 
-export default function AdvancedLeaveManagementSystem() {
-  const [activeTab, setActiveTab] = useState('overview');
+// Department options (matching employee version)
+const departmentsList = [
+  { value: 'Human Resources', label: 'Human Resources (HR)' },
+  { value: 'Finance', label: 'Finance' },
+  { value: 'Operations', label: 'Operations' },
+  { value: 'Administration', label: 'Administration' },
+  { value: 'IT Support', label: 'IT Support' },
+  { value: 'Facilities', label: 'Facilities' },
+  { value: 'Sales', label: 'Sales' },
+  { value: 'Productions', label: 'Productions' }
+];
+
+// Department-wise application types (matching employee version)
+const departmentApplicationTypes = {
+  'Human Resources': [
+    { value: 'Annual Leave Request', label: 'Annual Leave Request' },
+    { value: 'Remote Work Request', label: 'Remote Work Request' },
+    { value: 'Overtime Request', label: 'Overtime Request' },
+    { value: 'Resignation Request', label: 'Resignation Request' },
+    { value: 'Promotion Request', label: 'Promotion Request' },
+    { value: 'Transfer Request', label: 'Transfer Request' },
+    { value: 'Salary Revision', label: 'Salary Revision' },
+    { value: 'Employee Grievance', label: 'Employee Grievance' },
+    { value: 'Other', label: 'Other' }
+  ],
+  'Finance': [
+    { value: 'Expense Reimbursement', label: 'Expense Reimbursement' },
+    { value: 'Advance Salary', label: 'Advance Salary' },
+    { value: 'Loan Request', label: 'Loan Request' },
+    { value: 'Invoice Processing', label: 'Invoice Processing' },
+    { value: 'Budget Approval', label: 'Budget Approval' },
+    { value: 'Payment Request', label: 'Payment Request' },
+    { value: 'Tax Query', label: 'Tax Query' },
+    { value: 'Audit Support', label: 'Audit Support' },
+    { value: 'Other', label: 'Other' }
+  ],
+  'Operations': [
+    { value: 'Equipment Request', label: 'Equipment Request' },
+    { value: 'Vehicle Request', label: 'Vehicle Request' },
+    { value: 'Maintenance Request', label: 'Maintenance Request' },
+    { value: 'Safety Equipment Request', label: 'Safety Equipment Request' },
+    { value: 'Inventory Request', label: 'Inventory Request' },
+    { value: 'Site Visit Request', label: 'Site Visit Request' },
+    { value: 'Operational Report', label: 'Operational Report' },
+    { value: 'Vendor Complaint', label: 'Vendor Complaint' },
+    { value: 'Other', label: 'Other' }
+  ],
+  'Administration': [
+    { value: 'Travel Request', label: 'Travel Request' },
+    { value: 'Stationery Request', label: 'Stationery Request' },
+    { value: 'Office Supplies Request', label: 'Office Supplies Request' },
+    { value: 'Meeting Room Booking', label: 'Meeting Room Booking' },
+    { value: 'Visitor Pass Request', label: 'Visitor Pass Request' },
+    { value: 'Other', label: 'Other' }
+  ],
+  'IT Support': [
+    { value: 'Hardware Request', label: 'Hardware Request' },
+    { value: 'Software Request', label: 'Software Request' },
+    { value: 'Access Request', label: 'Access Request' },
+    { value: 'Technical Support', label: 'Technical Support' },
+    { value: 'System Maintenance', label: 'System Maintenance' },
+    { value: 'Other', label: 'Other' }
+  ],
+  'Facilities': [
+    { value: 'Maintenance Request', label: 'Maintenance Request' },
+    { value: 'Repair Request', label: 'Repair Request' },
+    { value: 'Cleaning Request', label: 'Cleaning Request' },
+    { value: 'Security Request', label: 'Security Request' },
+    { value: 'Other', label: 'Other' }
+  ],
+  'Sales': [
+    { value: 'Sales Report Submission', label: 'Sales Report Submission' },
+    { value: 'Client Visit Request', label: 'Client Visit Request' },
+    { value: 'Sales Target Revision', label: 'Sales Target Revision' },
+    { value: 'Discount Approval Request', label: 'Discount Approval Request' },
+    { value: 'Sales Material Request', label: 'Sales Material Request' },
+    { value: 'Other', label: 'Other' }
+  ],
+  'Productions': [
+    { value: 'Raw Material Request', label: 'Raw Material Request' },
+    { value: 'Machine Maintenance', label: 'Machine Maintenance' },
+    { value: 'Production Report', label: 'Production Report' },
+    { value: 'Quality Inspection', label: 'Quality Inspection' },
+    { value: 'Shift Change Request', label: 'Shift Change Request' },
+    { value: 'Other', label: 'Other' }
+  ]
+};
+
+export default function OfficeApplicationsSystem() {
+  const [activeTab, setActiveTab] = useState('all-applications');
   const [selectedDepartment, setSelectedDepartment] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
-  const [selectedLeaveType, setSelectedLeaveType] = useState('all');
+  const [selectedApplicationType, setSelectedApplicationType] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [dateRange, setDateRange] = useState({
     start: getStartOfMonth(),
     end: getEndOfMonth(),
   });
   const [showFilters, setShowFilters] = useState(false);
-  const [leaveData, setLeaveData] = useState(generateLeaveData());
-  const [viewLeaveModal, setViewLeaveModal] = useState(null);
-  const [selectedView, setSelectedView] = useState('all'); // 'all', 'upcoming', 'past'
+  const [viewDetailsModal, setViewDetailsModal] = useState(null);
+  const [selectedView, setSelectedView] = useState('today');
+  const [memoType, setMemoType] = useState('all');
+  const [newApplicationForm, setNewApplicationForm] = useState({
+    department: '',
+    applicationType: '',
+    subject: '',
+    description: '',
+    priority: 'medium',
+    attachments: []
+  });
+  const [showNewAppModal, setShowNewAppModal] = useState(false);
+  const [showNewMemoModal, setShowNewMemoModal] = useState(false);
 
-  // Advanced statistics calculations
+  // Stats calculations
   const stats = useMemo(() => {
-    const totalEmployees = departments.reduce((sum, dept) => sum + dept.totalEmployees, 0);
-    const totalOnLeave = departments.reduce((sum, dept) => sum + dept.onLeave, 0);
-    const totalApplied = appliedLeaves.length;
-    const pendingApprovals = appliedLeaves.filter(leave => leave.status === 'pending').length;
-    const approvalRate = totalApplied > 0 
-      ? ((appliedLeaves.filter(leave => leave.status === 'approved').length / totalApplied) * 100).toFixed(1)
-      : '0';
-
+    const totalApplied = appliedApplications.length;
+    const totalReceiving = receivingApplications.length;
+    const approvedApplied = appliedApplications.filter(app => app.status === 'approved' || app.status === 'completed').length;
+    const processedReceiving = receivingApplications.filter(app => app.status === 'approved' || app.status === 'processing').length;
+    
     return {
-      totalEmployees,
-      totalOnLeave,
       totalApplied,
-      pendingApprovals,
-      approvalRate,
-      leaveUtilization: ((totalOnLeave / totalEmployees) * 100).toFixed(1),
+      totalReceiving,
+      approvedApplied,
+      processedReceiving,
+      approvalRate: totalApplied > 0 ? ((approvedApplied / totalApplied) * 100).toFixed(1) : '0',
+      processingRate: totalReceiving > 0 ? ((processedReceiving / totalReceiving) * 100).toFixed(1) : '0',
+      pendingApps: appliedApplications.filter(app => app.status === 'submitted' || app.status === 'in-progress').length,
+      unreadMemos: activeMemos.filter(memo => memo.status === 'unread').length,
+      drafts: 2
     };
   }, []);
 
-  // Filter applied leaves
-  const filteredLeaves = useMemo(() => {
-    return appliedLeaves.filter(leave => {
-      const matchesDepartment = selectedDepartment === 'all' || leave.employee.department === selectedDepartment;
-      const matchesStatus = selectedStatus === 'all' || leave.status === selectedStatus;
+  // Filter all applications (combined applied and receiving)
+  const filteredAllApplications = useMemo(() => {
+    const allApps = [...appliedApplications, ...receivingApplications];
+    let filtered = allApps;
+    
+    if (selectedView === 'today') {
+      const today = new Date().toISOString().split('T')[0];
+      filtered = filtered.filter(app => 
+        app.appliedDate === today || app.receivedDate === today
+      );
+    } else if (selectedView === 'pending') {
+      filtered = filtered.filter(app => 
+        app.status === 'submitted' || 
+        app.status === 'in-progress' || 
+        app.status === 'received' || 
+        app.status === 'processing' ||
+        app.status === 'pending-approval'
+      );
+    } else if (selectedView === 'approved') {
+      filtered = filtered.filter(app => app.status === 'approved' || app.status === 'completed');
+    } else if (selectedView === 'overdue') {
+      filtered = filtered.filter(app => {
+        const dueDate = app.dueDate ? new Date(app.dueDate) : null;
+        const today = new Date();
+        return dueDate && dueDate < today && (app.status === 'received' || app.status === 'processing');
+      });
+    }
+    
+    return filtered.filter(app => {
+      const matchesDepartment = selectedDepartment === 'all' || app.department === selectedDepartment;
+      const matchesStatus = selectedStatus === 'all' || app.status === selectedStatus;
+      const matchesType = selectedApplicationType === 'all' || 
+        (app.applicationType && app.applicationType === selectedApplicationType);
       const matchesSearch = searchQuery === '' || 
-        leave.employee.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        leave.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        leave.reason.toLowerCase().includes(searchQuery.toLowerCase());
+        app.applicationNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        app.applicantName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        app.subject?.toLowerCase().includes(searchQuery.toLowerCase());
       
-      return matchesDepartment && matchesStatus && matchesSearch;
+      return matchesDepartment && matchesStatus && matchesType && matchesSearch;
     });
-  }, [selectedDepartment, selectedStatus, searchQuery]);
+  }, [selectedDepartment, selectedStatus, selectedApplicationType, searchQuery, selectedView]);
 
-  // Filter all leaves (for View Leaves tab)
-  const filteredAllLeaves = useMemo(() => {
-    return allLeaves.filter(leave => {
-      const matchesDepartment = selectedDepartment === 'all' || leave.employee.department === selectedDepartment;
-      const matchesStatus = selectedStatus === 'all' || leave.status === selectedStatus;
-      const matchesType = selectedLeaveType === 'all' || leave.type.toLowerCase() === selectedLeaveType;
+  // Filter applied applications
+  const filteredAppliedApplications = useMemo(() => {
+    let filtered = appliedApplications;
+    
+    if (selectedView === 'today') {
+      const today = new Date().toISOString().split('T')[0];
+      filtered = filtered.filter(app => app.appliedDate === today);
+    } else if (selectedView === 'pending') {
+      filtered = filtered.filter(app => app.status === 'submitted' || app.status === 'in-progress');
+    } else if (selectedView === 'approved') {
+      filtered = filtered.filter(app => app.status === 'approved' || app.status === 'completed');
+    }
+    
+    return filtered.filter(app => {
+      const matchesDepartment = selectedDepartment === 'all' || app.department === selectedDepartment;
+      const matchesStatus = selectedStatus === 'all' || app.status === selectedStatus;
+      const matchesType = selectedApplicationType === 'all' || app.applicationType === selectedApplicationType;
       const matchesSearch = searchQuery === '' || 
-        leave.employee.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        leave.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        leave.reason.toLowerCase().includes(searchQuery.toLowerCase());
+        app.applicationNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        app.applicantName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        app.subject.toLowerCase().includes(searchQuery.toLowerCase());
       
-      // Filter by view type
-      const today = new Date();
-      const leaveEnd = new Date(leave.endDate);
-      
-      let matchesView = true;
-      if (selectedView === 'upcoming') {
-        matchesView = leaveEnd > today;
-      } else if (selectedView === 'past') {
-        matchesView = leaveEnd <= today;
-      }
-      
-      return matchesDepartment && matchesStatus && matchesType && matchesSearch && matchesView;
+      return matchesDepartment && matchesStatus && matchesType && matchesSearch;
     });
-  }, [selectedDepartment, selectedStatus, selectedLeaveType, searchQuery, selectedView]);
+  }, [selectedDepartment, selectedStatus, selectedApplicationType, searchQuery, selectedView]);
 
-  // Calculate department-wise leave distribution
-  const departmentLeaveData = useMemo(() => {
-    return departments.map(dept => ({
-      name: dept.name,
-      onLeave: dept.onLeave,
-      upcoming: dept.upcomingLeaves,
-      utilization: Math.round(dept.leaveUtilization * 100),
-    }));
-  }, []);
+  // Filter receiving applications
+  const filteredReceivingApplications = useMemo(() => {
+    let filtered = receivingApplications;
+    
+    if (selectedView === 'today') {
+      const today = new Date().toISOString().split('T')[0];
+      filtered = filtered.filter(app => app.receivedDate === today);
+    } else if (selectedView === 'pending') {
+      filtered = filtered.filter(app => app.status === 'received' || app.status === 'processing');
+    } else if (selectedView === 'overdue') {
+      filtered = filtered.filter(app => {
+        const dueDate = new Date(app.dueDate);
+        const today = new Date();
+        return dueDate < today && (app.status === 'received' || app.status === 'processing');
+      });
+    }
+    
+    return filtered.filter(app => {
+      const matchesDepartment = selectedDepartment === 'all' || app.department === selectedDepartment;
+      const matchesStatus = selectedStatus === 'all' || app.status === selectedStatus;
+      const matchesType = selectedApplicationType === 'all' || app.applicationType === selectedApplicationType;
+      const matchesSearch = searchQuery === '' || 
+        app.applicationNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        app.applicantName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        app.subject.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      return matchesDepartment && matchesStatus && matchesType && matchesSearch;
+    });
+  }, [selectedDepartment, selectedStatus, selectedApplicationType, searchQuery, selectedView]);
 
-  // Handle leave actions
-  const handleLeaveAction = (leaveId, action) => {
-    // In a real app, this would make an API call
-    console.log(`${action} leave ${leaveId}`);
+  // Filter active memos
+  const filteredMemos = useMemo(() => {
+    return activeMemos.filter(memo => {
+      const matchesDepartment = selectedDepartment === 'all' || memo.author.department === selectedDepartment;
+      const matchesStatus = selectedStatus === 'all' || memo.status === selectedStatus;
+      const matchesType = memoType === 'all' || memo.type === memoType;
+      const matchesSearch = searchQuery === '' || 
+        memo.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        memo.author.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        memo.content.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      return matchesDepartment && matchesStatus && matchesType && matchesSearch;
+    });
+  }, [selectedDepartment, selectedStatus, memoType, searchQuery]);
+
+  // Handle application actions
+  const handleApplicationAction = (appId, action) => {
+    console.log(`${action} application ${appId}`);
   };
 
-  // Refresh data
-  const refreshData = () => {
-    setLeaveData(generateLeaveData());
+  // Handle new application form submission
+  const handleNewApplicationSubmit = (applicationData) => {
+    console.log('New application submitted:', applicationData);
+    setShowNewAppModal(false);
   };
 
-  // Handle view leave details
-  const handleViewLeave = (leave) => {
-    setViewLeaveModal(leave);
+  // Handle new memo form submission
+  const handleNewMemoSubmit = (memoData) => {
+    console.log('New memo submitted:', memoData);
+    setShowNewMemoModal(false);
+  };
+
+  // Handle mark as read
+  const handleMarkAsRead = (memoId) => {
+    console.log('Mark memo as read:', memoId);
+  };
+
+  // Handle view details
+  const handleViewDetails = (item) => {
+    setViewDetailsModal(item);
   };
 
   // Close view modal
   const closeViewModal = () => {
-    setViewLeaveModal(null);
+    setViewDetailsModal(null);
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-6 space-y-6">
-      {/* Header with Tabs */}
+      {/* Header with 4 Tabs in One Line */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
         <div className="p-2">
-          {/* Navigation Tabs */}
           <div className="flex flex-wrap gap-1 border-b border-slate-200">
+            {/* Tab 1: All Applications */}
             <button
-              onClick={() => setActiveTab('overview')}
-              className={`px-4 py-3 font-medium text-sm rounded-t-lg transition-colors ${
-                activeTab === 'overview'
+              onClick={() => setActiveTab('all-applications')}
+              className={`px-4 py-3 font-medium text-sm rounded-t-lg transition-colors flex items-center ${
+                activeTab === 'all-applications'
                   ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
-              <BarChart3 className="inline mr-2" size={16} />
-              Overview
+              <Briefcase className="mr-2" size={16} />
+              All Applications ({appliedApplications.length + receivingApplications.length})
             </button>
+            
+            {/* Tab 2: Applied Applications */}
             <button
               onClick={() => setActiveTab('applied')}
-              className={`px-4 py-3 font-medium text-sm rounded-t-lg transition-colors ${
+              className={`px-4 py-3 font-medium text-sm rounded-t-lg transition-colors flex items-center ${
                 activeTab === 'applied'
                   ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
-              <CalendarDays className="inline mr-2" size={16} />
-              Applied Leaves ({appliedLeaves.length})
+              <FileUp className="mr-2" size={16} />
+              Applied ({appliedApplications.length})
             </button>
+            
+            {/* Tab 3: Receive Applications */}
             <button
-              onClick={() => setActiveTab('viewLeaves')}
-              className={`px-4 py-3 font-medium text-sm rounded-t-lg transition-colors ${
-                activeTab === 'viewLeaves'
+              onClick={() => setActiveTab('receive')}
+              className={`px-4 py-3 font-medium text-sm rounded-t-lg transition-colors flex items-center ${
+                activeTab === 'receive'
                   ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
-              <FileText className="inline mr-2" size={16} />
-              View Leaves ({allLeaves.length})
+              <Inbox className="mr-2" size={16} />
+              Receive ({receivingApplications.length})
             </button>
+            
+            {/* Tab 4: Memos */}
             <button
-              onClick={() => setActiveTab('onLeave')}
-              className={`px-4 py-3 font-medium text-sm rounded-t-lg transition-colors ${
-                activeTab === 'onLeave'
+              onClick={() => setActiveTab('memos')}
+              className={`px-4 py-3 font-medium text-sm rounded-t-lg transition-colors flex items-center ${
+                activeTab === 'memos'
                   ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
-              <UserX className="inline mr-2" size={16} />
-              On Leave ({stats.totalOnLeave})
-            </button>
-            <button
-              onClick={() => setActiveTab('analytics')}
-              className={`px-4 py-3 font-medium text-sm rounded-t-lg transition-colors ${
-                activeTab === 'analytics'
-                  ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-              }`}
-            >
-              <PieChartIcon className="inline mr-2" size={16} />
-              Analytics
+              <FileText className="mr-2" size={16} />
+              Memos ({activeMemos.length})
             </button>
           </div>
         </div>
@@ -555,9 +723,9 @@ export default function AdvancedLeaveManagementSystem() {
               <input
                 type="text"
                 placeholder={
-                  activeTab === 'viewLeaves' 
-                    ? "Search all leaves..." 
-                    : "Search employees, leave types, or reasons..."
+                  activeTab === 'memos' 
+                    ? "Search memos, guidelines, or authors..." 
+                    : "Search by application number, applicant, or subject..."
                 }
                 className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg text-sm"
                 value={searchQuery}
@@ -572,8 +740,8 @@ export default function AdvancedLeaveManagementSystem() {
               onChange={(e) => setSelectedDepartment(e.target.value)}
             >
               <option value="all">All Departments</option>
-              {departments.map(dept => (
-                <option key={dept.name} value={dept.name}>{dept.name}</option>
+              {departmentsList.map(dept => (
+                <option key={dept.value} value={dept.value}>{dept.label}</option>
               ))}
             </select>
             <select
@@ -582,22 +750,72 @@ export default function AdvancedLeaveManagementSystem() {
               onChange={(e) => setSelectedStatus(e.target.value)}
             >
               <option value="all">All Status</option>
-              <option value="approved">Approved</option>
-              <option value="pending">Pending</option>
-              <option value="rejected">Rejected</option>
+              {activeTab === 'all-applications' ? (
+                <>
+                  <option value="submitted">Submitted</option>
+                  <option value="received">Received</option>
+                  <option value="in-progress">In Progress</option>
+                  <option value="processing">Processing</option>
+                  <option value="pending-approval">Pending Approval</option>
+                  <option value="approved">Approved</option>
+                  <option value="completed">Completed</option>
+                  <option value="rejected">Rejected</option>
+                </>
+              ) : activeTab === 'applied' ? (
+                <>
+                  <option value="submitted">Submitted</option>
+                  <option value="in-progress">In Progress</option>
+                  <option value="approved">Approved</option>
+                  <option value="completed">Completed</option>
+                  <option value="rejected">Rejected</option>
+                </>
+              ) : activeTab === 'receive' ? (
+                <>
+                  <option value="received">Received</option>
+                  <option value="processing">Processing</option>
+                  <option value="pending-approval">Pending Approval</option>
+                  <option value="approved">Approved</option>
+                  <option value="rejected">Rejected</option>
+                </>
+              ) : (
+                <>
+                  <option value="active">Active</option>
+                  <option value="draft">Draft</option>
+                  <option value="archived">Archived</option>
+                </>
+              )}
             </select>
             
-            {/* Leave Type Filter - Show for View Leaves tab */}
-            {activeTab === 'viewLeaves' && (
+            {/* Application Type Filter */}
+            {activeTab !== 'memos' && (
               <select
                 className="border border-slate-300 rounded-lg px-3 py-2.5 text-sm min-w-[140px]"
-                value={selectedLeaveType}
-                onChange={(e) => setSelectedLeaveType(e.target.value)}
+                value={selectedApplicationType}
+                onChange={(e) => setSelectedApplicationType(e.target.value)}
               >
                 <option value="all">All Types</option>
-                {leaveTypes.map(type => (
-                  <option key={type.id} value={type.id}>{type.name}</option>
-                ))}
+                <option value="Annual Leave Request">Annual Leave Request</option>
+                <option value="Business Trip Request">Business Trip Request</option>
+                <option value="Expense Claim">Expense Claim</option>
+                <option value="Purchase Request">Purchase Request</option>
+                <option value="Maintenance Request">Maintenance Request</option>
+                <option value="Remote Work Request">Remote Work Request</option>
+                <option value="Expense Reimbursement">Expense Reimbursement</option>
+              </select>
+            )}
+
+            {/* Memo Type Filter */}
+            {activeTab === 'memos' && (
+              <select
+                className="border border-slate-300 rounded-lg px-3 py-2.5 text-sm min-w-[140px]"
+                value={memoType}
+                onChange={(e) => setMemoType(e.target.value)}
+              >
+                <option value="all">All Memo Types</option>
+                <option value="policy">Policy</option>
+                <option value="process">Process</option>
+                <option value="guideline">Guideline</option>
+                <option value="announcement">Announcement</option>
               </select>
             )}
 
@@ -613,7 +831,6 @@ export default function AdvancedLeaveManagementSystem() {
               Export Report
             </button>
             <button 
-              onClick={refreshData}
               className="flex items-center gap-2 px-4 py-2.5 border border-slate-300 rounded-lg text-sm hover:bg-slate-50"
               title="Refresh data"
             >
@@ -622,29 +839,44 @@ export default function AdvancedLeaveManagementSystem() {
           </div>
         </div>
 
-        {/* View Type Filter for View Leaves tab */}
-        {activeTab === 'viewLeaves' && (
+        {/* View Type Filter */}
+        {(activeTab === 'all-applications' || activeTab === 'applied' || activeTab === 'receive') && (
           <div className="mt-4 flex flex-wrap gap-3">
             <div className="flex items-center gap-2">
               <span className="text-sm text-slate-700 font-medium">View:</span>
               <div className="flex gap-1">
                 <button
+                  onClick={() => setSelectedView('today')}
+                  className={`px-3 py-1.5 text-sm rounded-lg ${selectedView === 'today' ? 'bg-blue-100 text-blue-700' : 'text-slate-600 hover:bg-slate-100'}`}
+                >
+                  Today's
+                </button>
+                <button
+                  onClick={() => setSelectedView('pending')}
+                  className={`px-3 py-1.5 text-sm rounded-lg ${selectedView === 'pending' ? 'bg-amber-100 text-amber-700' : 'text-slate-600 hover:bg-slate-100'}`}
+                >
+                  Pending
+                </button>
+                {(activeTab === 'all-applications' || activeTab === 'applied') ? (
+                  <button
+                    onClick={() => setSelectedView('approved')}
+                    className={`px-3 py-1.5 text-sm rounded-lg ${selectedView === 'approved' ? 'bg-green-100 text-green-700' : 'text-slate-600 hover:bg-slate-100'}`}
+                  >
+                    Approved
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setSelectedView('overdue')}
+                    className={`px-3 py-1.5 text-sm rounded-lg ${selectedView === 'overdue' ? 'bg-red-100 text-red-700' : 'text-slate-600 hover:bg-slate-100'}`}
+                  >
+                    Overdue
+                  </button>
+                )}
+                <button
                   onClick={() => setSelectedView('all')}
-                  className={`px-3 py-1.5 text-sm rounded-lg ${selectedView === 'all' ? 'bg-blue-100 text-blue-700' : 'text-slate-600 hover:bg-slate-100'}`}
+                  className={`px-3 py-1.5 text-sm rounded-lg ${selectedView === 'all' ? 'bg-slate-100 text-slate-700' : 'text-slate-600 hover:bg-slate-100'}`}
                 >
-                  All Leaves
-                </button>
-                <button
-                  onClick={() => setSelectedView('upcoming')}
-                  className={`px-3 py-1.5 text-sm rounded-lg ${selectedView === 'upcoming' ? 'bg-green-100 text-green-700' : 'text-slate-600 hover:bg-slate-100'}`}
-                >
-                  Upcoming
-                </button>
-                <button
-                  onClick={() => setSelectedView('past')}
-                  className={`px-3 py-1.5 text-sm rounded-lg ${selectedView === 'past' ? 'bg-amber-100 text-amber-700' : 'text-slate-600 hover:bg-slate-100'}`}
-                >
-                  Past Leaves
+                  All
                 </button>
               </div>
             </div>
@@ -674,22 +906,22 @@ export default function AdvancedLeaveManagementSystem() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Leave Type</label>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Priority Level</label>
                 <select className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
-                  <option value="all">All Types</option>
-                  {leaveTypes.map(type => (
-                    <option key={type.id} value={type.id}>{type.name}</option>
-                  ))}
+                  <option value="all">All Priorities</option>
+                  <option value="high">High Priority</option>
+                  <option value="medium">Medium Priority</option>
+                  <option value="low">Low Priority</option>
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Duration</label>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Processing Time</label>
                 <select className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
                   <option value="all">Any Duration</option>
-                  <option value="1">1 Day</option>
-                  <option value="2-3">2-3 Days</option>
-                  <option value="4-7">4-7 Days</option>
-                  <option value="7+">More than 7 Days</option>
+                  <option value="0-1">Within 1 Day</option>
+                  <option value="1-3">1-3 Days</option>
+                  <option value="3-7">3-7 Days</option>
+                  <option value="7+">Over 7 Days</option>
                 </select>
               </div>
             </div>
@@ -698,556 +930,1081 @@ export default function AdvancedLeaveManagementSystem() {
       </div>
 
       {/* Main Content based on Active Tab */}
-      {activeTab === 'overview' && (
+      {activeTab === 'all-applications' && (
         <div className="space-y-6">
-          {/* Key Statistics */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-2xl p-6">
+          {/* Combined Applications Table */}
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+            <div className="p-6 border-b border-slate-200">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-blue-800">Total Employees</p>
-                  <h3 className="text-3xl font-bold text-blue-900 mt-2">{stats.totalEmployees}</h3>
+                <h3 className="text-lg font-semibold text-slate-900">
+                  All Applications ({filteredAllApplications.length})
+                </h3>
+                <div className="flex items-center gap-3">
+                  {/* <button 
+                    onClick={() => setShowNewAppModal(true)}
+                    className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium"
+                  >
+                    <Plus className="h-4 w-4" />
+                    New Application
+                  </button> */}
+                  {/* <button className="flex items-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium">
+                    <Printer size={16} />
+                    Print List
+                  </button> */}
                 </div>
-                <Users className="text-blue-600" size={32} />
               </div>
             </div>
-            <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-2xl p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-green-800">Currently on Leave</p>
-                  <h3 className="text-3xl font-bold text-green-900 mt-2">{stats.totalOnLeave}</h3>
-                  <p className="text-xs text-green-700 mt-1">{stats.leaveUtilization}% of workforce</p>
-                </div>
-                <UserX className="text-green-600" size={32} />
-              </div>
-            </div>
-            <div className="bg-gradient-to-br from-amber-50 to-amber-100 border border-amber-200 rounded-2xl p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-amber-800">Pending Approvals</p>
-                  <h3 className="text-3xl font-bold text-amber-900 mt-2">{stats.pendingApprovals}</h3>
-                  <p className="text-xs text-amber-700 mt-1">Requires attention</p>
-                </div>
-                <AlertCircle className="text-amber-600" size={32} />
-              </div>
-            </div>
-            <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-2xl p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-purple-800">Approval Rate</p>
-                  <h3 className="text-3xl font-bold text-purple-900 mt-2">{stats.approvalRate}%</h3>
-                  <p className="text-xs text-purple-700 mt-1">This month</p>
-                </div>
-                <CheckCircle className="text-purple-600" size={32} />
-              </div>
-            </div>
-          </div>
-
-          {/* Department-wise Leave Distribution */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-              <h3 className="text-lg font-semibold text-slate-900 mb-6">Department Leave Status</h3>
-              <div className="space-y-4">
-                {departments.map((dept) => (
-                  <div key={dept.name} className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium text-slate-900">{dept.name}</span>
-                      <div className="flex items-center gap-4">
-                        <span className="text-sm text-slate-600">{dept.onLeave} on leave</span>
-                        <span className="text-sm text-blue-600 font-medium">
-                          {Math.round(dept.leaveUtilization * 100)}% utilization
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-slate-50">
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Application No.</th>
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Type</th>
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Applicant</th>
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Department</th>
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Subject</th>
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Date</th>
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Status</th>
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredAllApplications.map((app, index) => (
+                    <tr key={`${app.id}-${index}`} className="border-b border-slate-100 hover:bg-slate-50">
+                      <td className="py-4 px-6">
+                        <div className="font-medium text-slate-900">{app.applicationNumber}</div>
+                        <div className="text-xs text-slate-500 mt-1">{app.applicationType}</div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
+                          app.appliedDate ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+                        }`}>
+                          {app.appliedDate ? 'Applied' : 'Receiving'}
                         </span>
-                      </div>
-                    </div>
-                    <div className="w-full bg-slate-200 rounded-full h-2">
-                      <div
-                        className="h-2 rounded-full bg-gradient-to-r from-blue-500 to-blue-600"
-                        style={{ width: `${dept.leaveUtilization * 100}%` }}
-                      />
-                    </div>
-                    <div className="flex justify-between text-xs text-slate-500">
-                      <span>{dept.totalEmployees} employees</span>
-                      <span>{dept.upcomingLeaves} upcoming leaves</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-              <h3 className="text-lg font-semibold text-slate-900 mb-6">Leave Trend Analysis</h3>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={leaveData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                    <XAxis dataKey="month" />
-                    <YAxis />
-                    <Tooltip />
-                    <Area type="monotone" dataKey="applied" stackId="1" stroke="#2563eb" fill="#2563eb" fillOpacity={0.2} />
-                    <Area type="monotone" dataKey="approved" stackId="1" stroke="#10b981" fill="#10b981" fillOpacity={0.2} />
-                    <Area type="monotone" dataKey="onLeave" stackId="1" stroke="#f59e0b" fill="#f59e0b" fillOpacity={0.2} />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div>
+                          <p className="font-medium text-slate-900">{app.applicantName}</p>
+                          <p className="text-xs text-slate-500">{app.applicantId || app.applicantDesignation}</p>
+                        </div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
+                          <Building size={12} />
+                          {app.department}
+                        </span>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="max-w-xs">
+                          <p className="font-medium text-slate-900 truncate">{app.subject}</p>
+                          {app.attachments && app.attachments.length > 0 && (
+                            <p className="text-xs text-slate-500 mt-1">{app.attachments.length} attachment(s)</p>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div>
+                          <p className="text-sm font-medium text-slate-900">
+                            {formatDate(app.appliedDate || app.receivedDate)}
+                          </p>
+                          <p className="text-xs text-slate-500">{app.appliedTime || app.receivedTime}</p>
+                        </div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="flex flex-col gap-2">
+                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
+                            app.status === 'approved' || app.status === 'completed' ? 'bg-green-100 text-green-800' :
+                            app.status === 'in-progress' || app.status === 'processing' ? 'bg-blue-100 text-blue-800' :
+                            app.status === 'submitted' || app.status === 'received' ? 'bg-amber-100 text-amber-800' :
+                            app.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                            app.status === 'pending-approval' ? 'bg-purple-100 text-purple-800' :
+                            'bg-slate-100 text-slate-800'
+                          }`}>
+                            {app.status === 'approved' || app.status === 'completed' ? <CheckCircle size={12} /> :
+                             app.status === 'in-progress' || app.status === 'processing' ? <Clock size={12} /> :
+                             app.status === 'submitted' || app.status === 'received' ? <AlertCircle size={12} /> :
+                             app.status === 'rejected' ? <XCircle size={12} /> :
+                             app.status === 'pending-approval' ? <AlertCircle size={12} /> :
+                             <Inbox size={12} />}
+                            {app.status.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                          </span>
+                          <span className={`text-xs font-medium ${
+                            app.priority === 'high' ? 'text-red-600' :
+                            app.priority === 'medium' ? 'text-amber-600' :
+                            'text-green-600'
+                          }`}>
+                            {app.priority ? app.priority.charAt(0).toUpperCase() + app.priority.slice(1) + ' Priority' : 'Normal Priority'}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="flex items-center gap-2">
+                          <button 
+                            onClick={() => handleViewDetails(app)}
+                            className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-medium"
+                          >
+                            <Eye size={12} className="inline mr-1" />
+                            View
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
       )}
 
       {activeTab === 'applied' && (
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-          <div className="p-6 border-b border-slate-200">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-slate-900">Applied Leaves ({filteredLeaves.length})</h3>
-              <div className="flex items-center gap-3">
-                <button className="text-sm text-blue-600 hover:text-blue-800 font-medium">
-                  <Plus size={16} className="inline mr-1" />
-                  New Leave
-                </button>
-              </div>
-            </div>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-slate-50">
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Employee</th>
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Leave Type</th>
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Dates</th>
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Duration</th>
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Status</th>
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredLeaves.map((leave) => (
-                  <tr key={leave.id} className="border-b border-slate-100 hover:bg-slate-50">
-                    <td className="py-4 px-6">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-medium">
-                          {leave.employee.avatar}
-                        </div>
-                        <div>
-                          <p className="font-medium text-slate-900">{leave.employee.name}</p>
-                          <p className="text-xs text-slate-500">{leave.employee.department}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
-                        {leave.type}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6">
-                      <div>
-                        <p className="text-sm text-slate-900">{formatDate(leave.startDate)}</p>
-                        <p className="text-sm text-slate-900">to {formatDate(leave.endDate)}</p>
-                      </div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <span className="font-medium text-slate-900">{leave.duration} days</span>
-                    </td>
-                    <td className="py-4 px-6">
-                      <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${
-                        leave.status === 'approved' ? 'bg-green-100 text-green-800' :
-                        leave.status === 'pending' ? 'bg-amber-100 text-amber-800' :
-                        'bg-red-100 text-red-800'
-                      }`}>
-                        {leave.status === 'approved' ? <CheckCircle size={12} /> :
-                         leave.status === 'pending' ? <Clock size={12} /> :
-                         <XCircle size={12} />}
-                        {leave.status.charAt(0).toUpperCase() + leave.status.slice(1)}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className="flex items-center gap-2">
-                        {leave.status === 'pending' && (
-                          <>
-                            <button
-                              onClick={() => handleLeaveAction(leave.id, 'approve')}
-                              className="px-3 py-1.5 bg-green-50 hover:bg-green-100 text-green-700 rounded-lg text-xs font-medium"
-                            >
-                              Approve
-                            </button>
-                            <button
-                              onClick={() => handleLeaveAction(leave.id, 'reject')}
-                              className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg text-xs font-medium"
-                            >
-                              Reject
-                            </button>
-                          </>
-                        )}
-                        <button 
-                          onClick={() => handleViewLeave(leave)}
-                          className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-medium"
-                        >
-                          <Eye size={12} className="inline mr-1" />
-                          View
-                        </button>
-                        {/* <button className="p-1.5 hover:bg-slate-100 rounded">
-                          <MoreVertical size={16} className="text-slate-500" />
-                        </button> */}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'viewLeaves' && (
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-          <div className="p-6 border-b border-slate-200">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-slate-900">
-                All Leaves ({filteredAllLeaves.length})
-                <span className="text-sm font-normal text-slate-500 ml-2">
-                  {selectedView === 'all' ? 'All leaves' : selectedView === 'upcoming' ? 'Upcoming leaves' : 'Past leaves'}
-                </span>
-              </h3>
-              <div className="flex items-center gap-3">
-                <button className="text-sm text-blue-600 hover:text-blue-800 font-medium">
-                  <Download size={16} className="inline mr-1" />
-                  Export History
-                </button>
-              </div>
-            </div>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-slate-50">
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Employee</th>
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Leave Type</th>
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Dates</th>
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Duration</th>
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Status</th>
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Submitted On</th>
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredAllLeaves.map((leave) => (
-                  <tr key={leave.id} className="border-b border-slate-100 hover:bg-slate-50">
-                    <td className="py-4 px-6">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-medium">
-                          {leave.employee.avatar}
-                        </div>
-                        <div>
-                          <p className="font-medium text-slate-900">{leave.employee.name}</p>
-                          <p className="text-xs text-slate-500">{leave.employee.department}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
-                        {leave.type}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6">
-                      <div>
-                        <p className="text-sm text-slate-900">{formatDate(leave.startDate)}</p>
-                        <p className="text-sm text-slate-900">to {formatDate(leave.endDate)}</p>
-                      </div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <span className="font-medium text-slate-900">{leave.duration} days</span>
-                    </td>
-                    <td className="py-4 px-6">
-                      <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${
-                        leave.status === 'approved' ? 'bg-green-100 text-green-800' :
-                        leave.status === 'pending' ? 'bg-amber-100 text-amber-800' :
-                        'bg-red-100 text-red-800'
-                      }`}>
-                        {leave.status === 'approved' ? <CheckCircle size={12} /> :
-                         leave.status === 'pending' ? <Clock size={12} /> :
-                         <XCircle size={12} />}
-                        {leave.status.charAt(0).toUpperCase() + leave.status.slice(1)}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6">
-                      <span className="text-sm text-slate-700">{formatDate(leave.submittedAt)}</span>
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className="flex items-center gap-2">
-                        <button 
-                          onClick={() => handleViewLeave(leave)}
-                          className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-medium"
-                        >
-                          <Eye size={12} className="inline mr-1" />
-                          View Details
-                        </button>
-                        {/* <button className="p-1.5 hover:bg-slate-100 rounded">
-                          <MoreVertical size={16} className="text-slate-500" />
-                        </button> */}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'onLeave' && (
         <div className="space-y-6">
-          {/* Employees Currently on Leave */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-slate-900 mb-6">Employees Currently on Leave ({employeesOnLeave.filter(e => e.onLeave).length})</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {employeesOnLeave.filter(e => e.onLeave).map((employee) => (
-                <div key={employee.id} className="border border-slate-200 rounded-xl p-5 hover:shadow-md transition-shadow">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center text-blue-700 font-bold text-lg">
-                        {employee.avatar}
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-slate-900">{employee.name}</h4>
-                        <p className="text-sm text-slate-600">{employee.position}</p>
-                        <p className="text-xs text-slate-500">{employee.department}</p>
-                      </div>
-                    </div>
-                    <div className="px-2 py-1 bg-red-50 text-red-700 rounded-full text-xs font-medium">
-                      On Leave
-                    </div>
+          {/* Applied Applications Table */}
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+            <div className="p-6 border-b border-slate-200">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-slate-900">
+                  Applied Applications ({filteredAppliedApplications.length})
+                </h3>
+                <div className="flex items-center gap-3">
+                  {/* <button 
+                    onClick={() => setShowNewAppModal(true)}
+                    className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium"
+                  >
+                    <Plus className="h-4 w-4" />
+                    New Application
+                  </button>
+                  <button className="flex items-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium">
+                    <Printer size={16} />
+                    Print List
+                  </button> */}
+                </div>
+              </div>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-slate-50">
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Application No.</th>
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Applicant</th>
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Department</th>
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Subject</th>
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Applied On</th>
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Status</th>
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredAppliedApplications.map((app) => (
+                    <tr key={app.id} className="border-b border-slate-100 hover:bg-slate-50">
+                      <td className="py-4 px-6">
+                        <div className="font-medium text-slate-900">{app.applicationNumber}</div>
+                        <div className="text-xs text-slate-500 mt-1">{app.applicationType}</div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div>
+                          <p className="font-medium text-slate-900">{app.applicantName}</p>
+                          <p className="text-xs text-slate-500">{app.applicantId} • {app.applicantDesignation}</p>
+                        </div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
+                          <Building size={12} />
+                          {app.department}
+                        </span>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="max-w-xs">
+                          <p className="font-medium text-slate-900 truncate">{app.subject}</p>
+                          {app.attachments && app.attachments.length > 0 && (
+                            <p className="text-xs text-slate-500 mt-1">{app.attachments.length} attachment(s)</p>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div>
+                          <p className="text-sm font-medium text-slate-900">{formatDate(app.appliedDate)}</p>
+                          <p className="text-xs text-slate-500">{app.appliedTime}</p>
+                        </div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="flex flex-col gap-2">
+                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
+                            app.status === 'approved' || app.status === 'completed' ? 'bg-green-100 text-green-800' :
+                            app.status === 'in-progress' ? 'bg-blue-100 text-blue-800' :
+                            app.status === 'submitted' ? 'bg-amber-100 text-amber-800' :
+                            app.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                            'bg-slate-100 text-slate-800'
+                          }`}>
+                            {app.status === 'approved' || app.status === 'completed' ? <CheckCircle size={12} /> :
+                             app.status === 'in-progress' ? <Clock size={12} /> :
+                             app.status === 'submitted' ? <AlertCircle size={12} /> :
+                             app.status === 'rejected' ? <XCircle size={12} /> :
+                             <Inbox size={12} />}
+                            {app.status.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                          </span>
+                          <span className={`text-xs font-medium ${
+                            app.priority === 'high' ? 'text-red-600' :
+                            app.priority === 'medium' ? 'text-amber-600' :
+                            'text-green-600'
+                          }`}>
+                            {app.priority.charAt(0).toUpperCase() + app.priority.slice(1)} Priority
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="flex items-center gap-2">
+                          <button 
+                            onClick={() => handleViewDetails(app)}
+                            className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-medium"
+                          >
+                            <Eye size={12} className="inline mr-1" />
+                            View
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'receive' && (
+        <div className="space-y-6">
+          {/* Receiving Applications Table */}
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+            <div className="p-6 border-b border-slate-200">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-slate-900">
+                  Receiving Applications ({filteredReceivingApplications.length})
+                </h3>
+                <div className="flex items-center gap-3">
+                  {/* <button 
+                    onClick={() => setShowNewAppModal(true)}
+                    className="flex items-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium"
+                  >
+                    <FileDown size={16} />
+                    Receive New
+                  </button> */}
+                  {/* <button className="flex items-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium">
+                    <Printer size={16} />
+                    Print List
+                  </button> */}
+                </div>
+              </div>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-slate-50">
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Application No.</th>
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Applicant</th>
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Department</th>
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Subject</th>
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Received On</th>
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Status</th>
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredReceivingApplications.map((app) => (
+                    <tr key={app.id} className="border-b border-slate-100 hover:bg-slate-50">
+                      <td className="py-4 px-6">
+                        <div className="font-medium text-slate-900">{app.applicationNumber}</div>
+                        <div className="text-xs text-slate-500 mt-1">{app.applicationType}</div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div>
+                          <p className="font-medium text-slate-900">{app.applicantName}</p>
+                          <p className="text-xs text-slate-500">{app.applicantDesignation}</p>
+                        </div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
+                          <Building size={12} />
+                          {app.department}
+                        </span>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="max-w-xs">
+                          <p className="font-medium text-slate-900 truncate">{app.subject}</p>
+                          {app.attachments && app.attachments.length > 0 && (
+                            <p className="text-xs text-slate-500 mt-1">{app.attachments.length} attachment(s)</p>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div>
+                          <p className="text-sm font-medium text-slate-900">{formatDate(app.receivedDate)}</p>
+                          <p className="text-xs text-slate-500">{app.receivedTime}</p>
+                          <p className="text-xs text-slate-500 mt-1">Due: {formatDate(app.dueDate)}</p>
+                        </div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="flex flex-col gap-2">
+                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
+                            app.status === 'approved' ? 'bg-green-100 text-green-800' :
+                            app.status === 'processing' ? 'bg-blue-100 text-blue-800' :
+                            app.status === 'pending-approval' ? 'bg-amber-100 text-amber-800' :
+                            app.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                            'bg-slate-100 text-slate-800'
+                          }`}>
+                            {app.status === 'approved' ? <CheckCircle size={12} /> :
+                             app.status === 'processing' ? <Clock size={12} /> :
+                             app.status === 'pending-approval' ? <AlertCircle size={12} /> :
+                             app.status === 'rejected' ? <XCircle size={12} /> :
+                             <Inbox size={12} />}
+                            {app.status.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                          </span>
+                          <span className="text-xs text-slate-600">Assigned to: {app.assignedTo}</span>
+                        </div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="flex items-center gap-2">
+                          <button 
+                            onClick={() => handleViewDetails(app)}
+                            className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-medium"
+                          >
+                            <Eye size={12} className="inline mr-1" />
+                            View
+                          </button>
+                          {/* <button
+                            onClick={() => handleApplicationAction(app.id, 'process')}
+                            className="px-3 py-1.5 bg-green-50 hover:bg-green-100 text-green-700 rounded-lg text-xs font-medium"
+                          >
+                            <FileCheck size={12} className="inline mr-1" />
+                            Process
+                          </button> */}
+                          {/* <button className="p-1.5 hover:bg-slate-100 rounded">
+                            <MoreVertical size={16} className="text-slate-500" />
+                          </button> */}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'memos' && (
+        <div className="space-y-6">
+          {/* Memos Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredMemos.map((memo) => (
+              <div key={memo.id} className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                      memo.type === 'process' ? 'bg-blue-100 text-blue-800' :
+                      memo.type === 'guideline' ? 'bg-green-100 text-green-800' :
+                      memo.type === 'policy' ? 'bg-purple-100 text-purple-800' :
+                      'bg-amber-100 text-amber-800'
+                    }`}>
+                      {memo.type.charAt(0).toUpperCase() + memo.type.slice(1)}
+                    </span>
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-800 ml-2">
+                      {memo.category}
+                    </span>
                   </div>
-                  <div className="mt-4 space-y-3">
-                    <div className="flex items-center gap-2 text-sm text-slate-600">
-                      <Calendar size={14} />
-                      <span>Returns: {formatDate(employee.leaveUntil)}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-slate-600">
-                      <Mail size={14} />
-                      <span>{employee.email}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-slate-600">
-                      <Phone size={14} />
-                      <span>{employee.phone}</span>
-                    </div>
-                  </div>
-                  <div className="mt-4 pt-4 border-t border-slate-200">
-                    <div className="flex justify-between text-sm">
-                      <div className="text-center">
-                        <div className="text-slate-600">Annual</div>
-                        <div className="font-semibold text-blue-600">{employee.leaveBalance.annual}d left</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-slate-600">Sick</div>
-                        <div className="font-semibold text-green-600">{employee.leaveBalance.sick}d left</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-slate-600">Casual</div>
-                        <div className="font-semibold text-amber-600">{employee.leaveBalance.casual}d left</div>
-                      </div>
-                    </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
+                      memo.priority === 'high' ? 'bg-red-100 text-red-800' :
+                      memo.priority === 'medium' ? 'bg-amber-100 text-amber-800' :
+                      'bg-green-100 text-green-800'
+                    }`}>
+                      {memo.priority}
+                    </span>
                   </div>
                 </div>
+                
+                <h4 className="font-semibold text-slate-900 text-lg mb-3">{memo.title}</h4>
+                <p className="text-sm text-slate-600 mb-4 line-clamp-3">{memo.summary}</p>
+                
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center">
+                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-2">
+                      <span className="text-sm font-medium text-blue-700">{memo.author.avatar}</span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-slate-900">{memo.author.name}</p>
+                      <p className="text-xs text-slate-500">{memo.author.department}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-slate-500">Created</p>
+                    <p className="text-sm font-medium text-slate-900">{formatDate(memo.createdDate)}</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-4">
+                    <span className="flex items-center text-slate-600">
+                      <Eye size={14} className="mr-1" />
+                      {memo.readers}
+                    </span>
+                    <span className="flex items-center text-slate-600">
+                      <MessageSquare size={14} className="mr-1" />
+                      {memo.comments}
+                    </span>
+                    {memo.attachments && memo.attachments.length > 0 && (
+                      <span className="flex items-center text-slate-600">
+                        <FileText size={14} className="mr-1" />
+                        {memo.attachments.length}
+                      </span>
+                    )}
+                  </div>
+                  <button 
+                    onClick={() => handleViewDetails(memo)}
+                    className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                  >
+                    View Details
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* New Memo Button */}
+          <div className="flex justify-end">
+            <button 
+              onClick={() => setShowNewMemoModal(true)}
+              className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium"
+            >
+              <Plus className="h-4 w-4" />
+              New Memo
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modals */}
+      {showNewAppModal && (
+        <NewApplicationModal
+          onClose={() => setShowNewAppModal(false)}
+          onSave={handleNewApplicationSubmit}
+        />
+      )}
+
+      {showNewMemoModal && (
+        <NewMemoModal
+          onClose={() => setShowNewMemoModal(false)}
+          onSave={handleNewMemoSubmit}
+        />
+      )}
+
+      {viewDetailsModal && (
+        <ApplicationDetailModal
+          application={viewDetailsModal}
+          onClose={closeViewModal}
+          onMarkAsRead={handleMarkAsRead}
+          isMemo={activeTab === 'memos'}
+        />
+      )}
+    </div>
+  );
+}
+
+// New Application Modal for HR
+const NewApplicationModal = ({ onClose, onSave }) => {
+  const [formData, setFormData] = useState({
+    department: '',
+    applicationType: '',
+    customSubject: '',
+    description: '',
+    priority: 'medium',
+    attachments: []
+  });
+
+  const [uploadedFiles, setUploadedFiles] = useState([]);
+
+  const handleFileUpload = (files) => {
+    const newFiles = Array.from(files).map(file => ({
+      name: file.name,
+      size: (file.size / 1024 / 1024).toFixed(2) + ' MB',
+      type: file.type.split('/')[1],
+      file: file
+    }));
+    setUploadedFiles(prev => [...prev, ...newFiles]);
+  };
+
+  const handleRemoveFile = (index) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    const isOtherSelected = formData.applicationType === 'Other';
+    const subjectValue = isOtherSelected ? formData.customSubject : formData.applicationType;
+    
+    const applicationData = {
+      department: formData.department,
+      type: subjectValue,
+      notes: formData.description,
+      priority: formData.priority,
+      documents: uploadedFiles.map(file => ({
+        name: file.name,
+        size: file.size,
+        uploaded: new Date().toISOString().split('T')[0]
+      }))
+    };
+
+    onSave(applicationData);
+  };
+
+  // Get application types for selected department
+  const getApplicationTypes = () => {
+    if (!formData.department) return [];
+    return departmentApplicationTypes[formData.department] || [];
+  };
+
+  const isOtherSelected = formData.applicationType === 'Other';
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center p-6 border-b border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900">Submit New Application</h3>
+          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Department *</label>
+            <select 
+              value={formData.department}
+              onChange={(e) => setFormData(prev => ({ 
+                ...prev, 
+                department: e.target.value,
+                applicationType: '',
+                customSubject: ''
+              }))}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-xl"
+            >
+              <option value="">Select Department</option>
+              {departmentsList.map(dept => (
+                <option key={dept.value} value={dept.value}>
+                  {dept.label}
+                </option>
               ))}
-            </div>
+            </select>
           </div>
 
-          {/* Department-wise On Leave Chart */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-slate-900 mb-6">Department-wise Employees on Leave</h3>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={departmentLeaveData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="onLeave" name="Currently on Leave" fill="#ef4444" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="upcoming" name="Upcoming Leaves" fill="#f59e0b" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Subject *</label>
+            <select 
+              value={formData.applicationType}
+              onChange={(e) => setFormData(prev => ({ 
+                ...prev, 
+                applicationType: e.target.value,
+                customSubject: e.target.value === 'Other' ? '' : prev.customSubject
+              }))}
+              required
+              disabled={!formData.department}
+              className={`w-full px-3 py-2 border border-gray-300 rounded-xl ${!formData.department ? 'bg-gray-100 text-gray-500' : ''}`}
+            >
+              <option value="">
+                {formData.department 
+                  ? `Select ${formData.department} Subject` 
+                  : 'Select Department First'}
+              </option>
+              {getApplicationTypes().map(type => (
+                <option key={type.value} value={type.value}>
+                  {type.label}
+                </option>
+              ))}
+            </select>
           </div>
-        </div>
-      )}
 
-      {activeTab === 'analytics' && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Leave Type Distribution */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-              <h3 className="text-lg font-semibold text-slate-900 mb-6">Leave Type Distribution</h3>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={leaveTypes}
-                      dataKey="maxDays"
-                      nameKey="name"
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={80}
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+          {isOtherSelected && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Specify Subject *</label>
+              <input 
+                type="text"
+                value={formData.customSubject}
+                onChange={(e) => setFormData(prev => ({ ...prev, customSubject: e.target.value }))}
+                required
+                placeholder="Enter your custom subject..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-xl"
+              />
+            </div>
+          )}
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+            <textarea 
+              value={formData.description}
+              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+              required
+              rows="4"
+              placeholder="Describe your application in detail..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-xl"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+            <select 
+              value={formData.priority}
+              onChange={(e) => setFormData(prev => ({ ...prev, priority: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-xl"
+            >
+              <option value="low">Low Priority</option>
+              <option value="medium">Medium Priority</option>
+              <option value="high">High Priority</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Supporting Documents (Optional)</label>
+            <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center">
+              <CloudUpload className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+              <p className="text-sm text-gray-600 mb-2">Drag & drop files here or click to browse</p>
+              <p className="text-xs text-gray-500 mb-4">Supports PDF, DOC, JPG, PNG up to 10MB each</p>
+              <input
+                type="file"
+                multiple
+                onChange={(e) => handleFileUpload(e.target.files)}
+                className="hidden"
+                id="file-upload"
+              />
+              <label 
+                htmlFor="file-upload"
+                className="inline-block px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 cursor-pointer"
+              >
+                Browse Files
+              </label>
+            </div>
+
+            {uploadedFiles.length > 0 && (
+              <div className="mt-4 space-y-2">
+                {uploadedFiles.map((file, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <FileText className="h-5 w-5 text-gray-500" />
+                      <div>
+                        <p className="text-sm font-medium">{file.name}</p>
+                        <p className="text-xs text-gray-500">{file.size} • {file.type}</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveFile(index)}
+                      className="p-1 hover:bg-gray-200 rounded"
                     >
-                      {leaveTypes.map((type, index) => (
-                        <Cell key={type.id} fill={type.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
+                      <X className="h-4 w-4 text-gray-500" />
+                    </button>
+                  </div>
+                ))}
               </div>
-            </div>
-
-            {/* Monthly Leave Analytics */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-              <h3 className="text-lg font-semibold text-slate-900 mb-6">Monthly Leave Analytics</h3>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={leaveData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                    <XAxis dataKey="month" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Line type="monotone" dataKey="applied" stroke="#2563eb" strokeWidth={2} dot={{ r: 4 }} />
-                    <Line type="monotone" dataKey="approved" stroke="#10b981" strokeWidth={2} dot={{ r: 4 }} />
-                    <Line type="monotone" dataKey="rejected" stroke="#ef4444" strokeWidth={2} dot={{ r: 4 }} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
+            )}
           </div>
 
-          {/* Detailed Analytics Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-2xl p-6">
-              <div className="text-center">
-                <div className="text-4xl font-bold text-blue-900">{stats.approvalRate}%</div>
-                <div className="text-sm font-medium text-blue-800 mt-2">Average Approval Rate</div>
-                <div className="text-xs text-blue-700 mt-1">Higher than industry average</div>
-              </div>
-            </div>
-            <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-2xl p-6">
-              <div className="text-center">
-                <div className="text-4xl font-bold text-green-900">4.2</div>
-                <div className="text-sm font-medium text-green-800 mt-2">Average Leave Duration</div>
-                <div className="text-xs text-green-700 mt-1">Days per leave request</div>
-              </div>
-            </div>
-            <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-2xl p-6">
-              <div className="text-center">
-                <div className="text-4xl font-bold text-purple-900">18.5%</div>
-                <div className="text-sm font-medium text-purple-800 mt-2">Leave Utilization</div>
-                <div className="text-xs text-purple-700 mt-1">Of total available leave days</div>
-              </div>
-            </div>
+          <div className="flex gap-3 pt-4">
+            <button 
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-3 text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition duration-200"
+            >
+              Cancel
+            </button>
+            <button 
+              type="submit"
+              disabled={
+                !formData.department || 
+                !formData.applicationType || 
+                (isOtherSelected && !formData.customSubject) || 
+                !formData.description
+              }
+              className="flex-1 px-4 py-3 text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Submit Application
+            </button>
           </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+// New Memo Modal for HR
+const NewMemoModal = ({ onClose, onSave }) => {
+  const [formData, setFormData] = useState({
+    title: '',
+    category: 'Announcement',
+    priority: 'medium',
+    content: '',
+    recipients: ['HR Department', 'Team Lead'],
+    attachments: []
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    const memoData = {
+      title: formData.title,
+      category: formData.category,
+      priority: formData.priority,
+      summary: formData.content.substring(0, 100) + '...',
+      content: formData.content,
+      attachments: formData.attachments.length,
+      actionsRequired: formData.category === 'Request',
+      recipients: formData.recipients
+    };
+
+    onSave(memoData);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center p-6 border-b border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900">Compose New Memo</h3>
+          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg">
+            <X className="h-5 w-5" />
+          </button>
         </div>
-      )}
+        
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+              <input 
+                type="text"
+                value={formData.title}
+                onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                required
+                placeholder="Memo title..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-xl"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
+              <select 
+                value={formData.category}
+                onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-xl"
+              >
+                <option value="Announcement">Announcement</option>
+                <option value="Request">Request</option>
+                <option value="Update">Update</option>
+                <option value="Question">Question</option>
+                <option value="Feedback">Feedback</option>
+              </select>
+            </div>
+          </div>
 
-      {/* View Leave Details Modal */}
-      {viewLeaveModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h3 className="text-xl font-semibold text-slate-900">Leave Details</h3>
-                  <p className="text-sm text-slate-600">Complete information about the leave request</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Priority *</label>
+              <select 
+                value={formData.priority}
+                onChange={(e) => setFormData(prev => ({ ...prev, priority: e.target.value }))}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-xl"
+              >
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Recipients *</label>
+              <select 
+                value={formData.recipients[0]}
+                onChange={(e) => setFormData(prev => ({ ...prev, recipients: [e.target.value] }))}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-xl"
+              >
+                <option value="HR Department">HR Department</option>
+                <option value="Team Lead">Team Lead</option>
+                <option value="Manager">Manager</option>
+                <option value="IT Department">IT Department</option>
+                <option value="Finance Department">Finance Department</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Content *</label>
+            <textarea 
+              value={formData.content}
+              onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
+              required
+              rows="6"
+              placeholder="Write your memo here..."
+              className="w-full px-3 py-3 border border-gray-300 rounded-xl"
+            />
+          </div>
+
+          <div className="flex gap-3 pt-4">
+            <button 
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-3 text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition duration-200"
+            >
+              Save Draft
+            </button>
+            <button 
+              type="submit"
+              className="flex-1 px-4 py-3 text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition duration-200"
+            >
+              Send Memo
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+// Application/Memo Detail Modal for HR
+const ApplicationDetailModal = ({ application, onClose, onMarkAsRead, isMemo }) => {
+  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [transferDepartment, setTransferDepartment] = useState('');
+  const [transferNotes, setTransferNotes] = useState('');
+  
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'pending':
+      case 'submitted':
+      case 'received': return 'bg-yellow-100 text-yellow-800';
+      case 'approved':
+      case 'completed': return 'bg-green-100 text-green-800';
+      case 'rejected': return 'bg-red-100 text-red-800';
+      case 'in-progress':
+      case 'processing': return 'bg-blue-100 text-blue-800';
+      case 'pending-approval': return 'bg-amber-100 text-amber-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getStatusText = (status) => {
+    switch (status) {
+      case 'pending':
+      case 'submitted': return 'Submitted';
+      case 'received': return 'Received';
+      case 'approved': return 'Approved';
+      case 'rejected': return 'Rejected';
+      case 'in-progress':
+      case 'processing': return 'In Progress';
+      case 'pending-approval': return 'Pending Approval';
+      case 'completed': return 'Completed';
+      default: return 'Unknown';
+    }
+  };
+
+  const handleAction = (action) => {
+    switch (action) {
+      case 'approve':
+        console.log(`Approving application ${application.id}`);
+        alert(`Application ${application.applicationNumber} has been approved.`);
+        onClose();
+        break;
+      case 'reject':
+        console.log(`Rejecting application ${application.id}`);
+        alert(`Application ${application.applicationNumber} has been rejected.`);
+        onClose();
+        break;
+      case 'in-progress':
+        console.log(`Marking application ${application.id} as in progress`);
+        alert(`Application ${application.applicationNumber} is now marked as In Progress.`);
+        onClose();
+        break;
+      case 'transfer':
+        setShowTransferModal(true);
+        break;
+      default:
+        break;
+    }
+  };
+
+  const handleTransfer = () => {
+    if (!transferDepartment) {
+      alert('Please select a department to transfer to.');
+      return;
+    }
+    
+    console.log(`Transferring application ${application.id} to ${transferDepartment}`, transferNotes);
+    alert(`Application ${application.applicationNumber} has been transferred to ${transferDepartment}.`);
+    setShowTransferModal(false);
+    onClose();
+  };
+
+  // Only show action buttons for receiving applications (not memos)
+  const shouldShowActions = !isMemo && (application.status === 'received' || 
+                                       application.status === 'processing' || 
+                                       application.status === 'pending-approval');
+
+  return (
+    <>
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+          <div className="flex justify-between items-center p-6 border-b border-gray-200">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">
+                {isMemo ? application.title : application.subject}
+              </h3>
+              <p className="text-sm text-gray-600">
+                {isMemo ? application.memoNumber : application.applicationNumber}
+              </p>
+            </div>
+            <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg">
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+          
+          <div className="p-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2 space-y-6">
+                <div className={`p-4 rounded-xl ${getStatusColor(application.status)}`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      {application.status === 'approved' && <CheckCircle className="h-6 w-6" />}
+                      {application.status === 'rejected' && <AlertCircle className="h-6 w-6" />}
+                      {application.status === 'pending' && <Clock className="h-6 w-6" />}
+                      {application.status === 'in-progress' && <Eye className="h-6 w-6" />}
+                      <div>
+                        <h4 className="font-semibold">Status: {getStatusText(application.status)}</h4>
+                        <p className="text-sm opacity-90">
+                          {isMemo ? `Sent on ${application.date}` : `Submitted on ${application.appliedDate || application.receivedDate}`}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <button
-                  onClick={closeViewModal}
-                  className="p-2 hover:bg-slate-100 rounded-lg"
-                >
-                  <XCircle size={20} className="text-slate-500" />
-                </button>
+
+                <div className="space-y-4">
+                  <h4 className="font-semibold text-gray-900">{isMemo ? 'Memo Details' : 'Application Details'}</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {!isMemo && (
+                      <>
+                        <div className="bg-gray-50 p-4 rounded-xl">
+                          <p className="text-sm text-gray-500 mb-1">Department</p>
+                          <p className="font-medium">{application.department}</p>
+                        </div>
+                        
+                        <div className="bg-gray-50 p-4 rounded-xl">
+                          <p className="text-sm text-gray-500 mb-1">Application Type</p>
+                          <p className="font-medium">{application.applicationType}</p>
+                        </div>
+                      </>
+                    )}
+                    
+                    <div className="bg-gray-50 p-4 rounded-xl">
+                      <p className="text-sm text-gray-500 mb-1">
+                        {isMemo ? 'Memo Number' : 'Application Number'}
+                      </p>
+                      <p className="font-medium">{isMemo ? application.memoNumber : application.applicationNumber}</p>
+                    </div>
+                    
+                    <div className="bg-gray-50 p-4 rounded-xl">
+                      <p className="text-sm text-gray-500 mb-1">
+                        {isMemo ? 'Date' : 'Submission Date'}
+                      </p>
+                      <p className="font-medium">{isMemo ? application.date : (application.appliedDate || application.receivedDate)}</p>
+                    </div>
+                  </div>
+
+                  {isMemo ? (
+                    <div className="bg-gray-50 p-4 rounded-xl">
+                      <p className="text-sm text-gray-500 mb-2">Content</p>
+                      <p className="text-gray-900 whitespace-pre-line">{application.summary || application.content}</p>
+                    </div>
+                  ) : (
+                    <div className="bg-gray-50 p-4 rounded-xl">
+                      <p className="text-sm text-gray-500 mb-2">Description</p>
+                      <p className="text-gray-900 whitespace-pre-line">{application.notes}</p>
+                    </div>
+                  )}
+
+                  {!isMemo && application.approvedBy && (
+                    <div className="bg-green-50 p-4 rounded-xl">
+                      <p className="text-sm text-green-600 font-medium mb-1">Approved By</p>
+                      <p className="font-medium">{application.approvedBy}</p>
+                      {application.approvedDate && (
+                        <p className="text-sm text-green-600 mt-1">On {application.approvedDate}</p>
+                      )}
+                    </div>
+                  )}
+
+                  {!isMemo && application.rejectionReason && (
+                    <div className="bg-red-50 p-4 rounded-xl">
+                      <p className="text-sm text-red-600 font-medium mb-1">Reason for Rejection</p>
+                      <p className="font-medium">{application.rejectionReason}</p>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="space-y-6">
-                {/* Employee Information */}
-                <div className="bg-slate-50 rounded-xl p-4">
-                  <h4 className="font-semibold text-slate-900 mb-4">Employee Information</h4>
-                  <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xl">
-                      {viewLeaveModal.employee.avatar}
-                    </div>
-                    <div>
-                      <p className="font-semibold text-lg text-slate-900">{viewLeaveModal.employee.name}</p>
-                      <p className="text-slate-600">{viewLeaveModal.employee.position}</p>
-                      <p className="text-sm text-slate-500">{viewLeaveModal.employee.department}</p>
-                      <p className="text-sm text-slate-500">{viewLeaveModal.employee.email}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Leave Details */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Leave Type</label>
-                      <div className="px-3 py-2 bg-blue-50 text-blue-700 rounded-lg font-medium">
-                        {viewLeaveModal.type}
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Duration</label>
-                      <div className="px-3 py-2 bg-slate-100 text-slate-900 rounded-lg font-medium">
-                        {viewLeaveModal.duration} days
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Status</label>
-                      <div className={`px-3 py-2 rounded-lg font-medium ${
-                        viewLeaveModal.status === 'approved' ? 'bg-green-100 text-green-800' :
-                        viewLeaveModal.status === 'pending' ? 'bg-amber-100 text-amber-800' :
-                        'bg-red-100 text-red-800'
-                      }`}>
-                        {viewLeaveModal.status.charAt(0).toUpperCase() + viewLeaveModal.status.slice(1)}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Start Date</label>
-                      <div className="px-3 py-2 bg-slate-100 text-slate-900 rounded-lg">
-                        {formatDate(viewLeaveModal.startDate)}
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">End Date</label>
-                      <div className="px-3 py-2 bg-slate-100 text-slate-900 rounded-lg">
-                        {formatDate(viewLeaveModal.endDate)}
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Submitted On</label>
-                      <div className="px-3 py-2 bg-slate-100 text-slate-900 rounded-lg">
-                        {formatDate(viewLeaveModal.submittedAt)}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Reason */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Reason for Leave</label>
-                  <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
-                    <p className="text-slate-900">{viewLeaveModal.reason}</p>
-                  </div>
-                </div>
-
-                {/* Attachments (if any) */}
-                {viewLeaveModal.attachments && viewLeaveModal.attachments.length > 0 && (
+                {/* Action Buttons Section - Only for receiving applications */}
+                {shouldShowActions && (
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Attachments</label>
+                    <h4 className="font-semibold text-gray-900 mb-4">Quick Actions</h4>
+                    <div className="grid grid-cols-1 gap-2">
+                      <button 
+                        onClick={() => handleAction('approve')}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-green-50 text-green-700 border border-green-200 rounded-xl hover:bg-green-100 transition-colors"
+                      >
+                        <CheckCircle className="h-4 w-4" />
+                        Approve Application
+                      </button>
+                      
+                      <button 
+                        onClick={() => handleAction('reject')}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-50 text-red-700 border border-red-200 rounded-xl hover:bg-red-100 transition-colors"
+                      >
+                        <XCircle className="h-4 w-4" />
+                        Reject Application
+                      </button>
+                      
+                      <button 
+                        onClick={() => handleAction('in-progress')}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-50 text-blue-700 border border-blue-200 rounded-xl hover:bg-blue-100 transition-colors"
+                      >
+                        <Clock className="h-4 w-4" />
+                        Mark as In Progress
+                      </button>
+                      
+                      <button 
+                        onClick={() => handleAction('transfer')}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-purple-50 text-purple-700 border border-purple-200 rounded-xl hover:bg-purple-100 transition-colors"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                        Transfer to Department
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Existing Documents Section */}
+                {!isMemo && application.attachments && application.attachments.length > 0 && (
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-4">Supporting Documents</h4>
                     <div className="space-y-2">
-                      {viewLeaveModal.attachments.map((attachment, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-                          <span className="text-sm text-blue-700">{attachment}</span>
-                          <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
-                            Download
+                      {application.attachments.map((doc, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <FileText className="h-5 w-5 text-gray-500" />
+                            <div>
+                              <p className="text-sm font-medium">{doc}</p>
+                            </div>
+                          </div>
+                          <button className="p-1 hover:bg-gray-200 rounded">
+                            <Download className="h-4 w-4 text-gray-500" />
                           </button>
                         </div>
                       ))}
@@ -1255,53 +2012,110 @@ export default function AdvancedLeaveManagementSystem() {
                   </div>
                 )}
 
-                {/* Approval Information (if approved) */}
-                {viewLeaveModal.approvedBy && (
-                  <div className="bg-green-50 rounded-xl p-4">
-                    <h4 className="font-semibold text-green-900 mb-2">Approval Information</h4>
-                    <p className="text-green-800">Approved by: <span className="font-semibold">{viewLeaveModal.approvedBy}</span></p>
-                    {viewLeaveModal.approvedAt && (
-                      <p className="text-green-800 text-sm mt-1">Approved on: {formatDate(viewLeaveModal.approvedAt)}</p>
+                {/* Additional Actions Section */}
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-4">Additional Actions</h4>
+                  <div className="space-y-2">
+                    {!isMemo && (
+                      <>
+                        <button className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100">
+                          <Download className="h-4 w-4" />
+                          Download All Documents
+                        </button>
+                        <button className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-50 text-gray-700 rounded-xl hover:bg-gray-100">
+                          <Printer className="h-4 w-4" />
+                          Print Application
+                        </button>
+                        <button className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-50 text-gray-700 rounded-xl hover:bg-gray-100">
+                          <Share2 className="h-4 w-4" />
+                          Share Application
+                        </button>
+                      </>
+                    )}
+                    {isMemo && (
+                      <>
+                        <button className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100">
+                          <Download className="h-4 w-4" />
+                          Download Memo
+                        </button>
+                        <button className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-50 text-green-600 rounded-xl hover:bg-green-100">
+                          <Check className="h-4 w-4" />
+                          Mark as Complete
+                        </button>
+                      </>
                     )}
                   </div>
-                )}
-
-                {/* Action Buttons */}
-                <div className="flex gap-3 pt-6 border-t border-slate-200">
-                  <button
-                    onClick={closeViewModal}
-                    className="flex-1 px-4 py-2.5 border border-slate-300 rounded-lg text-sm font-medium hover:bg-slate-50"
-                  >
-                    Close
-                  </button>
-                  {viewLeaveModal.status === 'pending' && (
-                    <>
-                      <button
-                        onClick={() => {
-                          handleLeaveAction(viewLeaveModal.id, 'approve');
-                          closeViewModal();
-                        }}
-                        className="flex-1 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium"
-                      >
-                        Approve
-                      </button>
-                      <button
-                        onClick={() => {
-                          handleLeaveAction(viewLeaveModal.id, 'reject');
-                          closeViewModal();
-                        }}
-                        className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium"
-                      >
-                        Reject
-                      </button>
-                    </>
-                  )}
                 </div>
               </div>
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Transfer Modal */}
+      {showTransferModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md">
+            <div className="flex justify-between items-center p-6 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">Transfer Application</h3>
+              <button onClick={() => setShowTransferModal(false)} className="p-1 hover:bg-gray-100 rounded-lg">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Transfer to Department *
+                </label>
+                <select 
+                  value={transferDepartment}
+                  onChange={(e) => setTransferDepartment(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-xl"
+                >
+                  <option value="">Select Department</option>
+                  {departmentsList
+                    .filter(dept => dept.value !== application.department)
+                    .map(dept => (
+                      <option key={dept.value} value={dept.value}>
+                        {dept.label}
+                      </option>
+                    ))}
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Transfer Notes (Optional)
+                </label>
+                <textarea 
+                  value={transferNotes}
+                  onChange={(e) => setTransferNotes(e.target.value)}
+                  rows="3"
+                  placeholder="Add notes about why this application is being transferred..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-xl"
+                />
+              </div>
+              
+              <div className="flex gap-3 pt-2">
+                <button 
+                  onClick={() => setShowTransferModal(false)}
+                  className="flex-1 px-4 py-3 text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={handleTransfer}
+                  disabled={!transferDepartment}
+                  className="flex-1 px-4 py-3 text-white bg-purple-600 rounded-xl hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Transfer Application
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
-    </div>
+    </>
   );
-}
+};

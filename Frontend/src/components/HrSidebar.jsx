@@ -13,6 +13,8 @@ import {
   ChevronDown,
   ChevronRight,
   User,
+  Shield,
+  Database,
   Settings
 } from 'lucide-react';
 
@@ -36,11 +38,32 @@ const HrSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) =
       ]
     },
     { id: 'applications', icon: FileText, label: 'Applications & Memos', path: '/hr/applications' },
-    { id: 'reports', icon: BarChart3, label: 'Reports & Analytics', path: '/hr/reports' }
+    { id: 'reports', icon: BarChart3, label: 'Reports & Analytics', path: '/hr/reports' },
+    { 
+      id: 'settings', 
+      icon: Settings, 
+      label: 'Settings', 
+      hasSubmenu: true,
+      submenu: [
+        { id: 'user-roles', label: 'User Roles & Permissions', icon: Shield, path: '/hr/user-roles' },
+        { id: 'system-config', label: 'System Configuration', icon: Database, path: '/hr/system-config' },
+      ]
+    },
   ];
 
   const toggleSubmenu = (itemId) => {
-    if (isCollapsed) return; // Don't expand submenus when sidebar is collapsed
+    if (isCollapsed) {
+      // If sidebar is collapsed, expand it first
+      setIsCollapsed(false);
+      // Wait for sidebar to expand before showing submenu
+      setTimeout(() => {
+        setExpandedItems(prev => ({
+          ...prev,
+          [itemId]: !prev[itemId]
+        }));
+      }, 300);
+      return;
+    }
     setExpandedItems(prev => ({
       ...prev,
       [itemId]: !prev[itemId]
@@ -53,12 +76,13 @@ const HrSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) =
       return;
     }
     
-    if (isSubmenuItem) {
-      setActiveItem(item.id);
-    } else {
-      setActiveItem(item.id);
-    }
+    setActiveItem(item.id);
     navigate(item.path);
+    
+    // Close mobile sidebar on navigation
+    if (window.innerWidth < 1024) {
+      setIsCollapsed(true);
+    }
   };
 
   const handleLogout = async () => {
@@ -66,15 +90,28 @@ const HrSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) =
 
     try {
       const token = localStorage.getItem('token') || localStorage.getItem('authToken');
-      await logoutNoCheckout(!!token);
+      if (logoutNoCheckout) {
+        await logoutNoCheckout(!!token);
+      }
     } catch (err) {
       console.error('Logout failed:', err);
     } finally {
+      // Clear local storage
+      localStorage.removeItem('token');
+      localStorage.removeItem('authToken');
+      
+      // Navigate to login
       navigate('/login', { replace: true });
-      setTimeout(() => {
-        if (window.location.pathname !== '/login') window.location.href = '/login';
-      }, 250);
     }
+  };
+
+  // Check if item or any of its subitems is active
+  const isItemActive = (item) => {
+    if (item.id === activeItem) return true;
+    if (item.submenu) {
+      return item.submenu.some(sub => sub.id === activeItem);
+    }
+    return false;
   };
 
   return (
@@ -91,10 +128,11 @@ const HrSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) =
       <div className={`
         fixed lg:static inset-y-0 left-0 z-50
         bg-blue-50/80 backdrop-blur-md border-r border-blue-200/40
-        transition-all duration-500 ease-in-out
-        flex flex-col pr-2
+        transition-all duration-300 ease-in-out
+        flex flex-col
         ${isCollapsed ? '-translate-x-full lg:translate-x-0 lg:w-20' : 'translate-x-0 w-64'}
         shadow-xl shadow-blue-500/10
+        h-screen
       `}>
         
         {/* User Profile */}
@@ -129,7 +167,7 @@ const HrSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) =
           <div className="space-y-2 px-4">
             {menuItems.map((item) => {
               const Icon = item.icon;
-              const isActive = activeItem === item.id || (item.submenu && item.submenu.some(sub => activeItem === sub.id));
+              const isActive = isItemActive(item);
               const isExpanded = expandedItems[item.id];
               
               return (
@@ -138,32 +176,32 @@ const HrSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) =
                   <button
                     onClick={() => handleNavigation(item)}
                     className={`
-                      w-full flex items-center rounded-xl px-4 py-3 text-sm font-medium transition-all duration-300 relative
+                      w-full flex items-center rounded-xl px-4 py-3 text-sm font-medium transition-all duration-300
                       backdrop-blur-sm border
                       ${isActive
-                        ? 'bg-[#349dff] text-white shadow-lg shadow-blue-500/30 border-[#349dff] transform -translate-y-0.5'
+                        ? 'bg-[#349dff] text-white shadow-lg shadow-blue-500/30 border-[#349dff]'
                         : 'bg-white/60 text-slate-700 border-blue-200/40 hover:bg-white/80 hover:border-[#349dff]/30 hover:shadow-md'
                       }
-                      ${isCollapsed ? 'justify-center' : 'justify-start'}
+                      ${isCollapsed ? 'justify-center' : 'justify-between'}
                     `}
                     title={item.label}
                   >
-                    <Icon className={`h-5 w-5 ${isCollapsed ? '' : 'mr-3'}`} />
-                    {!isCollapsed && (
-                      <>
-                        <span className="font-semibold flex-1 text-left">{item.label}</span>
-                        {item.hasSubmenu && (
-                          isExpanded ? 
-                            <ChevronDown className="h-4 w-4" /> : 
-                            <ChevronRight className="h-4 w-4" />
-                        )}
-                      </>
+                    <div className="flex items-center">
+                      <Icon className="h-5 w-5" />
+                      {!isCollapsed && (
+                        <span className="font-semibold ml-3 text-left">{item.label}</span>
+                      )}
+                    </div>
+                    {!isCollapsed && item.hasSubmenu && (
+                      isExpanded ? 
+                        <ChevronDown className="h-4 w-4" /> : 
+                        <ChevronRight className="h-4 w-4" />
                     )}
                   </button>
 
                   {/* Submenu Items */}
                   {item.hasSubmenu && !isCollapsed && isExpanded && (
-                    <div className="ml-4 mt-2 space-y-1">
+                    <div className="ml-8 mt-2 space-y-1 border-l-2 border-blue-200/30 pl-2">
                       {item.submenu.map((subItem) => {
                         const SubIcon = subItem.icon;
                         const isSubActive = activeItem === subItem.id;
@@ -173,17 +211,16 @@ const HrSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) =
                             key={subItem.id}
                             onClick={() => handleNavigation(subItem, true)}
                             className={`
-                              w-full flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-all duration-300
+                              w-full flex items-left rounded-lg px-3 py-2 text-sm font-medium transition-all duration-300
                               backdrop-blur-sm border
                               ${isSubActive
                                 ? 'bg-[#349dff]/90 text-white shadow-md border-[#349dff]'
                                 : 'bg-white/40 text-slate-600 border-blue-200/30 hover:bg-white/60 hover:border-[#349dff]/20'
                               }
                             `}
-                            title={subItem.label}
                           >
                             <SubIcon className="h-4 w-4 mr-2" />
-                            <span className="font-medium">{subItem.label}</span>
+                            <span className="text-left font-medium">{subItem.label}</span>
                           </button>
                         );
                       })}
@@ -203,11 +240,11 @@ const HrSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) =
               w-full flex items-center rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-300
               backdrop-blur-sm border border-red-200/50
               bg-white/60 text-red-600 hover:bg-red-500 hover:text-white hover:border-red-500 hover:shadow-md
-              ${isCollapsed ? 'justify-center' : ''}
+              ${isCollapsed ? 'justify-center' : 'justify-center lg:justify-start'}
             `}
           >
-            <LogOut className={`h-5 w-5 ${isCollapsed ? '' : 'mr-3'}`} />
-            {!isCollapsed && <span>Logout</span>}
+            <LogOut className="h-5 w-5" />
+            {!isCollapsed && <span className="ml-3">Logout</span>}
           </button>
         </div>
       </div>
