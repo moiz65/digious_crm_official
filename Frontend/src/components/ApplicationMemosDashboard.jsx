@@ -43,11 +43,11 @@ const ApplicationsMemosDashboard = () => {
     const mockApplications = [
       {
         id: 1,
-        applicationNumber: 'APP-2024-001',
+        applicationNumber: 'APP-2026-001',
         applicantName: 'John Smith',
         applicantEmail: 'john.smith@company.com',
         applicationType: 'Leave Application',
-        submissionDate: '2024-01-15',
+        submissionDate: '2026-01-15',
         status: 'pending',
         priority: 'medium',
         department: 'Production',
@@ -55,19 +55,19 @@ const ApplicationsMemosDashboard = () => {
         submittedDocuments: 2,
         notes: 'Requesting 5 days of annual leave',
         assignedTo: 'Sarah Johnson',
-        lastUpdated: '2024-01-16',
+        lastUpdated: '2026-01-16',
         timeline: [
-          { date: '2024-01-15', action: 'Submitted', status: 'completed' },
-          { date: '2024-01-16', action: 'Under Review', status: 'current' }
+          { date: '2026-01-15', action: 'Submitted', status: 'completed' },
+          { date: '2026-01-16', action: 'Under Review', status: 'current' }
         ]
       },
       {
         id: 2,
-        applicationNumber: 'APP-2024-002',
+        applicationNumber: 'APP-2026-002',
         applicantName: 'Maria Garcia',
         applicantEmail: 'maria.garcia@company.com',
         applicationType: 'Travel Request',
-        submissionDate: '2024-01-14',
+        submissionDate: '2026-01-14',
         status: 'approved',
         priority: 'high',
         department: 'Sales',
@@ -75,20 +75,20 @@ const ApplicationsMemosDashboard = () => {
         submittedDocuments: 4,
         notes: 'Business trip to client meeting in Chicago',
         assignedTo: 'Michael Chen',
-        lastUpdated: '2024-01-15',
+        lastUpdated: '2026-01-15',
         timeline: [
-          { date: '2024-01-14', action: 'Submitted', status: 'completed' },
-          { date: '2024-01-14', action: 'Reviewed', status: 'completed' },
-          { date: '2024-01-15', action: 'Approved', status: 'completed' }
+          { date: '2026-01-14', action: 'Submitted', status: 'completed' },
+          { date: '2026-01-14', action: 'Reviewed', status: 'completed' },
+          { date: '2026-01-15', action: 'Approved', status: 'completed' }
         ]
       },
       {
         id: 3,
-        applicationNumber: 'APP-2024-003',
+        applicationNumber: 'APP-2026-003',
         applicantName: 'Robert Johnson',
         applicantEmail: 'robert.johnson@company.com',
         applicationType: 'Equipment Request',
-        submissionDate: '2024-01-13',
+        submissionDate: '2026-01-13',
         status: 'rejected',
         priority: 'low',
         department: 'IT',
@@ -96,19 +96,19 @@ const ApplicationsMemosDashboard = () => {
         submittedDocuments: 1,
         notes: 'Request for new laptop',
         assignedTo: 'IT Department',
-        lastUpdated: '2024-01-14',
+        lastUpdated: '2026-01-14',
         timeline: [
-          { date: '2024-01-13', action: 'Submitted', status: 'completed' },
-          { date: '2024-01-14', action: 'Rejected - Missing documents', status: 'completed' }
+          { date: '2026-01-13', action: 'Submitted', status: 'completed' },
+          { date: '2026-01-14', action: 'Rejected - Missing documents', status: 'completed' }
         ]
       },
       {
         id: 4,
-        applicationNumber: 'APP-2024-004',
+        applicationNumber: 'APP-2026-004',
         applicantName: 'Emily Davis',
         applicantEmail: 'emily.davis@company.com',
         applicationType: 'Training Request',
-        submissionDate: '2024-01-12',
+        submissionDate: '2026-01-12',
         status: 'in_progress',
         priority: 'medium',
         department: 'HR',
@@ -116,10 +116,10 @@ const ApplicationsMemosDashboard = () => {
         submittedDocuments: 3,
         notes: 'Request for leadership training program',
         assignedTo: 'Training Department',
-        lastUpdated: '2024-01-13',
+        lastUpdated: '2026-01-13',
         timeline: [
-          { date: '2024-01-12', action: 'Submitted', status: 'completed' },
-          { date: '2024-01-13', action: 'Under Evaluation', status: 'current' }
+          { date: '2026-01-12', action: 'Submitted', status: 'completed' },
+          { date: '2026-01-13', action: 'Under Evaluation', status: 'current' }
         ]
       }
     ];
@@ -127,10 +127,10 @@ const ApplicationsMemosDashboard = () => {
     const mockMemos = [
       {
         id: 1,
-        memoNumber: 'MEMO-2024-001',
+        memoNumber: 'MEMO-2026-001',
         title: 'Quarterly Meeting Agenda',
         author: 'CEO Office',
-        date: '2024-01-15',
+        date: '2026-01-15',
         priority: 'high',
         category: 'Announcement',
         status: 'unread',
@@ -138,14 +138,14 @@ const ApplicationsMemosDashboard = () => {
         summary: 'Agenda for Q1 company-wide meeting',
         attachments: 2,
         actionsRequired: true,
-        deadline: '2024-01-20'
+        deadline: '2026-01-20'
       },
       {
         id: 2,
-        memoNumber: 'MEMO-2024-002',
+        memoNumber: 'MEMO-2026-002',
         title: 'New Policy Implementation',
         author: 'HR Department',
-        date: '2024-01-14',
+        date: '2026-01-14',
         priority: 'medium',
         category: 'Policy',
         status: 'read',
@@ -153,14 +153,14 @@ const ApplicationsMemosDashboard = () => {
         summary: 'Updated remote work policy guidelines',
         attachments: 3,
         actionsRequired: false,
-        deadline: '2024-01-25'
+        deadline: '2026-01-25'
       },
       {
         id: 3,
-        memoNumber: 'MEMO-2024-003',
+        memoNumber: 'MEMO-2026-003',
         title: 'Security Alert',
         author: 'IT Security',
-        date: '2024-01-13',
+        date: '2026-01-13',
         priority: 'urgent',
         category: 'Security',
         status: 'unread',
@@ -168,7 +168,7 @@ const ApplicationsMemosDashboard = () => {
         summary: 'Important security updates required',
         attachments: 1,
         actionsRequired: true,
-        deadline: '2024-01-14'
+        deadline: '2026-01-14'
       }
     ];
 
@@ -201,7 +201,7 @@ const ApplicationsMemosDashboard = () => {
   const handleAddApplication = (applicationData) => {
     const newApp = {
       id: applications.length + 1,
-      applicationNumber: `APP-2024-${String(applications.length + 1).padStart(3, '0')}`,
+      applicationNumber: `APP-2026-${String(applications.length + 1).padStart(3, '0')}`,
       ...applicationData,
       submissionDate: new Date().toISOString().split('T')[0],
       lastUpdated: new Date().toISOString().split('T')[0],
@@ -217,7 +217,7 @@ const ApplicationsMemosDashboard = () => {
   const handleAddMemo = (memoData) => {
     const newMemo = {
       id: memos.length + 1,
-      memoNumber: `MEMO-2024-${String(memos.length + 1).padStart(3, '0')}`,
+      memoNumber: `MEMO-2026-${String(memos.length + 1).padStart(3, '0')}`,
       ...memoData,
       date: new Date().toISOString().split('T')[0],
       status: 'unread'

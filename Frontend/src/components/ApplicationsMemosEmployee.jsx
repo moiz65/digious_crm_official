@@ -3,11 +3,24 @@ import {
   Calendar, MapPin, Briefcase,
   FileCheck, ClipboardList, Plus, Search,
   Clock, AlertCircle, CheckCircle, X, Download,
-  Printer, Share2, Paperclip, Eye,
-  Check, DollarSign,
-  Package, FileText, Send, Edit, Trash2,
-  FilePlus,
-  MessageSquare, Bell, User, Users, Home, Target, Globe, CloudUpload, Mail as MailIcon
+  Printer, Share2, Paperclip, Upload, Eye,
+  Check, UserPlus, Award, TrendingUp, DollarSign,
+  Package, ShoppingCart, CreditCard, PieChart, Grid,
+  Bell, Settings, LogOut, Home, BarChart, Users,
+  Shield, Building, Globe, Bookmark, Star,
+  CloudUpload, FileText, Send, Edit, Trash2,
+  FilePlus, FolderPlus, FolderOpen, Folder,
+  MessageSquare, Mail as MailIcon, BellRing, 
+  CalendarDays, Target, Timer, Zap, Rocket,
+  Trophy, Medal, Crown, Heart, ThumbsUp,
+  TrendingDown, RefreshCw, ExternalLink, Link,
+  Copy, QrCode, Smartphone, Tablet, Monitor,
+  Headphones, Camera, Video, Mic, Music,
+  Wifi, Battery, Power, Database, Server,
+  Cpu, HardDrive, Network, Lock, Key,
+  EyeOff, Eye as EyeIcon, Fingerprint,
+  ShieldCheck, ShieldAlert, ShieldOff,
+  Truck, Wrench
 } from 'lucide-react';
 
 const ApplicationsMemosEmployee = () => {
@@ -209,9 +222,7 @@ const ApplicationsMemosEmployee = () => {
   };
 
   return (
-    
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 ">
-
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-100 rounded-full mix-blend-multiply filter blur-3xl opacity-40 animate-pulse"></div>
         <div className="absolute top-1/3 right-1/4 w-80 h-80 bg-cyan-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse"></div>
@@ -220,7 +231,6 @@ const ApplicationsMemosEmployee = () => {
       <div className="relative z-10 p-6">
         
         {/* Header */}
-        
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-8">
           <div className="flex items-center gap-4">
             <div className="relative">
@@ -250,21 +260,10 @@ const ApplicationsMemosEmployee = () => {
               </div>
             </div>
           </div>
-          
-          {/* <div className="flex items-center gap-3">
-            <button className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition duration-200 flex items-center gap-2">
-              <Settings className="h-4 w-4" />
-              Settings
-            </button>
-            <button className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition duration-200 flex items-center gap-2">
-              <Plus className="h-4 w-4" />
-              New Request
-            </button>
-          </div> */}
         </div>
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+        {/* <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
           <div className="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-blue-100 rounded-lg">
@@ -336,12 +335,12 @@ const ApplicationsMemosEmployee = () => {
               </div>
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* Quick Actions */}
         <div className="bg-white rounded-2xl border border-gray-200 p-4 mb-6">
           <h3 className="font-semibold text-gray-900 mb-4">Quick Actions</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-2 gap-3">
             <button 
               onClick={() => setShowNewAppModal(true)}
               className="flex flex-col items-center justify-center p-4 bg-blue-50 hover:bg-blue-100 rounded-xl transition duration-200 group"
@@ -364,27 +363,27 @@ const ApplicationsMemosEmployee = () => {
               <span className="text-xs text-gray-500">Internal communication</span>
             </button>
 
-            <button 
+            {/* <button 
               onClick={() => setActiveTab('applications')}
               className="flex flex-col items-center justify-center p-4 bg-green-50 hover:bg-green-100 rounded-xl transition duration-200 group"
             >
               <div className="p-2 bg-green-100 rounded-lg mb-2 group-hover:scale-110 transition duration-200">
                 <Eye className="h-5 w-5 text-green-600" />
               </div>
-              <span className="text-sm font-medium text-gray-900">Track Status</span>
+              <span className="text-sm font-medium text-gray-900">Applications Status</span>
               <span className="text-xs text-gray-500">Check applications</span>
-            </button>
+            </button> */}
 
-            <button 
+            {/* <button 
               onClick={() => setActiveTab('memos')}
               className="flex flex-col items-center justify-center p-4 bg-orange-50 hover:bg-orange-100 rounded-xl transition duration-200 group"
             >
               <div className="p-2 bg-orange-100 rounded-lg mb-2 group-hover:scale-110 transition duration-200">
                 <MailIcon className="h-5 w-5 text-orange-600" />
               </div>
-              <span className="text-sm font-medium text-gray-900">Inbox</span>
+              <span className="text-sm font-medium text-gray-900">Memos</span>
               <span className="text-xs text-gray-500">View memos</span>
-            </button>
+            </button> */}
           </div>
         </div>
 
@@ -723,7 +722,7 @@ const MyMemosTab = ({ memos, onSelect, onMarkAsRead }) => {
                 
                 <div className="flex items-center gap-3 text-sm text-gray-500">
                   <span className="flex items-center gap-1">
-                    <User className="h-3 w-3" />
+                    <Users className="h-3 w-3" />
                     {memo.from}
                   </span>
                   <span className="flex items-center gap-1">
@@ -789,18 +788,99 @@ const DraftsTab = ({ drafts }) => {
   );
 };
 
+
+// New Application Modal for Employee
+// New Application Modal for Employee
+// New Application Modal for Employee
+// New Application Modal for Employee
 // New Application Modal for Employee
 const NewApplicationModal = ({ onClose, onSave, employee }) => {
   const [formData, setFormData] = useState({
-    type: 'Annual Leave Request',
-    startDate: '',
-    endDate: '',
-    notes: '',
-    priority: 'medium',
+    department: '', // Department
+    type: '', // Application Type
+    customSubject: '', // Custom subject when "Other" is selected
+    description: '', // Description
     documents: []
   });
 
   const [uploadedFiles, setUploadedFiles] = useState([]);
+
+  // Department options
+  const departments = [
+    { value: 'HR', label: 'Human Resources (HR)' },
+    { value: 'Operations', label: 'Operations' },
+    { value: 'Productions', label: 'Productions' },
+    { value: 'Finance', label: 'Finance' },
+    { value: 'Sales', label: 'Sales' }
+  ];
+
+  // Department-wise application types
+  const departmentApplicationTypes = {
+    'HR': [
+      { value: 'Annual Leave Request', label: 'Annual Leave Request' },
+      { value: 'Remote Work Request', label: 'Remote Work Request' },
+      { value: 'Overtime Request', label: 'Overtime Request' },
+      { value: 'Resignation Request', label: 'Resignation Request' },
+      { value: 'Promotion Request', label: 'Promotion Request' },
+      { value: 'Transfer Request', label: 'Transfer Request' },
+      { value: 'Salary Revision', label: 'Salary Revision' },
+      { value: 'Employee Grievance', label: 'Employee Grievance' },
+      { value: 'Other', label: 'Other' }
+    ],
+    'Operations': [
+      { value: 'Equipment Request', label: 'Equipment Request' },
+      { value: 'Vehicle Request', label: 'Vehicle Request' },
+      { value: 'Maintenance Request', label: 'Maintenance Request' },
+      { value: 'Safety Equipment Request', label: 'Safety Equipment Request' },
+      { value: 'Inventory Request', label: 'Inventory Request' },
+      { value: 'Site Visit Request', label: 'Site Visit Request' },
+      { value: 'Operational Report', label: 'Operational Report' },
+      { value: 'Vendor Complaint', label: 'Vendor Complaint' },
+      { value: 'Other', label: 'Other' }
+    ],
+    'Productions': [
+      { value: 'Raw Material Request', label: 'Raw Material Request' },
+      { value: 'Machine Maintenance', label: 'Machine Maintenance' },
+      { value: 'Production Report', label: 'Production Report' },
+      { value: 'Quality Inspection', label: 'Quality Inspection' },
+      { value: 'Shift Change Request', label: 'Shift Change Request' },
+      { value: 'Production Target Change', label: 'Production Target Change' },
+      { value: 'Line Maintenance', label: 'Line Maintenance' },
+      { value: 'Safety Concern', label: 'Safety Concern' },
+      { value: 'Other', label: 'Other' }
+    ],
+    'Finance': [
+      { value: 'Expense Reimbursement', label: 'Expense Reimbursement' },
+      { value: 'Advance Salary', label: 'Advance Salary' },
+      { value: 'Loan Request', label: 'Loan Request' },
+      { value: 'Invoice Processing', label: 'Invoice Processing' },
+      { value: 'Budget Approval', label: 'Budget Approval' },
+      { value: 'Payment Request', label: 'Payment Request' },
+      { value: 'Tax Query', label: 'Tax Query' },
+      { value: 'Audit Support', label: 'Audit Support' },
+      { value: 'Other', label: 'Other' }
+    ],
+    'Sales': [
+      { value: 'Sales Report Submission', label: 'Sales Report Submission' },
+      { value: 'Client Visit Request', label: 'Client Visit Request' },
+      { value: 'Sales Target Revision', label: 'Sales Target Revision' },
+      { value: 'Discount Approval Request', label: 'Discount Approval Request' },
+      { value: 'Sales Material Request', label: 'Sales Material Request' },
+      { value: 'CRM Access Request', label: 'CRM Access Request' },
+      { value: 'Sales Training Request', label: 'Sales Training Request' },
+      { value: 'Customer Complaint', label: 'Customer Complaint' },
+      { value: 'Other', label: 'Other' }
+    ]
+  };
+
+  // Get application types for selected department
+  const getApplicationTypes = () => {
+    if (!formData.department) return [];
+    return departmentApplicationTypes[formData.department] || [];
+  };
+
+  // Check if "Other" is selected
+  const isOtherSelected = formData.type === 'Other';
 
   const handleFileUpload = (files) => {
     const newFiles = Array.from(files).map(file => ({
@@ -819,12 +899,13 @@ const NewApplicationModal = ({ onClose, onSave, employee }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     
+    // Use custom subject if "Other" is selected, otherwise use the selected type
+    const subjectValue = isOtherSelected ? formData.customSubject : formData.type;
+    
     const applicationData = {
-      type: formData.type,
-      startDate: formData.startDate,
-      endDate: formData.endDate,
-      notes: formData.notes,
-      priority: formData.priority,
+      department: formData.department,
+      type: subjectValue,
+      notes: formData.description,
       documents: uploadedFiles.map(file => ({
         name: file.name,
         size: file.size,
@@ -832,28 +913,8 @@ const NewApplicationModal = ({ onClose, onSave, employee }) => {
       }))
     };
 
-    if (formData.type === 'Equipment Request') {
-      applicationData.requestedItem = formData.requestedItem || '';
-      applicationData.reason = formData.reason || '';
-    }
-
-    if (formData.type === 'Training Request') {
-      applicationData.trainingProgram = formData.trainingProgram || '';
-      applicationData.provider = formData.provider || '';
-      applicationData.cost = formData.cost || 0;
-    }
-
     onSave(applicationData);
   };
-
-  const applicationTypes = [
-    { value: 'Annual Leave Request', label: 'Annual Leave', icon: Calendar },
-    { value: 'Remote Work Request', label: 'Remote Work', icon: Home },
-    { value: 'Equipment Request', label: 'Equipment', icon: Package },
-    { value: 'Training Request', label: 'Training', icon: Target },
-    { value: 'Travel Request', label: 'Travel', icon: Globe },
-    { value: 'Expense Reimbursement', label: 'Expense', icon: DollarSign }
-  ];
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -866,181 +927,90 @@ const NewApplicationModal = ({ onClose, onSave, employee }) => {
         </div>
         
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* Applicant Info */}
-          <div className="bg-blue-50 p-4 rounded-xl">
-            <p className="text-sm text-blue-600 font-medium mb-2">Applicant Information</p>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-xs text-gray-500">Name</p>
-                <p className="font-medium">{employee.name}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500">Department</p>
-                <p className="font-medium">{employee.department}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500">Employee ID</p>
-                <p className="font-medium">{employee.employeeId}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500">Date</p>
-                <p className="font-medium">{new Date().toLocaleDateString()}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Application Type */}
+          {/* Department */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">Application Type *</label>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {applicationTypes.map(type => (
-                <button
-                  type="button"
-                  key={type.value}
-                  onClick={() => setFormData(prev => ({ ...prev, type: type.value }))}
-                  className={`p-3 rounded-xl border-2 transition duration-200 ${
-                    formData.type === type.value 
-                      ? 'border-blue-500 bg-blue-50' 
-                      : 'border-gray-200 hover:border-blue-200 hover:bg-blue-50'
-                  }`}
-                >
-                  <div className="flex flex-col items-center gap-2">
-                    <div className={`p-2 rounded-lg ${
-                      formData.type === type.value ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600'
-                    }`}>
-                      <type.icon className="h-4 w-4" />
-                    </div>
-                    <span className="text-xs font-medium text-gray-900">{type.label}</span>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Dynamic Fields Based on Application Type */}
-          {formData.type === 'Annual Leave Request' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Start Date *</label>
-                <input 
-                  type="date"
-                  value={formData.startDate}
-                  onChange={(e) => setFormData(prev => ({ ...prev, startDate: e.target.value }))}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-xl"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">End Date *</label>
-                <input 
-                  type="date"
-                  value={formData.endDate}
-                  onChange={(e) => setFormData(prev => ({ ...prev, endDate: e.target.value }))}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-xl"
-                />
-              </div>
-            </div>
-          )}
-
-          {formData.type === 'Equipment Request' && (
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Equipment Needed *</label>
-                <input 
-                  type="text"
-                  value={formData.requestedItem || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, requestedItem: e.target.value }))}
-                  required
-                  placeholder="e.g., Laptop, Monitor, Software"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-xl"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Reason for Request *</label>
-                <textarea 
-                  value={formData.reason || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, reason: e.target.value }))}
-                  required
-                  rows="2"
-                  placeholder="Explain why you need this equipment..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-xl"
-                />
-              </div>
-            </div>
-          )}
-
-          {formData.type === 'Training Request' && (
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Training Program *</label>
-                <input 
-                  type="text"
-                  value={formData.trainingProgram || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, trainingProgram: e.target.value }))}
-                  required
-                  placeholder="e.g., Advanced React Course, AWS Certification"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-xl"
-                />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Provider *</label>
-                  <input 
-                    type="text"
-                    value={formData.provider || ''}
-                    onChange={(e) => setFormData(prev => ({ ...prev, provider: e.target.value }))}
-                    required
-                    placeholder="e.g., Coursera, Udemy, University"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-xl"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Cost (USD) *</label>
-                  <input 
-                    type="number"
-                    value={formData.cost || ''}
-                    onChange={(e) => setFormData(prev => ({ ...prev, cost: e.target.value }))}
-                    required
-                    placeholder="0.00"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-xl"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Priority */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Priority *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Department *</label>
             <select 
-              value={formData.priority}
-              onChange={(e) => setFormData(prev => ({ ...prev, priority: e.target.value }))}
+              value={formData.department}
+              onChange={(e) => setFormData(prev => ({ 
+                ...prev, 
+                department: e.target.value,
+                type: '', // Reset type when department changes
+                customSubject: '' // Reset custom subject
+              }))}
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-xl"
             >
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-              <option value="urgent">Urgent</option>
+              <option value="">Select Department</option>
+              {departments.map(dept => (
+                <option key={dept.value} value={dept.value}>
+                  {dept.label}
+                </option>
+              ))}
             </select>
           </div>
 
-          {/* Notes */}
+          {/* Subject */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Additional Notes</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Subject *</label>
+            <select 
+              value={formData.type}
+              onChange={(e) => setFormData(prev => ({ 
+                ...prev, 
+                type: e.target.value,
+                customSubject: e.target.value === 'Other' ? '' : prev.customSubject // Reset custom subject if not "Other"
+              }))}
+              required
+              disabled={!formData.department}
+              className={`w-full px-3 py-2 border border-gray-300 rounded-xl ${!formData.department ? 'bg-gray-100 text-gray-500' : ''}`}
+            >
+              <option value="">
+                {formData.department 
+                  ? `Select ${formData.department} Subject` 
+                  : 'Select Department First'}
+              </option>
+              {getApplicationTypes().map(type => (
+                <option key={type.value} value={type.value}>
+                  {type.label}
+                </option>
+              ))}
+            </select>
+            {!formData.department && (
+              <p className="text-xs text-gray-500 mt-1">Please select a department first</p>
+            )}
+          </div>
+
+          {/* Custom Subject Input (shown when "Other" is selected) */}
+          {isOtherSelected && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Specify Subject *</label>
+              <input 
+                type="text"
+                value={formData.customSubject}
+                onChange={(e) => setFormData(prev => ({ ...prev, customSubject: e.target.value }))}
+                required
+                placeholder="Enter your custom subject..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-xl"
+              />
+            </div>
+          )}
+
+          {/* Description */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
             <textarea 
-              value={formData.notes}
-              onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-              rows="3"
-              placeholder="Provide any additional details or explanations..."
+              value={formData.description}
+              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+              required
+              rows="4"
+              placeholder="Describe your application in detail..."
               className="w-full px-3 py-2 border border-gray-300 rounded-xl"
             />
           </div>
 
-          {/* File Upload */}
+          {/* Supporting Documents */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Supporting Documents</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Supporting Documents (Optional)</label>
             <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center">
               <CloudUpload className="h-12 w-12 text-gray-400 mx-auto mb-3" />
               <p className="text-sm text-gray-600 mb-2">Drag & drop files here or click to browse</p>
@@ -1096,7 +1066,13 @@ const NewApplicationModal = ({ onClose, onSave, employee }) => {
             </button>
             <button 
               type="submit"
-              className="flex-1 px-4 py-3 text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition duration-200"
+              disabled={
+                !formData.department || 
+                !formData.type || 
+                (isOtherSelected && !formData.customSubject) || 
+                !formData.description
+              }
+              className="flex-1 px-4 py-3 text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Submit Application
             </button>
@@ -1333,7 +1309,7 @@ const ApplicationDetailModal = ({ application, onClose }) => {
                     <div>
                       <h4 className="font-semibold">Status: {getStatusText(application.status)}</h4>
                       <p className="text-sm opacity-90">
-                        Submitted on {application.submissionDate} • Last updated {application.lastUpdated}
+                        Submitted on {application.submissionDate}
                       </p>
                     </div>
                   </div>
@@ -1344,45 +1320,34 @@ const ApplicationDetailModal = ({ application, onClose }) => {
               <div className="space-y-4">
                 <h4 className="font-semibold text-gray-900">Application Details</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {application.department && (
+                    <div className="bg-gray-50 p-4 rounded-xl">
+                      <p className="text-sm text-gray-500 mb-1">Department</p>
+                      <p className="font-medium">{application.department}</p>
+                    </div>
+                  )}
+                  
                   <div className="bg-gray-50 p-4 rounded-xl">
                     <p className="text-sm text-gray-500 mb-1">Application Type</p>
                     <p className="font-medium">{application.type}</p>
                   </div>
                   
-                  {application.startDate && (
-                    <div className="bg-gray-50 p-4 rounded-xl">
-                      <p className="text-sm text-gray-500 mb-1">Start Date</p>
-                      <p className="font-medium">{application.startDate}</p>
-                    </div>
-                  )}
+                  <div className="bg-gray-50 p-4 rounded-xl">
+                    <p className="text-sm text-gray-500 mb-1">Application Number</p>
+                    <p className="font-medium">{application.applicationNumber}</p>
+                  </div>
                   
-                  {application.endDate && (
-                    <div className="bg-gray-50 p-4 rounded-xl">
-                      <p className="text-sm text-gray-500 mb-1">End Date</p>
-                      <p className="font-medium">{application.endDate}</p>
-                    </div>
-                  )}
-                  
-                  {application.requestedItem && (
-                    <div className="bg-gray-50 p-4 rounded-xl">
-                      <p className="text-sm text-gray-500 mb-1">Requested Item</p>
-                      <p className="font-medium">{application.requestedItem}</p>
-                    </div>
-                  )}
-                  
-                  {application.trainingProgram && (
-                    <div className="bg-gray-50 p-4 rounded-xl">
-                      <p className="text-sm text-gray-500 mb-1">Training Program</p>
-                      <p className="font-medium">{application.trainingProgram}</p>
-                    </div>
-                  )}
+                  <div className="bg-gray-50 p-4 rounded-xl">
+                    <p className="text-sm text-gray-500 mb-1">Submission Date</p>
+                    <p className="font-medium">{application.submissionDate}</p>
+                  </div>
                 </div>
 
-                {/* Notes */}
+                {/* Description */}
                 {application.notes && (
                   <div className="bg-gray-50 p-4 rounded-xl">
-                    <p className="text-sm text-gray-500 mb-2">Your Notes</p>
-                    <p className="text-gray-900">{application.notes}</p>
+                    <p className="text-sm text-gray-500 mb-2">Description</p>
+                    <p className="text-gray-900 whitespace-pre-line">{application.notes}</p>
                   </div>
                 )}
 
@@ -1410,33 +1375,42 @@ const ApplicationDetailModal = ({ application, onClose }) => {
             <div className="space-y-6">
               {/* Documents */}
               <div>
-                <h4 className="font-semibold text-gray-900 mb-4">Documents</h4>
-                <div className="space-y-2">
-                  {application.documents?.map((doc, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <FileText className="h-5 w-5 text-gray-500" />
-                        <div>
-                          <p className="text-sm font-medium">{doc.name}</p>
-                          <p className="text-xs text-gray-500">Uploaded {doc.uploaded}</p>
+                <h4 className="font-semibold text-gray-900 mb-4">Supporting Documents</h4>
+                {application.documents && application.documents.length > 0 ? (
+                  <div className="space-y-2">
+                    {application.documents.map((doc, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <FileText className="h-5 w-5 text-gray-500" />
+                          <div>
+                            <p className="text-sm font-medium">{doc.name}</p>
+                            <p className="text-xs text-gray-500">{doc.size} • Uploaded {doc.uploaded}</p>
+                          </div>
                         </div>
+                        <button className="p-1 hover:bg-gray-200 rounded">
+                          <Download className="h-4 w-4 text-gray-500" />
+                        </button>
                       </div>
-                      <button className="p-1 hover:bg-gray-200 rounded">
-                        <Download className="h-4 w-4 text-gray-500" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center p-4 bg-gray-50 rounded-xl">
+                    <FileText className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                    <p className="text-sm text-gray-600">No supporting documents</p>
+                  </div>
+                )}
               </div>
 
               {/* Quick Actions */}
               <div>
                 <h4 className="font-semibold text-gray-900 mb-4">Actions</h4>
                 <div className="space-y-2">
-                  <button className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100">
-                    <Download className="h-4 w-4" />
-                    Download All
-                  </button>
+                  {application.documents && application.documents.length > 0 && (
+                    <button className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100">
+                      <Download className="h-4 w-4" />
+                      Download All
+                    </button>
+                  )}
                   <button className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-50 text-gray-700 rounded-xl hover:bg-gray-100">
                     <Printer className="h-4 w-4" />
                     Print Application
@@ -1527,7 +1501,7 @@ const MemoDetailModal = ({ memo, onClose, onMarkAsRead }) => {
                 
                 <div className="flex items-center gap-4 text-sm text-gray-600">
                   <span className="flex items-center gap-1">
-                    <User className="h-3 w-3" />
+                    <Users className="h-3 w-3" />
                     From: {memo.from}
                   </span>
                   <span className="flex items-center gap-1">

@@ -15,7 +15,9 @@ import {
   User,
   Settings,
   Menu,
-  X
+  X,
+  Shield,
+  Database
 } from 'lucide-react';
 
 const HrSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) => {
@@ -84,7 +86,17 @@ const HrSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) =
       ]
     },
     { id: 'applications', icon: FileText, label: 'Applications & Memos', path: '/hr/applications' },
-    { id: 'reports', icon: BarChart3, label: 'Reports & Analytics', path: '/hr/reports' }
+    { id: 'reports', icon: BarChart3, label: 'Reports & Analytics', path: '/hr/reports' },
+    { 
+      id: 'settings', 
+      icon: Settings, 
+      label: 'Settings', 
+      hasSubmenu: true,
+      submenu: [
+        { id: 'user-roles', label: 'User Roles & Permissions', icon: Shield, path: '/hr/user-roles' },
+        { id: 'system-config', label: 'System Configuration', icon: Database, path: '/hr/system-config' },
+      ]
+    },
   ];
 
   const toggleSubmenu = (itemId) => {
@@ -104,11 +116,7 @@ const HrSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) =
       }
     }
     
-    if (isSubmenuItem) {
-      setActiveItem(item.id);
-    } else {
-      setActiveItem(item.id);
-    }
+    setActiveItem(item.id);
     navigate(item.path);
     
     // Close sidebar on mobile after navigation
@@ -137,14 +145,18 @@ const HrSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) =
 
     try {
       const token = localStorage.getItem('token') || localStorage.getItem('authToken');
-      await logoutNoCheckout(!!token);
+      if (logoutNoCheckout) {
+        await logoutNoCheckout(!!token);
+      }
     } catch (err) {
       console.error('Logout failed:', err);
     } finally {
+      // Clear local storage
+      localStorage.removeItem('token');
+      localStorage.removeItem('authToken');
+      
+      // Navigate to login
       navigate('/login', { replace: true });
-      setTimeout(() => {
-        if (window.location.pathname !== '/login') window.location.href = '/login';
-      }, 250);
     }
   };
 
@@ -240,7 +252,7 @@ const HrSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) =
                   <button
                     onClick={() => handleNavigation(item)}
                     className={`
-                      w-full flex items-center rounded-xl px-4 py-3 text-sm font-medium transition-all duration-300 relative
+                      w-full flex items-center rounded-xl px-4 py-3 text-sm font-medium transition-all duration-300
                       backdrop-blur-sm border
                       ${active
                         ? 'bg-[#349dff] text-white shadow-lg shadow-blue-500/30 border-[#349dff]'
@@ -275,17 +287,16 @@ const HrSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) =
                             key={subItem.id}
                             onClick={() => handleNavigation(subItem, true)}
                             className={`
-                              w-full flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-all duration-300
+                              w-full flex items-left rounded-lg px-3 py-2 text-sm font-medium transition-all duration-300
                               backdrop-blur-sm border
                               ${subActive
                                 ? 'bg-[#349dff]/90 text-white shadow-md border-[#349dff]'
                                 : 'bg-white/40 text-slate-600 border-blue-200/30 hover:bg-white/60 hover:border-[#349dff]/20'
                               }
                             `}
-                            title={subItem.label}
                           >
                             <SubIcon className="h-4 w-4 mr-2" />
-                            <span className="font-medium">{subItem.label}</span>
+                            <span className="text-left font-medium">{subItem.label}</span>
                           </button>
                         );
                       })}

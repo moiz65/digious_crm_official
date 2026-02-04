@@ -27,9 +27,9 @@ const AdminApplicationsMemos = () => {
       department: 'Sales',
       subject: 'Annual Leave Request',
       description: 'Requesting 5 days annual leave for family vacation',
-      submittedDate: '2024-12-08',
-      startDate: '2024-12-15',
-      endDate: '2024-12-20',
+      submittedDate: '2026-12-08',
+      startDate: '2026-12-15',
+      endDate: '2026-12-20',
       status: 'Pending',
       priority: 'Medium',
       attachments: ['leave-form.pdf']
@@ -42,11 +42,11 @@ const AdminApplicationsMemos = () => {
       department: 'Marketing',
       subject: 'Department Transfer Request',
       description: 'Requesting transfer to Digital Marketing team',
-      submittedDate: '2024-12-05',
+      submittedDate: '2026-12-05',
       status: 'Approved',
       priority: 'High',
       approvedBy: 'Admin',
-      approvedDate: '2024-12-07',
+      approvedDate: '2026-12-07',
       notes: 'Transfer approved effective January 1st'
     },
     {
@@ -57,7 +57,7 @@ const AdminApplicationsMemos = () => {
       department: 'Production',
       subject: 'Travel Expense Reimbursement',
       description: 'Client meeting travel expenses',
-      submittedDate: '2024-12-10',
+      submittedDate: '2026-12-10',
       amount: '$450',
       status: 'Pending',
       priority: 'Medium',
@@ -71,12 +71,12 @@ const AdminApplicationsMemos = () => {
       department: 'Sales',
       subject: 'Senior Sales Executive Promotion',
       description: 'Request for promotion based on performance achievements',
-      submittedDate: '2024-12-01',
+      submittedDate: '2026-12-01',
       status: 'Rejected',
       priority: 'High',
       rejectedBy: 'Admin',
-      rejectedDate: '2024-12-06',
-      notes: 'Further evaluation needed after Q1 2025'
+      rejectedDate: '2026-12-06',
+      notes: 'Further evaluation needed after Q1 2026'
     },
     {
       id: 5,
@@ -86,7 +86,7 @@ const AdminApplicationsMemos = () => {
       department: 'Production',
       subject: 'Workplace Conduct Complaint',
       description: 'Filing a formal complaint regarding workplace conduct',
-      submittedDate: '2024-12-09',
+      submittedDate: '2026-12-09',
       status: 'Pending',
       priority: 'High',
       attachments: ['complaint-details.pdf']
@@ -99,12 +99,12 @@ const AdminApplicationsMemos = () => {
       department: 'HR',
       subject: 'Training Course Request',
       description: 'Requesting approval for professional development course',
-      submittedDate: '2024-12-06',
+      submittedDate: '2026-12-06',
       status: 'Approved',
       priority: 'Low',
       approvedBy: 'Admin',
-      approvedDate: '2024-12-07',
-      notes: 'Approved for Q1 2025 batch'
+      approvedDate: '2026-12-07',
+      notes: 'Approved for Q1 2026 batch'
     }
   ]);
 
@@ -113,27 +113,27 @@ const AdminApplicationsMemos = () => {
       id: 1,
       type: 'Policy Update',
       title: 'Updated Remote Work Policy',
-      content: 'Effective January 1st, 2025, employees can work remotely up to 3 days per week',
+      content: 'Effective January 1st, 2026, employees can work remotely up to 3 days per week',
       issuedBy: 'Admin Department',
-      issuedDate: '2024-12-10',
+      issuedDate: '2026-12-10',
       department: 'All',
       priority: 'High',
       recipients: 248,
       status: 'Active',
-      expiryDate: '2025-12-31'
+      expiryDate: '2026-12-31'
     },
     {
       id: 2,
       type: 'Announcement',
-      title: 'Holiday Schedule 2025',
-      content: 'Company holiday schedule for the year 2025 is now available',
+      title: 'Holiday Schedule 2026',
+      content: 'Company holiday schedule for the year 2026 is now available',
       issuedBy: 'Admin Manager',
-      issuedDate: '2024-12-08',
+      issuedDate: '2026-12-08',
       department: 'All',
       priority: 'Medium',
       recipients: 248,
       status: 'Active',
-      attachments: ['holiday-calendar-2025.pdf']
+      attachments: ['holiday-calendar-2026.pdf']
     },
     {
       id: 3,
@@ -141,7 +141,7 @@ const AdminApplicationsMemos = () => {
       title: 'Security Policy Reminder',
       content: 'All employees must follow updated security protocols',
       issuedBy: 'Admin Department',
-      issuedDate: '2024-12-05',
+      issuedDate: '2026-12-05',
       department: 'All',
       priority: 'High',
       recipients: 248,
@@ -153,7 +153,7 @@ const AdminApplicationsMemos = () => {
       title: 'Office Maintenance Schedule',
       content: 'HVAC maintenance will be conducted on December 15th',
       issuedBy: 'Facilities',
-      issuedDate: '2024-12-03',
+      issuedDate: '2026-12-03',
       department: 'All',
       priority: 'Low',
       recipients: 248,
@@ -163,9 +163,9 @@ const AdminApplicationsMemos = () => {
       id: 5,
       type: 'Announcement',
       title: 'New Project Launch',
-      content: 'Company launching new strategic initiative in Q1 2025',
+      content: 'Company launching new strategic initiative in Q1 2026',
       issuedBy: 'Executive Team',
-      issuedDate: '2024-12-07',
+      issuedDate: '2026-12-07',
       department: 'All',
       priority: 'High',
       recipients: 248,
@@ -175,14 +175,14 @@ const AdminApplicationsMemos = () => {
       id: 6,
       type: 'Policy Update',
       title: 'Updated Travel Policy',
-      content: 'New travel approval process and budget limits effective January 2025',
+      content: 'New travel approval process and budget limits effective January 2026',
       issuedBy: 'Finance Department',
-      issuedDate: '2024-12-04',
+      issuedDate: '2026-12-04',
       department: 'All',
       priority: 'Medium',
       recipients: 248,
       status: 'Active',
-      attachments: ['travel-policy-2025.pdf']
+      attachments: ['travel-policy-2026.pdf']
     }
   ]);
 

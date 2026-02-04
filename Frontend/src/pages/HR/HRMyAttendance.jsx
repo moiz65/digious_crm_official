@@ -292,12 +292,12 @@ const HRMyAttendance = () => {
 
   const getStatusColor = () => {
     // Check if there's a check-in time
-    if (!attendanceData?.check_in_time) return 'text-gray-500';
+    if (!attendanceData?.check_in_time) return 'text-[#009336]';
     // If checked out, return blue
-    if (attendanceData?.check_out_time) return 'text-blue-500';
+    if (attendanceData?.check_out_time) return 'text-[#009336]';
     // If checked in, return status color (Present/Late/etc)
     return attendanceData?.status === 'Present' ? 'text-green-500' : 
-           attendanceData?.status === 'Late' ? 'text-orange-500' : 'text-blue-500';
+           attendanceData?.status === 'Late' ? 'text-orange-500' : 'text-orange-500';
   };
 
   const getStatusText = () => {
