@@ -722,7 +722,7 @@ const MyMemosTab = ({ memos, onSelect, onMarkAsRead }) => {
                 
                 <div className="flex items-center gap-3 text-sm text-gray-500">
                   <span className="flex items-center gap-1">
-                    <User className="h-3 w-3" />
+                    <Users className="h-3 w-3" />
                     {memo.from}
                   </span>
                   <span className="flex items-center gap-1">
