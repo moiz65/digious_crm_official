@@ -208,14 +208,28 @@ const UserManagementDashboard = () => {
 
       if (newPermissions[module].includes(permission)) {
         newPermissions[module] = newPermissions[module].filter(p => p !== permission);
-        // If module has no permissions, remove it
-        if (newPermissions[module].length === 0) {
-          delete newPermissions[module];
-        }
       } else {
         newPermissions[module] = [...newPermissions[module], permission];
       }
 
+      return newPermissions;
+    });
+  };
+
+  // Toggle module enable/disable
+  const toggleModule = (module) => {
+    setSelectedPermissions(prev => {
+      const newPermissions = { ...prev };
+      const hasModuleKey = newPermissions.hasOwnProperty(module);
+      
+      if (hasModuleKey) {
+        // Disable module - remove the module key completely
+        delete newPermissions[module];
+      } else {
+        // Enable module - add module key with empty array
+        newPermissions[module] = [];
+      }
+      
       return newPermissions;
     });
   };
@@ -233,7 +247,13 @@ const UserManagementDashboard = () => {
 
   // Deselect all permissions for all modules
   const handleDeselectAll = () => {
-    setSelectedPermissions({});
+    // Keep the module keys but with empty arrays
+    const emptyPermissions = {};
+    Object.keys(allPermissions).forEach(module => {
+      emptyPermissions[module] = [];
+    });
+    
+    setSelectedPermissions(emptyPermissions);
   };
 
   // Select all permissions for a specific module
@@ -246,9 +266,10 @@ const UserManagementDashboard = () => {
 
   // Deselect all permissions for a specific module
   const handleDeselectAllInModule = (module) => {
-    const newPermissions = { ...selectedPermissions };
-    delete newPermissions[module];
-    setSelectedPermissions(newPermissions);
+    setSelectedPermissions(prev => ({
+      ...prev,
+      [module]: []
+    }));
   };
 
   // Check if all permissions in a module are selected
@@ -259,17 +280,14 @@ const UserManagementDashboard = () => {
   };
 
   // Check if any permission in a module is selected
-  const isModuleEnabled = (module) => {
-    return selectedPermissions[module] && selectedPermissions[module].length > 0;
+  const isAnyPermissionSelectedInModule = (module) => {
+    const modulePermissions = selectedPermissions[module] || [];
+    return modulePermissions.length > 0;
   };
 
-  // Toggle all permissions in a module
-  const toggleAllModulePermissions = (module) => {
-    if (areAllModulePermissionsSelected(module)) {
-      handleDeselectAllInModule(module);
-    } else {
-      handleSelectAllInModule(module);
-    }
+  // Check if module is enabled (has module key in selectedPermissions)
+  const isModuleEnabled = (module) => {
+    return selectedPermissions.hasOwnProperty(module);
   };
 
   // Handle add new user
@@ -458,58 +476,10 @@ const UserManagementDashboard = () => {
 
   return (
     <div className="max-w-8xl m-5">
-      {/* Header with Select All/Deselect All buttons */}
-      {/* <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-800">User Management</h1>
-            <p className="text-gray-600 mt-1">Manage user accounts and permissions</p>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <button
-              onClick={handleSelectAll}
-              className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors duration-200 flex items-center"
-            >
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              Select All Permissions
-            </button>
-            <button
-              onClick={handleDeselectAll}
-              className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors duration-200 flex items-center"
-            >
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-              Deselect All
-            </button>
-            <button
-              onClick={() => {
-                setShowAddUserModal(true);
-                setIsEditing(false);
-                setNewUserData({ name: '', email: '', role: 'hr-executive', department: 'HR' });
-                setSelectedPermissions({});
-              }}
-              className="px-4 py-2 bg-[#349dff] text-white rounded-lg hover:bg-[#2d8ce8] transition-colors duration-200 flex items-center"
-            >
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Add User
-            </button>
-          </div>
-        </div>
-      </div> */}
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Panel - Users List */}
         <div className="lg:col-span-1">
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            {/* <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-semibold text-gray-800">Users ({users.length})</h2>
-            </div> */}
-
             {/* Search and Filter */}
             <div className="mb-6 space-y-3">
               <input
@@ -630,6 +600,22 @@ const UserManagementDashboard = () => {
                 </div>
               ))}
             </div>
+
+            {/* Add User Button */}
+            <button
+              onClick={() => {
+                setShowAddUserModal(true);
+                setIsEditing(false);
+                setNewUserData({ name: '', email: '', role: 'hr-executive', department: 'HR' });
+                setSelectedPermissions({});
+              }}
+              className="w-full mt-6 px-4 py-3 bg-[#349dff] text-white rounded-lg hover:bg-[#2d8ce8] transition-colors duration-200 flex items-center justify-center"
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Add New User
+            </button>
           </div>
         </div>
 
@@ -693,6 +679,36 @@ const UserManagementDashboard = () => {
               </div>
             )}
 
+            {/* Global Select/Deselect Buttons */}
+            {/* <div className="mb-6 bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700">Global Permission Controls</h4>
+                  <p className="text-xs text-gray-500 mt-1">Apply to all modules at once</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={handleSelectAll}
+                    className="px-4 py-2 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors duration-200 text-sm font-medium flex items-center"
+                  >
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Select All Permissions
+                  </button>
+                  <button
+                    onClick={handleDeselectAll}
+                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200 text-sm font-medium flex items-center"
+                  >
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    Deselect All Permissions
+                  </button>
+                </div>
+              </div>
+            </div> */}
+
             {/* Permissions Grid */}
             <div className="space-y-6">
               {Object.entries(allPermissions).map(([module, permissions]) => (
@@ -702,28 +718,40 @@ const UserManagementDashboard = () => {
                       <h3 className="text-lg font-semibold text-gray-800 mr-4">
                         {moduleLabels[module] || module}
                       </h3>
-                      {isModuleEnabled(module) && (
-                        <button
-                          onClick={() => toggleAllModulePermissions(module)}
-                          className={`text-sm px-3 py-1 rounded-full ${
-                            areAllModulePermissionsSelected(module)
-                              ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                              : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
-                          } transition-colors duration-200`}
-                        >
-                          {areAllModulePermissionsSelected(module) ? 'Deselect All' : 'Select All'}
-                        </button>
-                      )}
                     </div>
                     
-                    <div className="flex items-center">
+                    <div className="flex items-center space-x-4">
+                      {/* Module-level Select/Deselect buttons */}
+                      {isModuleEnabled(module) && (
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => handleSelectAllInModule(module)}
+                            disabled={areAllModulePermissionsSelected(module)}
+                            className={`px-3 py-1 text-xs rounded ${
+                              areAllModulePermissionsSelected(module)
+                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
+                            } transition-colors duration-200`}
+                          >
+                            Select All
+                          </button>
+                          {/* <button
+                            onClick={() => handleDeselectAllInModule(module)}
+                            className="px-3 py-1 text-xs bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition-colors duration-200"
+                          >
+                            Clear
+                          </button> */}
+                        </div>
+                      )}
+                      
+                      {/* Enable/Disable Toggle */}
                       <label className="flex items-center cursor-pointer">
                         <div className="relative">
                           <input
                             type="checkbox"
                             className="sr-only"
                             checked={isModuleEnabled(module)}
-                            onChange={() => toggleAllModulePermissions(module)}
+                            onChange={() => toggleModule(module)}
                           />
                           <div className={`block w-12 h-6 rounded-full ${isModuleEnabled(module) ? 'bg-[#349dff]' : 'bg-gray-300'}`}></div>
                           <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition transform ${isModuleEnabled(module) ? 'translate-x-6' : ''}`}></div>
@@ -760,66 +788,32 @@ const UserManagementDashboard = () => {
                         ))}
                       </div>
                       
-                      <div className="pt-3 border-t border-gray-100">
+                      {/* <div className="pt-3 border-t border-gray-100">
                         <div className="flex justify-between items-center text-sm">
                           <span className="text-gray-500">
                             {selectedPermissions[module]?.length || 0} of {permissions.length} permissions selected
                           </span>
                           <div className="flex space-x-2">
-                            <button
-                              onClick={() => handleSelectAllInModule(module)}
-                              className={`px-3 py-1 text-xs rounded ${
-                                areAllModulePermissionsSelected(module)
-                                  ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
-                                  : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
-                              } transition-colors duration-200`}
-                              disabled={areAllModulePermissionsSelected(module)}
-                            >
-                              Select All in Module
-                            </button>
-                            <button
-                              onClick={() => handleDeselectAllInModule(module)}
-                              className="px-3 py-1 text-xs bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors duration-200"
-                            >
-                              Clear Module
-                            </button>
+                            {areAllModulePermissionsSelected(module) ? (
+                              <span className="px-2 py-1 text-xs bg-green-50 text-green-600 rounded">
+                                All permissions selected
+                              </span>
+                            ) : isAnyPermissionSelectedInModule(module) ? (
+                              <span className="px-2 py-1 text-xs bg-blue-50 text-blue-600 rounded">
+                                {selectedPermissions[module]?.length || 0} selected
+                              </span>
+                            ) : (
+                              <span className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded">
+                                No permissions selected
+                              </span>
+                            )}
                           </div>
                         </div>
-                      </div>
+                      </div> */}
                     </>
                   )}
                 </div>
               ))}
-            </div>
-            
-            {/* Global permission controls at bottom */}
-            <div className="mt-8 pt-6 border-t border-gray-200">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                  <h4 className="text-sm font-medium text-gray-700">Global Permission Controls</h4>
-                  <p className="text-xs text-gray-500 mt-1">Apply to all modules at once</p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={handleSelectAll}
-                    className="px-4 py-2 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors duration-200 text-sm font-medium flex items-center"
-                  >
-                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    Select All Everywhere
-                  </button>
-                  <button
-                    onClick={handleDeselectAll}
-                    className="px-4 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors duration-200 text-sm font-medium flex items-center"
-                  >
-                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                    Clear All Permissions
-                  </button>
-                </div>
-              </div>
             </div>
           </div>
         </div>
