@@ -1588,7 +1588,7 @@ const MonthlyOverview = ({
       {/* Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Main Column Chart */}
-        <div className="lg:col-span-2 p-6 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl border border-gray-200 shadow-sm">
+        {/* <div className="lg:col-span-2 p-6 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl border border-gray-200 shadow-sm">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-bold text-gray-900">{getChartTitle()}</h3>
             <div className="flex gap-2">
@@ -1621,7 +1621,7 @@ const MonthlyOverview = ({
             stacked={isStacked}
             chartType={chartType}
           />
-        </div>
+        </div> */}
 
         {/* Stats Cards */}
         {statsCards && statsCards.length > 0 && (
@@ -1965,7 +1965,7 @@ const EmployeeDetailView = ({
       </div>
 
       <div className="p-6">
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-8">
+        {/* <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-8">
           <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-5 border border-green-200 text-center shadow-sm hover:shadow-md transition-all duration-300">
             <div className="text-2xl font-bold text-green-600">{empStats.present}</div>
             <div className="text-xs font-medium text-green-700 mt-2">Present</div>
@@ -1990,7 +1990,7 @@ const EmployeeDetailView = ({
             <div className="text-2xl font-bold text-cyan-600">{empStats.totalOvertime}h</div>
             <div className="text-xs font-medium text-cyan-700 mt-2">Overtime</div>
           </div>
-        </div>
+        </div> */}
 
 
 
@@ -2044,7 +2044,7 @@ const EmployeeDetailView = ({
           <h3 className="text-lg font-semibold text-gray-900 mb-6">Leaves Summary</h3>
           
           {/* Overall Leaves Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          {/* <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
               <div className="text-center">
                 <div className="text-2xl font-bold text-blue-600">{employee.totalLeaves}</div>
@@ -2071,7 +2071,7 @@ const EmployeeDetailView = ({
                 <div className="text-xs text-purple-700 font-medium mt-1">Utilization</div>
               </div>
             </div>
-          </div>
+          </div> */}
 
           {/* Detailed Leave Breakdown */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
