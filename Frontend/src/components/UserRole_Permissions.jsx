@@ -16,7 +16,7 @@ const UserManagementDashboard = () => {
   const [editingUserId, setEditingUserId] = useState(null);
   const [departmentFilter, setDepartmentFilter] = useState('all');
 
-  // Initial users data
+  // Initial users data with additional users for new roles
   const [users, setUsers] = useState([
     {
       id: 'john-doe',
@@ -131,25 +131,105 @@ const UserManagementDashboard = () => {
         reports: ['view', 'export'],
         settings: ['view', 'edit']
       }
+    },
+    // New users for added roles
+    {
+      id: 'david-wilson',
+      name: 'David Wilson',
+      email: 'david.wilson@company.com',
+      role: 'super-admin',
+      department: 'IT',
+      status: 'active',
+      lastActive: '10 minutes ago',
+      avatarColor: 'bg-pink-500',
+      permissions: {
+        dashboard: ['view', 'export'],
+        employees: ['view', 'create', 'edit', 'delete', 'export'],
+        attendance: ['view', 'create', 'edit', 'delete', 'approve', 'export'],
+        leaves: ['view', 'create', 'edit', 'delete', 'approve', 'reject', 'export'],
+        applications: ['view', 'create', 'edit', 'process', 'export'],
+        reports: ['view', 'create', 'edit', 'export', 'share'],
+        settings: ['view', 'edit', 'manage_roles', 'manage_users']
+      }
+    },
+    {
+      id: 'lisa-anderson',
+      name: 'Lisa Anderson',
+      email: 'lisa.anderson@company.com',
+      role: 'operation-manager',
+      department: 'Operations',
+      status: 'active',
+      lastActive: '1 hour ago',
+      avatarColor: 'bg-teal-500',
+      permissions: {
+        dashboard: ['view', 'export'],
+        employees: ['view', 'create'],
+        attendance: ['view', 'create', 'edit', 'approve', 'export'],
+        leaves: ['view', 'approve', 'reject'],
+        applications: ['view', 'process'],
+        reports: ['view', 'create', 'export'],
+        settings: ['view']
+      }
+    },
+    {
+      id: 'robert-taylor',
+      name: 'Robert Taylor',
+      email: 'robert.taylor@company.com',
+      role: 'team-lead',
+      department: 'Production',
+      status: 'active',
+      lastActive: '45 minutes ago',
+      avatarColor: 'bg-orange-500',
+      permissions: {
+        dashboard: ['view'],
+        employees: ['view'],
+        attendance: ['view', 'create', 'edit', 'approve'],
+        leaves: ['view', 'approve'],
+        applications: ['view', 'process'],
+        reports: ['view'],
+        settings: []
+      }
+    },
+    {
+      id: 'emily-clark',
+      name: 'Emily Clark',
+      email: 'emily.clark@company.com',
+      role: 'production-manager',
+      department: 'Production',
+      status: 'active',
+      lastActive: '20 minutes ago',
+      avatarColor: 'bg-cyan-500',
+      permissions: {
+        dashboard: ['view', 'export'],
+        employees: ['view', 'create'],
+        attendance: ['view', 'create', 'edit', 'approve', 'export'],
+        leaves: ['view', 'approve', 'reject'],
+        applications: ['view', 'process'],
+        reports: ['view', 'create', 'export'],
+        settings: ['view']
+      }
     }
   ]);
 
-  // Available roles
+  // Updated available roles including new roles
   const availableRoles = [
+    { id: 'super-admin', name: 'Super Admin' },
     { id: 'hr-manager', name: 'HR Manager' },
+    { id: 'operation-manager', name: 'Operation Manager' },
+    { id: 'production-manager', name: 'Production Manager' },
     { id: 'hr-executive', name: 'HR Executive' },
+    { id: 'team-lead', name: 'Team Lead' },
     { id: 'hr-recruiter', name: 'HR Recruiter' },
-    { id: 'view-only', name: 'View Only' },
-    { id: 'admin', name: 'System Admin' }
+    { id: 'view-only', name: 'View Only' }
   ];
 
-  // Departments
-  const departments = ['HR', 'Recruitment', 'Operations', 'Audit', 'Finance', 'IT'];
+  // Updated departments including new departments
+  const departments = ['HR', 'Recruitment', 'Operations', 'Audit', 'Finance', 'IT', 'Production', 'Marketing', 'Sales', 'Quality Control'];
 
-  // All possible permissions
+  // All possible permissions - Added "Add Employee" permission
   const allPermissions = {
     dashboard: ['view', 'export'],
-    employees: ['view', 'create', 'edit', 'delete', 'export'],
+    employees: ['view', 'create', 'edit', 'delete', 'export', 'add_employee'], // Added add_employee
     attendance: ['view', 'create', 'edit', 'delete', 'approve', 'export'],
     leaves: ['view', 'create', 'edit', 'delete', 'approve', 'reject', 'export'],
     applications: ['view', 'create', 'edit', 'process', 'export'],
@@ -157,7 +237,7 @@ const UserManagementDashboard = () => {
     settings: ['view', 'edit', 'manage_roles', 'manage_users']
   };
 
-  // Permission labels for display
+  // Permission labels for display - Updated with new permission
   const permissionLabels = {
     view: 'View',
     create: 'Create',
@@ -169,7 +249,8 @@ const UserManagementDashboard = () => {
     export: 'Export',
     share: 'Share',
     manage_roles: 'Manage Roles',
-    manage_users: 'Manage Users'
+    manage_users: 'Manage Users',
+    add_employee: 'Add Employee' // New permission label
   };
 
   // Module labels
@@ -305,7 +386,7 @@ const UserManagementDashboard = () => {
       department: newUserData.department,
       status: 'active',
       lastActive: 'Never',
-      avatarColor: `bg-${['blue', 'purple', 'green', 'yellow', 'red', 'indigo', 'pink'][Math.floor(Math.random() * 7)]}-500`,
+      avatarColor: `bg-${['blue', 'purple', 'green', 'yellow', 'red', 'indigo', 'pink', 'teal', 'orange', 'cyan'][Math.floor(Math.random() * 10)]}-500`,
       permissions: { ...selectedPermissions }
     };
 
@@ -399,30 +480,66 @@ const UserManagementDashboard = () => {
     alert('User permissions saved successfully!');
   };
 
-  // Handle role change for selected user
+  // Handle role change for selected user - Updated with new role templates
   const handleRoleChange = (newRoleId) => {
     const roleTemplate = {
+      'super-admin': {
+        dashboard: ['view', 'export'],
+        employees: ['view', 'create', 'edit', 'delete', 'export', 'add_employee'],
+        attendance: ['view', 'create', 'edit', 'delete', 'approve', 'export'],
+        leaves: ['view', 'create', 'edit', 'delete', 'approve', 'reject', 'export'],
+        applications: ['view', 'create', 'edit', 'process', 'export'],
+        reports: ['view', 'create', 'edit', 'export', 'share'],
+        settings: ['view', 'edit', 'manage_roles', 'manage_users']
+      },
       'hr-manager': {
-        dashboard: ['view'],
-        employees: ['view', 'create', 'edit', 'delete'],
-        attendance: ['view', 'create', 'edit', 'approve'],
-        leaves: ['view', 'approve', 'reject'],
-        applications: ['view', 'process'],
+        dashboard: ['view', 'export'],
+        employees: ['view', 'create', 'edit', 'delete', 'export', 'add_employee'],
+        attendance: ['view', 'create', 'edit', 'approve', 'export'],
+        leaves: ['view', 'approve', 'reject', 'export'],
+        applications: ['view', 'process', 'export'],
         reports: ['view', 'export'],
         settings: ['view', 'edit']
       },
+      'operation-manager': {
+        dashboard: ['view', 'export'],
+        employees: ['view', 'create', 'add_employee'],
+        attendance: ['view', 'create', 'edit', 'approve', 'export'],
+        leaves: ['view', 'approve', 'reject'],
+        applications: ['view', 'process'],
+        reports: ['view', 'create', 'export'],
+        settings: ['view']
+      },
+      'production-manager': {
+        dashboard: ['view', 'export'],
+        employees: ['view', 'create', 'add_employee'],
+        attendance: ['view', 'create', 'edit', 'approve', 'export'],
+        leaves: ['view', 'approve', 'reject'],
+        applications: ['view', 'process'],
+        reports: ['view', 'create', 'export'],
+        settings: ['view']
+      },
       'hr-executive': {
         dashboard: ['view'],
-        employees: ['view', 'create'],
+        employees: ['view', 'create', 'add_employee'],
         attendance: ['view', 'edit'],
         leaves: ['view', 'process'],
         applications: ['view', 'process'],
         reports: ['view'],
         settings: ['view']
       },
+      'team-lead': {
+        dashboard: ['view'],
+        employees: ['view'],
+        attendance: ['view', 'create', 'edit', 'approve'],
+        leaves: ['view', 'approve'],
+        applications: ['view', 'process'],
+        reports: ['view'],
+        settings: []
+      },
       'hr-recruiter': {
         dashboard: ['view'],
-        employees: ['view', 'create'],
+        employees: ['view', 'create', 'add_employee'],
         attendance: ['view'],
         leaves: ['view'],
         applications: ['view'],
@@ -437,15 +554,6 @@ const UserManagementDashboard = () => {
         applications: ['view'],
         reports: ['view'],
         settings: []
-      },
-      'admin': {
-        dashboard: ['view', 'export'],
-        employees: ['view', 'create', 'edit', 'delete', 'export'],
-        attendance: ['view', 'create', 'edit', 'delete', 'approve', 'export'],
-        leaves: ['view', 'create', 'edit', 'delete', 'approve', 'reject', 'export'],
-        applications: ['view', 'create', 'edit', 'process', 'export'],
-        reports: ['view', 'create', 'edit', 'export', 'share'],
-        settings: ['view', 'edit', 'manage_roles', 'manage_users']
       }
     };
 
@@ -679,36 +787,6 @@ const UserManagementDashboard = () => {
               </div>
             )}
 
-            {/* Global Select/Deselect Buttons */}
-            {/* <div className="mb-6 bg-gray-50 rounded-lg p-4 border border-gray-200">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                  <h4 className="text-sm font-medium text-gray-700">Global Permission Controls</h4>
-                  <p className="text-xs text-gray-500 mt-1">Apply to all modules at once</p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={handleSelectAll}
-                    className="px-4 py-2 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors duration-200 text-sm font-medium flex items-center"
-                  >
-                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    Select All Permissions
-                  </button>
-                  <button
-                    onClick={handleDeselectAll}
-                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200 text-sm font-medium flex items-center"
-                  >
-                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                    Deselect All Permissions
-                  </button>
-                </div>
-              </div>
-            </div> */}
-
             {/* Permissions Grid */}
             <div className="space-y-6">
               {Object.entries(allPermissions).map(([module, permissions]) => (
@@ -735,12 +813,6 @@ const UserManagementDashboard = () => {
                           >
                             Select All
                           </button>
-                          {/* <button
-                            onClick={() => handleDeselectAllInModule(module)}
-                            className="px-3 py-1 text-xs bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition-colors duration-200"
-                          >
-                            Clear
-                          </button> */}
                         </div>
                       )}
                       
@@ -787,29 +859,6 @@ const UserManagementDashboard = () => {
                           </label>
                         ))}
                       </div>
-                      
-                      {/* <div className="pt-3 border-t border-gray-100">
-                        <div className="flex justify-between items-center text-sm">
-                          <span className="text-gray-500">
-                            {selectedPermissions[module]?.length || 0} of {permissions.length} permissions selected
-                          </span>
-                          <div className="flex space-x-2">
-                            {areAllModulePermissionsSelected(module) ? (
-                              <span className="px-2 py-1 text-xs bg-green-50 text-green-600 rounded">
-                                All permissions selected
-                              </span>
-                            ) : isAnyPermissionSelectedInModule(module) ? (
-                              <span className="px-2 py-1 text-xs bg-blue-50 text-blue-600 rounded">
-                                {selectedPermissions[module]?.length || 0} selected
-                              </span>
-                            ) : (
-                              <span className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded">
-                                No permissions selected
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div> */}
                     </>
                   )}
                 </div>

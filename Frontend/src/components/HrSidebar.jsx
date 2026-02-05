@@ -94,7 +94,7 @@ const HrSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) =
       label: 'Settings', 
       hasSubmenu: true,
       submenu: [
-        { id: 'user-roles', label: 'User Roles & Permissions', icon: Shield, path: '/hr/user-roles' },
+        { id: 'user-roles', label: 'User Roles', icon: Shield, path: '/hr/user-roles' },
         { id: 'system-config', label: 'System Configuration', icon: Database, path: '/hr/system-config' },
         { id: 'role-management', label: 'Role Management', icon: UserRoundCog, path: '/hr/role-management' },
       ]
