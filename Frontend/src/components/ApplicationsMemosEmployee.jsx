@@ -1196,6 +1196,7 @@ const NewMemoModal = ({ onClose, onSave, employee }) => {
                 <option value="Manager">Manager</option>
                 <option value="IT Department">IT Department</option>
                 <option value="Finance Department">Finance Department</option>
+                <option value="All Departments">All Departments</option>
               </select>
             </div>
           </div>
