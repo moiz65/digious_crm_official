@@ -30,6 +30,7 @@ import EmployeeManagement from './pages/HR/EmployeeManagement';
 import EmployeeOnboarding from './pages/HR/EmployeeOnboarding';
 import ApplicationsMemos from './pages/HR/ApplicationsMemos';
 import LeaveManagement from './pages/HR/LeaveManagement';
+import UserRoles_and_Permissions from './pages/HR/UserRoles_and_Permissions';
 
 // Employee Pages
 import EmployeeDashboard from './pages/Employee/EmployeeDashboard';
@@ -173,6 +174,14 @@ function AppContent() {
               element={
                 <ProtectedRoute requiredRole="hr">
                   <EmployeeManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/hr/user-roles"
+              element={
+                <ProtectedRoute requiredRole="hr">
+                  <UserRoles_and_Permissions />
                 </ProtectedRoute>
               }
             />
