@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import HrSidebar from '../../components/HrSidebar';
 import { DashboardHeader} from '../../components/DashboardComponents';
-import HrLeaveManagement from '../../components/HrLeaveManagement';
+import HrApplicationMemos from '../../components/HrApplicationMemos';
 
-const LeaveManagement = () => {
+const Applications_and_Memos = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [activeItem, setActiveItem] = useState('leaves');
-
+  const [activeItem, setActiveItem] = useState('applications-memos');
   return (
     <div className="flex bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Sidebar */}
@@ -20,12 +19,12 @@ const LeaveManagement = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         <DashboardHeader
-          title="Leave Management"
-          subtitle="Manage employee leave requests and balances"
+          title="Applications and Memos"
+          subtitle="Manage employee applications and internal memos"
         />
         
 
-        <HrLeaveManagement/>
+        <HrApplicationMemos />
 
         
       </div>
@@ -33,4 +32,4 @@ const LeaveManagement = () => {
   );
 };
 
-export default LeaveManagement;
+export default Applications_and_Memos;

@@ -29,8 +29,10 @@ import HRMyAttendance from './pages/HR/HRMyAttendance';
 import EmployeeManagement from './pages/HR/EmployeeManagement';
 import EmployeeOnboarding from './pages/HR/EmployeeOnboarding';
 import ApplicationsMemos from './pages/HR/ApplicationsMemos';
-import LeaveManagement from './pages/HR/LeaveManagement';
+// import LeaveManagement from './pages/HR/Applications_and_Memos';
 import UserRoles_and_Permissions from './pages/HR/UserRoles_and_Permissions';
+import RoleTemplates from './pages/HR/RoleTemplates';
+import Applications_and_Memos from './pages/HR/Applications_and_Memos';
 
 // Employee Pages
 import EmployeeDashboard from './pages/Employee/EmployeeDashboard';
@@ -154,10 +156,10 @@ function AppContent() {
               }
             />
             <Route
-              path="/hr/leave-management"
+              path="/hr/applications-memos"
               element={
                 <ProtectedRoute requiredRole="hr">
-                  <LeaveManagement  />
+                  <Applications_and_Memos />
                 </ProtectedRoute>
               }
             />
@@ -183,6 +185,15 @@ function AppContent() {
                 <ProtectedRoute requiredRole="hr">
                   <UserRoles_and_Permissions />
                 </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/hr/role-management"
+              element={
+                <ProtectedRoute requiredRole="hr">
+                  <RoleTemplates />
+                  </ProtectedRoute>
+               
               }
             />
             
