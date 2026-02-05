@@ -1,5 +1,6 @@
 const pool = require("../../config/database");
 const bcrypt = require("bcryptjs");
+const cloudinary = require("../../config/cloudinary");
 
 // Create new employee onboarding
 exports.createEmployee = async (req, res) => {
@@ -39,6 +40,8 @@ exports.createEmployee = async (req, res) => {
       cnicExpiryDate,
       requestPasswordChange,
       request_password_change,
+      profile_photo,
+      profile_picture,
       // Resources
       laptop,
       laptopSerial,
@@ -226,11 +229,46 @@ exports.createEmployee = async (req, res) => {
       // Hash password
       const hashedPassword = await bcrypt.hash(normalizedData.password, 10);
 
+      // Handle profile photo upload to Cloudinary if provided
+      let profilePhotoUrl = null;
+      const providedProfilePhoto = profile_photo || profile_picture;
+      
+      if (providedProfilePhoto && providedProfilePhoto.startsWith("data:image")) {
+        try {
+          console.log("🖼️ Uploading profile photo to Cloudinary...");
+          const uploadResult = await new Promise((resolve, reject) => {
+            cloudinary.uploader.upload(
+              providedProfilePhoto,
+              {
+                folder: `employee_profiles/${normalizedData.employeeId}`,
+                public_id: `profile_photo_${Date.now()}`,
+                resource_type: 'auto',
+                quality: 'auto:good',
+                fetch_format: 'auto',
+                transformation: [
+                  { width: 400, height: 400, crop: 'fill', gravity: 'face' },
+                  { quality: 'auto:good', fetch_format: 'auto' }
+                ]
+              },
+              (error, result) => {
+                if (error) reject(error);
+                else resolve(result);
+              }
+            );
+          });
+          profilePhotoUrl = uploadResult.secure_url;
+          console.log("✅ Profile photo uploaded successfully:", profilePhotoUrl);
+        } catch (uploadError) {
+          console.error("❌ Profile photo upload failed:", uploadError);
+          // Don't fail the employee creation if photo upload fails
+        }
+      }
+
       // Insert employee onboarding record
       const [employeeResult] = await connection.query(
         `INSERT INTO employee_onboarding 
-        (employee_id, name, email, password_temp, phone, cnic, department, sub_department, join_date, confirmation_date, address, emergency_contact, request_password_change, account_title_name, bank_name, bank_account, tax_id, designation, employment_status, cnic_issue_date, cnic_expiry_date, dob, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        (employee_id, name, email, password_temp, phone, cnic, department, sub_department, join_date, confirmation_date, address, emergency_contact, request_password_change, account_title_name, bank_name, bank_account, tax_id, designation, employment_status, cnic_issue_date, cnic_expiry_date, dob, profile_photo, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           normalizedData.employeeId,
           normalizedData.name,
@@ -254,6 +292,7 @@ exports.createEmployee = async (req, res) => {
           normalizedCnicIssueDate || null,
           normalizedCnicExpiryDate || null,
           normalizedData.dob || null,
+          profilePhotoUrl,
           "Active",
         ],
       );
@@ -488,33 +527,77 @@ exports.getEmployeeById = async (req, res) => {
       }
       employee.cnic_document_status = docStatus;
 
-      // Get allowances
-      const [allowances] = await connection.query(
-        `SELECT allowance_name as name, allowance_amount as amount 
-         FROM employee_allowances 
-         WHERE employee_id = ?`,
-        [id],
-      );
+      // Get allowances (optional)
+      let allowances = [];
+      try {
+        const [aRows] = await connection.query(
+          `SELECT allowance_name as name, allowance_amount as amount 
+           FROM employee_allowances 
+           WHERE employee_id = ?`,
+          [id],
+        );
+        allowances = aRows;
+      } catch (err) {
+        if (err && err.code === 'ER_NO_SUCH_TABLE') {
+          console.warn('employee_allowances table missing, continuing without it');
+          allowances = [];
+        } else {
+          throw err;
+        }
+      }
 
-      // Get resources
-      const [resources] = await connection.query(
-        `SELECT * FROM employee_resources WHERE employee_id = ?`,
-        [id],
-      );
+      // Get resources (optional)
+      let resources = [];
+      try {
+        const [rRows] = await connection.query(
+          `SELECT * FROM employee_resources WHERE employee_id = ?`,
+          [id],
+        );
+        resources = rRows;
+      } catch (err) {
+        if (err && err.code === 'ER_NO_SUCH_TABLE') {
+          console.warn('employee_resources table missing, continuing without it');
+          resources = [];
+        } else {
+          throw err;
+        }
+      }
 
-      // Get dynamic resources
-      const [dynamicResources] = await connection.query(
-        `SELECT id, resource_name as name, resource_serial as serial 
-         FROM employee_dynamic_resources 
-         WHERE employee_id = ?`,
-        [id],
-      );
+      // Get dynamic resources (optional)
+      let dynamicResources = [];
+      try {
+        const [dRows] = await connection.query(
+          `SELECT id, resource_name as name, resource_serial as serial 
+           FROM employee_dynamic_resources 
+           WHERE employee_id = ?`,
+          [id],
+        );
+        dynamicResources = dRows;
+      } catch (err) {
+        if (err && err.code === 'ER_NO_SUCH_TABLE') {
+          console.warn('employee_dynamic_resources table missing, continuing without it');
+          dynamicResources = [];
+        } else {
+          throw err;
+        }
+      }
 
-      // Get onboarding progress
-      const [progress] = await connection.query(
-        `SELECT * FROM onboarding_progress WHERE employee_id = ?`,
-        [id],
-      );
+      // Get onboarding progress (optional)
+      let progress = [];
+      try {
+        const [pRows] = await connection.query(
+          `SELECT * FROM onboarding_progress WHERE employee_id = ?`,
+          [id],
+        );
+        progress = pRows;
+      } catch (err) {
+        if (err && err.code === 'ER_NO_SUCH_TABLE') {
+          console.warn('onboarding_progress table missing, continuing without it');
+          progress = [];
+        } else {
+          throw err;
+        }
+      }
 
       res.status(200).json({
         success: true,

@@ -2,28 +2,72 @@ const pool = require('../../config/database');
 const cloudinary = require('../../config/cloudinary');
 
 /**
- * Get employee profile by ID (from employee_profile_summary view)
+ * Get employee profile by ID (from employee_onboarding and employee_profiles)
  */
 const getEmployeeProfile = async (req, res) => {
   try {
     const { id } = req.params;
     
-    const [rows] = await pool.query(
-      'SELECT * FROM employee_profile_summary WHERE id = ?',
-      [id]
+    // Get from employee_onboarding
+    const [onboarding] = await pool.query(
+      'SELECT * FROM employee_onboarding WHERE id = ? OR employee_id = ?',
+      [id, id]
     );
     
-    if (rows.length === 0) {
+    // Get from employee_profiles (if exists)
+    let profiles = [];
+    try {
+      const [pRows] = await pool.query(
+        'SELECT * FROM employee_profiles WHERE employee_id = ? OR id = ?',
+        [id, id]
+      );
+      profiles = pRows;
+    } catch (err) {
+      if (err && err.code === 'ER_NO_SUCH_TABLE') {
+        console.warn('employee_profiles table missing, continuing without it');
+        profiles = [];
+      } else {
+        throw err;
+      }
+    }
+    
+    if (onboarding.length === 0 && profiles.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'Employee profile not found'
       });
     }
     
+    // Merge data from both tables
+    const onboardingData = onboarding[0] || {};
+    const profileData = profiles[0] || {};
+    
+    const mergedProfile = {
+      id: onboardingData.id || profileData.id,
+      employee_id: onboardingData.employee_id || profileData.employee_id,
+      name: onboardingData.name,
+      email: onboardingData.email,
+      phone: onboardingData.phone,
+      department: onboardingData.department,
+      designation: onboardingData.designation,
+      join_date: onboardingData.join_date,
+      dob: onboardingData.dob,
+      profile_photo: profileData.profile_photo || onboardingData.profile_photo,
+      banner_url: profileData.banner_url,
+      bio: profileData.bio,
+      emergency_contact_phone: profileData.emergency_contact_phone,
+      linkedin_url: profileData.linkedin_url,
+      github_url: profileData.github_url,
+      portfolio_url: profileData.portfolio_url,
+      skills_json: profileData.skills_json,
+      documents_json: profileData.documents_json,
+      resources_json: profileData.resources_json
+    };
+    
     return res.status(200).json({
       success: true,
       message: 'Employee profile retrieved successfully',
-      data: rows[0]
+      data: mergedProfile
     });
   } catch (error) {
     console.error('Error fetching employee profile:', error);
@@ -42,28 +86,78 @@ const getProfileSummary = async (req, res) => {
   try {
     const { id } = req.params;
     
-    const [profile] = await pool.query(
-      'SELECT * FROM employee_profile_summary WHERE id = ?',
-      [id]
+    // Get from employee_onboarding
+    const [onboarding] = await pool.query(
+      'SELECT * FROM employee_onboarding WHERE id = ? OR employee_id = ?',
+      [id, id]
     );
     
-    if (profile.length === 0) {
+    // Get from employee_profiles (if exists)
+    let profiles = [];
+    try {
+      const [pRows] = await pool.query(
+        'SELECT * FROM employee_profiles WHERE employee_id = ? OR id = ?',
+        [id, id]
+      );
+      profiles = pRows;
+    } catch (err) {
+      if (err && err.code === 'ER_NO_SUCH_TABLE') {
+        console.warn('employee_profiles table missing, continuing without it');
+        profiles = [];
+      } else {
+        throw err;
+      }
+    }
+    
+    if (onboarding.length === 0 && profiles.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'Employee not found'
       });
     }
     
+    // Merge data from both tables
+    const onboardingData = onboarding[0] || {};
+    const profileData = profiles[0] || {};
+    
+    const mergedProfile = {
+      id: onboardingData.id || profileData.id,
+      employee_id: onboardingData.employee_id || profileData.employee_id,
+      // Provide both 'name' and 'full_name' for frontend compatibility
+      name: onboardingData.name || profileData.name || (profileData.first_name ? `${profileData.first_name} ${profileData.last_name || ''}` : null),
+      full_name: onboardingData.name || profileData.full_name || (profileData.first_name ? `${profileData.first_name} ${profileData.last_name || ''}` : null),
+      email: onboardingData.email,
+      phone: onboardingData.phone,
+      department: onboardingData.department,
+      designation: profileData.designation || onboardingData.designation || null,
+      join_date: onboardingData.join_date,
+      dob: onboardingData.dob,
+      // Profile photo preference: profile table first, then onboarding
+      profile_photo: profileData.profile_photo || onboardingData.profile_photo,
+      banner_url: profileData.banner_url,
+      bio: profileData.bio,
+      emergency_contact_phone: profileData.emergency_contact_phone || onboardingData.emergency_contact,
+      linkedin_url: profileData.linkedin_url,
+      github_url: profileData.github_url,
+      portfolio_url: profileData.portfolio_url,
+      documents_json: profileData.documents_json,
+      resources_json: profileData.resources_json,
+      // Expose employment and type information
+      employment_status: onboardingData.employment_status || profileData.employment_status || null,
+      employee_type: profileData.employee_type || onboardingData.employment_status || null
+    };
+    
     return res.status(200).json({
       success: true,
       message: 'Profile summary retrieved successfully',
       data: {
-        profile: profile[0],
+        profile: mergedProfile,
         metadata: {
-          has_banner: !!profile[0].banner_url,
-          has_documents: !!profile[0].documents_json,
-          has_resources: !!profile[0].resources_json,
-          profile_completeness: calculateProfileCompleteness(profile[0])
+          has_banner: !!mergedProfile.banner_url,
+          has_documents: !!mergedProfile.documents_json,
+          has_resources: !!mergedProfile.resources_json,
+          has_profile_photo: !!mergedProfile.profile_photo,
+          profile_completeness: calculateProfileCompleteness(mergedProfile)
         }
       }
     });
@@ -83,23 +177,99 @@ const getProfileSummary = async (req, res) => {
 const getFinancialSummary = async (req, res) => {
   try {
     const { id } = req.params;
-    
-    const [rows] = await pool.query(
-      'SELECT * FROM employee_financial_summary WHERE id = ?',
-      [id]
+    console.log(`\n💰 [Financial Summary] Employee ID: ${id}`);
+
+    // Get employee basic info
+    const [empRows] = await pool.query(
+      'SELECT id, employee_id, name FROM employee_onboarding WHERE id = ? OR employee_id = ?',
+      [id, id]
     );
-    
-    if (rows.length === 0) {
+
+    if (empRows.length === 0) {
+      console.warn(`⚠️ [Financial Summary] Employee not found - ID: ${id}`);
       return res.status(404).json({
         success: false,
-        message: 'Financial data not found'
+        message: 'Employee not found'
       });
     }
-    
+
+    const emp = empRows[0];
+    const empId = emp.employee_id || emp.id;
+
+    // Get base salary and total salary from employee_salary table
+    let salary = { base_salary: null, total_salary: null };
+    try {
+      const [salRows] = await pool.query(
+        'SELECT base_salary, total_salary FROM employee_salary WHERE employee_id = ?',
+        [empId]
+      );
+      if (salRows.length > 0) {
+        salary = salRows[0];
+        console.log(`✅ [Financial Summary] Found salary: base=${salary.base_salary}, total=${salary.total_salary}`);
+      }
+    } catch (err) {
+      console.warn(`⚠️ [Financial Summary] Error querying salary:`, err.message);
+    }
+
+    // Get allowances from employee_allowances table
+    let allowances = [];
+    let totalAllowances = 0;
+    try {
+      const [allowRows] = await pool.query(
+        'SELECT allowance_name, allowance_amount FROM employee_allowances WHERE employee_id = ?',
+        [empId]
+      );
+      allowances = allowRows || [];
+      totalAllowances = allowances.reduce((sum, a) => sum + (parseFloat(a.allowance_amount) || 0), 0);
+      console.log(`✅ [Financial Summary] Found ${allowances.length} allowances, total=${totalAllowances}`);
+    } catch (err) {
+      console.warn(`⚠️ [Financial Summary] Error querying allowances:`, err.message);
+    }
+
+    // Get bank account info (masked)
+    let bankAccount = null;
+    try {
+      const [baRows] = await pool.query(
+        `SELECT
+           id AS bank_account_id,
+           CONCAT(SUBSTRING(account_number, 1, 4), '****', SUBSTRING(account_number, -4)) AS account_number_masked,
+           account_title_name,
+           bank_name,
+           account_type
+         FROM employee_bank_accounts
+         WHERE employee_id = ? AND is_primary = 1
+         LIMIT 1`,
+        [empId]
+      );
+      if (baRows.length > 0) {
+        bankAccount = baRows[0];
+        console.log(`✅ [Financial Summary] Found primary bank account: ${bankAccount.bank_name}`);
+      }
+    } catch (err) {
+      console.warn(`⚠️ [Financial Summary] Error querying bank accounts:`, err.message);
+    }
+
+    // Build response
+    const result = {
+      id: empId,
+      employee_id: empId,
+      name: emp.name,
+      base_salary: salary.base_salary ? parseFloat(salary.base_salary) : null,
+      total_salary: salary.total_salary ? parseFloat(salary.total_salary) : null,
+      allowances: allowances.map(a => ({
+        name: a.allowance_name,
+        amount: parseFloat(a.allowance_amount)
+      })),
+      total_allowances: totalAllowances,
+      allowances_count: allowances.length,
+      bank_account: bankAccount || null
+    };
+
+    console.log(`✅ [Financial Summary] Returning complete financial summary`);
     return res.status(200).json({
       success: true,
       message: 'Financial summary retrieved successfully',
-      data: rows[0]
+      data: result
     });
   } catch (error) {
     console.error('Error fetching financial summary:', error);
@@ -187,9 +357,7 @@ const createEmployeeProfile = async (req, res) => {
     const {
       employee_id,
       bio,
-      emergency_contact_name,
       emergency_contact_phone,
-      emergency_contact_relation,
       preferred_contact_method,
       linkedin_url,
       github_url,
@@ -221,13 +389,13 @@ const createEmployeeProfile = async (req, res) => {
     
     const [result] = await pool.query(
       `INSERT INTO employee_profiles 
-      (employee_id, bio, emergency_contact_name, emergency_contact_phone, emergency_contact_relation,
+      (employee_id, bio, emergency_contact_phone,
        preferred_contact_method, linkedin_url, github_url, portfolio_url, skills_json, 
        certifications_json, banner_url, documents_json, resources_json, next_review_date, 
        review_cycle, preferred_work_location, work_mode_preference, total_work_experience_years)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        employee_id, bio, emergency_contact_name, emergency_contact_phone, emergency_contact_relation,
+        employee_id, bio, emergency_contact_phone,
         preferred_contact_method, linkedin_url, github_url, portfolio_url, 
         skills_json ? JSON.stringify(skills_json) : null,
         certifications_json ? JSON.stringify(certifications_json) : null,
@@ -265,61 +433,215 @@ const updateEmployeeProfile = async (req, res) => {
     const { id } = req.params;
     const updates = req.body;
     
-    // Build dynamic update query
-    const allowedFields = [
-      'bio', 'emergency_contact_name', 'emergency_contact_phone', 'emergency_contact_relation',
+    // Fields that belong to employee_onboarding table
+    const onboardingFields = ['email', 'phone', 'address', 'emergency_contact', 'emergency_contact_relation'];
+    
+    // Fields that belong to employee_profiles table
+    const profileFields = [
+      'bio', 'emergency_contact_phone',
       'preferred_contact_method', 'linkedin_url', 'github_url', 'portfolio_url',
       'skills_json', 'certifications_json', 'banner_url', 'documents_json', 'resources_json',
       'next_review_date', 'review_cycle', 'preferred_work_location', 'work_mode_preference',
       'total_work_experience_years'
     ];
     
-    const updateFields = [];
-    const values = [];
+    // Separate updates by table
+    const onboardingUpdates = {};
+    const profileUpdates = {};
     
     Object.keys(updates).forEach(key => {
-      if (allowedFields.includes(key)) {
-        updateFields.push(`${key} = ?`);
-        // Stringify JSON fields
-        if (['skills_json', 'certifications_json', 'documents_json', 'resources_json'].includes(key)) {
-          values.push(updates[key] ? JSON.stringify(updates[key]) : null);
-        } else {
-          values.push(updates[key]);
-        }
+      if (onboardingFields.includes(key)) {
+        onboardingUpdates[key] = updates[key];
+      } else if (profileFields.includes(key)) {
+        profileUpdates[key] = updates[key];
       }
     });
     
-    if (updateFields.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'No valid fields to update'
+    let totalAffected = 0;
+    
+    // Update employee_onboarding if there are onboarding fields
+    if (Object.keys(onboardingUpdates).length > 0) {
+      const onboardingUpdateFields = [];
+      const onboardingValues = [];
+      
+      Object.keys(onboardingUpdates).forEach(key => {
+        onboardingUpdateFields.push(`${key} = ?`);
+        onboardingValues.push(onboardingUpdates[key]);
       });
+      
+      onboardingValues.push(id);
+      onboardingValues.push(id);
+      
+      const [onboardingResult] = await pool.query(
+        `UPDATE employee_onboarding SET ${onboardingUpdateFields.join(', ')}, updated_at = NOW() WHERE id = ? OR employee_id = ?`,
+        onboardingValues
+      );
+      
+      totalAffected += onboardingResult.affectedRows;
     }
     
-    values.push(id);
+    // Also store JSON fields in employee_onboarding as fallback (for skills_json, documents_json, etc.)
+    const jsonFieldsForOnboarding = {};
+    Object.keys(profileUpdates).forEach(key => {
+      if (['skills_json', 'documents_json', 'resources_json', 'certifications_json'].includes(key)) {
+        jsonFieldsForOnboarding[key] = profileUpdates[key];
+      }
+    });
     
-    const [result] = await pool.query(
-      `UPDATE employee_profiles SET ${updateFields.join(', ')}, updated_at = NOW() WHERE employee_id = ?`,
-      values
+    if (Object.keys(jsonFieldsForOnboarding).length > 0) {
+      const onboardingJsonFields = [];
+      const onboardingJsonValues = [];
+      
+      Object.keys(jsonFieldsForOnboarding).forEach(key => {
+        onboardingJsonFields.push(`${key} = ?`);
+        // Stringify JSON fields for storage
+        const value = jsonFieldsForOnboarding[key];
+        if (typeof value === 'string') {
+          onboardingJsonValues.push(value);
+        } else if (value) {
+          onboardingJsonValues.push(JSON.stringify(value));
+        } else {
+          onboardingJsonValues.push(null);
+        }
+      });
+      
+      onboardingJsonValues.push(id);
+      onboardingJsonValues.push(id);
+      
+      try {
+        const [jsonResult] = await pool.query(
+          `UPDATE employee_onboarding SET ${onboardingJsonFields.join(', ')}, updated_at = NOW() WHERE id = ? OR employee_id = ?`,
+          onboardingJsonValues
+        );
+        totalAffected += jsonResult.affectedRows;
+      } catch (err) {
+        // Log but don't fail - columns might not exist yet
+        console.warn('Could not update JSON fields in employee_onboarding:', err.message);
+        // Non-fatal, continue
+      }
+    }
+    
+    // Update employee_profiles if there are profile fields
+    if (Object.keys(profileUpdates).length > 0) {
+      try {
+        const profileUpdateFields = [];
+        const profileValues = [];
+        
+        Object.keys(profileUpdates).forEach(key => {
+          profileUpdateFields.push(`${key} = ?`);
+          // Handle JSON fields - they might come as string or object
+          if (['skills_json', 'certifications_json', 'documents_json', 'resources_json'].includes(key)) {
+            const value = profileUpdates[key];
+            if (typeof value === 'string') {
+              // Already stringified by frontend
+              profileValues.push(value);
+            } else if (value) {
+              // Object - stringify it
+              profileValues.push(JSON.stringify(value));
+            } else {
+              profileValues.push(null);
+            }
+          } else {
+            profileValues.push(profileUpdates[key]);
+          }
+        });
+        
+        profileValues.push(id);
+        profileValues.push(id);
+        
+        const [profileResult] = await pool.query(
+          `UPDATE employee_profiles SET ${profileUpdateFields.join(', ')}, updated_at = NOW() WHERE employee_id = ? OR id = ?`,
+          profileValues
+        );
+        
+        totalAffected += profileResult.affectedRows;
+      } catch (err) {
+        // If employee_profiles table doesn't exist, log warning and continue
+        // Profile data will be stored/retrieved from employee_onboarding instead
+        if (err && err.code === 'ER_NO_SUCH_TABLE') {
+          console.warn('employee_profiles table missing, storing profile fields in employee_onboarding instead');
+          // Data already stored in employee_onboarding above, so just continue
+        } else {
+          throw err;
+        }
+      }
+    }
+    
+    // Check if employee exists (even if no updates were applied to profile tables)
+    const [checkOnboarding] = await pool.query(
+      'SELECT id FROM employee_onboarding WHERE id = ? OR employee_id = ?',
+      [id, id]
     );
     
-    if (result.affectedRows === 0) {
+    if (checkOnboarding.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'Employee profile not found'
       });
     }
-    
-    // Fetch updated profile
-    const [updated] = await pool.query(
-      'SELECT * FROM employee_profile_summary WHERE id = ?',
-      [id]
+
+    // Fetch updated profile data from both tables
+    const [onboarding] = await pool.query(
+      'SELECT * FROM employee_onboarding WHERE id = ? OR employee_id = ?',
+      [id, id]
     );
+    
+    let profiles = [];
+    try {
+      const [pRows] = await pool.query(
+        'SELECT * FROM employee_profiles WHERE employee_id = ? OR id = ?',
+        [id, id]
+      );
+      profiles = pRows;
+    } catch (err) {
+      if (err && err.code === 'ER_NO_SUCH_TABLE') {
+        console.warn('employee_profiles table missing, continuing without it');
+        profiles = [];
+      } else {
+        throw err;
+      }
+    }
+
+    const onboardingData = onboarding[0] || {};
+    const profileData = profiles[0] || {};
+
+    const mergedProfile = {
+      id: onboardingData.id || profileData.id,
+      employee_id: onboardingData.employee_id || profileData.employee_id,
+      name: onboardingData.name || profileData.name || (profileData.first_name ? `${profileData.first_name} ${profileData.last_name || ''}` : null),
+      full_name: onboardingData.name || profileData.full_name || (profileData.first_name ? `${profileData.first_name} ${profileData.last_name || ''}` : null),
+      email: onboardingData.email,
+      phone: onboardingData.phone,
+      address: onboardingData.address,
+      department: onboardingData.department,
+      designation: profileData.designation || onboardingData.designation || null,
+      join_date: onboardingData.join_date,
+      dob: onboardingData.dob,
+      profile_photo: profileData.profile_photo || onboardingData.profile_photo,
+      banner_url: profileData.banner_url,
+      bio: profileData.bio,
+      emergency_contact_phone: profileData.emergency_contact_phone || onboardingData.emergency_contact,
+      linkedin_url: profileData.linkedin_url,
+      github_url: profileData.github_url,
+      portfolio_url: profileData.portfolio_url,
+      documents_json: profileData.documents_json,
+      resources_json: profileData.resources_json,
+      employment_status: onboardingData.employment_status || profileData.employment_status || null,
+      employee_type: profileData.employee_type || onboardingData.employment_status || null,
+      skills_json: profileData.skills_json,
+      certifications_json: profileData.certifications_json,
+      preferred_contact_method: profileData.preferred_contact_method,
+      next_review_date: profileData.next_review_date,
+      review_cycle: profileData.review_cycle,
+      preferred_work_location: profileData.preferred_work_location,
+      work_mode_preference: profileData.work_mode_preference,
+      total_work_experience_years: profileData.total_work_experience_years
+    };
     
     return res.status(200).json({
       success: true,
       message: 'Employee profile updated successfully',
-      data: updated[0]
+      data: mergedProfile
     });
   } catch (error) {
     console.error('Error updating employee profile:', error);
@@ -649,6 +971,835 @@ const uploadDocumentsToCloudinary = async (req, res) => {
   }
 };
 
+/**
+ * Upload profile photo to Cloudinary
+ */
+const uploadProfilePhoto = async (req, res) => {
+  try {
+    const { id } = req.params; // This is the employee ID (numeric or string)
+    const { image_base64 } = req.body;
+
+    if (!image_base64) {
+      return res.status(400).json({
+        success: false,
+        message: 'image_base64 is required'
+      });
+    }
+
+    // Upload to Cloudinary with optimizations
+    const result = await cloudinary.uploader.upload(image_base64, {
+      folder: `employee_profiles/${id}/photos`,
+      resource_type: 'auto',
+      quality: 'auto:good',
+      fetch_format: 'auto',
+      transformation: [
+        { width: 400, height: 400, crop: 'fill', gravity: 'face' },
+        { quality: 'auto:good', fetch_format: 'auto' }
+      ]
+    });
+
+    if (!result || !result.secure_url) {
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to upload profile photo to Cloudinary'
+      });
+    }
+
+    // First, check if employee exists in employee_onboarding
+    const [onboardingRows] = await pool.query(
+      'SELECT id FROM employee_onboarding WHERE id = ? OR employee_id = ?',
+      [id, id]
+    );
+
+    // Update profile_photo in employee_onboarding if found
+    let onboardingUpdated = false;
+    if (onboardingRows.length > 0) {
+      try {
+        const [onboardingUpdate] = await pool.query(
+          'UPDATE employee_onboarding SET profile_photo = ?, updated_at = NOW() WHERE id = ? OR employee_id = ?',
+          [result.secure_url, id, id]
+        );
+        onboardingUpdated = onboardingUpdate.affectedRows > 0;
+        console.log(`Updated employee_onboarding: ${onboardingUpdate.affectedRows} rows`);
+      } catch (err) {
+        console.warn('Error updating employee_onboarding:', err.message);
+      }
+    }
+
+    // Update or insert into employee_profiles
+    let profileUpdated = false;
+    try {
+      const [profileUpdate] = await pool.query(
+        'UPDATE employee_profiles SET profile_photo = ?, updated_at = NOW() WHERE employee_id = ? OR id = ?',
+        [result.secure_url, id, id]
+      );
+      
+      if (profileUpdate.affectedRows > 0) {
+        profileUpdated = true;
+        console.log(`Updated employee_profiles: ${profileUpdate.affectedRows} rows`);
+      } else {
+        // If no profile exists, create one with the profile_photo set
+        try {
+          const [insertResult] = await pool.query(
+            `INSERT INTO employee_profiles (employee_id, profile_photo, created_at, updated_at)
+             VALUES (?, ?, NOW(), NOW())`,
+            [id, result.secure_url]
+          );
+          profileUpdated = insertResult.affectedRows > 0;
+          console.log(`Inserted to employee_profiles: ${insertResult.affectedRows} rows`);
+        } catch (insertErr) {
+          console.warn('Error inserting to employee_profiles:', insertErr.message);
+        }
+      }
+    } catch (err) {
+      console.warn('Error updating employee_profiles:', err.message);
+    }
+
+    if (!onboardingUpdated && !profileUpdated) {
+      return res.status(404).json({
+        success: false,
+        message: 'Employee not found in profile tables'
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Profile photo uploaded successfully',
+      data: {
+        profile_photo_url: result.secure_url,
+        cloudinary_public_id: result.public_id,
+        width: result.width,
+        height: result.height,
+        size: result.bytes,
+        updated_tables: {
+          onboarding: onboardingUpdated,
+          profiles: profileUpdated
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Error uploading profile photo:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to upload profile photo',
+      error: error.message
+    });
+  }
+};
+
+const getEmployeeResources = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Same approach as getProfileSummary - get from employee_profiles (if exists)
+    let profiles = [];
+    try {
+      const [pRows] = await pool.query(
+        'SELECT * FROM employee_profiles WHERE employee_id = ? OR id = ?',
+        [id, id]
+      );
+      profiles = pRows;
+    } catch (err) {
+      if (err && err.code === 'ER_NO_SUCH_TABLE') {
+        console.warn('employee_profiles table missing, continuing without it');
+        profiles = [];
+      } else {
+        throw err;
+      }
+    }
+
+    let resourcesArray = [];
+
+    if (profiles && profiles.length > 0 && profiles[0].resources_json) {
+      try {
+        let parsed = JSON.parse(profiles[0].resources_json);
+        
+        // If the result is a string (double-escaped), parse again
+        if (typeof parsed === 'string') {
+          parsed = JSON.parse(parsed);
+        }
+        
+        // If it's still a string (triple-escaped), parse once more
+        if (typeof parsed === 'string') {
+          parsed = JSON.parse(parsed);
+        }
+        
+        let parsedArray = Array.isArray(parsed) ? parsed : [];
+        // Filter out empty objects / entries with no meaningful data
+        parsedArray = parsedArray.filter(item => item && Object.values(item).some(v => v !== null && v !== undefined && v !== '' && !(Array.isArray(v) && v.length === 0)));
+        
+        // Transform old format equipment list to display format
+        if (parsedArray.length > 0 && parsedArray[0].laptop !== undefined) {
+          // Old format detected - build display-friendly resources
+          resourcesArray = [];
+          const oldData = parsedArray[0];
+          
+          // List of equipment to check
+          const equipment = [
+            { field: 'laptop', label: 'Laptop', serial: oldData.laptop_serial },
+            { field: 'charger', label: 'Charger', serial: oldData.charger_serial },
+            { field: 'mouse', label: 'Mouse', serial: oldData.mouse_serial },
+            { field: 'keyboard', label: 'Keyboard', serial: oldData.keyboard_serial },
+            { field: 'monitor', label: 'Monitor', serial: oldData.monitor_serial },
+            { field: 'mobile', label: 'Mobile', serial: oldData.mobile_serial }
+          ];
+          
+          // Add allocated items
+          equipment.forEach((item, idx) => {
+            if (oldData[item.field]) {
+              resourcesArray.push({
+                id: idx + 1,
+                employee_id: oldData.employee_id || id,
+                resource_name: item.label,
+                title: item.label,
+                resource_serial: item.serial || 'N/A',
+                serial: item.serial || 'N/A',
+                allocated_date: oldData.allocated_date,
+                created_at: oldData.allocated_date,
+                issuedAt: oldData.allocated_date ? new Date(oldData.allocated_date).toISOString().split('T')[0] : null
+              });
+            }
+          });
+        } else {
+          resourcesArray = parsedArray;
+        }
+      } catch (parseErr) {
+        // Silently fail and return empty array
+        resourcesArray = [];
+      }
+    }
+
+    // If no resources in JSON, try employee_dynamic_resources table
+    if (resourcesArray.length === 0) {
+      const [dynamicResources] = await pool.query(
+        `SELECT id, employee_id, resource_name, resource_serial, created_at
+         FROM employee_dynamic_resources
+         WHERE employee_id = ? AND COALESCE(TRIM(resource_name), '') != ''`,
+        [id]
+      );
+      resourcesArray = (dynamicResources || []).filter(r => r && (r.resource_name || r.resource_serial));
+    }
+
+    const successMessage = resourcesArray.length === 0 ? 'No resources allocated' : 'Employee resources retrieved successfully';
+
+    return res.status(200).json({
+      success: true,
+      message: successMessage,
+      data: resourcesArray
+    });
+  } catch (error) {
+    console.error('Error fetching employee resources:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve employee resources',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Get employee skills (technical and soft) from skills_json field
+ * Supports both JSON storage and dedicated employee_skills table
+ */
+const getEmployeeSkills = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // First, try to get skills from employee_onboarding.skills_json
+    const [onboarding] = await pool.query(
+      'SELECT skills_json FROM employee_onboarding WHERE id = ? OR employee_id = ?',
+      [id, id]
+    );
+
+    let skillsData = {
+      technical: [],
+      soft: []
+    };
+
+    // If skills_json exists in onboarding, parse and use it
+    if (onboarding && onboarding.length > 0 && onboarding[0].skills_json) {
+      try {
+        let parsed = onboarding[0].skills_json;
+        
+        // Handle JSON string or already-parsed object
+        if (typeof parsed === 'string') {
+          parsed = JSON.parse(parsed);
+        }
+        
+        // Ensure we have the correct structure
+        skillsData = {
+          technical: Array.isArray(parsed?.technical) ? parsed.technical : [],
+          soft: Array.isArray(parsed?.soft) ? parsed.soft : []
+        };
+      } catch (parseErr) {
+        console.warn('Could not parse skills_json:', parseErr);
+        skillsData = { technical: [], soft: [] };
+      }
+    }
+
+    // If no skills found in JSON, try dedicated employee_skills table
+    if (skillsData.technical.length === 0 && skillsData.soft.length === 0) {
+      try {
+        const [dbSkills] = await pool.query(
+          `SELECT skill_name, skill_type FROM employee_skills 
+           WHERE employee_id = ? 
+           ORDER BY skill_type, skill_name`,
+          [id]
+        );
+
+        if (dbSkills && dbSkills.length > 0) {
+          dbSkills.forEach(skill => {
+            if (skill.skill_type === 'technical') {
+              skillsData.technical.push(skill.skill_name);
+            } else if (skill.skill_type === 'soft') {
+              skillsData.soft.push(skill.skill_name);
+            }
+          });
+        }
+      } catch (err) {
+        if (err && err.code === 'ER_NO_SUCH_TABLE') {
+          console.warn('employee_skills table missing, using JSON storage only');
+        } else {
+          throw err;
+        }
+      }
+    }
+
+    const successMessage = 
+      (skillsData.technical.length === 0 && skillsData.soft.length === 0) 
+        ? 'No skills added yet' 
+        : 'Employee skills retrieved successfully';
+
+    return res.status(200).json({
+      success: true,
+      message: successMessage,
+      data: skillsData
+    });
+  } catch (error) {
+    console.error('Error fetching employee skills:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve employee skills',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Get employee social links
+ */
+const getEmployeeSocialLinks = async (req, res) => {
+  try {
+    const { id } = req.params;
+    console.log(`\n📖 [Get Social Links] Employee ID: ${id}`);
+
+    // Try employee_social_links table first
+    try {
+      console.log(`📖 [Get Social Links] Querying employee_social_links table...`);
+      const [links] = await pool.query(
+        'SELECT platform, url, is_verified FROM employee_social_links WHERE employee_id = ?',
+        [id]
+      );
+
+      console.log(`📖 [Get Social Links] Found ${links.length} social links in table`);
+
+      if (links.length > 0) {
+        const socialLinks = {};
+        links.forEach(link => {
+          socialLinks[link.platform] = {
+            url: link.url,
+            is_verified: link.is_verified
+          };
+          console.log(`  ✓ ${link.platform}: ${link.url}`);
+        });
+
+        console.log(`✅ [Get Social Links] Returning ${links.length} links from table`);
+        return res.status(200).json({
+          success: true,
+          message: 'Employee social links retrieved successfully',
+          data: socialLinks
+        });
+      }
+      console.log(`⚠️ [Get Social Links] No links found in table, trying JSON fallback...`);
+    } catch (err) {
+      console.warn(`⚠️ [Get Social Links] Table error:`, err.message);
+      if (err && err.code !== 'ER_NO_SUCH_TABLE') {
+        throw err;
+      }
+    }
+
+    // Fallback to JSON column in employee_onboarding
+    console.log(`📋 [Get Social Links] Querying JSON column in employee_onboarding...`);
+    const [onboarding] = await pool.query(
+      'SELECT social_links_json FROM employee_onboarding WHERE id = ? OR employee_id = ?',
+      [id, id]
+    );
+
+    if (onboarding.length === 0) {
+      console.error(`❌ [Get Social Links] Employee not found - ID: ${id}`);
+      return res.status(404).json({
+        success: false,
+        message: 'Employee not found'
+      });
+    }
+
+    let socialLinks = {};
+    if (onboarding[0].social_links_json) {
+      try {
+        socialLinks = typeof onboarding[0].social_links_json === 'string'
+          ? JSON.parse(onboarding[0].social_links_json)
+          : onboarding[0].social_links_json;
+        console.log(`✅ [Get Social Links] Returning links from JSON:`, socialLinks);
+      } catch (e) {
+        console.warn('Failed to parse social_links_json:', e);
+      }
+    } else {
+      console.log(`📖 [Get Social Links] No JSON data found`);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Employee social links retrieved successfully',
+      data: socialLinks
+    });
+  } catch (error) {
+    console.error('❌ [Get Social Links] Error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve employee social links',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Get employee required documents
+ */
+const getEmployeeRequiredDocuments = async (req, res) => {
+  try {
+    const { id } = req.params;
+    console.log(`\n📖 [Get Documents] Employee ID: ${id}`);
+
+    // Try employee_required_documents table first
+    try {
+      console.log(`📖 [Get Documents] Querying employee_required_documents table...`);
+      const [documents] = await pool.query(
+        'SELECT id, document_type, document_name, document_url, status, expiry_date, uploaded_at FROM employee_required_documents WHERE employee_id = ?',
+        [id]
+      );
+
+      console.log(`📖 [Get Documents] Found ${documents.length} documents in table`);
+
+      if (documents.length > 0) {
+        documents.forEach(doc => {
+          console.log(`  ✓ ${doc.document_type}: ${doc.document_name} (${doc.status})`);
+        });
+        console.log(`✅ [Get Documents] Returning ${documents.length} documents from table`);
+        return res.status(200).json({
+          success: true,
+          message: 'Employee required documents retrieved successfully',
+          data: documents
+        });
+      }
+      console.log(`⚠️ [Get Documents] No documents found in table, trying JSON fallback...`);
+    } catch (err) {
+      console.warn(`⚠️ [Get Documents] Table error:`, err.message);
+      if (err && err.code !== 'ER_NO_SUCH_TABLE') {
+        throw err;
+      }
+    }
+
+    // Fallback to JSON column in employee_onboarding
+    console.log(`📋 [Get Documents] Querying JSON column in employee_onboarding...`);
+    const [onboarding] = await pool.query(
+      'SELECT required_documents_json FROM employee_onboarding WHERE id = ? OR employee_id = ?',
+      [id, id]
+    );
+
+    if (onboarding.length === 0) {
+      console.error(`❌ [Get Documents] Employee not found - ID: ${id}`);
+      return res.status(404).json({
+        success: false,
+        message: 'Employee not found'
+      });
+    }
+
+    let documents = [];
+    if (onboarding[0].required_documents_json) {
+      try {
+        documents = typeof onboarding[0].required_documents_json === 'string'
+          ? JSON.parse(onboarding[0].required_documents_json)
+          : onboarding[0].required_documents_json;
+        console.log(`✅ [Get Documents] Returning ${documents.length} documents from JSON`);
+      } catch (e) {
+        console.warn('Failed to parse required_documents_json:', e);
+      }
+    } else {
+      console.log(`📖 [Get Documents] No JSON data found`);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Employee required documents retrieved successfully',
+      data: documents
+    });
+  } catch (error) {
+    console.error('❌ [Get Documents] Error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve employee required documents',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Get employee achievements
+ */
+const getEmployeeAchievements = async (req, res) => {
+  try {
+    const { id } = req.params;
+    console.log(`\n📖 [Get Achievements] Employee ID: ${id}`);
+
+    // Try employee_achievements table first
+    try {
+      console.log(`📖 [Get Achievements] Querying employee_achievements table...`);
+      const [achievements] = await pool.query(
+        'SELECT id, achievement_type, title, description, issuer_organization, issue_date, expiry_date, credential_url, attachment_url, is_verified FROM employee_achievements WHERE employee_id = ?',
+        [id]
+      );
+
+      console.log(`📖 [Get Achievements] Found ${achievements.length} achievements in table`);
+
+      if (achievements.length > 0) {
+        achievements.forEach(ach => {
+          console.log(`  ✓ ${ach.achievement_type}: ${ach.title}`);
+        });
+        console.log(`✅ [Get Achievements] Returning ${achievements.length} achievements from table`);
+        return res.status(200).json({
+          success: true,
+          message: 'Employee achievements retrieved successfully',
+          data: achievements
+        });
+      }
+      console.log(`⚠️ [Get Achievements] No achievements found in table, trying JSON fallback...`);
+    } catch (err) {
+      console.warn(`⚠️ [Get Achievements] Table error:`, err.message);
+      if (err && err.code !== 'ER_NO_SUCH_TABLE') {
+        throw err;
+      }
+    }
+
+    // Fallback to JSON column in employee_onboarding
+    console.log(`📋 [Get Achievements] Querying JSON column in employee_onboarding...`);
+    const [onboarding] = await pool.query(
+      'SELECT achievements_json FROM employee_onboarding WHERE id = ? OR employee_id = ?',
+      [id, id]
+    );
+
+    if (onboarding.length === 0) {
+      console.error(`❌ [Get Achievements] Employee not found - ID: ${id}`);
+      return res.status(404).json({
+        success: false,
+        message: 'Employee not found'
+      });
+    }
+
+    let achievements = [];
+    if (onboarding[0].achievements_json) {
+      try {
+        achievements = typeof onboarding[0].achievements_json === 'string'
+          ? JSON.parse(onboarding[0].achievements_json)
+          : onboarding[0].achievements_json;
+        console.log(`✅ [Get Achievements] Returning ${achievements.length} achievements from JSON`);
+      } catch (e) {
+        console.warn('Failed to parse achievements_json:', e);
+      }
+    } else {
+      console.log(`📖 [Get Achievements] No JSON data found`);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Employee achievements retrieved successfully',
+      data: achievements
+    });
+  } catch (error) {
+    console.error('❌ [Get Achievements] Error:', error);
+    console.error('Error fetching employee achievements:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve employee achievements',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Update employee social links
+ */
+const updateEmployeeSocialLinks = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { socialLinks } = req.body;
+
+    console.log(`\n📝 [Social Links Update] Employee ID: ${id}`);
+    console.log(`📝 [Social Links Update] Received Data:`, JSON.stringify(socialLinks, null, 2));
+
+    if (!socialLinks) {
+      console.error('❌ [Social Links Update] Missing socialLinks in request body');
+      return res.status(400).json({
+        success: false,
+        message: 'Social links data is required'
+      });
+    }
+
+    // Try updating in employee_social_links table first
+    try {
+      console.log(`🔄 [Social Links Update] Attempting to update employee_social_links table...`);
+      
+      // Delete old entries
+      const [deleteResult] = await pool.query('DELETE FROM employee_social_links WHERE employee_id = ?', [id]);
+      console.log(`🗑️  [Social Links Update] Deleted ${deleteResult.affectedRows} old entries`);
+
+      // Insert new entries
+      let insertCount = 0;
+      for (const [platform, data] of Object.entries(socialLinks)) {
+        const url = data?.url || data;
+        if (url && typeof url === 'string' && url.trim()) {
+          console.log(`➕ [Social Links Update] Inserting ${platform}: ${url}`);
+          await pool.query(
+            'INSERT INTO employee_social_links (employee_id, platform, url, is_verified) VALUES (?, ?, ?, ?)',
+            [id, platform, url, data.is_verified || 0]
+          );
+          insertCount++;
+        }
+      }
+      console.log(`✅ [Social Links Update] Successfully inserted ${insertCount} social links`);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Social links updated successfully',
+        data: socialLinks
+      });
+    } catch (err) {
+      console.warn(`⚠️  [Social Links Update] employee_social_links table error:`, err.message);
+      if (err && err.code !== 'ER_NO_SUCH_TABLE') {
+        throw err;
+      }
+      console.log(`📋 [Social Links Update] Falling back to JSON storage in employee_onboarding...`);
+    }
+
+    // Fallback to JSON column in employee_onboarding
+    const socialLinksJson = JSON.stringify(socialLinks);
+    console.log(`💾 [Social Links Update] Storing as JSON in employee_onboarding:`, socialLinksJson);
+    
+    const [result] = await pool.query(
+      'UPDATE employee_onboarding SET social_links_json = ? WHERE id = ? OR employee_id = ?',
+      [socialLinksJson, id, id]
+    );
+
+    console.log(`✅ [Social Links Update] Updated ${result.affectedRows} rows in employee_onboarding`);
+
+    if (result.affectedRows === 0) {
+      console.error(`❌ [Social Links Update] Employee not found - ID: ${id}`);
+      return res.status(404).json({
+        success: false,
+        message: 'Employee not found'
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Social links updated successfully',
+      data: socialLinks
+    });
+  } catch (error) {
+    console.error('❌ [Social Links Update] Error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to update social links',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Update employee required documents
+ */
+const updateEmployeeRequiredDocuments = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { requiredDocuments } = req.body;
+
+    console.log(`\n📄 [Required Documents Update] Employee ID: ${id}`);
+    console.log(`📄 [Required Documents Update] Received Data:`, JSON.stringify(requiredDocuments, null, 2));
+
+    if (!Array.isArray(requiredDocuments)) {
+      console.error('❌ [Required Documents Update] requiredDocuments is not an array');
+      return res.status(400).json({
+        success: false,
+        message: 'Required documents must be an array'
+      });
+    }
+
+    console.log(`📄 [Required Documents Update] Total documents to process: ${requiredDocuments.length}`);
+
+    // Try updating in employee_required_documents table first
+    try {
+      console.log(`🔄 [Required Documents Update] Attempting to update employee_required_documents table...`);
+      
+      // Delete old entries
+      const [deleteResult] = await pool.query('DELETE FROM employee_required_documents WHERE employee_id = ?', [id]);
+      console.log(`🗑️  [Required Documents Update] Deleted ${deleteResult.affectedRows} old entries`);
+
+      // Insert new entries
+      let insertCount = 0;
+      for (const doc of requiredDocuments) {
+        console.log(`➕ [Required Documents Update] Inserting:`, doc);
+        await pool.query(
+          'INSERT INTO employee_required_documents (employee_id, document_type, document_name, document_url, status, expiry_date) VALUES (?, ?, ?, ?, ?, ?)',
+          [id, doc.document_type || doc.type, doc.document_name || doc.name, doc.document_url || doc.url, doc.status || 'pending', doc.expiry_date || null]
+        );
+        insertCount++;
+      }
+      console.log(`✅ [Required Documents Update] Successfully inserted ${insertCount} documents`);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Required documents updated successfully',
+        data: requiredDocuments
+      });
+    } catch (err) {
+      console.warn(`⚠️  [Required Documents Update] employee_required_documents table error:`, err.message);
+      if (err && err.code !== 'ER_NO_SUCH_TABLE') {
+        throw err;
+      }
+      console.log(`📋 [Required Documents Update] Falling back to JSON storage in employee_onboarding...`);
+    }
+
+    // Fallback to JSON column in employee_onboarding
+    const docsJson = JSON.stringify(requiredDocuments);
+    console.log(`💾 [Required Documents Update] Storing as JSON in employee_onboarding`);
+    
+    const [result] = await pool.query(
+      'UPDATE employee_onboarding SET required_documents_json = ? WHERE id = ? OR employee_id = ?',
+      [docsJson, id, id]
+    );
+
+    console.log(`✅ [Required Documents Update] Updated ${result.affectedRows} rows in employee_onboarding`);
+
+    if (result.affectedRows === 0) {
+      console.error(`❌ [Required Documents Update] Employee not found - ID: ${id}`);
+      return res.status(404).json({
+        success: false,
+        message: 'Employee not found'
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Required documents updated successfully',
+      data: requiredDocuments
+    });
+  } catch (error) {
+    console.error('❌ [Required Documents Update] Error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to update required documents',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Update employee achievements
+ */
+const updateEmployeeAchievements = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { achievements } = req.body;
+
+    console.log(`\n🏆 [Achievements Update] Employee ID: ${id}`);
+    console.log(`🏆 [Achievements Update] Received Data:`, JSON.stringify(achievements, null, 2));
+
+    if (!Array.isArray(achievements)) {
+      console.error('❌ [Achievements Update] achievements is not an array');
+      return res.status(400).json({
+        success: false,
+        message: 'Achievements must be an array'
+      });
+    }
+
+    console.log(`🏆 [Achievements Update] Total achievements to process: ${achievements.length}`);
+
+    // Try updating in employee_achievements table first
+    try {
+      console.log(`🔄 [Achievements Update] Attempting to update employee_achievements table...`);
+      
+      // Delete old entries
+      const [deleteResult] = await pool.query('DELETE FROM employee_achievements WHERE employee_id = ?', [id]);
+      console.log(`🗑️  [Achievements Update] Deleted ${deleteResult.affectedRows} old entries`);
+
+      // Insert new entries
+      let insertCount = 0;
+      for (const ach of achievements) {
+        console.log(`➕ [Achievements Update] Inserting:`, ach);
+        await pool.query(
+          'INSERT INTO employee_achievements (employee_id, achievement_type, title, description, issuer_organization, issue_date, expiry_date, credential_url, attachment_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          [id, ach.achievement_type || 'award', ach.title, ach.description || null, ach.issuer_organization || null, ach.issue_date || null, ach.expiry_date || null, ach.credential_url || null, ach.attachment_url || null]
+        );
+        insertCount++;
+      }
+      console.log(`✅ [Achievements Update] Successfully inserted ${insertCount} achievements`);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Achievements updated successfully',
+        data: achievements
+      });
+    } catch (err) {
+      console.warn(`⚠️  [Achievements Update] employee_achievements table error:`, err.message);
+      if (err && err.code !== 'ER_NO_SUCH_TABLE') {
+        throw err;
+      }
+      console.log(`📋 [Achievements Update] Falling back to JSON storage in employee_onboarding...`);
+    }
+
+    // Fallback to JSON column in employee_onboarding
+    const achJson = JSON.stringify(achievements);
+    console.log(`💾 [Achievements Update] Storing as JSON in employee_onboarding`);
+    
+    const [result] = await pool.query(
+      'UPDATE employee_onboarding SET achievements_json = ? WHERE id = ? OR employee_id = ?',
+      [achJson, id, id]
+    );
+
+    console.log(`✅ [Achievements Update] Updated ${result.affectedRows} rows in employee_onboarding`);
+
+    if (result.affectedRows === 0) {
+      console.error(`❌ [Achievements Update] Employee not found - ID: ${id}`);
+      return res.status(404).json({
+        success: false,
+        message: 'Employee not found'
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Achievements updated successfully',
+      data: achievements
+    });
+  } catch (error) {
+    console.error('❌ [Achievements Update] Error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to update achievements',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   getEmployeeProfile,
   getProfileSummary,
@@ -662,5 +1813,14 @@ module.exports = {
   updateResources,
   deleteEmployeeProfile,
   uploadBannerImage,
-  uploadDocumentsToCloudinary
+  uploadDocumentsToCloudinary,
+  uploadProfilePhoto,
+  getEmployeeResources,
+  getEmployeeSkills,
+  getEmployeeSocialLinks,
+  getEmployeeRequiredDocuments,
+  getEmployeeAchievements,
+  updateEmployeeSocialLinks,
+  updateEmployeeRequiredDocuments,
+  updateEmployeeAchievements
 };
