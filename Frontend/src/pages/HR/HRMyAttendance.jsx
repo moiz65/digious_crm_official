@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import HrSidebar from '../../components/HrSidebar';
 import { DashboardHeader } from '../../components/DashboardComponents';
+import HrSidebar from '../../components/HrSidebar';
 import { useAuth } from '../../context/AuthContext';
 import { endpoints } from '../../config/api';
 import { getPakistanDate } from '../../utils/timezone';
@@ -9,10 +9,15 @@ import {
   Clock,
   LogIn,
   LogOut,
+  User,
+  Activity,
   AlertCircle,
+  Timer,
+  PauseCircle,
+  Utensils,
+  Cigarette,
   Table,
-  Shield,
-  PauseCircle
+  Shield
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -30,12 +35,14 @@ import {
 const HRMyAttendance = () => {
   const { user, role } = useAuth();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [activeItem, setActiveItem] = useState('my-attendance');
+  const [sidebarActiveItem, setSidebarActiveItem] = useState('attendance');
   const [activeTab, setActiveTab] = useState('dashboard'); // dashboard or sheet
   const [currentTime, setCurrentTime] = useState(new Date());
   const [attendanceData, setAttendanceData] = useState(null);
   const [monthlyAttendance, setMonthlyAttendance] = useState([]);
   const [isCheckedIn, setIsCheckedIn] = useState(false);
+  const [activeBreaks, setActiveBreaks] = useState([]);
+  const [breakTimers, setBreakTimers] = useState({}); // Track elapsed time for each break
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('All Status'); // Filter for status
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
@@ -55,6 +62,7 @@ const HRMyAttendance = () => {
   useEffect(() => {
     console.log('🔍 HRMyAttendance mounted with user:', user);
     fetchTodayAttendance();
+    fetchActiveBreaks();
     fetchMonthlyAttendance();
   }, []);
 
@@ -64,6 +72,46 @@ const HRMyAttendance = () => {
     fetchMonthlyAttendance();
   }, [selectedMonth, selectedYear]);
 
+  // Update break timers every second
+  useEffect(() => {
+    if (activeBreaks.length === 0) return;
+
+    const timerInterval = setInterval(() => {
+      const newTimers = {};
+      activeBreaks.forEach(breakItem => {
+        if (breakItem.break_start_time) {
+          const [startHour, startMin, startSec] = breakItem.break_start_time.split(':').map(Number);
+          const now = new Date();
+          const currentHour = now.getHours();
+          const currentMin = now.getMinutes();
+          const currentSec = now.getSeconds();
+          
+          const startTotalSeconds = (startHour * 3600) + (startMin * 60) + (startSec || 0);
+          const nowTotalSeconds = (currentHour * 3600) + (currentMin * 60) + currentSec;
+          
+          let elapsedSeconds = nowTotalSeconds - startTotalSeconds;
+          if (elapsedSeconds < 0) elapsedSeconds += 24 * 3600; // Handle midnight wraparound
+          
+          newTimers[breakItem.id] = elapsedSeconds;
+        }
+      });
+      setBreakTimers(newTimers);
+    }, 1000);
+
+    return () => clearInterval(timerInterval);
+  }, [activeBreaks]);
+
+  // Format elapsed time as MM:SS or H:MM:SS
+  const formatElapsedTime = (seconds) => {
+    if (!seconds) return '0:00';
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    if (hours > 0) {
+      return `${hours}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
+    return `${minutes}:${String(secs).padStart(2, '0')}`;
+  };
 
   // Reset pagination when status filter changes
   useEffect(() => {
@@ -154,7 +202,28 @@ const HRMyAttendance = () => {
     }
   };
 
+  const fetchActiveBreaks = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const employeeId = getEmployeeId();
+      
+      if (!employeeId) return;
 
+      const response = await fetch(endpoints.attendance.ongoingBreaks(employeeId), {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setActiveBreaks(data.data || []);
+      }
+    } catch (error) {
+      console.error('Error fetching active breaks:', error);
+    }
+  };
 
   const handleCheckIn = async () => {
     try {
@@ -219,7 +288,92 @@ const HRMyAttendance = () => {
     }
   };
 
+  const handleBreakStart = async (breakType) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(endpoints.attendance.breakStart, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          employee_id: getEmployeeId(),
+          break_type: breakType,
+          reason: `${breakType.charAt(0).toUpperCase() + breakType.slice(1)} break`
+        })
+      });
 
+      const data = await response.json();
+      if (data.success) {
+        fetchActiveBreaks();
+      } else {
+        alert(data.message || 'Failed to start break');
+      }
+    } catch (error) {
+      console.error('Start break error:', error);
+      alert('Failed to start break');
+    }
+  };
+
+  const handleBreakEnd = async (breakId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const employeeId = getEmployeeId();
+      
+      // Find the break details from activeBreaks
+      const breakRecord = activeBreaks.find(b => b.id === breakId);
+      if (!breakRecord) {
+        alert('Break record not found');
+        return;
+      }
+
+      // Calculate duration from start time to now
+      // Parse times correctly: HH:MM:SS format
+      const [startHour, startMin, startSec] = breakRecord.break_start_time.split(':').map(Number);
+      const now = new Date();
+      const currentHour = now.getHours();
+      const currentMin = now.getMinutes();
+      const currentSec = now.getSeconds();
+      
+      // Convert both to total minutes since midnight for accurate calculation
+      const startTotalSeconds = (startHour * 3600) + (startMin * 60) + (startSec || 0);
+      const nowTotalSeconds = (currentHour * 3600) + (currentMin * 60) + currentSec;
+      
+      // Calculate duration in minutes (handle midnight crossing)
+      let durationSeconds = nowTotalSeconds - startTotalSeconds;
+      if (durationSeconds < 0) {
+        // Break started before midnight, ended after - add 24 hours
+        durationSeconds += (24 * 3600);
+      }
+      const duration = Math.max(0, Math.floor(durationSeconds / 60));
+
+      const response = await fetch(endpoints.attendance.breakEnd, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          employee_id: employeeId,
+          break_type: breakRecord.break_type,
+          break_end_time: now.toTimeString().split(' ')[0],
+          break_duration_minutes: duration
+        })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        fetchActiveBreaks();
+        fetchTodayAttendance();
+      } else {
+        alert(data.message || 'Failed to end break');
+      }
+    } catch (error) {
+      console.error('End break error:', error);
+      alert('Failed to end break');
+    }
+  };
 
   const getWorkingHours = () => {
     if (!attendanceData?.check_in_time) return '0h 0m';
@@ -339,6 +493,44 @@ const HRMyAttendance = () => {
     }));
   };
 
+  const getMonthlyStats = () => {
+    if (monthlyAttendance.length === 0) {
+      return {
+        totalHours: 0,
+        averageHours: 0,
+        maxHours: 0,
+        minHours: 0,
+        workDays: 0,
+        totalBreakTime: 0
+      };
+    }
+
+    const totalMinutes = monthlyAttendance.reduce((sum, record) => sum + (record.net_working_time_minutes || 0), 0);
+    const totalBreakMinutes = monthlyAttendance.reduce((sum, record) => sum + (record.total_break_duration_minutes || 0), 0);
+    const workDays = monthlyAttendance.filter(r => r.status === 'Present' || r.status === 'Late').length;
+    const hours = monthlyAttendance.map(r => (r.net_working_time_minutes || 0) / 60);
+    
+    return {
+      totalHours: Math.floor(totalMinutes / 60),
+      totalMinutes: totalMinutes % 60,
+      averageHours: workDays > 0 ? Math.floor(totalMinutes / workDays / 60) : 0,
+      averageMinutes: workDays > 0 ? (totalMinutes / workDays) % 60 : 0,
+      maxHours: Math.floor(Math.max(...hours, 0)),
+      minHours: hours.length > 0 ? Math.floor(Math.min(...hours.filter(h => h > 0), Infinity)) : 0,
+      workDays: workDays,
+      totalBreakMinutes: totalBreakMinutes
+    };
+  };
+
+  const getMonthlyData = () => {
+    return monthlyAttendance.map(record => ({
+      date: new Date(record.attendance_date).getDate(),
+      hours: Math.floor((record.net_working_time_minutes || 0) / 60),
+      minutes: (record.net_working_time_minutes || 0) % 60,
+      status: record.status
+    })).sort((a, b) => a.date - b.date);
+  };
+
   // Format minutes to "Xh Ym" format (e.g., 120 minutes -> "2h 0m", 90 -> "1h 30m", 45 -> "45m")
   const formatTimeDisplay = (minutes) => {
     if (!minutes || minutes === 0) return '0m';
@@ -349,23 +541,27 @@ const HRMyAttendance = () => {
     return `${hours}h ${mins}m`;
   };
 
-  // Breaks removed from HR view — no break types needed here.
+  const breakTypes = [
+    { type: 'Smoke', label: 'Smoke Break', icon: Cigarette, color: 'bg-gray-500', duration: 5 },
+    { type: 'Dinner', label: 'Dinner Break', icon: Utensils, color: 'bg-orange-500', duration: 60 },
+    { type: 'Washroom', label: 'Washroom Break', icon: User, color: 'bg-blue-500', duration: 10 },
+    { type: 'Prayer', label: 'Prayer Break', icon: Activity, color: 'bg-purple-500', duration: 10 }
+  ];
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-cyan-50">
+      {/* Sidebar */}
       <HrSidebar 
         isCollapsed={isSidebarCollapsed}
         setIsCollapsed={setIsSidebarCollapsed}
-        activeItem={activeItem}
-        setActiveItem={setActiveItem}
+        activeItem={sidebarActiveItem}
+        setActiveItem={setSidebarActiveItem}
       />
-      
+
       <div className="flex-1 flex flex-col overflow-hidden">
         <DashboardHeader 
           title="My Attendance Dashboard"
           subtitle="Manage your daily attendance and working hours"
-          isSidebarCollapsed={isSidebarCollapsed}
-          setIsSidebarCollapsed={setIsSidebarCollapsed}
           role={role}
           currentTime={currentTime}
         />
@@ -578,7 +774,124 @@ const HRMyAttendance = () => {
               </div>
             </div>
 
+            {/* Break Management */}
+            <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-200">
+              <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                <PauseCircle className="w-6 h-6 text-purple-600" />
+                Break Management
+              </h2>
+              
+              {/* Break Type Cards Grid */}
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                {breakTypes.map((breakType) => {
+                  const Icon = breakType.icon;
+                  const isActive = activeBreaks.some(b => b.break_type === breakType.type);
+                  
+                  return (
+                    <button
+                      key={breakType.type}
+                      onClick={() => handleBreakStart(breakType.type)}
+                      disabled={!isCheckedIn || isActive || attendanceData?.check_out_time}
+                      className={`p-5 rounded-xl text-center transition-all duration-300 border ${
+                        !isCheckedIn || isActive || attendanceData?.check_out_time
+                          ? 'bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed'
+                          : 'bg-white border-gray-200 hover:border-purple-300 hover:shadow-md text-gray-900'
+                      }`}
+                    >
+                      <Icon className="w-6 h-6 mx-auto mb-2 opacity-70" />
+                      <div className="text-sm font-semibold">{breakType.label}</div>
+                      <div className="text-xs text-gray-500 mt-1">{breakType.duration}m</div>
+                    </button>
+                  );
+                })}
+              </div>
 
+              {/* Active Breaks Alert */}
+              {activeBreaks.length > 0 && (
+                <div className="mb-6 bg-amber-50 border border-amber-200 rounded-lg p-4">
+                  <h3 className="text-sm font-semibold text-amber-900 mb-3 flex items-center gap-2">
+                    <Timer className="w-4 h-4" />
+                    Active Breaks
+                  </h3>
+                  <div className="space-y-2">
+                    {activeBreaks.map((breakItem) => (
+                      <div key={breakItem.id} className="flex items-center justify-between bg-white rounded-lg p-3 border border-amber-100">
+                        <div className="flex-1">
+                          <span className="text-sm font-medium text-gray-700">
+                            {breakItem.break_type.charAt(0).toUpperCase() + breakItem.break_type.slice(1)} Break
+                          </span>
+                          <div className="mt-1 flex items-center gap-2">
+                            <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                              <div 
+                                className="h-full bg-gradient-to-r from-amber-400 to-amber-500 transition-all"
+                                style={{
+                                  width: `${Math.min(100, (breakTimers[breakItem.id] || 0) / (breakItem.break_type === 'Dinner' ? 60 : breakItem.break_type === 'Smoke' ? 5 : 10) * 100)}%`
+                                }}
+                              />
+                            </div>
+                            <span className="text-xs font-mono font-bold text-amber-700 min-w-[50px]">
+                              {formatElapsedTime(breakTimers[breakItem.id] || 0)}
+                            </span>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleBreakEnd(breakItem.id)}
+                          className="ml-3 text-xs bg-red-500 text-white px-3 py-1 rounded-full hover:bg-red-600 transition-colors whitespace-nowrap"
+                        >
+                          End Break
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Today's Break Summary */}
+              {attendanceData && (
+                <div className="pt-6 border-t border-gray-200">
+                  <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-4">Today's Breaks</h3>
+                  
+                  {/* Main Stats */}
+                  <div className="space-y-3 mb-4">
+                    <div className="flex justify-between items-center">
+                      <p className="text-gray-700 font-medium">Total Breaks:</p>
+                      <p className="text-2xl font-bold text-purple-600">{attendanceData.total_breaks_taken || 0}</p>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <p className="text-gray-700 font-medium">Total Time:</p>
+                      <p className="text-2xl font-bold text-purple-600">{formatTimeDisplay(attendanceData.total_break_duration_minutes || 0)}</p>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <p className="text-gray-700 font-medium">Active:</p>
+                      <p className="text-2xl font-bold text-purple-600">{activeBreaks.length}</p>
+                    </div>
+                  </div>
+                  
+                  {/* Break Details by Type - Always Show */}
+                  <div className="pt-4 border-t border-purple-200">
+                    <h4 className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-3">Break Details</h4>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div className="flex justify-between items-center bg-gray-50 p-2 rounded">
+                        <span className="text-gray-700">Smoke Break:</span>
+                        <span className="font-semibold text-purple-600">0x</span>
+                      </div>
+                      <div className="flex justify-between items-center bg-gray-50 p-2 rounded">
+                        <span className="text-gray-700">Dinner Break:</span>
+                        <span className="font-semibold text-purple-600">0x</span>
+                      </div>
+                      <div className="flex justify-between items-center bg-gray-50 p-2 rounded">
+                        <span className="text-gray-700">Washroom Break:</span>
+                        <span className="font-semibold text-purple-600">0x</span>
+                      </div>
+                      <div className="flex justify-between items-center bg-gray-50 p-2 rounded">
+                        <span className="text-gray-700">Prayer Break:</span>
+                        <span className="font-semibold text-purple-600">0x</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Charts Section */}
@@ -621,6 +934,7 @@ const HRMyAttendance = () => {
               </ResponsiveContainer>
             </div>
           </div>
+
         </>
           )}
 
@@ -699,34 +1013,70 @@ const HRMyAttendance = () => {
                 </div>
               </div>
 
-              {/* Quick Stats Grid */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-white rounded-lg p-4 shadow border-l-4 border-[#349DFF]">
-                  <p className="text-gray-600 text-xs font-semibold uppercase">Total</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">{monthlyAttendance.length}</p>
-                </div>
+              {/* Monthly Statistics Section */}
+              <div className="mt-8">
+                <h3 className="text-2xl font-bold text-gray-900 mb-6">Monthly Overview</h3>
                 
-                <div className="bg-white rounded-lg p-4 shadow border-l-4 border-green-600">
-                  <p className="text-gray-600 text-xs font-semibold uppercase">Present</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">
-                    {monthlyAttendance.filter(r => r.status === 'Present').length}
-                  </p>
+                {/* Monthly Stats Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                  {/* Total Working Hours */}
+                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-2xl p-6">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-sm font-medium text-blue-800">Total Hours</h4>
+                      <Clock className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <p className="text-3xl font-bold text-blue-600">{getMonthlyStats().totalHours}h {getMonthlyStats().totalMinutes}m</p>
+                    <p className="text-xs text-blue-600 mt-1">total this month</p>
+                  </div>
+
+                  {/* Average Daily Hours */}
+                  <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-2xl p-6">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-sm font-medium text-purple-800">Average Daily</h4>
+                      <Activity className="w-5 h-5 text-purple-600" />
+                    </div>
+                    <p className="text-3xl font-bold text-purple-600">{getMonthlyStats().averageHours}h {Math.round(getMonthlyStats().averageMinutes)}m</p>
+                    <p className="text-xs text-purple-600 mt-1">per work day</p>
+                  </div>
+
+                  {/* Work Days */}
+                  <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-2xl p-6">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-sm font-medium text-green-800">Work Days</h4>
+                      <CheckCircle className="w-5 h-5 text-green-600" />
+                    </div>
+                    <p className="text-3xl font-bold text-green-600">{getMonthlyStats().workDays}</p>
+                    <p className="text-xs text-green-600 mt-1">days present/late</p>
+                  </div>
+
+                  {/* Total Break Time */}
+                  <div className="bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 rounded-2xl p-6">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-sm font-medium text-orange-800">Break Time</h4>
+                      <PauseCircle className="w-5 h-5 text-orange-600" />
+                    </div>
+                    <p className="text-3xl font-bold text-orange-600">{Math.floor(getMonthlyStats().totalBreakMinutes / 60)}h {getMonthlyStats().totalBreakMinutes % 60}m</p>
+                    <p className="text-xs text-orange-600 mt-1">total break time</p>
+                  </div>
                 </div>
-                
-                <div className="bg-white rounded-lg p-4 shadow border-l-4 border-orange-600">
-                  <p className="text-gray-600 text-xs font-semibold uppercase">Late</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">
-                    {monthlyAttendance.filter(r => r.status === 'Late').length}
-                  </p>
-                </div>
-                
-                <div className="bg-white rounded-lg p-4 shadow border-l-4 border-red-600">
-                  <p className="text-gray-600 text-xs font-semibold uppercase">Absent</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">
-                    {monthlyAttendance.filter(r => r.status === 'Absent').length}
-                  </p>
-                </div>
+
+                {/* Monthly Working Hours Chart */}
+                {monthlyAttendance.length > 0 && (
+                  <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
+                    <h3 className="text-lg font-bold text-gray-900 mb-4">Daily Working Hours - {selectedMonth} {selectedYear}</h3>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={getMonthlyData()}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="date" />
+                        <YAxis />
+                        <Tooltip formatter={(value) => `${value}h`} labelFormatter={(label) => `Day ${label}`} />
+                        <Bar dataKey="hours" fill="#3b82f6" radius={[8, 8, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
               </div>
+
 
               {/* Filter Buttons */}
               <div className="space-y-3">
@@ -839,11 +1189,25 @@ const HRMyAttendance = () => {
                                 day: 'numeric'
                               })}
                             </td>
-                            <td className="px-4 py-3 text-sm text-gray-700">
-                              {record.check_in_time || '-'}
+                            <td className="px-4 py-3 text-sm">
+                              {record.check_in_time ? (
+                                <div className="flex items-center gap-2">
+                                  <LogIn className="w-4 h-4 text-green-600" />
+                                  <span className="font-mono font-semibold text-green-700">{record.check_in_time}</span>
+                                </div>
+                              ) : (
+                                <span className="text-gray-400">-</span>
+                              )}
                             </td>
-                            <td className="px-4 py-3 text-sm text-gray-700">
-                              {record.check_out_time || '-'}
+                            <td className="px-4 py-3 text-sm">
+                              {record.check_out_time ? (
+                                <div className="flex items-center gap-2">
+                                  <LogOut className="w-4 h-4 text-red-600" />
+                                  <span className="font-mono font-semibold text-red-700">{record.check_out_time}</span>
+                                </div>
+                              ) : (
+                                <span className="text-gray-400">-</span>
+                              )}
                             </td>
                             <td className="px-4 py-3 text-sm">
                               <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
@@ -940,5 +1304,4 @@ const HRMyAttendance = () => {
 };
 
 export default HRMyAttendance;
-
 

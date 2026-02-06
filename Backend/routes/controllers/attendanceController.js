@@ -4,6 +4,7 @@ const {
   getPakistanDateString,
   getPakistanTimeString,
   getPakistanYesterday,
+  getPakistanYesterdayString,
   getUTCTimeString,
 } = require("../../utils/timezone");
 
@@ -165,14 +166,9 @@ exports.checkIn = async (req, res) => {
     // Priority: JWT employeeId (employee_onboarding.id) > request employee_id > fallback to jwtUserId
     let employee_id = jwtEmployeeId || reqEmployeeId || jwtUserId;
 
-    console.log("📥 Check-in request received:");
-    console.log("   - JWT employeeId (onboarding ID):", jwtEmployeeId);
-    console.log("   - JWT userId (user_as_employees.id):", jwtUserId);
-    console.log("   - Request employee_id:", reqEmployeeId);
-    console.log("   - Using employee_id:", employee_id);
-    console.log("   - email:", email);
-    console.log("   - name:", name);
-    console.log("   - Full body:", req.body);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`📥 Check-in request: endpoint=/check-in employee=${employee_id} jwtEmployeeId=${jwtEmployeeId || 'none'} jwtUserId=${jwtUserId || 'none'} emailPresent=${!!email} name=${name || 'N/A'}`);
+    }
 
     if (!employee_id || !email || !name) {
       return res.status(400).json({
@@ -1094,16 +1090,15 @@ exports.recordBreakEnd = async (req, res) => {
 
     const { break_type, break_end_time, break_duration_minutes } = req.body;
 
-    // Calculate attendance_date using same night shift logic
+    // Calculate attendance_date using Pakistan timezone night-shift logic
     const now = getPakistanDate();
-    const checkInHour = now.getHours();
+    const checkInHour = now.getUTCHours();
     let attendanceDate;
     if (checkInHour >= 0 && checkInHour < 6) {
-      // Early morning (00:00-05:59) - belongs to yesterday's shift
-      const yesterday = getPakistanYesterday();
-      attendanceDate = getLocalDateString(yesterday);
+      // Early morning (00:00-05:59 PKT) - belongs to yesterday's shift
+      attendanceDate = getPakistanYesterdayString();
     } else {
-      // Evening/normal hours - use today
+      // Evening/normal hours - use today (PKT)
       attendanceDate = getPakistanDateString();
     }
 
@@ -1286,18 +1281,16 @@ exports.recordBreakProgress = async (req, res) => {
 
     const { break_type, current_time, current_duration_minutes } = req.body;
 
-    // Calculate attendance_date using same night shift logic
-    const now = new Date();
-    const checkInHour = now.getHours();
+    // Calculate attendance_date using Pakistan timezone night-shift logic
+    const now = getPakistanDate();
+    const checkInHour = now.getUTCHours();
     let attendanceDate;
     if (checkInHour >= 0 && checkInHour < 6) {
-      // Early morning (00:00-05:59) - belongs to yesterday's shift
-      const yesterday = new Date(now);
-      yesterday.setDate(yesterday.getDate() - 1);
-      attendanceDate = getLocalDateString(yesterday);
+      // Early morning (00:00-05:59 PKT) - belongs to yesterday's shift
+      attendanceDate = getPakistanYesterdayString();
     } else {
-      // Evening/normal hours - use today
-      attendanceDate = getLocalDateString(now);
+      // Evening/normal hours - use today (PKT)
+      attendanceDate = getPakistanDateString();
     }
 
     console.log("⏸️ Auto-save break progress request received:");
@@ -1575,11 +1568,9 @@ exports.getTodayBreaks = async (req, res) => {
       attendanceDate = getLocalDateString(now);
     }
 
-    console.log("📋 Get today's breaks request received:");
-    console.log("   - JWT employeeId:", jwtEmployeeId);
-    console.log("   - Params employee_id:", reqEmployeeId);
-    console.log("   - Using employee_id:", employee_id);
-    console.log("   - Calculated attendance_date:", attendanceDate);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`📋 GetToday'sBreaks: employee=${employee_id} attendance_date=${attendanceDate} sourceParam=${reqEmployeeId || 'none'} jwtEmployeeId=${jwtEmployeeId || 'none'}`);
+    }
 
     if (!employee_id) {
       return res.status(400).json({
@@ -1890,14 +1881,12 @@ exports.getTodayAttendance = async (req, res) => {
     } else {
       // Normal hours - look for today's shift
       searchDate = getPakistanDateString(); // Use Pakistan date function
-      console.log(
-        `📅 getTodayAttendance [NORMAL HOURS] - Searching TODAY's date: ${searchDate}`,
-      );
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`📅 getTodayAttendance: employee=${employee_id} searchDate=${searchDate}`);
+      }
     }
 
-    console.log(
-      `📅 getTodayAttendance - Looking for employee_id: ${employee_id}, date: ${searchDate}`,
-    );
+
 
     const connection = await pool.getConnection();
 
@@ -1935,7 +1924,9 @@ exports.getTodayAttendance = async (req, res) => {
       // attempt to find a pending (no check_out_time) record from the previous day (night shift continuation).
       let record;
       if (attendance.length === 0) {
-        console.log(`⚠️ No attendance record found for finalEmployeeId: ${finalEmployeeId} on date: ${searchDate}`);
+        if (process.env.NODE_ENV === 'development') {
+          console.debug(`No attendance for id=${finalEmployeeId} date=${searchDate}`);
+        }
 
         const now = getPakistanDate();
         const currentHour = now.getUTCHours();
@@ -2183,7 +2174,7 @@ exports.getAllAttendance = async (req, res) => {
           eo.address,
           eo.join_date
 
-        FROM employee_attendance ea
+        FROM Employee_Attendance ea
         LEFT JOIN employee_onboarding eo ON ea.employee_id = eo.id
         WHERE 1=1
       `;
@@ -2242,11 +2233,110 @@ exports.getAllAttendance = async (req, res) => {
             attendanceDateStr = record.attendance_date.split("T")[0];
           }
 
+          // CRITICAL FIX: Calculate working hours if missing or zero but check-in exists
+          let grossWorkingMinutes = record.gross_working_time_minutes || 0;
+          let netWorkingMinutes = record.net_working_time_minutes || 0;
+          
+          // Recalculate working hours if stored value is 0 but employee has both check-in and check-out
+          // This handles cases where calculation was missed or SQL auto-fix didn't cover the scenario
+          if (record.check_in_time && record.check_out_time && (grossWorkingMinutes === 0 || grossWorkingMinutes === null)) {
+            try {
+              const [checkInHour, checkInMin] = record.check_in_time.split(':').map(Number);
+              const [checkOutHour, checkOutMin] = record.check_out_time.split(':').map(Number);
+              
+              const checkInTotalMinutes = checkInHour * 60 + checkInMin;
+              const checkOutTotalMinutes = checkOutHour * 60 + checkOutMin;
+              
+              // Determine if this is a night shift (check-in after 21:00 = 9 PM)
+              const isNightShift = checkInTotalMinutes >= 21 * 60;
+              
+              if (isNightShift) {
+                // Night shift scenario: Check-in at 21:00+ (9 PM or later)
+                if (checkOutTotalMinutes >= checkInTotalMinutes) {
+                  // Same day checkout (rare for night shift, but handle it)
+                  grossWorkingMinutes = checkOutTotalMinutes - checkInTotalMinutes;
+                } else if (checkOutTotalMinutes < 6 * 60) {
+                  // Checkout before 6 AM = next morning (normal night shift)
+                  const minutesUntilMidnight = (24 * 60) - checkInTotalMinutes;
+                  grossWorkingMinutes = minutesUntilMidnight + checkOutTotalMinutes;
+                } else {
+                  // Checkout after 6 AM = next day afternoon (extended shift)
+                  const minutesUntilMidnight = (24 * 60) - checkInTotalMinutes;
+                  grossWorkingMinutes = minutesUntilMidnight + checkOutTotalMinutes;
+                }
+              } else if (checkInTotalMinutes < 6 * 60) {
+                // Early morning check-in (before 6 AM) - continuation of previous night shift
+                const minutesUntilMidnight = (24 * 60) - checkInTotalMinutes;
+                grossWorkingMinutes = minutesUntilMidnight + checkOutTotalMinutes;
+              } else {
+                // Regular day shift: check-in between 6 AM and 9 PM
+                if (checkOutTotalMinutes >= checkInTotalMinutes) {
+                  // Same day checkout (normal case)
+                  grossWorkingMinutes = checkOutTotalMinutes - checkInTotalMinutes;
+                } else if (checkOutTotalMinutes < 6 * 60) {
+                  // Checkout before 6 AM next day (employee worked past midnight)
+                  const minutesUntilMidnight = (24 * 60) - checkInTotalMinutes;
+                  grossWorkingMinutes = minutesUntilMidnight + checkOutTotalMinutes;
+                } else {
+                  // Checkout after 6 AM next day (very late checkout)
+                  const minutesUntilMidnight = (24 * 60) - checkInTotalMinutes;
+                  grossWorkingMinutes = minutesUntilMidnight + checkOutTotalMinutes;
+                }
+              }
+              
+              // Ensure no negative values
+              grossWorkingMinutes = Math.max(0, grossWorkingMinutes);
+              
+              // Subtract breaks to get net working time
+              const breakMinutes = record.total_break_duration_minutes || 0;
+              netWorkingMinutes = Math.max(0, grossWorkingMinutes - breakMinutes);
+            } catch (e) {
+              console.warn(`Warning: Could not recalculate working hours for attendance ID ${record.id}:`, e.message);
+              // Keep the original values if calculation fails
+              grossWorkingMinutes = record.gross_working_time_minutes || 0;
+              netWorkingMinutes = record.net_working_time_minutes || 0;
+            }
+          } else if (record.check_in_time && !record.check_out_time && (grossWorkingMinutes === 0 || grossWorkingMinutes === null)) {
+            // Employee is still checked in - calculate from check-in to current time
+            try {
+              const [checkInHour, checkInMin] = record.check_in_time.split(':').map(Number);
+              const checkInTotalMinutes = checkInHour * 60 + checkInMin;
+              
+              // Use current Pakistan time for still-working employees
+              const now = getPakistanDate();
+              const checkOutTotalMinutes = now.getHours() * 60 + now.getMinutes();
+              
+              const isNightShift = checkInTotalMinutes >= 21 * 60;
+              
+              if (isNightShift) {
+                // Night shift still in progress
+                if (checkOutTotalMinutes >= checkInTotalMinutes) {
+                  grossWorkingMinutes = checkOutTotalMinutes - checkInTotalMinutes;
+                } else {
+                  // Passed midnight
+                  const minutesUntilMidnight = (24 * 60) - checkInTotalMinutes;
+                  grossWorkingMinutes = minutesUntilMidnight + checkOutTotalMinutes;
+                }
+              } else {
+                // Day shift still in progress
+                grossWorkingMinutes = Math.max(0, checkOutTotalMinutes - checkInTotalMinutes);
+              }
+              
+              // Subtract breaks
+              const breakMinutes = record.total_break_duration_minutes || 0;
+              netWorkingMinutes = Math.max(0, grossWorkingMinutes - breakMinutes);
+            } catch (e) {
+              console.warn(`Warning: Could not calculate ongoing working hours for attendance ID ${record.id}:`, e.message);
+            }
+          }
+
           return {
             ...record,
             attendance_date: attendanceDateStr,
             check_in_time: record.check_in_time,
             check_out_time: record.check_out_time || null,
+            gross_working_time_minutes: grossWorkingMinutes,
+            net_working_time_minutes: netWorkingMinutes,
             breaks: breaks
               ? breaks.map((b) => ({
                   ...b,
@@ -2342,11 +2432,55 @@ exports.getAllAttendanceWithAbsent = async (req, res) => {
             attendanceDateStr = record.attendance_date.split("T")[0];
           }
 
+          // CRITICAL FIX: Calculate working hours if missing or zero but check-in exists
+          let grossWorkingMinutes = record.gross_working_time_minutes || 0;
+          let netWorkingMinutes = record.net_working_time_minutes || 0;
+          
+          if ((grossWorkingMinutes === 0 || grossWorkingMinutes === null) && record.check_in_time) {
+            // Employee has checked in but no check out or working hours not calculated
+            const [checkInHour, checkInMin] = record.check_in_time.split(':').map(Number);
+            const checkInTotalMinutes = checkInHour * 60 + checkInMin;
+            
+            let checkOutTotalMinutes = 0;
+            if (record.check_out_time) {
+              // Employee has checked out - use checkout time
+              const [checkOutHour, checkOutMin] = record.check_out_time.split(':').map(Number);
+              checkOutTotalMinutes = checkOutHour * 60 + checkOutMin;
+            } else {
+              // Employee still working - use current time in Pakistan timezone
+              const now = getPakistanDate();
+              checkOutTotalMinutes = now.getHours() * 60 + now.getMinutes();
+            }
+            
+            // Calculate working minutes (handling night shifts)
+            const isNightShift = checkInTotalMinutes >= 21 * 60; // After 9 PM
+            
+            if (isNightShift) {
+              if (checkOutTotalMinutes >= checkInTotalMinutes) {
+                // Same day checkout (shouldn't happen for night shift)
+                grossWorkingMinutes = checkOutTotalMinutes - checkInTotalMinutes;
+              } else {
+                // Next day checkout (normal night shift) - crossed midnight
+                const minutesUntilMidnight = (24 * 60) - checkInTotalMinutes;
+                grossWorkingMinutes = minutesUntilMidnight + checkOutTotalMinutes;
+              }
+            } else {
+              // Regular shift calculation
+              grossWorkingMinutes = Math.max(0, checkOutTotalMinutes - checkInTotalMinutes);
+            }
+            
+            // Subtract breaks
+            const breakMinutes = record.total_break_duration_minutes || 0;
+            netWorkingMinutes = Math.max(0, grossWorkingMinutes - breakMinutes);
+          }
+
           return {
             ...record,
             attendance_date: attendanceDateStr,
             check_in_time: record.check_in_time,
             check_out_time: record.check_out_time || null,
+            gross_working_time_minutes: grossWorkingMinutes,
+            net_working_time_minutes: netWorkingMinutes,
             breaks: breaks
               ? breaks.map((b) => ({
                   ...b,

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Jan 30, 2026 at 05:43 PM
+-- Generation Time: Feb 04, 2026 at 02:03 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -20,32 +20,6 @@ SET time_zone = "+00:00";
 --
 -- Database: `Digious_CRM_DataBase`
 --
-
--- --------------------------------------------------------
-
---
--- Stand-in structure for view `active_users_view`
--- (See below for the actual view)
---
-CREATE TABLE `active_users_view` (
-`id` int(11)
-,`employee_id` int(11)
-,`email` varchar(255)
-,`name` varchar(255)
-,`login_time` timestamp
-,`device_type` enum('PC','Mobile','Tablet','Other')
-,`device_name` varchar(255)
-,`ip_address` varchar(45)
-,`hostname` varchar(255)
-,`mac_address` varchar(17)
-,`browser` varchar(100)
-,`os` varchar(100)
-,`country` varchar(100)
-,`city` varchar(100)
-,`last_activity_time` timestamp
-,`logged_in_minutes` bigint(21)
-,`is_active` tinyint(1)
-);
 
 -- --------------------------------------------------------
 
@@ -71,31 +45,6 @@ CREATE TABLE `admin_users` (
 
 INSERT INTO `admin_users` (`id`, `email`, `password`, `full_name`, `phone`, `role`, `status`, `created_at`, `updated_at`) VALUES
 (1, 'admin@digious.com', '$2a$12$Tdc/e2C9kf.GOIVDwS0HQ.GIqPNlmfjL.R5wImzRWSHniZO1eKDUa', 'Administrator', '03100000000', 'super_admin', 'Active', '2025-12-28 16:04:33', '2025-12-29 17:06:53');
-
--- --------------------------------------------------------
-
---
--- Stand-in structure for view `Attendance_Summary_View`
--- (See below for the actual view)
---
-CREATE TABLE `Attendance_Summary_View` (
-`employee_id` int(11)
-,`name` varchar(100)
-,`email` varchar(100)
-,`attendance_date` date
-,`check_in_time` time
-,`check_out_time` time
-,`status` enum('Present','Absent','Late','On Leave','Half Day')
-,`total_breaks_taken` int(11)
-,`total_break_duration_minutes` int(11)
-,`gross_working_time` varchar(26)
-,`net_working_time` varchar(26)
-,`overtime_hours` decimal(5,2)
-,`on_time` tinyint(1)
-,`late_by_minutes` int(11)
-,`created_at` timestamp
-,`updated_at` timestamp
-);
 
 -- --------------------------------------------------------
 
@@ -132,6 +81,37 @@ INSERT INTO `Company_Rules` (`id`, `rule_name`, `rule_type`, `description`, `sta
 (4, 'Washroom Break', 'BREAK_TIME', 'Washroom/Restroom break', NULL, NULL, NULL, 10, 'Washroom Break', NULL, NULL, 1, 3, '2025-12-23 16:25:46', '2025-12-23 16:25:46'),
 (5, 'Prayer Break', 'BREAK_TIME', 'Prayer break during working hours', NULL, NULL, NULL, 10, 'Prayer Break', NULL, NULL, 1, 3, '2025-12-23 16:25:46', '2025-12-23 16:25:46'),
 (6, 'Overtime - Standard Rate', 'OVERTIME', 'Overtime payment after regular working hours (9 hours)', NULL, NULL, NULL, NULL, NULL, 540, 1.50, 1, 4, '2025-12-23 16:25:46', '2025-12-23 16:25:46');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `employee_achievements`
+--
+
+CREATE TABLE `employee_achievements` (
+  `id` int(11) NOT NULL,
+  `employee_id` int(11) NOT NULL,
+  `achievement_type` enum('award','certification','publication','recognition','project') DEFAULT 'award' COMMENT 'Type of achievement',
+  `title` varchar(255) NOT NULL,
+  `description` text DEFAULT NULL,
+  `issuer_organization` varchar(255) DEFAULT NULL,
+  `issue_date` date DEFAULT NULL,
+  `expiry_date` date DEFAULT NULL,
+  `credential_id` varchar(255) DEFAULT NULL,
+  `credential_url` varchar(500) DEFAULT NULL,
+  `attachment_url` varchar(500) DEFAULT NULL,
+  `is_verified` tinyint(1) DEFAULT 0,
+  `visibility` enum('public','private','restricted') DEFAULT 'public',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `employee_achievements`
+--
+
+INSERT INTO `employee_achievements` (`id`, `employee_id`, `achievement_type`, `title`, `description`, `issuer_organization`, `issue_date`, `expiry_date`, `credential_id`, `credential_url`, `attachment_url`, `is_verified`, `visibility`, `created_at`, `updated_at`) VALUES
+(20, 1, 'certification', 'React Expert', NULL, 'Udemy', NULL, NULL, NULL, NULL, NULL, 0, 'public', '2026-02-04 12:56:49', '2026-02-04 12:56:49');
 
 -- --------------------------------------------------------
 
@@ -187,26 +167,7 @@ INSERT INTO `employee_allowances` (`id`, `employee_id`, `allowance_name`, `allow
 (16, 1, 'transport', 2000.00, 'PKR', 1.0000, '2026-01-15 13:04:53'),
 (17, 24, 'happy', 1000.00, 'PKR', 1.0000, '2026-01-15 21:40:16'),
 (18, 26, 'Happy', 10000.00, 'PKR', 1.0000, '2026-01-30 14:02:04'),
-(20, 26, 'Happy 2', 10000.00, 'PKR', 1.0000, '2026-01-30 14:19:11');
-
--- --------------------------------------------------------
-
---
--- Stand-in structure for view `employee_allowances_in_pkr`
--- (See below for the actual view)
---
-CREATE TABLE `employee_allowances_in_pkr` (
-`id` int(11)
-,`employee_id` int(11)
-,`employee_name` varchar(255)
-,`email` varchar(255)
-,`allowance_name` varchar(100)
-,`allowance_amount` decimal(12,2)
-,`currency` varchar(10)
-,`amount_in_pkr` decimal(19,2)
-,`exchange_rate` decimal(10,4)
-,`created_at` timestamp
-);
+(21, 26, 'Happy 3', 198700.00, 'PKR', 1.0000, '2026-01-30 17:42:04');
 
 -- --------------------------------------------------------
 
@@ -460,7 +421,7 @@ INSERT INTO `Employee_Attendance` (`id`, `employee_id`, `email`, `name`, `attend
 (215, 13, 'test1@digious.com', 'test1', '2026-01-01', '00:55:08', '06:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 305, 305, 540, 0, 0.00, 0, 160, NULL, 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-02 19:55:08', '2026-01-03 11:40:06'),
 (216, 14, 'ron@digious.com', 'Ron', '2026-01-02', '01:08:43', '02:35:17', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 87, 87, 540, 0, 0.00, 0, 173, NULL, 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-02 20:08:43', '2026-01-02 22:23:22'),
 (217, 14, 'ron@digious.com', 'Ron', '2026-01-01', '02:07:51', '06:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 232, 232, 540, 0, 0.00, 0, 232, NULL, NULL, '1', '2026-01-02 21:07:51', '2026-01-03 11:59:02'),
-(218, 12, 'raffay.ahmed@digious.com', 'Raffay Ahmed', '2026-01-01', '03:24:20', '03:24:34', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 309, NULL, NULL, '1', '2026-01-02 22:24:20', '2026-01-02 22:24:34'),
+(218, 12, 'raffay.ahmed@digious.com', 'Raffay Ahmed', '2026-01-01', '03:24:20', '03:24:34', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 309, NULL, NULL, '1', '2026-01-02 22:24:20', '2026-01-31 18:52:32'),
 (219, 1, 'muhammad.hunain@digious.com', 'Muhammad Hunain', '2026-01-03', '22:07:50', '06:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 473, 473, 540, 0, 0.00, 0, 52, NULL, NULL, '1', '2026-01-03 09:07:50', '2026-01-03 09:23:33'),
 (220, 4, 'hassan.raza@digious.com', 'Hassan Raza', '2026-01-03', '16:21:59', '16:22:12', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 540, 0, 0.00, 1, 0, NULL, NULL, '127.0.0.1', '2026-01-03 11:21:59', '2026-01-03 11:22:12'),
 (231, 12, 'raffay.ahmed@digious.com', 'Raffay Ahmed', '2026-01-03', '21:55:46', '03:15:01', 'Late', 1, 1, 0, 0, 0, 15, 0, 0, 0, 15, 320, 305, 540, 0, 0.00, 0, 40, NULL, NULL, '1', '2026-01-03 16:55:46', '2026-01-03 22:15:01'),
@@ -469,11 +430,11 @@ INSERT INTO `Employee_Attendance` (`id`, `employee_id`, `email`, `name`, `attend
 (241, 15, 'khalid.iqbal@digious.com', 'Khalid Iqbal', '2026-01-05', '13:51:34', NULL, 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 73, 73, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:146.0) Gecko/20100101 Firefox/146.0', '127.0.0.1', '2026-01-05 08:51:34', '2026-01-05 10:05:04'),
 (242, 2, 'ahmed.ali@digious.com', 'Ahmed Ali', '2026-01-05', '19:42:07', NULL, 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 1, 0, NULL, NULL, '1', '2026-01-05 14:42:07', '2026-01-05 14:42:07'),
 (243, 16, 'muneeb.baig@digious.com', 'Muneeb Baig', '2026-01-05', '21:37:31', NULL, 'Late', 1, 1, 0, 0, 0, 6, 0, 0, 0, 6, 1, 1, 540, 0, 0.00, 0, 22, NULL, 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-05 16:37:31', '2026-01-05 16:45:12'),
-(244, 1, 'muhammad.hunain@digious.com', 'Muhammad Hunain', '2026-01-06', '23:26:19', '23:36:19', 'Late', 1, 1, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 540, 0, 0.00, 0, 131, NULL, NULL, '1', '2026-01-06 18:26:19', '2026-01-08 18:29:45'),
-(245, 1, 'muhammad.hunain@digious.com', 'Muhammad Hunain', '2026-01-07', '21:56:24', '23:26:19', 'Late', 2, 1, 0, 0, 1, 0, 0, 0, 2, 2, 0, 0, 540, 0, 0.00, 0, 41, NULL, NULL, '1', '2026-01-07 16:56:24', '2026-01-08 18:29:45'),
+(244, 1, 'muhammad.hunain@digious.com', 'Muhammad Hunain', '2026-01-06', '23:26:19', '23:36:19', 'Late', 1, 1, 0, 0, 0, 4, 0, 0, 0, 4, 10, 6, 540, 0, 0.00, 0, 131, NULL, NULL, '1', '2026-01-06 18:26:19', '2026-01-31 18:52:32'),
+(245, 1, 'muhammad.hunain@digious.com', 'Muhammad Hunain', '2026-01-07', '21:56:24', '23:26:19', 'Late', 2, 1, 0, 0, 1, 0, 0, 0, 2, 2, 90, 88, 540, 0, 0.00, 0, 41, NULL, NULL, '1', '2026-01-07 16:56:24', '2026-01-31 18:52:32'),
 (249, 1, 'muhammad.hunain@digious.com', 'Muhammad Hunain', '2026-01-08', '23:36:23', NULL, 'Late', 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 141, NULL, 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-08 18:36:23', '2026-01-08 18:45:57'),
 (250, 1, 'muhammad.hunain@digious.com', 'Muhammad Hunain', '2026-01-09', '16:17:10', NULL, 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 2, NULL, NULL, '1', '2026-01-09 16:17:10', '2026-01-09 16:17:10'),
-(251, 1, 'muhammad.hunain@digious.com', 'Muhammad Hunain', '2026-01-12', '11:43:27', '00:26:34', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'PC', NULL, '2026-01-12 11:43:27', '2026-01-12 19:26:34'),
+(251, 1, 'muhammad.hunain@digious.com', 'Muhammad Hunain', '2026-01-12', '11:43:27', '00:26:34', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'PC', NULL, '2026-01-12 11:43:27', '2026-01-31 18:52:32'),
 (252, 1, 'muhammad.hunain@digious.com', 'Muhammad Hunain', '2026-01-13', '17:21:24', NULL, 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'PC', NULL, '2026-01-13 12:21:24', '2026-01-13 12:21:24'),
 (254, 3, 'fatima.khan@digious.com', 'Fatima Khan', '2026-01-13', '21:34:18', '01:28:05', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 234, 234, 540, 0, 0.00, 0, 19, NULL, 'Web Browser', NULL, '2026-01-13 16:34:18', '2026-01-22 18:34:08'),
 (265, 3, 'fatima.khan@digious.com', 'Fatima Khan', '2026-01-16', '00:28:39', NULL, 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 540, 0, 0.00, 1, 0, NULL, 'Web Browser', NULL, '2026-01-16 07:56:10', '2026-01-16 20:45:54'),
@@ -483,13 +444,22 @@ INSERT INTO `Employee_Attendance` (`id`, `employee_id`, `email`, `name`, `attend
 (276, 1, 'muhammad.hunain@digious.com', 'Muhammad Hunain', '2026-01-22', '21:15:51', NULL, 'Present', 2, 0, 2, 0, 0, 0, 1, 0, 0, 1, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0', '127.0.0.1', '2026-01-22 16:15:51', '2026-01-22 18:26:33'),
 (277, 1, 'muhammad.hunain@digious.com', 'Muhammad Hunain', '2026-01-26', '00:04:32', NULL, 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 169, NULL, 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0', '127.0.0.1', '2026-01-26 19:04:32', '2026-01-26 19:04:32'),
 (279, 3, 'fatima.khan@digious.com', 'Fatima Khan', '2026-01-27', '00:59:35', NULL, 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 224, NULL, 'Web Browser', NULL, '2026-01-27 19:59:35', '2026-01-27 19:59:35'),
-(281, 3, 'fatima.khan@digious.com', 'Fatima Khan', '2026-01-28', '15:40:32', '01:25:20', 'Present', 2, 1, 1, 0, 0, 0, 29, 0, 0, 29, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Web Browser', NULL, '2026-01-28 10:40:32', '2026-01-28 20:25:20'),
+(281, 3, 'fatima.khan@digious.com', 'Fatima Khan', '2026-01-28', '15:40:32', '01:25:20', 'Present', 2, 1, 1, 0, 0, 0, 29, 0, 0, 29, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Web Browser', NULL, '2026-01-28 10:40:32', '2026-01-31 18:52:32'),
 (287, 1, 'muhammad.hunain@digious.com', 'Muhammad Hunain', '2026-01-27', '21:13:45', '21:18:15', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0', '127.0.0.1', '2026-01-28 16:13:45', '2026-01-28 16:18:15'),
 (289, 1, 'muhammad.hunain@digious.com', 'Muhammad Hunain', '2026-01-28', '21:19:49', NULL, 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 4, NULL, 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0', '127.0.0.1', '2026-01-28 16:19:49', '2026-01-28 16:19:49'),
-(290, 1, 'muhammad.hunain@digious.com', 'Muhammad Hunain', '2026-01-29', '20:42:08', NULL, 'Present', 1, 0, 0, 0, 1, 0, 0, 0, 58, 58, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0', '127.0.0.1', '2026-01-29 15:42:08', '2026-01-30 15:28:28'),
-(291, 3, 'fatima.khan@digious.com', 'Fatima Khan', '2026-01-30', '15:33:49', NULL, 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Web Browser', NULL, '2026-01-30 10:33:49', '2026-01-30 10:33:49'),
-(293, 1, 'muhammad.hunain@digious.com', 'Muhammad Hunain', '2026-01-30', '20:52:32', NULL, 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0', '127.0.0.1', '2026-01-30 15:52:32', '2026-01-30 15:52:32');
+(290, 1, 'muhammad.hunain@digious.com', 'Muhammad Hunain', '2026-01-29', '20:42:08', NULL, 'Present', 2, 1, 0, 0, 1, 1, 0, 0, 58, 59, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0', '127.0.0.1', '2026-01-29 15:42:08', '2026-01-30 17:39:48'),
+(291, 3, 'fatima.khan@digious.com', 'Fatima Khan', '2026-01-30', '15:33:49', '08:23:56', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Web Browser', NULL, '2026-01-30 10:33:49', '2026-01-31 18:52:32'),
+(293, 1, 'muhammad.hunain@digious.com', 'Muhammad Hunain', '2026-01-30', '20:52:32', '08:44:45', 'Present', 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0', '127.0.0.1', '2026-01-30 15:52:32', '2026-01-31 18:52:32'),
+(295, 3, 'fatima.khan@digious.com', 'Fatima Khan', '2026-01-31', '23:07:20', NULL, 'Late', 1, 1, 0, 0, 0, 12, 0, 0, 0, 12, 0, 0, 540, 0, 0.00, 0, 112, NULL, 'Web Browser', NULL, '2026-01-31 18:07:20', '2026-01-31 18:27:50'),
+(297, 1, 'muhammad.hunain@digious.com', 'Muhammad Hunain', '2026-01-31', '00:04:30', NULL, 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 540, 0, 0.00, 0, 169, NULL, 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-31 19:04:30', '2026-01-31 19:09:23'),
+(298, 1, 'muhammad.hunain@digious.com', 'Muhammad Hunain', '2026-02-02', '14:54:24', NULL, 'Present', 1, 0, 0, 0, 1, 0, 0, 0, 2, 1, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0', '127.0.0.1', '2026-02-02 09:54:24', '2026-02-02 18:23:45'),
+(299, 3, 'fatima.khan@digious.com', 'Fatima Khan', '2026-02-02', '23:16:43', NULL, 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 121, NULL, 'Web Browser', NULL, '2026-02-02 18:16:43', '2026-02-02 18:16:43'),
+(300, 1, 'muhammad.hunain@digious.com', 'Muhammad Hunain', '2026-02-03', '01:24:58', NULL, 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 249, NULL, 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0', '127.0.0.1', '2026-02-03 20:24:58', '2026-02-03 20:24:58'),
+(301, 3, 'fatima.khan@digious.com', 'Fatima Khan', '2026-02-03', '01:39:40', NULL, 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 264, NULL, 'Web Browser', NULL, '2026-02-03 20:39:40', '2026-02-03 20:39:40');
 
+-- --------------------------------------------------------
+
+--
 -- --------------------------------------------------------
 
 --
@@ -587,7 +557,10 @@ INSERT INTO `Employee_Breaks` (`id`, `attendance_id`, `employee_id`, `break_type
 (58, 275, 3, 'Smoke', '23:41:43', '23:43:07', 1, 'Smoke break', '2026-01-22 18:41:43', '2026-01-22 18:46:04'),
 (59, 275, 3, 'Prayer', '23:46:48', '23:48:15', 1, 'Prayer break', '2026-01-22 18:46:48', '2026-01-22 18:48:15'),
 (61, 281, 3, 'Smoke', '15:40:49', '15:41:26', 0, 'Smoke break', '2026-01-28 10:40:49', '2026-01-28 10:41:26'),
-(62, 281, 3, 'Dinner', '15:41:55', '16:11:26', 29, 'Dinner break', '2026-01-28 10:41:55', '2026-01-28 11:11:26');
+(62, 281, 3, 'Dinner', '15:41:55', '16:11:26', 29, 'Dinner break', '2026-01-28 10:41:55', '2026-01-28 11:11:26'),
+(64, 293, 1, 'Smoke', '22:38:07', '22:39:48', 1, 'Smoke Break break - Auto-saved on start', '2026-01-30 17:38:07', '2026-01-30 17:39:48'),
+(65, 295, 3, 'Smoke', '23:15:47', '23:27:50', 12, NULL, '2026-01-31 18:15:48', '2026-01-31 18:27:50'),
+(66, 298, 1, 'Prayer', '23:22:27', '23:23:45', 1, 'Prayer Break break - Auto-saved on start', '2026-02-02 18:22:27', '2026-02-02 18:23:45');
 
 -- --------------------------------------------------------
 
@@ -609,9 +582,12 @@ CREATE TABLE `employee_dynamic_resources` (
 
 INSERT INTO `employee_dynamic_resources` (`id`, `employee_id`, `resource_name`, `resource_serial`, `created_at`) VALUES
 (1, 24, 'headset', 'N/A', '2026-01-15 21:40:16'),
-(3, 26, 'Laptop', 'HI', '2026-01-30 14:19:11'),
-(4, 26, 'Charger', 'SX 10000', '2026-01-30 14:19:11');
+(7, 26, 'Laptop', 'HI', '2026-01-30 17:42:18'),
+(8, 26, 'Charger', 'SX 10000', '2026-01-30 17:42:18');
 
+-- --------------------------------------------------------
+
+--
 -- --------------------------------------------------------
 
 --
@@ -644,30 +620,38 @@ CREATE TABLE `employee_onboarding` (
   `status` enum('Pending','Active','Inactive','Suspended') DEFAULT 'Active',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  `dob` date DEFAULT NULL COMMENT 'Date of birth (YYYY-MM-DD)'
+  `dob` date DEFAULT NULL COMMENT 'Date of birth (YYYY-MM-DD)',
+  `profile_photo` varchar(1000) DEFAULT NULL COMMENT 'Cloudinary URL for employee profile photo',
+  `skills_json` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'JSON field storing {technical: [], soft: []} skills structure' CHECK (json_valid(`skills_json`)),
+  `documents_json` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'JSON field for documents storage' CHECK (json_valid(`documents_json`)),
+  `resources_json` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'JSON field for resources storage' CHECK (json_valid(`resources_json`)),
+  `certifications_json` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'JSON field for certifications storage' CHECK (json_valid(`certifications_json`)),
+  `social_links_json` longtext DEFAULT NULL COMMENT 'JSON object containing social links (linkedin, github, portfolio, twitter, etc.)',
+  `required_documents_json` longtext DEFAULT NULL COMMENT 'JSON array of required documents with status',
+  `achievements_json` longtext DEFAULT NULL COMMENT 'JSON array of achievements with categories (award, certification, publication)'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `employee_onboarding`
 --
 
-INSERT INTO `employee_onboarding` (`id`, `employee_id`, `name`, `email`, `password_temp`, `phone`, `department`, `sub_department`, `employment_status`, `join_date`, `confirmation_date`, `address`, `emergency_contact`, `request_password_change`, `bank_account`, `account_title_name`, `bank_name`, `tax_id`, `cnic`, `cnic_issue_date`, `cnic_expiry_date`, `designation`, `status`, `created_at`, `updated_at`, `dob`) VALUES
-(1, 'DIG-001', 'Muhammad Hunain', 'muhammad.hunain@digious.com', '$2a$12$Tdc/e2C9kf.GOIVDwS0HQ.GIqPNlmfjL.R5wImzRWSHniZO1eKDUa', '03183598103', 'Production', 'Software Engineer', 'Permanent', '2025-11-01', '2026-02-01', 'Nazimabad, Karachi', '03123598003', 0, 'PKRIBAN123456', 'Muhammad Hunain (Main Account)', 'HBL', '123456789', '4210151036535', '2026-01-28', '2031-01-15', 'Senior Developer', 'Active', '2025-11-01 10:00:00', '2026-01-30 14:01:39', NULL),
-(2, 'DIG-002', 'Ahmed Ali', 'ahmed.ali@digious.com', '$2a$12$Tdc/e2C9kf.GOIVDwS0HQ.GIqPNlmfjL.R5wImzRWSHniZO1eKDUa', '03215678901', 'Production', 'Software Developer', 'Permanent', '2025-11-15', '2026-02-15', 'Gulshan, Karachi', '03005555555', 1, 'PKRIBAN654321', 'Ahmed Ali (Main Account)', 'HBL', '987654321', '4210252547382', '2021-01-15', '2031-01-15', 'Junior Developer', 'Active', '2025-11-15 09:30:00', '2026-01-15 13:02:34', NULL),
-(3, 'DIG-003', 'Fatima Khan', 'fatima.khan@digious.com', '$2a$12$Tdc/e2C9kf.GOIVDwS0HQ.GIqPNlmfjL.R5wImzRWSHniZO1eKDUa', '03045678901', 'HR', 'HR Manager', 'Permanent', '2025-10-20', '2026-01-20', 'Clifton, Karachi', '03006666666', 0, 'PKRIBAN789012', 'Fatima Khan (Main Account)', 'HBL', 'SSN12345', '4210351045678', '2021-01-15', '2031-01-15', 'HR Manager', 'Active', '2025-10-20 08:00:00', '2026-01-15 13:02:34', NULL),
-(4, 'DIG-004', 'Hassan Raza', 'hassan.raza@digious.com', '$2a$12$Tdc/e2C9kf.GOIVDwS0HQ.GIqPNlmfjL.R5wImzRWSHniZO1eKDUa', '03134455667', 'Sales', 'Sales Manager', 'Permanent', '2025-11-01', '2026-02-01', 'Defense, Karachi', '03007777777', 1, 'PKRIBAN345678', 'Hassan Raza (Main Account)', 'HBL', 'PAN123456', '4210452658934', '2021-01-15', '2031-01-15', 'Sales Head', 'Active', '2025-11-01 11:00:00', '2026-01-15 13:02:34', NULL),
-(5, 'DIG-005', 'Sara Ahmed', 'sara.ahmed@digious.com', '$2a$12$Tdc/e2C9kf.GOIVDwS0HQ.GIqPNlmfjL.R5wImzRWSHniZO1eKDUa', '03008888888', 'Finance', 'Finance Officer', 'Permanent', '2025-12-01', '2026-03-01', 'Saddar, Karachi', '03009999999', 1, 'PKRIBAN901234', 'Sara Ahmed (Main Account)', 'HBL', 'TIN456789', '4210552759045', '2021-01-15', '2031-01-15', 'Finance Officer', 'Active', '2025-12-01 10:30:00', '2026-01-15 13:02:34', NULL),
-(12, 'DIG-010', 'Raffay Ahmed', 'raffay.ahmed@digious.com', '$2a$10$eWvhWkhKGqnlO3QA..cWdOHIXyu/LjzpvhCwWYsq4qSOURZSPMIqi', '0986789010', 'Production', 'Software Developer', 'Probation', '2026-01-03', '2026-04-03', 'hunain', '0312398003', 1, 'pkriban1234589', 'Raffay Ahmed (Main Account)', 'HBL', 'SSN1234', '42101-5103653-51', '2021-01-15', '2031-01-15', 'Mid Level', 'Active', '2026-01-02 19:14:56', '2026-01-15 13:04:48', NULL),
-(13, 'DIG-100', 'test1', 'test1@digious.com', '$2a$10$zf5ChX237SfY4A2rTMmTA.D.x3r8VREGqe.vvi642.ax5k3Isqcfy', '42101510365356', 'Production', 'MD1', 'Probation', '2026-01-03', '2026-04-03', 'qwerty123', '031239800311', 1, 'pkriban1234590', 'test1 (Main Account)', 'HBL', 'SSN12367', '42101-5103653-512', '2021-01-15', '2031-01-15', 'SMD', 'Inactive', '2026-01-02 19:54:33', '2026-01-15 13:04:48', NULL),
-(14, 'DIG-101', 'Ron', 'ron@digious.com', '$2a$10$cVjt3I.H.AhYMlt264Dvjem4pxnAepwrD0U4F/LfRRb5PfqbNfpn6', '421015103653511', 'Production', 'MDq', 'Probation', '2026-01-02', '2026-04-02', 'qwerty', '031239800311', 1, 'pkriban123459012', 'Ron (Main Account)', 'HBL', 'SSN12311', '42101-5103653-5111', '2021-01-15', '2031-01-15', 'MD2', 'Active', '2026-01-02 20:07:51', '2026-01-15 13:04:48', NULL),
-(15, 'DiG-105', 'Khalid Iqbal', 'khalid.iqbal@digious.com', '$2a$10$fXR7nYYtwew6CXS6pyoN.uJCpHrE3RuHpgUOqUCByMIe/C.ruRJ1S', '03123598003', 'Production', ' Manager', 'Probation', '2026-01-05', '2026-04-05', 'North Nazimabd Karachi', '03102588816', 1, 'PKR 450 123456 789', 'Khalid Iqbal (Main Account)', 'HBL', 'CDN-4567', '1234-5103653-5', '2021-01-15', '2031-01-15', 'Branch Head', 'Active', '2026-01-04 19:22:59', '2026-01-15 13:04:48', NULL),
-(16, 'DIG-503', 'Muneeb Baig', 'muneeb.baig@digious.com', '$2a$10$7c3e3ve.x1SkZiOydTY5Nuv9KnNbT8qaOawOSEH4EQwNakbpQ56Rm', '4210151036535', 'Production', 'Developer ', 'Probation', '2026-01-01', '2026-04-01', '123qwerty', '031239800311', 1, 'pkriban1234590009', 'Muneeb Baig (Main Account)', 'HBL', 'SSN123123', '42101-5103653-5121', '2021-01-15', '2031-01-15', 'Senior', 'Active', '2026-01-05 16:36:20', '2026-01-15 13:04:48', NULL),
-(17, 'DIG-444', 'NEW Test1', 'fatima.khan11@digious.com', '$2a$10$ui8OhY3roEIGZZZfr/NmieYMDkYgsKgw.yG/HthN.WKRKszbWIdMG', '4210151036535', 'Sales', 'MD', 'Probation', '2026-01-01', '2026-04-01', NULL, '11111', 1, '111111111111111', 'NEW Test1 (Main Account)', 'HBL', '1111111111', '1111111111111111111', '2021-01-15', '2031-01-15', 'MD', 'Active', '2026-01-13 20:51:49', '2026-01-15 13:04:48', NULL),
-(21, 'DIG-006', 'jd', 'jd2@digious.com', '$2a$10$yUUxKMYWW/kjz3qUITdS/.NMW1DvR3f10l3mKPmq9SYeqdpoM0Tey', '123456789', 'Production', 'tree', 'Part-Time', '2026-01-15', '2026-01-31', NULL, NULL, 1, '123456789', 'Hunain', 'Meezan', NULL, '123456789yyyy', '2026-01-15', '2026-01-31', 'SMA', 'Active', '2026-01-15 14:09:36', '2026-01-15 14:09:36', NULL),
-(22, 'DIG-007', 'JD', 'JD12@digious.com', '$2a$10$0vYeqotPZXM97NhflxoFWOUryjE0Y3Rx8IpYgXO3ObbLytqpIlJ2C', '1092837465', 'Production', 'SMA', 'Probation', '2026-01-15', '2026-01-16', 'aaaaaa', 'aaaaaaa', 1, 'aq33qq', '1234qwe', 'MCB', NULL, '123456789', '2026-01-01', '2026-01-30', 'ASD', 'Active', '2026-01-15 15:01:53', '2026-01-15 15:01:53', NULL),
-(24, 'DG-001', 'Muhammad Hunain', 'hunain@digioussolutions.com', '$2a$10$jLKX45NiLU767Sdo/9an4ePzPliXF4CjcNoGlNLfCcINwMJBIckxu', '03123598003', 'Marketing', 'ase', 'Permanent', '2026-01-16', '2026-01-16', 'shan residency block K', '03123598003', 1, '03183598103', 'pkr INB 123', 'Naypay', NULL, '42101-5103653-5', '2025-09-01', '2026-11-01', 'sma', 'Active', '2026-01-15 21:40:16', '2026-01-15 21:40:16', NULL),
-(25, 'DG-002', 'Nazir Hussan', 'nazirdigious.com@digioussolutions.com', '$2a$10$SViiJqUPgA6qDYJGz6mYueNiVNJOnsI2nO4C0Vie/N8gPu.L8dAtu', '0981726534', 'Sales', 'MD', 'Permanent', '2026-01-01', '2026-01-30', 'qwerty', '09182736', 1, 'pkr ibm 1234', 'annnna', 'HBL', NULL, '12345678', '2026-01-01', '2026-01-30', 'SM', 'Active', '2026-01-30 10:56:15', '2026-01-30 10:56:15', NULL),
-(26, 'DG-004', 'test2', 'test2@digioussolutions.com', '$2a$10$T2D..ECh6KROsOL8gcnUC.a14Ffx9IrrDK4ZsR.UIO8wOEl.DBgnO', '01928354', 'Marketing', 'ssbbs', 'Part-Time', '2026-01-15', '2026-01-27', 'jnzjn', '0192837499', 1, 'sjsnnsn', 'snnsns', 'Allied', NULL, '10293847561782', '2025-12-30', '2026-02-24', 's s  s', 'Active', '2026-01-30 12:02:23', '2026-01-30 14:19:11', '2025-12-31');
+INSERT INTO `employee_onboarding` (`id`, `employee_id`, `name`, `email`, `password_temp`, `phone`, `department`, `sub_department`, `employment_status`, `join_date`, `confirmation_date`, `address`, `emergency_contact`, `request_password_change`, `bank_account`, `account_title_name`, `bank_name`, `tax_id`, `cnic`, `cnic_issue_date`, `cnic_expiry_date`, `designation`, `status`, `created_at`, `updated_at`, `dob`, `profile_photo`, `skills_json`, `documents_json`, `resources_json`, `certifications_json`, `social_links_json`, `required_documents_json`, `achievements_json`) VALUES
+(1, 'DIG-001', 'Muhammad Hunain', 'muhammad.hunain@digious.com', '$2a$12$Tdc/e2C9kf.GOIVDwS0HQ.GIqPNlmfjL.R5wImzRWSHniZO1eKDUa', '03333333333', 'Production', 'Software Engineer', 'Permanent', '2025-11-01', '2026-02-01', 'AAA', '03123598003', 0, 'PKRIBAN123456', 'Muhammad Hunain (Main Account)', 'HBL', '123456789', '4210151036535', '2026-01-28', '2031-01-15', 'Senior Developer', 'Active', '2025-11-01 10:00:00', '2026-02-04 12:56:48', NULL, 'https://res.cloudinary.com/dmxf2mega/image/upload/v1770039997/employee_profiles/1/photos/zt54psp5cmafee4a84jr.jpg', '{\"technical\":[\"React\",\"jAVA sCRIPT\"],\"soft\":[\"communication\"]}', '[]', '[]', '[]', '{\"linkedin\": \"\", \"github\": \"\", \"portfolio\": \"\", \"twitter\": \"\", \"facebook\": \"\", \"instagram\": \"\", \"other_links\": []}', '[{\"id\": 1, \"type\": \"cnic\", \"name\": \"CNIC\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 2, \"type\": \"passport\", \"name\": \"Passport\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 3, \"type\": \"diploma\", \"name\": \"Educational Diploma\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 4, \"type\": \"resume\", \"name\": \"Resume/CV\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 5, \"type\": \"reference_letter\", \"name\": \"Reference Letter\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}]', '[]'),
+(2, 'DIG-002', 'Ahmed Ali', 'ahmed.ali@digious.com', '$2a$12$Tdc/e2C9kf.GOIVDwS0HQ.GIqPNlmfjL.R5wImzRWSHniZO1eKDUa', '03215678901', 'Production', 'Software Developer', 'Permanent', '2025-11-15', '2026-02-15', 'Gulshan, Karachi', '03005555555', 1, 'PKRIBAN654321', 'Ahmed Ali (Main Account)', 'HBL', '987654321', '4210252547382', '2021-01-15', '2031-01-15', 'Junior Developer', 'Active', '2025-11-15 09:30:00', '2026-02-03 18:11:51', NULL, NULL, '{\"technical\": [], \"soft\": []}', '[]', '[]', '[]', '{\"linkedin\": \"\", \"github\": \"\", \"portfolio\": \"\", \"twitter\": \"\", \"facebook\": \"\", \"instagram\": \"\", \"other_links\": []}', '[{\"id\": 1, \"type\": \"cnic\", \"name\": \"CNIC\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 2, \"type\": \"passport\", \"name\": \"Passport\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 3, \"type\": \"diploma\", \"name\": \"Educational Diploma\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 4, \"type\": \"resume\", \"name\": \"Resume/CV\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 5, \"type\": \"reference_letter\", \"name\": \"Reference Letter\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}]', '[]'),
+(3, 'DIG-003', 'Fatima Khan', 'fatima.khan@digious.com', '$2a$12$Tdc/e2C9kf.GOIVDwS0HQ.GIqPNlmfjL.R5wImzRWSHniZO1eKDUa', '03045678901', 'HR', 'HR Manager', 'Permanent', '2025-10-20', '2026-01-20', 'Clifton, Karachi', '03006666666', 0, 'PKRIBAN789012', 'Fatima Khan (Main Account)', 'HBL', 'SSN12345', '4210351045678', '2021-01-15', '2031-01-15', 'HR Manager', 'Active', '2025-10-20 08:00:00', '2026-02-03 18:11:51', NULL, NULL, '{\"technical\": [], \"soft\": []}', '[]', '[]', '[]', '{\"linkedin\": \"\", \"github\": \"\", \"portfolio\": \"\", \"twitter\": \"\", \"facebook\": \"\", \"instagram\": \"\", \"other_links\": []}', '[{\"id\": 1, \"type\": \"cnic\", \"name\": \"CNIC\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 2, \"type\": \"passport\", \"name\": \"Passport\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 3, \"type\": \"diploma\", \"name\": \"Educational Diploma\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 4, \"type\": \"resume\", \"name\": \"Resume/CV\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 5, \"type\": \"reference_letter\", \"name\": \"Reference Letter\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}]', '[]'),
+(4, 'DIG-004', 'Hassan Raza', 'hassan.raza@digious.com', '$2a$12$Tdc/e2C9kf.GOIVDwS0HQ.GIqPNlmfjL.R5wImzRWSHniZO1eKDUa', '03134455667', 'Sales', 'Sales Manager', 'Permanent', '2025-11-01', '2026-02-01', 'Defense, Karachi', '03007777777', 1, 'PKRIBAN345678', 'Hassan Raza (Main Account)', 'HBL', 'PAN123456', '4210452658934', '2021-01-15', '2031-01-15', 'Sales Head', 'Active', '2025-11-01 11:00:00', '2026-02-03 18:11:51', NULL, NULL, '{\"technical\": [], \"soft\": []}', '[]', '[]', '[]', '{\"linkedin\": \"\", \"github\": \"\", \"portfolio\": \"\", \"twitter\": \"\", \"facebook\": \"\", \"instagram\": \"\", \"other_links\": []}', '[{\"id\": 1, \"type\": \"cnic\", \"name\": \"CNIC\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 2, \"type\": \"passport\", \"name\": \"Passport\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 3, \"type\": \"diploma\", \"name\": \"Educational Diploma\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 4, \"type\": \"resume\", \"name\": \"Resume/CV\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 5, \"type\": \"reference_letter\", \"name\": \"Reference Letter\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}]', '[]'),
+(5, 'DIG-005', 'Sara Ahmed', 'sara.ahmed@digious.com', '$2a$12$Tdc/e2C9kf.GOIVDwS0HQ.GIqPNlmfjL.R5wImzRWSHniZO1eKDUa', '03008888888', 'Finance', 'Finance Officer', 'Permanent', '2025-12-01', '2026-03-01', 'Saddar, Karachi', '03009999999', 1, 'PKRIBAN901234', 'Sara Ahmed (Main Account)', 'HBL', 'TIN456789', '4210552759045', '2021-01-15', '2031-01-15', 'Finance Officer', 'Active', '2025-12-01 10:30:00', '2026-02-03 18:11:51', NULL, NULL, '{\"technical\": [], \"soft\": []}', '[]', '[]', '[]', '{\"linkedin\": \"\", \"github\": \"\", \"portfolio\": \"\", \"twitter\": \"\", \"facebook\": \"\", \"instagram\": \"\", \"other_links\": []}', '[{\"id\": 1, \"type\": \"cnic\", \"name\": \"CNIC\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 2, \"type\": \"passport\", \"name\": \"Passport\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 3, \"type\": \"diploma\", \"name\": \"Educational Diploma\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 4, \"type\": \"resume\", \"name\": \"Resume/CV\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 5, \"type\": \"reference_letter\", \"name\": \"Reference Letter\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}]', '[]'),
+(12, 'DIG-010', 'Raffay Ahmed', 'raffay.ahmed@digious.com', '$2a$10$eWvhWkhKGqnlO3QA..cWdOHIXyu/LjzpvhCwWYsq4qSOURZSPMIqi', '0986789010', 'Production', 'Software Developer', 'Probation', '2026-01-03', '2026-04-03', 'hunain', '0312398003', 1, 'pkriban1234589', 'Raffay Ahmed (Main Account)', 'HBL', 'SSN1234', '42101-5103653-51', '2021-01-15', '2031-01-15', 'Mid Level', 'Active', '2026-01-02 19:14:56', '2026-02-03 18:11:51', NULL, NULL, '{\"technical\": [], \"soft\": []}', '[]', '[]', '[]', '{\"linkedin\": \"\", \"github\": \"\", \"portfolio\": \"\", \"twitter\": \"\", \"facebook\": \"\", \"instagram\": \"\", \"other_links\": []}', '[{\"id\": 1, \"type\": \"cnic\", \"name\": \"CNIC\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 2, \"type\": \"passport\", \"name\": \"Passport\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 3, \"type\": \"diploma\", \"name\": \"Educational Diploma\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 4, \"type\": \"resume\", \"name\": \"Resume/CV\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 5, \"type\": \"reference_letter\", \"name\": \"Reference Letter\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}]', '[]'),
+(13, 'DIG-100', 'test1', 'test1@digious.com', '$2a$10$zf5ChX237SfY4A2rTMmTA.D.x3r8VREGqe.vvi642.ax5k3Isqcfy', '42101510365356', 'Production', 'MD1', 'Probation', '2026-01-03', '2026-04-03', 'qwerty123', '031239800311', 1, 'pkriban1234590', 'test1 (Main Account)', 'HBL', 'SSN12367', '42101-5103653-512', '2021-01-15', '2031-01-15', 'SMD', 'Inactive', '2026-01-02 19:54:33', '2026-02-03 18:11:51', NULL, NULL, '{\"technical\": [], \"soft\": []}', '[]', '[]', '[]', '{\"linkedin\": \"\", \"github\": \"\", \"portfolio\": \"\", \"twitter\": \"\", \"facebook\": \"\", \"instagram\": \"\", \"other_links\": []}', '[{\"id\": 1, \"type\": \"cnic\", \"name\": \"CNIC\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 2, \"type\": \"passport\", \"name\": \"Passport\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 3, \"type\": \"diploma\", \"name\": \"Educational Diploma\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 4, \"type\": \"resume\", \"name\": \"Resume/CV\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 5, \"type\": \"reference_letter\", \"name\": \"Reference Letter\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}]', '[]'),
+(14, 'DIG-101', 'Ron', 'ron@digious.com', '$2a$10$cVjt3I.H.AhYMlt264Dvjem4pxnAepwrD0U4F/LfRRb5PfqbNfpn6', '421015103653511', 'Production', 'MDq', 'Probation', '2026-01-02', '2026-04-02', 'qwerty', '031239800311', 1, 'pkriban123459012', 'Ron (Main Account)', 'HBL', 'SSN12311', '42101-5103653-5111', '2021-01-15', '2031-01-15', 'MD2', 'Active', '2026-01-02 20:07:51', '2026-02-03 18:11:51', NULL, NULL, '{\"technical\": [], \"soft\": []}', '[]', '[]', '[]', '{\"linkedin\": \"\", \"github\": \"\", \"portfolio\": \"\", \"twitter\": \"\", \"facebook\": \"\", \"instagram\": \"\", \"other_links\": []}', '[{\"id\": 1, \"type\": \"cnic\", \"name\": \"CNIC\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 2, \"type\": \"passport\", \"name\": \"Passport\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 3, \"type\": \"diploma\", \"name\": \"Educational Diploma\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 4, \"type\": \"resume\", \"name\": \"Resume/CV\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 5, \"type\": \"reference_letter\", \"name\": \"Reference Letter\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}]', '[]'),
+(15, 'DiG-105', 'Khalid Iqbal', 'khalid.iqbal@digious.com', '$2a$10$fXR7nYYtwew6CXS6pyoN.uJCpHrE3RuHpgUOqUCByMIe/C.ruRJ1S', '03123598003', 'Production', ' Manager', 'Probation', '2026-01-05', '2026-04-05', 'North Nazimabd Karachi', '03102588816', 1, 'PKR 450 123456 789', 'Khalid Iqbal (Main Account)', 'HBL', 'CDN-4567', '1234-5103653-5', '2021-01-15', '2031-01-15', 'Branch Head', 'Active', '2026-01-04 19:22:59', '2026-02-03 18:11:51', NULL, NULL, '{\"technical\": [], \"soft\": []}', '[]', '[]', '[]', '{\"linkedin\": \"\", \"github\": \"\", \"portfolio\": \"\", \"twitter\": \"\", \"facebook\": \"\", \"instagram\": \"\", \"other_links\": []}', '[{\"id\": 1, \"type\": \"cnic\", \"name\": \"CNIC\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 2, \"type\": \"passport\", \"name\": \"Passport\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 3, \"type\": \"diploma\", \"name\": \"Educational Diploma\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 4, \"type\": \"resume\", \"name\": \"Resume/CV\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 5, \"type\": \"reference_letter\", \"name\": \"Reference Letter\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}]', '[]'),
+(16, 'DIG-503', 'Muneeb Baig', 'muneeb.baig@digious.com', '$2a$10$7c3e3ve.x1SkZiOydTY5Nuv9KnNbT8qaOawOSEH4EQwNakbpQ56Rm', '4210151036535', 'Production', 'Developer ', 'Probation', '2026-01-01', '2026-04-01', '123qwerty', '031239800311', 1, 'pkriban1234590009', 'Muneeb Baig (Main Account)', 'HBL', 'SSN123123', '42101-5103653-5121', '2021-01-15', '2031-01-15', 'Senior', 'Active', '2026-01-05 16:36:20', '2026-02-03 18:11:51', NULL, NULL, '{\"technical\": [], \"soft\": []}', '[]', '[]', '[]', '{\"linkedin\": \"\", \"github\": \"\", \"portfolio\": \"\", \"twitter\": \"\", \"facebook\": \"\", \"instagram\": \"\", \"other_links\": []}', '[{\"id\": 1, \"type\": \"cnic\", \"name\": \"CNIC\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 2, \"type\": \"passport\", \"name\": \"Passport\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 3, \"type\": \"diploma\", \"name\": \"Educational Diploma\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 4, \"type\": \"resume\", \"name\": \"Resume/CV\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 5, \"type\": \"reference_letter\", \"name\": \"Reference Letter\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}]', '[]'),
+(17, 'DIG-444', 'NEW Test1', 'fatima.khan11@digious.com', '$2a$10$ui8OhY3roEIGZZZfr/NmieYMDkYgsKgw.yG/HthN.WKRKszbWIdMG', '4210151036535', 'Sales', 'MD', 'Probation', '2026-01-01', '2026-04-01', NULL, '11111', 1, '111111111111111', 'NEW Test1 (Main Account)', 'HBL', '1111111111', '1111111111111111111', '2021-01-15', '2031-01-15', 'MD', 'Active', '2026-01-13 20:51:49', '2026-02-03 18:11:51', NULL, NULL, '{\"technical\": [], \"soft\": []}', '[]', '[]', '[]', '{\"linkedin\": \"\", \"github\": \"\", \"portfolio\": \"\", \"twitter\": \"\", \"facebook\": \"\", \"instagram\": \"\", \"other_links\": []}', '[{\"id\": 1, \"type\": \"cnic\", \"name\": \"CNIC\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 2, \"type\": \"passport\", \"name\": \"Passport\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 3, \"type\": \"diploma\", \"name\": \"Educational Diploma\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 4, \"type\": \"resume\", \"name\": \"Resume/CV\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 5, \"type\": \"reference_letter\", \"name\": \"Reference Letter\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}]', '[]'),
+(21, 'DIG-006', 'jd', 'jd2@digious.com', '$2a$10$yUUxKMYWW/kjz3qUITdS/.NMW1DvR3f10l3mKPmq9SYeqdpoM0Tey', '123456789', 'Production', 'tree', 'Part-Time', '2026-01-15', '2026-01-31', NULL, NULL, 1, '123456789', 'Hunain', 'Meezan', NULL, '123456789yyyy', '2026-01-15', '2026-01-31', 'SMA', 'Active', '2026-01-15 14:09:36', '2026-02-03 18:11:51', NULL, NULL, '{\"technical\": [], \"soft\": []}', '[]', '[]', '[]', '{\"linkedin\": \"\", \"github\": \"\", \"portfolio\": \"\", \"twitter\": \"\", \"facebook\": \"\", \"instagram\": \"\", \"other_links\": []}', '[{\"id\": 1, \"type\": \"cnic\", \"name\": \"CNIC\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 2, \"type\": \"passport\", \"name\": \"Passport\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 3, \"type\": \"diploma\", \"name\": \"Educational Diploma\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 4, \"type\": \"resume\", \"name\": \"Resume/CV\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 5, \"type\": \"reference_letter\", \"name\": \"Reference Letter\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}]', '[]'),
+(22, 'DIG-007', 'JD', 'JD12@digious.com', '$2a$10$0vYeqotPZXM97NhflxoFWOUryjE0Y3Rx8IpYgXO3ObbLytqpIlJ2C', '1092837465', 'Production', 'SMA', 'Probation', '2026-01-15', '2026-01-16', 'aaaaaa', 'aaaaaaa', 1, 'aq33qq', '1234qwe', 'MCB', NULL, '123456789', '2026-01-01', '2026-01-30', 'ASD', 'Active', '2026-01-15 15:01:53', '2026-02-03 18:11:51', NULL, NULL, '{\"technical\": [], \"soft\": []}', '[]', '[]', '[]', '{\"linkedin\": \"\", \"github\": \"\", \"portfolio\": \"\", \"twitter\": \"\", \"facebook\": \"\", \"instagram\": \"\", \"other_links\": []}', '[{\"id\": 1, \"type\": \"cnic\", \"name\": \"CNIC\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 2, \"type\": \"passport\", \"name\": \"Passport\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 3, \"type\": \"diploma\", \"name\": \"Educational Diploma\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 4, \"type\": \"resume\", \"name\": \"Resume/CV\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 5, \"type\": \"reference_letter\", \"name\": \"Reference Letter\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}]', '[]'),
+(24, 'DG-001', 'Muhammad Hunain', 'hunain@digioussolutions.com', '$2a$10$jLKX45NiLU767Sdo/9an4ePzPliXF4CjcNoGlNLfCcINwMJBIckxu', '03123598003', 'Marketing', 'ase', 'Permanent', '2026-01-16', '2026-01-16', 'shan residency block K', '03123598003', 1, '03183598103', 'pkr INB 123', 'Naypay', NULL, '42101-5103653-5', '2025-09-01', '2026-11-01', 'sma', 'Active', '2026-01-15 21:40:16', '2026-02-03 18:11:51', NULL, NULL, '{\"technical\": [], \"soft\": []}', '[]', '[]', '[]', '{\"linkedin\": \"\", \"github\": \"\", \"portfolio\": \"\", \"twitter\": \"\", \"facebook\": \"\", \"instagram\": \"\", \"other_links\": []}', '[{\"id\": 1, \"type\": \"cnic\", \"name\": \"CNIC\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 2, \"type\": \"passport\", \"name\": \"Passport\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 3, \"type\": \"diploma\", \"name\": \"Educational Diploma\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 4, \"type\": \"resume\", \"name\": \"Resume/CV\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 5, \"type\": \"reference_letter\", \"name\": \"Reference Letter\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}]', '[]'),
+(25, 'DG-002', 'Nazir Hussan', 'nazirdigious.com@digioussolutions.com', '$2a$10$SViiJqUPgA6qDYJGz6mYueNiVNJOnsI2nO4C0Vie/N8gPu.L8dAtu', '0981726534', 'Sales', 'MD', 'Permanent', '2026-01-01', '2026-01-30', 'qwerty', '09182736', 1, 'pkr ibm 1234', 'annnna', 'HBL', NULL, '12345678', '2026-01-01', '2026-01-30', 'SM', 'Active', '2026-01-30 10:56:15', '2026-02-03 18:11:51', NULL, NULL, '{\"technical\": [], \"soft\": []}', '[]', '[]', '[]', '{\"linkedin\": \"\", \"github\": \"\", \"portfolio\": \"\", \"twitter\": \"\", \"facebook\": \"\", \"instagram\": \"\", \"other_links\": []}', '[{\"id\": 1, \"type\": \"cnic\", \"name\": \"CNIC\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 2, \"type\": \"passport\", \"name\": \"Passport\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 3, \"type\": \"diploma\", \"name\": \"Educational Diploma\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 4, \"type\": \"resume\", \"name\": \"Resume/CV\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 5, \"type\": \"reference_letter\", \"name\": \"Reference Letter\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}]', '[]'),
+(26, 'DG-004', 'test2', 'test2@digioussolutions.com', '$2a$10$T2D..ECh6KROsOL8gcnUC.a14Ffx9IrrDK4ZsR.UIO8wOEl.DBgnO', '01928354', 'Marketing', 'ssbbs', 'Part-Time', '2026-01-15', '2026-01-26', 'jnzjn', '0192837499', 1, 'sjsnnsn', 'snnsns', 'Allied', NULL, '10293847561782', '2025-12-29', '2026-02-23', 's s  s', 'Active', '2026-01-30 12:02:23', '2026-02-03 18:11:51', '2025-12-30', NULL, '{\"technical\": [], \"soft\": []}', '[]', '[]', '[]', '{\"linkedin\": \"\", \"github\": \"\", \"portfolio\": \"\", \"twitter\": \"\", \"facebook\": \"\", \"instagram\": \"\", \"other_links\": []}', '[{\"id\": 1, \"type\": \"cnic\", \"name\": \"CNIC\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 2, \"type\": \"passport\", \"name\": \"Passport\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 3, \"type\": \"diploma\", \"name\": \"Educational Diploma\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 4, \"type\": \"resume\", \"name\": \"Resume/CV\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}, {\"id\": 5, \"type\": \"reference_letter\", \"name\": \"Reference Letter\", \"status\": \"pending\", \"uploaded_at\": null, \"url\": \"\"}]', '[]');
 
 --
 -- Triggers `employee_onboarding`
@@ -767,51 +751,35 @@ DELIMITER ;
 
 -- --------------------------------------------------------
 
+-- --------------------------------------------------------
+
 --
--- Table structure for table `employee_resources`
+-- Table structure for table `employee_required_documents`
 --
 
-CREATE TABLE `employee_resources` (
+CREATE TABLE `employee_required_documents` (
   `id` int(11) NOT NULL,
   `employee_id` int(11) NOT NULL,
-  `laptop` tinyint(1) DEFAULT 0,
-  `laptop_serial` varchar(100) DEFAULT NULL,
-  `charger` tinyint(1) DEFAULT 0,
-  `charger_serial` varchar(100) DEFAULT NULL,
-  `mouse` tinyint(1) DEFAULT 0,
-  `mouse_serial` varchar(100) DEFAULT NULL,
-  `keyboard` tinyint(1) DEFAULT 0,
-  `keyboard_serial` varchar(100) DEFAULT NULL,
-  `monitor` tinyint(1) DEFAULT 0,
-  `monitor_serial` varchar(100) DEFAULT NULL,
-  `mobile` tinyint(1) DEFAULT 0,
-  `mobile_serial` varchar(100) DEFAULT NULL,
-  `resources_note` text DEFAULT NULL,
-  `allocated_date` timestamp NOT NULL DEFAULT current_timestamp(),
-  `returned_date` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `document_type` varchar(100) NOT NULL COMMENT 'e.g., cnic, passport, diploma, resume, reference_letter',
+  `document_name` varchar(255) NOT NULL,
+  `document_url` varchar(500) DEFAULT NULL,
+  `status` enum('pending','submitted','verified','rejected') DEFAULT 'pending',
+  `expiry_date` date DEFAULT NULL,
+  `notes` text DEFAULT NULL,
+  `uploaded_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `verified_at` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `verified_by` int(11) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Dumping data for table `employee_resources`
+-- Dumping data for table `employee_required_documents`
 --
 
-INSERT INTO `employee_resources` (`id`, `employee_id`, `laptop`, `laptop_serial`, `charger`, `charger_serial`, `mouse`, `mouse_serial`, `keyboard`, `keyboard_serial`, `monitor`, `monitor_serial`, `mobile`, `mobile_serial`, `resources_note`, `allocated_date`, `returned_date`) VALUES
-(1, 1, 1, 'DELL-DIG-0001', 1, 'CHARGER-001', 1, 'MOUSE-001', 1, 'KEYBOARD-001', 1, 'MONITOR-001', 1, 'MOBILE-001', 'Good Condition', '2025-11-01 10:00:00', NULL),
-(2, 2, 1, 'DELL-DIG-0002', 1, 'CHARGER-002', 1, 'MOUSE-002', 1, 'KEYBOARD-002', 1, 'Hunain Monitior test', 1, 'MOBILE-002', 'New Equipment', '2025-11-15 09:30:00', NULL),
-(3, 3, 1, 'DELL-DIG-0003', 1, 'CHARGER-003', 1, 'MOUSE-003', 1, 'KEYBOARD-003', 1, 'MONITOR-003', 1, 'MOBILE-003', 'Good Condition', '2025-10-20 08:00:00', NULL),
-(4, 4, 1, 'DELL-DIG-0004', 1, 'CHARGER-004', 1, 'MOUSE-004', 0, NULL, 1, 'MONITOR-004', 1, 'MOBILE-004', 'Working', '2025-11-01 11:00:00', NULL),
-(5, 5, 1, 'DELL-DIG-0005', 1, 'CHARGER-005', 1, 'MOUSE-005', 1, 'KEYBOARD-005', 0, NULL, 0, NULL, 'Needs Monitor Setup', '2025-12-01 10:30:00', NULL),
-(6, 12, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0, NULL, NULL, '2026-01-02 19:14:56', NULL),
-(7, 13, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0, NULL, NULL, '2026-01-02 19:54:33', NULL),
-(8, 14, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0, NULL, NULL, '2026-01-02 20:07:51', NULL),
-(9, 15, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0, NULL, NULL, '2026-01-04 19:22:59', NULL),
-(10, 16, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0, NULL, NULL, '2026-01-05 16:36:20', NULL),
-(11, 17, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0, NULL, NULL, '2026-01-13 20:51:49', NULL),
-(12, 21, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0, NULL, NULL, '2026-01-15 14:09:36', NULL),
-(13, 22, 1, NULL, 1, NULL, 0, NULL, 0, NULL, 0, NULL, 0, NULL, NULL, '2026-01-15 15:01:53', NULL),
-(14, 24, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0, NULL, NULL, '2026-01-15 21:40:16', NULL),
-(15, 25, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0, NULL, NULL, '2026-01-30 10:56:15', NULL),
-(16, 26, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0, NULL, NULL, '2026-01-30 12:02:23', NULL);
+INSERT INTO `employee_required_documents` (`id`, `employee_id`, `document_type`, `document_name`, `document_url`, `status`, `expiry_date`, `notes`, `uploaded_at`, `verified_at`, `verified_by`, `created_at`, `updated_at`) VALUES
+(25, 1, 'cnic', 'CNIC', 'https://example.com/cnic.pdf', 'verified', NULL, NULL, '2026-02-04 12:56:49', '0000-00-00 00:00:00', NULL, '2026-02-04 12:56:49', '2026-02-04 12:56:49'),
+(26, 1, 'passport', 'Passport', NULL, 'pending', NULL, NULL, '2026-02-04 12:56:49', '0000-00-00 00:00:00', NULL, '2026-02-04 12:56:49', '2026-02-04 12:56:49');
 
 -- --------------------------------------------------------
 
@@ -852,27 +820,45 @@ INSERT INTO `employee_salary` (`id`, `employee_id`, `base_salary`, `total_salary
 -- --------------------------------------------------------
 
 --
--- Stand-in structure for view `Monthly_Attendance_Summary`
--- (See below for the actual view)
+-- Table structure for table `employee_skills`
 --
-CREATE TABLE `Monthly_Attendance_Summary` (
-`employee_id` int(11)
-,`name` varchar(100)
-,`email` varchar(100)
-,`year` int(4)
-,`month` int(2)
-,`total_days` bigint(21)
-,`present_days` decimal(22,0)
-,`absent_days` decimal(22,0)
-,`late_days` decimal(22,0)
-,`leave_days` decimal(22,0)
-,`attendance_rate` decimal(28,2)
-,`on_time_rate` decimal(28,2)
-,`total_working_minutes` decimal(32,0)
-,`total_overtime_minutes` decimal(32,0)
-,`total_break_minutes` decimal(32,0)
-);
 
+CREATE TABLE `employee_skills` (
+  `id` int(11) NOT NULL,
+  `employee_id` int(11) NOT NULL,
+  `skill_name` varchar(255) NOT NULL,
+  `skill_type` enum('technical','soft') NOT NULL DEFAULT 'technical' COMMENT 'Type of skill: technical or soft',
+  `proficiency_level` enum('beginner','intermediate','expert') DEFAULT 'intermediate' COMMENT 'Optional proficiency level',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `employee_social_links`
+--
+
+CREATE TABLE `employee_social_links` (
+  `id` int(11) NOT NULL,
+  `employee_id` int(11) NOT NULL,
+  `platform` varchar(50) NOT NULL COMMENT 'e.g., linkedin, github, portfolio, twitter, facebook, instagram',
+  `url` varchar(500) NOT NULL,
+  `is_verified` tinyint(1) DEFAULT 0,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `employee_social_links`
+--
+
+INSERT INTO `employee_social_links` (`id`, `employee_id`, `platform`, `url`, `is_verified`, `created_at`, `updated_at`) VALUES
+(20, 1, 'facebook', 'hunain.com', 0, '2026-02-04 12:56:49', '2026-02-04 12:56:49');
+
+-- --------------------------------------------------------
+
+--
 -- --------------------------------------------------------
 
 --
@@ -924,26 +910,6 @@ INSERT INTO `onboarding_progress` (`id`, `employee_id`, `step_1_basic_info`, `st
 -- --------------------------------------------------------
 
 --
--- Stand-in structure for view `Overtime_Report_View`
--- (See below for the actual view)
---
-CREATE TABLE `Overtime_Report_View` (
-`employee_id` int(11)
-,`name` varchar(100)
-,`email` varchar(100)
-,`attendance_date` date
-,`check_in_time` time
-,`check_out_time` time
-,`net_working_time_minutes` int(11)
-,`expected_working_time_minutes` int(11)
-,`overtime_minutes` int(11)
-,`overtime_hours` decimal(5,2)
-,`overtime_pay_multiplier` decimal(7,2)
-);
-
--- --------------------------------------------------------
-
---
 -- Table structure for table `user_as_employees`
 --
 
@@ -978,22 +944,21 @@ CREATE TABLE `user_as_employees` (
 --
 
 INSERT INTO `user_as_employees` (`id`, `employee_id`, `name`, `email`, `password`, `department`, `confirmation_date`, `position`, `employment_status`, `designation`, `status`, `request_password_change`, `login_count`, `last_login_time`, `current_session_token`, `session_token_expires_at`, `is_active`, `created_at`, `updated_at`, `account_title_name`, `bank_name`, `cnic_issue_date`, `cnic_expiry_date`) VALUES
-(1, 1, 'Muhammad Hunain', 'muhammad.hunain@digious.com', '$2a$12$Tdc/e2C9kf.GOIVDwS0HQ.GIqPNlmfjL.R5wImzRWSHniZO1eKDUa', 'Production', '2026-02-01', 'Software Engineer', 'Permanent', 'Senior Developer', 'Active', 0, 15, '2026-01-02 09:00:00', NULL, NULL, 1, '2025-11-01 10:00:00', '2026-01-30 14:01:39', 'Muhammad Hunain (Main Account)', 'HBL', '2026-01-28', '2031-01-15'),
-(2, 2, 'Ahmed Ali', 'ahmed.ali@digious.com', '$2a$10$iiNWuFJ27Mb42.TwAfp08e05//2dPnSnAIioD8G8D5heXSzhG1UDC', 'Production', '2026-02-15', 'Software Developer', 'Permanent', 'Junior Developer', 'Active', 0, 8, '2026-01-02 10:15:00', NULL, NULL, 1, '2025-11-15 09:30:00', '2026-01-15 13:04:48', 'Ahmed Ali (Main Account)', 'HBL', '2021-01-15', '2031-01-15'),
-(3, 3, 'Fatima Khan', 'fatima.khan@digious.com', '$2a$12$Tdc/e2C9kf.GOIVDwS0HQ.GIqPNlmfjL.R5wImzRWSHniZO1eKDUa', 'HR', '2026-01-20', 'HR Manager', 'Permanent', 'HR Manager', 'Active', 0, 25, '2026-01-02 08:30:00', NULL, NULL, 1, '2025-10-20 08:00:00', '2026-01-15 13:04:48', 'Fatima Khan (Main Account)', 'HBL', '2021-01-15', '2031-01-15'),
-(4, 4, 'Hassan Raza', 'hassan.raza@digious.com', '$2a$10$MQOPnBPpBTWOIFnd1f1UJu3cZQJIc104ucgrYkOc3Xl6RXd3ADT2q', 'Sales', '2026-02-01', 'Sales Manager', 'Permanent', 'Sales Head', 'Active', 0, 12, '2026-01-02 11:00:00', NULL, NULL, 1, '2025-11-01 11:00:00', '2026-01-15 13:04:48', 'Hassan Raza (Main Account)', 'HBL', '2021-01-15', '2031-01-15'),
-(5, 5, 'Sara Ahmed', 'sara.ahmed@digious.com', '$2a$12$Tdc/e2C9kf.GOIVDwS0HQ.GIqPNlmfjL.R5wImzRWSHniZO1eKDUa', 'Finance', '2026-03-01', 'Finance Officer', 'Permanent', 'Finance Officer', 'Active', 1, 5, '2026-01-02 09:30:00', NULL, NULL, 1, '2025-12-01 10:30:00', '2026-01-15 13:04:48', 'Sara Ahmed (Main Account)', 'HBL', '2021-01-15', '2031-01-15'),
-(6, 12, 'Raffay Ahmed', 'raffay.ahmed@digious.com', '$2a$10$XlzGt7qZM0kJOPYz53pE4e75VCxg0f0jJONXe4zC7VQH1UiyOGoT6', 'Production', '2026-04-03', 'Software Developer', 'Probation', 'Mid Level', 'Active', 0, 0, NULL, NULL, NULL, 1, '2026-01-02 19:14:56', '2026-01-15 13:04:48', 'Raffay Ahmed (Main Account)', 'HBL', '2021-01-15', '2031-01-15'),
-(7, 13, 'test1', 'test1@digious.com', '$2a$10$zR9/TX7yDNo3mwWv.A.4ROUUw4i6KaGvLA1nlvluiiXMSqGB5610m', 'Production', '2026-04-03', 'MD1', 'Probation', 'SMD', 'Inactive', 0, 0, NULL, NULL, NULL, 1, '2026-01-02 19:54:33', '2026-01-15 13:04:48', 'test1 (Main Account)', 'HBL', '2021-01-15', '2031-01-15'),
-(8, 14, 'Ron', 'ron@digious.com', '$2a$10$sSFUxoEgbmDuCF1WgnPtm.avY4muLF2Inqe5RkYOzK06Q8XToaeba', 'Production', '2026-04-02', 'MDq', 'Probation', 'MD2', 'Active', 0, 0, NULL, NULL, NULL, 1, '2026-01-02 20:07:51', '2026-01-15 13:04:48', 'Ron (Main Account)', 'HBL', '2021-01-15', '2031-01-15'),
-(9, 15, 'Khalid Iqbal', 'khalid.iqbal@digious.com', '$2a$10$Ox1EPyf8Jcs1Rl0gDSJEpONnz3v97wwVrFeVInqNJqlXhtiUYFWbS', 'Production', '2026-04-05', ' Manager', 'Probation', 'Branch Head', 'Active', 0, 0, NULL, NULL, NULL, 1, '2026-01-04 19:22:59', '2026-01-15 13:04:48', 'Khalid Iqbal (Main Account)', 'HBL', '2021-01-15', '2031-01-15'),
-(10, 16, 'Muneeb Baig', 'muneeb.baig@digious.com', '$2a$10$.HVtdNt9PQ2PQHyHwndefu0KRKSenfWVsQ1gyXNavh0lHzblry5WW', 'Production', '2026-04-01', 'Developer ', 'Probation', 'Senior', 'Active', 0, 0, NULL, NULL, NULL, 1, '2026-01-05 16:36:20', '2026-01-15 13:04:48', 'Muneeb Baig (Main Account)', 'HBL', '2021-01-15', '2031-01-15'),
-(11, 17, 'NEW Test1', 'fatima.khan11@digious.com', '$2a$10$ui8OhY3roEIGZZZfr/NmieYMDkYgsKgw.yG/HthN.WKRKszbWIdMG', 'Sales', '2026-04-01', 'MD', 'Probation', 'MD', 'Active', 1, 0, NULL, NULL, NULL, 1, '2026-01-13 20:51:49', '2026-01-15 13:04:48', 'NEW Test1 (Main Account)', 'HBL', '2021-01-15', '2031-01-15'),
-(15, 21, 'jd', 'jd2@digious.com', '$2a$10$yUUxKMYWW/kjz3qUITdS/.NMW1DvR3f10l3mKPmq9SYeqdpoM0Tey', 'Production', '2026-01-31', 'tree', 'Part-Time', 'SMA', 'Active', 1, 0, NULL, NULL, NULL, 1, '2026-01-15 14:09:36', '2026-01-15 14:09:36', 'Hunain', 'Meezan', '2026-01-15', '2026-01-31'),
-(16, 22, 'JD', 'JD12@digious.com', '$2a$10$0vYeqotPZXM97NhflxoFWOUryjE0Y3Rx8IpYgXO3ObbLytqpIlJ2C', 'Production', '2026-01-16', 'SMA', 'Probation', 'ASD', 'Active', 1, 0, NULL, NULL, NULL, 1, '2026-01-15 15:01:53', '2026-01-15 15:01:53', '1234qwe', 'MCB', '2026-01-01', '2026-01-30'),
-(17, 24, 'Muhammad Hunain', 'hunain@digioussolutions.com', '$2a$10$jLKX45NiLU767Sdo/9an4ePzPliXF4CjcNoGlNLfCcINwMJBIckxu', 'Marketing', '2026-01-16', 'ase', 'Permanent', 'sma', 'Active', 1, 0, NULL, NULL, NULL, 1, '2026-01-15 21:40:16', '2026-01-15 21:40:16', 'pkr INB 123', 'Naypay', '2025-09-01', '2026-11-01'),
-(18, 25, 'Nazir Hussan', 'nazirdigious.com@digioussolutions.com', '$2a$10$SViiJqUPgA6qDYJGz6mYueNiVNJOnsI2nO4C0Vie/N8gPu.L8dAtu', 'Sales', '2026-01-30', 'MD', 'Permanent', 'SM', 'Active', 1, 0, NULL, NULL, NULL, 1, '2026-01-30 10:56:15', '2026-01-30 10:56:15', 'annnna', 'HBL', '2026-01-01', '2026-01-30'),
-(19, 26, 'test2', 'test2@digioussolutions.com', '$2a$10$T2D..ECh6KROsOL8gcnUC.a14Ffx9IrrDK4ZsR.UIO8wOEl.DBgnO', 'Marketing', '2026-01-27', 'ssbbs', 'Part-Time', 's s  s', 'Active', 1, 0, NULL, NULL, NULL, 1, '2026-01-30 12:02:23', '2026-01-30 14:19:11', 'snnsns', 'Allied', '2025-12-30', '2026-02-24');
+(1, 1, 'Muhammad Hunain', 'muhammad.hunain@digious.com', '$2a$12$Tdc/e2C9kf.GOIVDwS0HQ.GIqPNlmfjL.R5wImzRWSHniZO1eKDUa', 'Production', '2026-02-01', 'Software Engineer', 'Permanent', 'Senior Developer', 'Active', 0, 15, '2026-01-02 09:00:00', NULL, NULL, 1, '2025-11-01 10:00:00', '2026-02-04 12:56:48', 'Muhammad Hunain (Main Account)', 'HBL', '2026-01-28', '2031-01-15'),
+(2, 2, 'Ahmed Ali', 'ahmed.ali@digious.com', '$2a$10$iiNWuFJ27Mb42.TwAfp08e05//2dPnSnAIioD8G8D5heXSzhG1UDC', 'Production', '2026-02-15', 'Software Developer', 'Permanent', 'Junior Developer', 'Active', 0, 8, '2026-01-02 10:15:00', NULL, NULL, 1, '2025-11-15 09:30:00', '2026-02-03 18:11:51', 'Ahmed Ali (Main Account)', 'HBL', '2021-01-15', '2031-01-15'),
+(3, 3, 'Fatima Khan', 'fatima.khan@digious.com', '$2a$12$Tdc/e2C9kf.GOIVDwS0HQ.GIqPNlmfjL.R5wImzRWSHniZO1eKDUa', 'HR', '2026-01-20', 'HR Manager', 'Permanent', 'HR Manager', 'Active', 0, 25, '2026-01-02 08:30:00', NULL, NULL, 1, '2025-10-20 08:00:00', '2026-02-03 18:11:51', 'Fatima Khan (Main Account)', 'HBL', '2021-01-15', '2031-01-15'),
+(4, 4, 'Hassan Raza', 'hassan.raza@digious.com', '$2a$10$MQOPnBPpBTWOIFnd1f1UJu3cZQJIc104ucgrYkOc3Xl6RXd3ADT2q', 'Sales', '2026-02-01', 'Sales Manager', 'Permanent', 'Sales Head', 'Active', 0, 12, '2026-01-02 11:00:00', NULL, NULL, 1, '2025-11-01 11:00:00', '2026-02-03 18:11:51', 'Hassan Raza (Main Account)', 'HBL', '2021-01-15', '2031-01-15'),
+(5, 5, 'Sara Ahmed', 'sara.ahmed@digious.com', '$2a$12$Tdc/e2C9kf.GOIVDwS0HQ.GIqPNlmfjL.R5wImzRWSHniZO1eKDUa', 'Finance', '2026-03-01', 'Finance Officer', 'Permanent', 'Finance Officer', 'Active', 1, 5, '2026-01-02 09:30:00', NULL, NULL, 1, '2025-12-01 10:30:00', '2026-02-03 18:11:51', 'Sara Ahmed (Main Account)', 'HBL', '2021-01-15', '2031-01-15'),
+(6, 12, 'Raffay Ahmed', 'raffay.ahmed@digious.com', '$2a$10$XlzGt7qZM0kJOPYz53pE4e75VCxg0f0jJONXe4zC7VQH1UiyOGoT6', 'Production', '2026-04-03', 'Software Developer', 'Probation', 'Mid Level', 'Active', 0, 0, NULL, NULL, NULL, 1, '2026-01-02 19:14:56', '2026-02-03 18:11:51', 'Raffay Ahmed (Main Account)', 'HBL', '2021-01-15', '2031-01-15'),
+(7, 13, 'test1', 'test1@digious.com', '$2a$10$zR9/TX7yDNo3mwWv.A.4ROUUw4i6KaGvLA1nlvluiiXMSqGB5610m', 'Production', '2026-04-03', 'MD1', 'Probation', 'SMD', 'Inactive', 0, 0, NULL, NULL, NULL, 1, '2026-01-02 19:54:33', '2026-02-03 18:11:51', 'test1 (Main Account)', 'HBL', '2021-01-15', '2031-01-15'),
+(8, 14, 'Ron', 'ron@digious.com', '$2a$10$sSFUxoEgbmDuCF1WgnPtm.avY4muLF2Inqe5RkYOzK06Q8XToaeba', 'Production', '2026-04-02', 'MDq', 'Probation', 'MD2', 'Active', 0, 0, NULL, NULL, NULL, 1, '2026-01-02 20:07:51', '2026-02-03 18:11:51', 'Ron (Main Account)', 'HBL', '2021-01-15', '2031-01-15'),
+(9, 15, 'Khalid Iqbal', 'khalid.iqbal@digious.com', '$2a$10$Ox1EPyf8Jcs1Rl0gDSJEpONnz3v97wwVrFeVInqNJqlXhtiUYFWbS', 'Production', '2026-04-05', ' Manager', 'Probation', 'Branch Head', 'Active', 0, 0, NULL, NULL, NULL, 1, '2026-01-04 19:22:59', '2026-02-03 18:11:51', 'Khalid Iqbal (Main Account)', 'HBL', '2021-01-15', '2031-01-15'),
+(10, 16, 'Muneeb Baig', 'muneeb.baig@digious.com', '$2a$10$.HVtdNt9PQ2PQHyHwndefu0KRKSenfWVsQ1gyXNavh0lHzblry5WW', 'Production', '2026-04-01', 'Developer ', 'Probation', 'Senior', 'Active', 0, 0, NULL, NULL, NULL, 1, '2026-01-05 16:36:20', '2026-02-03 18:11:51', 'Muneeb Baig (Main Account)', 'HBL', '2021-01-15', '2031-01-15'),
+(11, 17, 'NEW Test1', 'fatima.khan11@digious.com', '$2a$10$ui8OhY3roEIGZZZfr/NmieYMDkYgsKgw.yG/HthN.WKRKszbWIdMG', 'Sales', '2026-04-01', 'MD', 'Probation', 'MD', 'Active', 1, 0, NULL, NULL, NULL, 1, '2026-01-13 20:51:49', '2026-02-03 18:11:51', 'NEW Test1 (Main Account)', 'HBL', '2021-01-15', '2031-01-15'),
+(15, 21, 'jd', 'jd2@digious.com', '$2a$10$yUUxKMYWW/kjz3qUITdS/.NMW1DvR3f10l3mKPmq9SYeqdpoM0Tey', 'Production', '2026-01-31', 'tree', 'Part-Time', 'SMA', 'Active', 1, 0, NULL, NULL, NULL, 1, '2026-01-15 14:09:36', '2026-02-03 18:11:51', 'Hunain', 'Meezan', '2026-01-15', '2026-01-31'),
+(16, 22, 'JD', 'JD12@digious.com', '$2a$10$0vYeqotPZXM97NhflxoFWOUryjE0Y3Rx8IpYgXO3ObbLytqpIlJ2C', 'Production', '2026-01-16', 'SMA', 'Probation', 'ASD', 'Active', 1, 0, NULL, NULL, NULL, 1, '2026-01-15 15:01:53', '2026-02-03 18:11:51', '1234qwe', 'MCB', '2026-01-01', '2026-01-30'),
+(18, 25, 'Nazir Hussan', 'nazirdigious.com@digioussolutions.com', '$2a$10$SViiJqUPgA6qDYJGz6mYueNiVNJOnsI2nO4C0Vie/N8gPu.L8dAtu', 'Sales', '2026-01-30', 'MD', 'Permanent', 'SM', 'Active', 1, 0, NULL, NULL, NULL, 1, '2026-01-30 10:56:15', '2026-02-03 18:11:51', 'annnna', 'HBL', '2026-01-01', '2026-01-30'),
+(19, 26, 'test2', 'test2@digioussolutions.com', '$2a$10$T2D..ECh6KROsOL8gcnUC.a14Ffx9IrrDK4ZsR.UIO8wOEl.DBgnO', 'Marketing', '2026-01-26', 'ssbbs', 'Part-Time', 's s  s', 'Active', 1, 0, NULL, NULL, NULL, 1, '2026-01-30 12:02:23', '2026-02-03 18:11:51', 'snnsns', 'Allied', '2025-12-29', '2026-02-23');
 
 -- --------------------------------------------------------
 
@@ -1018,9 +983,9 @@ CREATE TABLE `user_concurrent_sessions` (
 --
 
 INSERT INTO `user_concurrent_sessions` (`id`, `employee_id`, `email`, `total_active_sessions`, `pc_count`, `mobile_count`, `tablet_count`, `other_count`, `updated_at`) VALUES
-(1, 1, 'muhammad.hunain@digious.com', 55, 54, 1, 0, 0, '2026-01-30 14:43:59'),
+(1, 1, 'muhammad.hunain@digious.com', 63, 62, 1, 0, 0, '2026-02-04 12:44:49'),
 (2, 2, 'ahmed.ali@digious.com', 3, 3, 0, 0, 0, '2026-01-05 16:47:12'),
-(3, 3, 'fatima.khan@digious.com', 41, 40, 0, 1, 0, '2026-01-29 20:17:52'),
+(3, 3, 'fatima.khan@digious.com', 46, 45, 0, 1, 0, '2026-02-03 20:33:26'),
 (4, 4, 'hassan.raza@digious.com', 4, 3, 1, 0, 0, '2026-01-03 11:21:59'),
 (5, 5, 'sara.ahmed@digious.com', 1, 1, 0, 0, 0, '2026-01-02 09:30:00'),
 (30, 15, 'khalid.iqbal@digious.com', 2, 2, 0, 0, 0, '2026-01-05 16:40:14'),
@@ -1029,24 +994,6 @@ INSERT INTO `user_concurrent_sessions` (`id`, `employee_id`, `email`, `total_act
 -- --------------------------------------------------------
 
 --
--- Stand-in structure for view `user_session_summary`
--- (See below for the actual view)
---
-CREATE TABLE `user_session_summary` (
-`id` int(11)
-,`employee_id` varchar(50)
-,`name` varchar(255)
-,`email` varchar(255)
-,`department` varchar(100)
-,`total_active_sessions` bigint(21)
-,`pc_sessions` bigint(21)
-,`mobile_sessions` bigint(21)
-,`tablet_sessions` bigint(21)
-,`last_login_time` timestamp
-,`all_ip_addresses` mediumtext
-,`all_device_types` mediumtext
-);
-
 -- --------------------------------------------------------
 
 --
@@ -1297,7 +1244,32 @@ INSERT INTO `user_system_info` (`id`, `employee_id`, `session_token`, `email`, `
 (308, 1, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtcGxveWVlSWQiOjEsImVtYWlsIjoibXVoYW1tYWQuaHVuYWluQGRpZ2lvdXMuY29tIiwibmFtZSI6Ik11aGFtbWFkIEh1bmFpbiIsInJvbGUiOiJQcm9kdWN0aW9uIiwiZGVzaWduYXRpb24iOiJTZW5pb3IgRGV2ZWxvcGVyIiwiaWF0IjoxNzY5NzE0MjE0LCJleHAiOjE3Njk4MDA2MTR9.ALg-IX1Fb_lQjoI6UGhy9_FLOvtTgOb_-M8wNuLZmlQ', 'muhammad.hunain@digious.com', 'Muhammad Hunain', '2026-01-29 19:16:54', '2026-01-29 20:17:42', 0, 'PC', 'Linux PC', 'Firefox 147', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0', '2026-01-29 20:17:42', '2026-01-29 19:16:54', '2026-01-29 20:17:42'),
 (309, 3, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjMsImVtcGxveWVlSWQiOjMsImVtYWlsIjoiZmF0aW1hLmtoYW5AZGlnaW91cy5jb20iLCJuYW1lIjoiRmF0aW1hIEtoYW4iLCJyb2xlIjoiSFIiLCJkZXNpZ25hdGlvbiI6IkhSIE1hbmFnZXIiLCJpYXQiOjE3Njk3MTc4NzIsImV4cCI6MTc2OTgwNDI3Mn0.NCcElDJo5cZlWQLfo2a9VPkTtO8LCCnYbfx5T5rP-yo', 'fatima.khan@digious.com', 'Fatima Khan', '2026-01-29 20:17:52', NULL, 1, 'PC', 'Linux PC', 'Firefox 147', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0', '2026-01-29 20:17:52', '2026-01-29 20:17:52', '2026-01-29 20:17:52'),
 (310, 1, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtcGxveWVlSWQiOjEsImVtYWlsIjoibXVoYW1tYWQuaHVuYWluQGRpZ2lvdXMuY29tIiwibmFtZSI6Ik11aGFtbWFkIEh1bmFpbiIsInJvbGUiOiJQcm9kdWN0aW9uIiwiZGVzaWduYXRpb24iOiJTZW5pb3IgRGV2ZWxvcGVyIiwiaWF0IjoxNzY5NzgzMzY0LCJleHAiOjE3Njk4Njk3NjR9.M3vYTQcBDpVjWu_dWKRgixNoTscb8DtlLx__x4YD5gs', 'muhammad.hunain@digious.com', 'Muhammad Hunain', '2026-01-30 14:29:24', NULL, 1, 'PC', 'Linux PC', 'Firefox 147', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0', '2026-01-30 14:29:24', '2026-01-30 14:29:24', '2026-01-30 14:29:24'),
-(311, 1, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtcGxveWVlSWQiOjEsImVtYWlsIjoibXVoYW1tYWQuaHVuYWluQGRpZ2lvdXMuY29tIiwibmFtZSI6Ik11aGFtbWFkIEh1bmFpbiIsInJvbGUiOiJQcm9kdWN0aW9uIiwiZGVzaWduYXRpb24iOiJTZW5pb3IgRGV2ZWxvcGVyIiwiaWF0IjoxNzY5Nzg0MjM5LCJleHAiOjE3Njk4NzA2Mzl9.07vha0K-6Da5gFiKvix3MPxHvrcnxUt8c7WLmsM4eb0', 'muhammad.hunain@digious.com', 'Muhammad Hunain', '2026-01-30 14:43:59', NULL, 1, 'PC', 'Linux PC', 'Firefox 147', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0', '2026-01-30 14:43:59', '2026-01-30 14:43:59', '2026-01-30 14:43:59');
+(311, 1, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtcGxveWVlSWQiOjEsImVtYWlsIjoibXVoYW1tYWQuaHVuYWluQGRpZ2lvdXMuY29tIiwibmFtZSI6Ik11aGFtbWFkIEh1bmFpbiIsInJvbGUiOiJQcm9kdWN0aW9uIiwiZGVzaWduYXRpb24iOiJTZW5pb3IgRGV2ZWxvcGVyIiwiaWF0IjoxNzY5Nzg0MjM5LCJleHAiOjE3Njk4NzA2Mzl9.07vha0K-6Da5gFiKvix3MPxHvrcnxUt8c7WLmsM4eb0', 'muhammad.hunain@digious.com', 'Muhammad Hunain', '2026-01-30 14:43:59', '2026-01-30 17:22:57', 0, 'PC', 'Linux PC', 'Firefox 147', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0', '2026-01-30 17:22:57', '2026-01-30 14:43:59', '2026-01-30 17:22:57'),
+(312, 3, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjMsImVtcGxveWVlSWQiOjMsImVtYWlsIjoiZmF0aW1hLmtoYW5AZGlnaW91cy5jb20iLCJuYW1lIjoiRmF0aW1hIEtoYW4iLCJyb2xlIjoiSFIiLCJkZXNpZ25hdGlvbiI6IkhSIE1hbmFnZXIiLCJpYXQiOjE3Njk3OTM3OTAsImV4cCI6MTc2OTg4MDE5MH0.t4cB1VlAUElkkehBoyx2W1_joZr-tW5thcz7NoBh9nU', 'fatima.khan@digious.com', 'Fatima Khan', '2026-01-30 17:23:10', NULL, 1, 'PC', 'Linux PC', 'Firefox 147', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0', '2026-01-30 17:23:10', '2026-01-30 17:23:10', '2026-01-30 17:23:10'),
+(313, 1, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtcGxveWVlSWQiOjEsImVtYWlsIjoibXVoYW1tYWQuaHVuYWluQGRpZ2lvdXMuY29tIiwibmFtZSI6Ik11aGFtbWFkIEh1bmFpbiIsInJvbGUiOiJQcm9kdWN0aW9uIiwiZGVzaWduYXRpb24iOiJTZW5pb3IgRGV2ZWxvcGVyIiwiaWF0IjoxNzY5NzkzODc5LCJleHAiOjE3Njk4ODAyNzl9.n5G9WmQpjaDg_Xub0Ssc5ftAnVDMVkU7iTPxCgP_A00', 'muhammad.hunain@digious.com', 'Muhammad Hunain', '2026-01-30 17:24:39', NULL, 1, 'PC', 'Linux PC', 'Firefox 147', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0', '2026-01-30 17:24:39', '2026-01-30 17:24:39', '2026-01-30 17:24:39'),
+(314, 1, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtcGxveWVlSWQiOjEsImVtYWlsIjoibXVoYW1tYWQuaHVuYWluQGRpZ2lvdXMuY29tIiwibmFtZSI6Ik11aGFtbWFkIEh1bmFpbiIsInJvbGUiOiJQcm9kdWN0aW9uIiwiZGVzaWduYXRpb24iOiJTZW5pb3IgRGV2ZWxvcGVyIiwiaWF0IjoxNzY5ODI3NDQ5LCJleHAiOjE3Njk5MTM4NDl9.MH34JKw5JxXPAkAfOL1hW7GOJZxgnzTL5HnB5YAF9OE', 'muhammad.hunain@digious.com', 'Muhammad Hunain', '2026-01-31 02:44:09', NULL, 1, 'PC', 'Linux PC', 'Firefox 147', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0', '2026-01-31 02:44:09', '2026-01-31 02:44:09', '2026-01-31 02:44:09'),
+(315, 3, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjMsImVtcGxveWVlSWQiOjMsImVtYWlsIjoiZmF0aW1hLmtoYW5AZGlnaW91cy5jb20iLCJuYW1lIjoiRmF0aW1hIEtoYW4iLCJyb2xlIjoiSFIiLCJkZXNpZ25hdGlvbiI6IkhSIE1hbmFnZXIiLCJpYXQiOjE3Njk4Mjk4MzAsImV4cCI6MTc2OTkxNjIzMH0.XdPtgdIK6kC0v4AjWlci2iTfVVg3LRsGZcn4lnSfsMQ', 'fatima.khan@digious.com', 'Fatima Khan', '2026-01-31 03:23:50', NULL, 1, 'PC', 'Linux PC', 'Chrome 144', 'Linux', '::1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '2026-01-31 03:23:50', '2026-01-31 03:23:50', '2026-01-31 03:23:50'),
+(316, 1, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtcGxveWVlSWQiOjEsImVtYWlsIjoibXVoYW1tYWQuaHVuYWluQGRpZ2lvdXMuY29tIiwibmFtZSI6Ik11aGFtbWFkIEh1bmFpbiIsInJvbGUiOiJQcm9kdWN0aW9uIiwiZGVzaWduYXRpb24iOiJTZW5pb3IgRGV2ZWxvcGVyIiwiaWF0IjoxNzY5ODcwODE3LCJleHAiOjE3Njk5NTcyMTd9.3XTVsjtHoEey2POdZWq3FiKIuu859DmPx22ggyogNmk', 'muhammad.hunain@digious.com', 'Muhammad Hunain', '2026-01-31 14:46:57', NULL, 1, 'PC', 'Linux PC', 'Firefox 147', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0', '2026-01-31 14:46:57', '2026-01-31 14:46:57', '2026-01-31 14:46:57'),
+(317, 3, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjMsImVtcGxveWVlSWQiOjMsImVtYWlsIjoiZmF0aW1hLmtoYW5AZGlnaW91cy5jb20iLCJuYW1lIjoiRmF0aW1hIEtoYW4iLCJyb2xlIjoiSFIiLCJkZXNpZ25hdGlvbiI6IkhSIE1hbmFnZXIiLCJpYXQiOjE3Njk4ODI4MjUsImV4cCI6MTc2OTk2OTIyNX0.seotNV1XENZEJM7XqjlzIdPggPAvtztPompSs2m2aB8', 'fatima.khan@digious.com', 'Fatima Khan', '2026-01-31 18:07:05', '2026-01-31 18:57:36', 0, 'PC', 'Linux PC', 'Chrome 144', 'Linux', '::1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '2026-01-31 18:57:36', '2026-01-31 18:07:05', '2026-01-31 18:57:36'),
+(318, 3, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjMsImVtcGxveWVlSWQiOjMsImVtYWlsIjoiZmF0aW1hLmtoYW5AZGlnaW91cy5jb20iLCJuYW1lIjoiRmF0aW1hIEtoYW4iLCJyb2xlIjoiSFIiLCJkZXNpZ25hdGlvbiI6IkhSIE1hbmFnZXIiLCJpYXQiOjE3Njk4ODM4MDcsImV4cCI6MTc2OTk3MDIwN30.au-3eLZUbZEVgeckiRf30SBSdcdcwkSH9BO_UFzW5io', 'fatima.khan@digious.com', 'Fatima Khan', '2026-01-31 18:23:27', '2026-01-31 18:52:51', 0, 'PC', 'Linux PC', 'Firefox 147', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0', '2026-01-31 18:52:51', '2026-01-31 18:23:27', '2026-01-31 18:52:51'),
+(319, 1, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtcGxveWVlSWQiOjEsImVtYWlsIjoibXVoYW1tYWQuaHVuYWluQGRpZ2lvdXMuY29tIiwibmFtZSI6Ik11aGFtbWFkIEh1bmFpbiIsInJvbGUiOiJQcm9kdWN0aW9uIiwiZGVzaWduYXRpb24iOiJTZW5pb3IgRGV2ZWxvcGVyIiwiaWF0IjoxNzY5ODg1NTc3LCJleHAiOjE3Njk5NzE5Nzd9.GZBNtTsfYG_1Ysy5jgzVi32qITYT4Z9zGeTQW5xW2fQ', 'muhammad.hunain@digious.com', 'Muhammad Hunain', '2026-01-31 18:52:57', NULL, 1, 'PC', 'Linux PC', 'Firefox 147', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0', '2026-01-31 18:52:57', '2026-01-31 18:52:57', '2026-01-31 18:52:57'),
+(320, 3, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjMsImVtcGxveWVlSWQiOjMsImVtYWlsIjoiZmF0aW1hLmtoYW5AZGlnaW91cy5jb20iLCJuYW1lIjoiRmF0aW1hIEtoYW4iLCJyb2xlIjoiSFIiLCJkZXNpZ25hdGlvbiI6IkhSIE1hbmFnZXIiLCJpYXQiOjE3Njk4ODU4NjUsImV4cCI6MTc2OTk3MjI2NX0.zisPEXnP2JOZEl2jy0Xq7aEy0g49gOJHZGcz6Gx-P-8', 'fatima.khan@digious.com', 'Fatima Khan', '2026-01-31 18:57:45', NULL, 1, 'PC', 'Linux PC', 'Chrome 144', 'Linux', '::1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '2026-01-31 18:57:45', '2026-01-31 18:57:45', '2026-01-31 18:57:45'),
+(321, 1, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtcGxveWVlSWQiOjEsImVtYWlsIjoibXVoYW1tYWQuaHVuYWluQGRpZ2lvdXMuY29tIiwibmFtZSI6Ik11aGFtbWFkIEh1bmFpbiIsInJvbGUiOiJQcm9kdWN0aW9uIiwiZGVzaWduYXRpb24iOiJTZW5pb3IgRGV2ZWxvcGVyIiwiaWF0IjoxNzY5ODg1OTEyLCJleHAiOjE3Njk5NzIzMTJ9.8wM7j18jHh9SS15UF_iH6j2EzJW_SoJGKRmrwEOYXBc', 'muhammad.hunain@digious.com', 'Muhammad Hunain', '2026-01-31 18:58:32', NULL, 1, 'PC', 'Linux PC', 'Chrome 144', 'Linux', '::1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '2026-01-31 18:58:32', '2026-01-31 18:58:32', '2026-01-31 18:58:32');
+INSERT INTO `user_system_info` (`id`, `employee_id`, `session_token`, `email`, `name`, `login_time`, `logout_time`, `is_active`, `device_type`, `device_name`, `browser`, `os`, `ip_address`, `hostname`, `mac_address`, `country`, `city`, `timezone`, `user_agent`, `last_activity_time`, `created_at`, `updated_at`) VALUES
+(322, 1, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtcGxveWVlSWQiOjEsImVtYWlsIjoibXVoYW1tYWQuaHVuYWluQGRpZ2lvdXMuY29tIiwibmFtZSI6Ik11aGFtbWFkIEh1bmFpbiIsInJvbGUiOiJQcm9kdWN0aW9uIiwiZGVzaWduYXRpb24iOiJTZW5pb3IgRGV2ZWxvcGVyIiwiaWF0IjoxNzY5ODg2OTkyLCJleHAiOjE3Njk5NzMzOTJ9.3wWsTb08buR5uHrs36pnADx35mJMeTHPfVxs9sng080', 'muhammad.hunain@digious.com', 'Muhammad Hunain', '2026-01-31 19:16:32', NULL, 1, 'PC', 'Linux PC', 'Firefox 147', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0', '2026-01-31 19:16:32', '2026-01-31 19:16:32', '2026-01-31 19:16:32'),
+(323, 3, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjMsImVtcGxveWVlSWQiOjMsImVtYWlsIjoiZmF0aW1hLmtoYW5AZGlnaW91cy5jb20iLCJuYW1lIjoiRmF0aW1hIEtoYW4iLCJyb2xlIjoiSFIiLCJkZXNpZ25hdGlvbiI6IkhSIE1hbmFnZXIiLCJpYXQiOjE3Njk4ODcwODYsImV4cCI6MTc2OTk3MzQ4Nn0.SlHd_6wUaCIDIHIsrkvhQWdyQ6SGOZX3cHuxJzkkOFA', 'fatima.khan@digious.com', 'Fatima Khan', '2026-01-31 19:18:06', NULL, 1, 'PC', 'Linux PC', 'Chrome 144', 'Linux', '::1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '2026-01-31 19:18:06', '2026-01-31 19:18:06', '2026-01-31 19:18:06'),
+(324, 1, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtcGxveWVlSWQiOjEsImVtYWlsIjoibXVoYW1tYWQuaHVuYWluQGRpZ2lvdXMuY29tIiwibmFtZSI6Ik11aGFtbWFkIEh1bmFpbiIsInJvbGUiOiJQcm9kdWN0aW9uIiwiZGVzaWduYXRpb24iOiJTZW5pb3IgRGV2ZWxvcGVyIiwiaWF0IjoxNzcwMDI2MDU5LCJleHAiOjE3NzAxMTI0NTl9.r4Ad-0qjMq4-ta4gozUDb5HXHsLcWWnDOkhAIdnasGQ', 'muhammad.hunain@digious.com', 'Muhammad Hunain', '2026-02-02 09:54:19', '2026-02-02 18:16:17', 0, 'PC', 'Linux PC', 'Firefox 147', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0', '2026-02-02 18:16:17', '2026-02-02 09:54:19', '2026-02-02 18:16:17'),
+(325, 1, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJtdWhhbW1hZC5odW5haW5AZGlnaW91cy5jb20iLCJpYXQiOjE3NzAwMzc1ODgsImV4cCI6MTc3MDA0MTE4OH0.ZlfldziLG12Ug9lsFLRFIO2Tv6hQDvqRpoj6G6qInQI', 'muhammad.hunain@digious.com', 'Muhammad Hunain', '2026-02-02 13:06:51', NULL, 1, 'PC', NULL, NULL, NULL, '127.0.0.1', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-02 13:06:51', '2026-02-02 13:06:51', '2026-02-02 13:06:51'),
+(326, 1, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtcGxveWVlSWQiOjEsImVtYWlsIjoibXVoYW1tYWQuaHVuYWluQGRpZ2lvdXMuY29tIiwibmFtZSI6Ik11aGFtbWFkIEh1bmFpbiIsInJvbGUiOiJQcm9kdWN0aW9uIiwiZGVzaWduYXRpb24iOiJTZW5pb3IgRGV2ZWxvcGVyIiwiaWF0IjoxNzcwMDUwMTY1LCJleHAiOjE3NzAxMzY1NjV9.TrWVYENqbVXoBMGXuZcOsMa5UY93ZXJxXhSySV7v-vY', 'muhammad.hunain@digious.com', 'Muhammad Hunain', '2026-02-02 16:36:05', NULL, 1, 'PC', 'Unknown Device', 'Unknown Browser', 'Unknown OS', '::1', 'Unknown Host', 'N/A', 'Unknown', 'Unknown', 'Unknown', 'curl/8.5.0', '2026-02-02 16:36:05', '2026-02-02 16:36:05', '2026-02-02 16:36:05'),
+(327, 3, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjMsImVtcGxveWVlSWQiOjMsImVtYWlsIjoiZmF0aW1hLmtoYW5AZGlnaW91cy5jb20iLCJuYW1lIjoiRmF0aW1hIEtoYW4iLCJyb2xlIjoiSFIiLCJkZXNpZ25hdGlvbiI6IkhSIE1hbmFnZXIiLCJpYXQiOjE3NzAwNTYxOTYsImV4cCI6MTc3MDE0MjU5Nn0.Y9i6AW-EsXK2yOiQkwaYQ6z6BRK3OcICWs6P5fsx4mg', 'fatima.khan@digious.com', 'Fatima Khan', '2026-02-02 18:16:36', '2026-02-02 18:17:36', 0, 'PC', 'Linux PC', 'Firefox 147', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0', '2026-02-02 18:17:36', '2026-02-02 18:16:36', '2026-02-02 18:17:36'),
+(328, 3, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjMsImVtcGxveWVlSWQiOjMsImVtYWlsIjoiZmF0aW1hLmtoYW5AZGlnaW91cy5jb20iLCJuYW1lIjoiRmF0aW1hIEtoYW4iLCJyb2xlIjoiSFIiLCJkZXNpZ25hdGlvbiI6IkhSIE1hbmFnZXIiLCJpYXQiOjE3NzAwNTYzMzQsImV4cCI6MTc3MDE0MjczNH0.xmP6HhbNtYt9e3G4YaUfDKP-e6N890lvJl12kyAMGZw', 'fatima.khan@digious.com', 'Fatima Khan', '2026-02-02 18:18:54', '2026-02-02 18:20:46', 0, 'PC', 'Linux PC', 'Firefox 147', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0', '2026-02-02 18:20:46', '2026-02-02 18:18:54', '2026-02-02 18:20:46'),
+(329, 1, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtcGxveWVlSWQiOjEsImVtYWlsIjoiaHVuYWluLnVwZGF0ZWRAZGlnaW91cy5jb20iLCJuYW1lIjoiTXVoYW1tYWQgSHVuYWluIiwicm9sZSI6IlByb2R1Y3Rpb24iLCJkZXNpZ25hdGlvbiI6IlNlbmlvciBEZXZlbG9wZXIiLCJpYXQiOjE3NzAwNTY1MjMsImV4cCI6MTc3MDE0MjkyM30.-RRNB7-rUUq4t4XZjMXp96rwR2sdjOE7Wkg1QEfB7B4', 'hunain.updated@digious.com', 'Muhammad Hunain', '2026-02-02 18:22:03', '2026-02-02 18:23:56', 0, 'PC', 'Linux PC', 'Firefox 147', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0', '2026-02-02 18:23:56', '2026-02-02 18:22:03', '2026-02-02 18:23:56'),
+(330, 3, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjMsImVtcGxveWVlSWQiOjMsImVtYWlsIjoiZmF0aW1hLmtoYW5AZGlnaW91cy5jb20iLCJuYW1lIjoiRmF0aW1hIEtoYW4iLCJyb2xlIjoiSFIiLCJkZXNpZ25hdGlvbiI6IkhSIE1hbmFnZXIiLCJpYXQiOjE3NzAwNTY2NDgsImV4cCI6MTc3MDE0MzA0OH0.APkHQZOn0tf3vNgtD_QuCDpSsbLR7ywfkjHD5FitRaI', 'fatima.khan@digious.com', 'Fatima Khan', '2026-02-02 18:24:08', '2026-02-02 18:32:11', 0, 'PC', 'Linux PC', 'Firefox 147', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0', '2026-02-02 18:32:11', '2026-02-02 18:24:08', '2026-02-02 18:32:11'),
+(331, 3, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjMsImVtcGxveWVlSWQiOjMsImVtYWlsIjoiZmF0aW1hLmtoYW5AZGlnaW91cy5jb20iLCJuYW1lIjoiRmF0aW1hIEtoYW4iLCJyb2xlIjoiSFIiLCJkZXNpZ25hdGlvbiI6IkhSIE1hbmFnZXIiLCJpYXQiOjE3NzAxMzAyMzgsImV4cCI6MTc3MDIxNjYzOH0.vr_7sRDWkbHuifvUFzrcMI6YCNGJ2_2op3h8SUZwd30', 'fatima.khan@digious.com', 'Fatima Khan', '2026-02-03 14:50:38', '2026-02-03 14:50:53', 0, 'PC', 'Linux PC', 'Firefox 147', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0', '2026-02-03 14:50:53', '2026-02-03 14:50:38', '2026-02-03 14:50:53'),
+(332, 1, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtcGxveWVlSWQiOjEsImVtYWlsIjoibXVoYW1tYWQuaHVuYWluQGRpZ2lvdXMuY29tIiwibmFtZSI6Ik11aGFtbWFkIEh1bmFpbiIsInJvbGUiOiJQcm9kdWN0aW9uIiwiZGVzaWduYXRpb24iOiJTZW5pb3IgRGV2ZWxvcGVyIiwiaWF0IjoxNzcwMTMwMzAyLCJleHAiOjE3NzAyMTY3MDJ9.XhQnfdnR2DghtwTbly5zlHgISjjvMHnR1a1WM-rQ1S0', 'muhammad.hunain@digious.com', 'Muhammad Hunain', '2026-02-03 14:51:42', NULL, 1, 'PC', 'Linux PC', 'Firefox 147', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0', '2026-02-03 14:51:42', '2026-02-03 14:51:42', '2026-02-03 14:51:42'),
+(333, 1, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtcGxveWVlSWQiOjEsImVtYWlsIjoibXVoYW1tYWQuaHVuYWluQGRpZ2lvdXMuY29tIiwibmFtZSI6Ik11aGFtbWFkIEh1bmFpbiIsInJvbGUiOiJQcm9kdWN0aW9uIiwiZGVzaWduYXRpb24iOiJTZW5pb3IgRGV2ZWxvcGVyIiwiaWF0IjoxNzcwMTM1MTQxLCJleHAiOjE3NzAyMjE1NDF9.V3iQ2gxAalJF-g3kaflKOfWameXspB8GV0O9z68__Z4', 'muhammad.hunain@digious.com', 'Muhammad Hunain', '2026-02-03 16:12:21', '2026-02-03 20:33:17', 0, 'PC', 'Linux PC', 'Firefox 147', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0', '2026-02-03 20:33:17', '2026-02-03 16:12:21', '2026-02-03 20:33:17'),
+(334, 3, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjMsImVtcGxveWVlSWQiOjMsImVtYWlsIjoiZmF0aW1hLmtoYW5AZGlnaW91cy5jb20iLCJuYW1lIjoiRmF0aW1hIEtoYW4iLCJyb2xlIjoiSFIiLCJkZXNpZ25hdGlvbiI6IkhSIE1hbmFnZXIiLCJpYXQiOjE3NzAxNTA4MDYsImV4cCI6MTc3MDIzNzIwNn0.W0u6HQrTr1N43kv7sJW1dsbWF5tmf-e6LtqnJpA1SNU', 'fatima.khan@digious.com', 'Fatima Khan', '2026-02-03 20:33:26', NULL, 1, 'PC', 'Linux PC', 'Firefox 147', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0', '2026-02-03 20:33:26', '2026-02-03 20:33:26', '2026-02-03 20:33:26'),
+(335, 1, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtcGxveWVlSWQiOjEsImVtYWlsIjoibXVoYW1tYWQuaHVuYWluQGRpZ2lvdXMuY29tIiwibmFtZSI6Ik11aGFtbWFkIEh1bmFpbiIsInJvbGUiOiJQcm9kdWN0aW9uIiwiZGVzaWduYXRpb24iOiJTZW5pb3IgRGV2ZWxvcGVyIiwiaWF0IjoxNzcwMjA5MDg5LCJleHAiOjE3NzAyOTU0ODl9.FCcMaqd-gmCdBiQmXUFuewHUYeFueheUt7uW9rySVp0', 'muhammad.hunain@digious.com', 'Muhammad Hunain', '2026-02-04 12:44:49', NULL, 1, 'PC', 'Linux PC', 'Firefox 147', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0', '2026-02-04 12:44:49', '2026-02-04 12:44:49', '2026-02-04 12:44:49');
 
 -- --------------------------------------------------------
 
@@ -1325,6 +1297,26 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW 
 DROP TABLE IF EXISTS `employee_allowances_in_pkr`;
 
 CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `employee_allowances_in_pkr`  AS SELECT `ea`.`id` AS `id`, `ea`.`employee_id` AS `employee_id`, `eo`.`name` AS `employee_name`, `eo`.`email` AS `email`, `ea`.`allowance_name` AS `allowance_name`, `ea`.`allowance_amount` AS `allowance_amount`, `ea`.`currency` AS `currency`, round(`ea`.`allowance_amount` * `ea`.`exchange_rate`,2) AS `amount_in_pkr`, `ea`.`exchange_rate` AS `exchange_rate`, `ea`.`created_at` AS `created_at` FROM (`employee_allowances` `ea` left join `employee_onboarding` `eo` on(`ea`.`employee_id` = `eo`.`id`)) ORDER BY `ea`.`employee_id` ASC ;
+
+-- --------------------------------------------------------
+
+--
+-- Structure for view `employee_attendance_summary`
+--
+DROP TABLE IF EXISTS `employee_attendance_summary`;
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `employee_attendance_summary`  AS SELECT `eo`.`id` AS `id`, `eo`.`name` AS `full_name`, `eo`.`employee_id` AS `employee_id`, count(`ea`.`id`) AS `total_attendance_records`, sum(case when `ea`.`status` = 'Present' then 1 else 0 end) AS `present_days`, sum(case when `ea`.`status` = 'Absent' then 1 else 0 end) AS `absent_days`, sum(case when `ea`.`status` = 'Late' then 1 else 0 end) AS `late_days`, sum(case when `ea`.`status` = 'Half Day' then 1 else 0 end) AS `half_days`, round(sum(case when `ea`.`status` = 'Present' or `ea`.`status` = 'Late' then 1 else 0 end) / nullif(count(`ea`.`id`),0) * 100,2) AS `attendance_percentage`, sum(cast(coalesce(`ea`.`overtime_hours`,0) as decimal(5,2))) AS `total_overtime_hours`, max(`ea`.`attendance_date`) AS `last_attendance_date`, max(case when `ea`.`status` = 'Present' or `ea`.`status` = 'Late' then `ea`.`attendance_date` end) AS `last_present_date` FROM (`employee_onboarding` `eo` left join `Employee_Attendance` `ea` on(`eo`.`id` = `ea`.`employee_id` and `ea`.`attendance_date` >= curdate() - interval 90 day)) WHERE `eo`.`status` <> 'Inactive' GROUP BY `eo`.`id`, `eo`.`name`, `eo`.`employee_id` ;
+
+-- --------------------------------------------------------
+
+--
+-- Structure for view `employee_financial_summary`
+--
+DROP TABLE IF EXISTS `employee_financial_summary`;
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `employee_financial_summary`  AS SELECT `eo`.`id` AS `id`, `eo`.`name` AS `full_name`, `eo`.`employee_id` AS `employee_id`, `ba`.`id` AS `bank_account_id`, concat(substr(`ba`.`account_number`,1,4),'****',substr(`ba`.`account_number`,-4)) AS `account_number_masked`, `ba`.`account_number` AS `account_number_full`, `ba`.`account_title_name` AS `account_title_name`, `ba`.`bank_name` AS `bank_name`, `ba`.`account_type` AS `account_type`, coalesce((select sum(cast(`ea`.`allowance_amount` as decimal(12,2))) from `employee_allowances` `ea` where `ea`.`employee_id` = `eo`.`id`),0) AS `total_allowances`, coalesce((select group_concat(concat(`ea`.`allowance_name`,'=',`ea`.`allowance_amount`) separator ', ') from `employee_allowances` `ea` where `ea`.`employee_id` = `eo`.`id`),'No allowances') AS `allowances_detail`, `es`.`base_salary` AS `base_salary`, `es`.`total_salary` AS `total_salary`, `ba`.`created_at` AS `created_at` FROM ((`employee_onboarding` `eo` left join `employee_bank_accounts` `ba` on(`eo`.`id` = `ba`.`employee_id` and `ba`.`is_primary` = 1)) left join `employee_salary` `es` on(`eo`.`id` = `es`.`employee_id`)) WHERE `eo`.`status` <> 'Inactive' ;
+
+-- --------------------------------------------------------
 
 -- --------------------------------------------------------
 
@@ -1375,6 +1367,15 @@ ALTER TABLE `Company_Rules`
   ADD KEY `idx_rule_type` (`rule_type`),
   ADD KEY `idx_is_active` (`is_active`),
   ADD KEY `idx_priority` (`priority`);
+
+--
+-- Indexes for table `employee_achievements`
+--
+ALTER TABLE `employee_achievements`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_employee_id` (`employee_id`),
+  ADD KEY `idx_achievement_type` (`achievement_type`),
+  ADD KEY `idx_is_verified` (`is_verified`);
 
 --
 -- Indexes for table `Employee_Activities`
@@ -1446,15 +1447,20 @@ ALTER TABLE `employee_onboarding`
   ADD KEY `idx_employment_status` (`employment_status`),
   ADD KEY `idx_confirmation_date` (`confirmation_date`),
   ADD KEY `idx_bank_name` (`bank_name`),
-  ADD KEY `idx_cnic_dates` (`cnic_issue_date`,`cnic_expiry_date`);
+  ADD KEY `idx_cnic_dates` (`cnic_issue_date`,`cnic_expiry_date`),
+  ADD KEY `idx_profile_photo` (`profile_photo`(768)),
+  ADD KEY `idx_social_links_json` (`social_links_json`(100)),
+  ADD KEY `idx_required_documents_json` (`required_documents_json`(100)),
+  ADD KEY `idx_achievements_json` (`achievements_json`(100));
 
 --
--- Indexes for table `employee_resources`
+-- Indexes for table `employee_required_documents`
 --
-ALTER TABLE `employee_resources`
+ALTER TABLE `employee_required_documents`
   ADD PRIMARY KEY (`id`),
   ADD KEY `idx_employee_id` (`employee_id`),
-  ADD KEY `idx_allocated_date` (`allocated_date`);
+  ADD KEY `idx_document_type` (`document_type`),
+  ADD KEY `idx_status` (`status`);
 
 --
 -- Indexes for table `employee_salary`
@@ -1462,6 +1468,24 @@ ALTER TABLE `employee_resources`
 ALTER TABLE `employee_salary`
   ADD PRIMARY KEY (`id`),
   ADD KEY `idx_employee_id` (`employee_id`);
+
+--
+-- Indexes for table `employee_skills`
+--
+ALTER TABLE `employee_skills`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `employee_id` (`employee_id`),
+  ADD KEY `skill_type` (`skill_type`),
+  ADD KEY `idx_employee_skills_lookup` (`employee_id`,`skill_type`);
+
+--
+-- Indexes for table `employee_social_links`
+--
+ALTER TABLE `employee_social_links`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `unique_employee_platform` (`employee_id`,`platform`),
+  ADD KEY `idx_employee_id` (`employee_id`),
+  ADD KEY `idx_platform` (`platform`);
 
 --
 -- Indexes for table `onboarding_progress`
@@ -1520,6 +1544,12 @@ ALTER TABLE `Company_Rules`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
+-- AUTO_INCREMENT for table `employee_achievements`
+--
+ALTER TABLE `employee_achievements`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+
+--
 -- AUTO_INCREMENT for table `Employee_Activities`
 --
 ALTER TABLE `Employee_Activities`
@@ -1529,13 +1559,13 @@ ALTER TABLE `Employee_Activities`
 -- AUTO_INCREMENT for table `employee_allowances`
 --
 ALTER TABLE `employee_allowances`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- AUTO_INCREMENT for table `Employee_Attendance`
 --
 ALTER TABLE `Employee_Attendance`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=294;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=302;
 
 --
 -- AUTO_INCREMENT for table `employee_bank_accounts`
@@ -1547,13 +1577,13 @@ ALTER TABLE `employee_bank_accounts`
 -- AUTO_INCREMENT for table `Employee_Breaks`
 --
 ALTER TABLE `Employee_Breaks`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=64;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=67;
 
 --
 -- AUTO_INCREMENT for table `employee_dynamic_resources`
 --
 ALTER TABLE `employee_dynamic_resources`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `employee_onboarding`
@@ -1562,16 +1592,28 @@ ALTER TABLE `employee_onboarding`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
 
 --
--- AUTO_INCREMENT for table `employee_resources`
+-- AUTO_INCREMENT for table `employee_required_documents`
 --
-ALTER TABLE `employee_resources`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+ALTER TABLE `employee_required_documents`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
 
 --
 -- AUTO_INCREMENT for table `employee_salary`
 --
 ALTER TABLE `employee_salary`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+
+--
+-- AUTO_INCREMENT for table `employee_skills`
+--
+ALTER TABLE `employee_skills`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `employee_social_links`
+--
+ALTER TABLE `employee_social_links`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
 
 --
 -- AUTO_INCREMENT for table `onboarding_progress`
@@ -1595,7 +1637,7 @@ ALTER TABLE `user_concurrent_sessions`
 -- AUTO_INCREMENT for table `user_system_info`
 --
 ALTER TABLE `user_system_info`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=312;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=336;
 
 --
 -- Constraints for dumped tables
@@ -1639,16 +1681,16 @@ ALTER TABLE `employee_dynamic_resources`
   ADD CONSTRAINT `employee_dynamic_resources_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employee_onboarding` (`id`) ON DELETE CASCADE;
 
 --
--- Constraints for table `employee_resources`
---
-ALTER TABLE `employee_resources`
-  ADD CONSTRAINT `employee_resources_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employee_onboarding` (`id`) ON DELETE CASCADE;
-
---
 -- Constraints for table `employee_salary`
 --
 ALTER TABLE `employee_salary`
   ADD CONSTRAINT `employee_salary_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employee_onboarding` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `employee_skills`
+--
+ALTER TABLE `employee_skills`
+  ADD CONSTRAINT `employee_skills_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employee_onboarding` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `onboarding_progress`

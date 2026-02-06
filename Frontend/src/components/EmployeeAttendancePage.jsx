@@ -1,1865 +1,211 @@
-////////
-
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { DashboardHeader } from './DashboardComponents';
+import { useAuth } from '../context/AuthContext';
 import { endpoints } from '../config/api';
-import { getPakistanTimeString, getPakistanDate } from '../utils/timezone';
+import { getPakistanDate } from '../utils/timezone';
 import {
-  Calendar,
   CheckCircle,
   Clock,
   LogIn,
   LogOut,
-  Check,
-  X,
-  Clock4,
-  Cigarette,
-  ToiletIcon,
-  Calendar1,
-  Utensils,
-  AlertCircle,
-  BarChart3,
-  PieChart,
-  Download,
-  Filter,
-  Plus,
-  Search,
-  MoreVertical,
-  Eye,
-  Edit3,
-  Trash2,
-  ChevronDown,
-  Settings,
-  UserCheck,
-  UserX,
-  Send,
-  Mail,
-  Bell,
-  Shield,
-  Zap,
-  Crown,
-  Sun,
-  Moon,
-  ArrowLeft,
-  ArrowRight,
-  RefreshCw,
+  User,
   Activity,
-  Wifi,
-  Sparkle,
-  RotateCcw,
-  Building,
-  ChevronUp,
-  ShieldUser,
-  Table,
-  TrendingUp,
-  Coffee,
-  FileText,
+  AlertCircle,
+  Timer,
   PauseCircle,
-  LineChart
+  Utensils,
+  Cigarette,
+  Table,
+  Shield
 } from 'lucide-react';
 import { 
   BarChart, 
   Bar, 
-  LineChart as ReLineChart, 
-  Line, 
-  PieChart as RePieChart, 
-  Pie, 
-  Cell,
   XAxis, 
   YAxis, 
   CartesianGrid, 
   Tooltip, 
-  Legend, 
   ResponsiveContainer,
-  Area,
-  AreaChart
+  PieChart,
+  Pie,
+  Cell
 } from 'recharts';
 
-// Helper function to get consistent employee ID from localStorage
-const getEmployeeId = () => {
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
-  // Priority order for employee ID:
-  // 1. user.employeeId (from login response - employee_onboarding.id)
-  // 2. user.userId (from user_as_employees.id) 
-  // 3. user.id (fallback)
-  // DO NOT default to 2 - that causes wrong employee to be fetched
-  const empId = user.employeeId || user.userId || user.id;
-  if (!empId) {
-    console.error('⚠️ ERROR: No employee ID found in localStorage user object:', user);
-    return null;
-  }
-  console.log('✅ getEmployeeId returning:', empId);
-  return empId;
-};
+const HRMyAttendance = () => {
+  const { user, role } = useAuth();
+  const [activeTab, setActiveTab] = useState('dashboard'); // dashboard or sheet
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [attendanceData, setAttendanceData] = useState(null);
+  const [monthlyAttendance, setMonthlyAttendance] = useState([]);
+  const [isCheckedIn, setIsCheckedIn] = useState(false);
+  const [activeBreaks, setActiveBreaks] = useState([]);
+  const [breakTimers, setBreakTimers] = useState({}); // Track elapsed time for each break
+  const [loading, setLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState('All Status'); // Filter for status
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [currentPage, setCurrentPage] = useState(1);
+  const RECORDS_PER_PAGE = 10;
 
-/**
- * Parse a time string in Pakistan timezone (UTC+5)
- * Input: "21:56:00" (from API, in Pakistan time)
- * Returns: Date object representing that time in Pakistan timezone
- */
-const parsePakistanTime = (dateStr, timeStr) => {
-  if (!timeStr) return null;
-  
-  try {
-    // The database stores times as HH:MM:SS in Pakistan timezone (UTC+5)
-    // Example: check_in_time: "17:54:27" means 17:54:27 Pakistan time
-    // 
-    // To match getPakistanDate() comparison:
-    // - Database has: 17:54:27 PKT
-    // - We need UTC equivalent: subtract 5 hours = 12:54:27 UTC
-    // - Then when compared with getPakistanDate() (which adds 5 hours to UTC), they align
-    
-    const [hours, minutes, seconds] = timeStr.split(':').map(Number);
-    const [year, month, day] = dateStr.split('-').map(Number);
-    
-    // Create date with Pakistan time, then adjust to UTC
-    let utcHours = hours - 5;
-    let utcDay = day;
-    
-    // Handle day wraparound (midnight crossing)
-    if (utcHours < 0) {
-      utcHours += 24;
-      utcDay -= 1; // Previous day
-    }
-    
-    const utcDate = new Date(Date.UTC(year, month - 1, utcDay, utcHours, minutes, seconds));
-    
-    return utcDate;
-  } catch (error) {
-    console.error('Error parsing Pakistan time:', error);
-    return new Date(`${dateStr}T${timeStr}`);
-  }
-};
+  // Update current time every second
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
-/**
- * Format a Pakistan time string (HH:MM:SS) to 12-hour format
- * Input: "23:23:24" (Pakistan timezone)
- * Output: "11:23 PM"
- */
-const formatPakistanTimeString = (timeStr) => {
-  if (!timeStr) return 'N/A';
-  
-  try {
-    const [hours, minutes] = timeStr.split(':').map(Number);
-    const hour12 = hours % 12 || 12;
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    return `${String(hour12).padStart(2, '0')}:${String(minutes).padStart(2, '0')} ${ampm}`;
-  } catch (error) {
-    console.error('Error formatting Pakistan time:', error);
-    return timeStr;
-  }
-};
+  // Fetch data on component mount
+  useEffect(() => {
+    console.log('🔍 HRMyAttendance mounted with user:', user);
+    fetchTodayAttendance();
+    fetchActiveBreaks();
+    fetchMonthlyAttendance();
+  }, []);
 
-// Small toast helper (used for user-facing messages)
-const showToast = (message, type = 'success') => {
-  try {
-    const el = document.createElement('div');
-    const isError = type === 'error';
-    el.className = `fixed top-4 right-4 z-50 max-w-sm p-3 rounded-lg shadow-lg transform transition-opacity duration-300 ${isError ? 'bg-red-50 border-l-4 border-red-500 text-red-800' : 'bg-green-50 border-l-4 border-green-500 text-green-800'}`;
-    el.style.opacity = '0';
-    el.innerHTML = `
-      <div class="flex items-start gap-3">
-        <div class="flex-1 text-sm">${message}</div>
-        <button class="ml-3 text-sm font-medium" aria-label="close">✕</button>
-      </div>
-    `;
-    const btn = el.querySelector('button');
-    btn.addEventListener('click', () => el.remove());
-    document.body.appendChild(el);
-    requestAnimationFrame(() => { el.style.opacity = '1'; });
-    setTimeout(() => { if (el.parentNode) el.remove(); }, 4500);
-  } catch (e) {
-    console.error('Toast error', e);
-    alert(message);
-  }
-};
+  // Re-fetch monthly attendance when filters change
+  useEffect(() => {
+    setCurrentPage(1); // Reset to first page when filters change
+    fetchMonthlyAttendance();
+  }, [selectedMonth, selectedYear]);
 
-// Custom hook for attendance management
-export const useAttendance = () => {
-  const [attendanceData, setAttendanceData] = useState([]);
-  const [systemAttendance, setSystemAttendance] = useState({
-    checkedIn: false,
-    checkInTime: null,
-    checkOutTime: null,
-    totalWorkingTime: 0,
-    isOnBreak: false,
-    lastUpdate: new Date(),
-    status: 'pending'
-  });
-  const [isAttendanceDataLoaded, setIsAttendanceDataLoaded] = useState(false);
+  // Update break timers every second
+  useEffect(() => {
+    if (activeBreaks.length === 0) return;
 
-  const handleSystemCheckIn = async () => {
-    try {
-      // Try both token storage keys
-      const token = localStorage.getItem('token') || localStorage.getItem('authToken');
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
-      
-      // Use consistent employee ID
-      const employeeId = getEmployeeId();
-      const email = user.email || 'test@example.com';
-      const name = user.name || 'Employee';
-
-      if (!token) {
-        throw new Error('Authentication token not found. Please login first.');
-      }
-
-      console.log('Check-in request:', { employeeId, email, name, token: token.substring(0, 20) + '...' });
-
-      const response = await fetch(
-        endpoints.attendance.checkIn,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            employee_id: employeeId,
-            email: email,
-            name: name,
-            device_info: navigator.userAgent,
-            ip_address: '127.0.0.1'
-          })
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `Check-in failed: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-
-      if (data.success) {
-        const now = getPakistanDate();
-        const hours = now.getHours();
-        const minutes = now.getMinutes();
-        const totalMinutes = hours * 60 + minutes;
-        const gracePeriodEnd = 22 * 60 + 15; // 22:15 = 1335 minutes
-        const isLate = totalMinutes > gracePeriodEnd;
-        
-        console.log('Check-in response:', data.message);
-
-        // Update attendance data
-        const today = now.toISOString().split('T')[0];
-        setAttendanceData(prev => {
-          const existingIndex = prev.findIndex(day => day.date === today);
-          
-          if (existingIndex >= 0) {
-            const updated = [...prev];
-            updated[existingIndex] = {
-              ...updated[existingIndex],
-              status: isLate ? 'late' : 'present',
-              checkIn: now.toLocaleTimeString('en-US', { 
-                hour: '2-digit', 
-                minute: '2-digit',
-                hour12: true 
-              }),
-              remarks: isLate ? 'Late arrival' : 'On time'
-            };
-            return updated;
-          } else {
-            return [...prev, {
-              date: today,
-              day: now.getDate(),
-              status: isLate ? 'late' : 'present',
-              checkIn: now.toLocaleTimeString('en-US', { 
-                hour: '2-digit', 
-                minute: '2-digit',
-                hour12: true 
-              }),
-              checkOut: '-',
-              hours: '0.0',
-              remarks: isLate ? 'Late arrival' : 'On time'
-            }];
-          }
-        });
-
-        setSystemAttendance(prev => ({
-          ...prev,
-          checkedIn: true,
-          checkInTime: prev.checkInTime || now,  // Keep existing check-in time if already checked in
-          checkOutTime: null,
-          totalWorkingTime: 0,
-          isOnBreak: false,
-          lastUpdate: now,
-          status: isLate ? 'late' : 'present'
-        }));
-
-        return {
-          timeString: now.toLocaleTimeString('en-US', { 
-            hour: '2-digit', 
-            minute: '2-digit',
-            hour12: true 
-          }),
-          isLate: isLate
-        };
-
-        return {
-          timeString: now.toLocaleTimeString('en-US', { 
-            hour: '2-digit', 
-            minute: '2-digit',
-            hour12: true 
-          }),
-          isLate: isLate
-        };
-      } else {
-        throw new Error(data.message || 'Check-in failed');
-      }
-    } catch (error) {
-      console.error('Check-in error:', error.message);
-      throw error;
-    }
-  };
-
-  const handleSystemCheckOut = async () => {
-    try {
-      // Try both token storage keys
-      const token = localStorage.getItem('token') || localStorage.getItem('authToken');
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
-      
-      // Use consistent employee ID
-      const employeeId = getEmployeeId();
-
-      if (!token) {
-        throw new Error('Authentication token not found. Please login first.');
-      }
-
-      // Get current time in Pakistan timezone (HH:MM:SS format)
-      const checkOutTimeFromClient = getPakistanTimeString();
-
-      console.log('🔴 Checkout request - employeeId:', employeeId, 'checkOutTime:', checkOutTimeFromClient, 'user:', user);
-
-      const response = await fetch(
-        endpoints.attendance.checkOut,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            employee_id: employeeId,
-            check_out_time: checkOutTimeFromClient
-          })
-        }
-      );
-
-      console.log('🔴 Checkout response status:', response.status);
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        const errorMsg = errorData.message || `Check-out failed: ${response.statusText}`;
-        console.error('❌ Checkout API error:', errorMsg, 'Status:', response.status);
-        throw new Error(errorMsg);
-      }
-
-      const data = await response.json();
-      console.log('🔴 Checkout response data:', data);
-
-      if (data.success) {
-        console.log('✅ Checkout successful');
-        const now = new Date();
-        const netWorkingMinutes = data.data?.net_working_time_minutes || 0;
-        const checkOutTimeFromApi = data.data?.check_out_time || now.toTimeString().split(' ')[0];
-        const hours = netWorkingMinutes / 60;
-
-        setSystemAttendance(prev => ({
-          ...prev,
-          checkedIn: false,
-          checkOutTime: new Date(`${now.toISOString().split('T')[0]}T${checkOutTimeFromApi}`),
-          lastUpdate: now,
-          totalWorkingTime: netWorkingMinutes
-        }));
-        
-        // Refresh attendance data to ensure database sync
-        setTimeout(() => fetchAttendanceData(), 500);
-
-        // Update attendance data
-        const today = now.toISOString().split('T')[0];
-        setAttendanceData(prev => {
-          const existingIndex = prev.findIndex(day => day.date === today);
-          
-          if (existingIndex >= 0) {
-            const updated = [...prev];
-            updated[existingIndex] = {
-              ...updated[existingIndex],
-              checkOut: now.toLocaleTimeString('en-US', { 
-                hour: '2-digit', 
-                minute: '2-digit',
-                hour12: true 
-              }),
-              hours: hours.toFixed(1),
-              remarks: hours >= 9 ? 'Full day' : 'Short day'
-            };
-            return updated;
-          } else {
-            return prev;
-          }
-        });
-
-        return {
-          timeString: now.toLocaleTimeString('en-US', { 
-            hour: '2-digit', 
-            minute: '2-digit',
-            hour12: true 
-          }),
-          hours: hours.toFixed(1)
-        };
-      } else {
-        throw new Error(data.message || 'Check-out failed');
-      }
-    } catch (error) {
-      console.error('Check-out error:', error.message);
-      throw error;
-    }
-  };
-
-  const updateWorkingTime = () => {
-    if (systemAttendance.checkedIn) {
-      // Simple approach: just increment the working time by 1 minute every second
-      // This avoids timezone calculation issues on the frontend
-      // The backend already calculated it correctly via current_session_minutes
-      
-      setSystemAttendance(prev => {
-        const newTime = (prev.totalWorkingTime || 0) + (1 / 60); // Add 1 second worth
-        
-        console.log(`⏱️ TIMER UPDATE: ${prev.totalWorkingTime?.toFixed(2)} -> ${newTime.toFixed(2)} minutes`);
-        
-        return {
-          ...prev,
-          totalWorkingTime: newTime,
-          lastUpdate: new Date()
-        };
-      });
-
-      // Update hours in attendance data
-      setAttendanceData(prev => {
-        const today = new Date().toISOString().split('T')[0];
-        const existingIndex = prev.findIndex(day => day.date === today);
-        if (existingIndex >= 0) {
-          const updated = [...prev];
-          const newHours = ((systemAttendance.totalWorkingTime || 0) / 60).toFixed(1);
-          if (updated[existingIndex].hours !== newHours) {
-            updated[existingIndex] = {
-              ...updated[existingIndex],
-              hours: newHours
-            };
-          }
-          return updated;
-        }
-        return prev;
-      });
-    }
-  };
-
-  const setBreakStatus = (isOnBreak) => {
-    setSystemAttendance(prev => ({
-      ...prev,
-      isOnBreak: isOnBreak,
-      lastUpdate: new Date()
-    }));
-  };
-
-  const getTodayStatus = () => {
-    const today = new Date().toISOString().split('T')[0];
-    const todayData = attendanceData.find(day => day.date === today);
-    
-    if (todayData) {
-      return todayData;
-    }
-
-    // Fallback: if no record in attendanceData but systemAttendance shows checked in,
-    // return the system state
-    if (systemAttendance.checkedIn && systemAttendance.checkInTime) {
-      return {
-        date: today,
-        day: new Date().getDate(),
-        status: systemAttendance.status || 'present',
-        checkIn: systemAttendance.checkInTime.toLocaleTimeString('en-US', { 
-          hour: '2-digit', 
-          minute: '2-digit',
-          hour12: true 
-        }),
-        checkOut: systemAttendance.checkOutTime ? 
-          systemAttendance.checkOutTime.toLocaleTimeString('en-US', { 
-            hour: '2-digit', 
-            minute: '2-digit',
-            hour12: true 
-          }) : '-',
-        hours: (systemAttendance.totalWorkingTime / 60).toFixed(1),
-        remarks: systemAttendance.checkOutTime ? 'Checked out' : 'Currently working'
-      };
-    }
-
-    return {
-      date: today,
-      day: new Date().getDate(),
-      status: 'Not Checked In',
-      checkIn: systemAttendance.checkInTime ? 
-        systemAttendance.checkInTime.toLocaleTimeString('en-US', { 
-          hour: '2-digit', 
-          minute: '2-digit',
-          hour12: true 
-        }) : 'Invalid Date',
-      checkOut: systemAttendance.checkOutTime ? 
-        systemAttendance.checkOutTime.toLocaleTimeString('en-US', { 
-          hour: '2-digit', 
-          minute: '2-digit',
-          hour12: true 
-        }) : '-',
-      hours: (systemAttendance.totalWorkingTime / 60).toFixed(1),
-      remarks: systemAttendance.checkedIn ? 'Currently working' : 'Not checked in yet'
-    };
-  };
-
-  const getAttendanceStats = () => {
-    const present = attendanceData.filter(day => 
-      day.status && (day.status.toLowerCase() === 'present')
-    ).length;
-    const late = attendanceData.filter(day => 
-      day.status && day.status.toLowerCase() === 'late'
-    ).length;
-    const absent = attendanceData.filter(day => 
-      day.status && day.status.toLowerCase() === 'absent'
-    ).length;
-    const workingDays = attendanceData.filter(day => 
-      day.status && day.status !== 'off' && day.status !== 'Pending'
-    ).length;
-    
-    const attendancePercentage = workingDays > 0 ? 
-      Math.round(((present + late) / workingDays) * 100) : 0;
-
-    return {
-      present,
-      absent,
-      late,
-      workingDays,
-      attendancePercentage
-    };
-  };
-
-  // Fetch attendance data function
-  const fetchAttendanceData = async () => {
-    try {
-      // Get token from localStorage (try both keys)
-      const token = localStorage.getItem('token') || localStorage.getItem('authToken');
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
-      
-      console.log('📦 localStorage user:', user);
-      // Use consistent employee ID
-      const employeeId = getEmployeeId();
-      
-      console.log('👤 Retrieved user object:', user);
-      console.log('🔑 Using employeeId:', employeeId);
-      
-      if (!token) {
-        console.log('No authentication token found - skipping attendance fetch');
-        return;
-      }
-
-      console.log('Fetching attendance for employee:', employeeId);
-
-      // Fetch today's attendance
-      const response = await fetch(
-        endpoints.attendance.today(employeeId),
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-
-      if (!response.ok) {
-        console.warn(`Attendance fetch status: ${response.status} - ${response.statusText}`);
-        return;
-      }
-
-      const data = await response.json();
-      
-      if (data.success && data.data) {
-        const attendanceRecord = data.data;
-        
-        // Extract date as YYYY-MM-DD format (handle ISO timestamps)
-        // The API returns attendance_date which may be UTC or a date string
-        let attendanceDateStr;
-        if (typeof attendanceRecord.attendance_date === 'string' && attendanceRecord.attendance_date.includes('T')) {
-          // It's an ISO string like "2026-01-02T19:00:00.000Z"
-          attendanceDateStr = attendanceRecord.attendance_date.split('T')[0];
-        } else if (typeof attendanceRecord.attendance_date === 'string') {
-          // It's already a date string like "2026-01-02"
-          attendanceDateStr = attendanceRecord.attendance_date;
-        } else {
-          // Fallback to today
-          attendanceDateStr = new Date().toISOString().split('T')[0];
-        }
-        
-        // Parse check-in and check-out times
-        // The API returns check_in_time as HH:MM:SS and attendance_date as YYYY-MM-DD
-        // These are in Pakistan time (UTC+5), NOT UTC
-        const checkInTime = attendanceRecord.check_in_time 
-          ? parsePakistanTime(attendanceDateStr, attendanceRecord.check_in_time)
-          : null;
-        const checkOutTime = attendanceRecord.check_out_time
-          ? parsePakistanTime(attendanceDateStr, attendanceRecord.check_out_time)
-          : null;
-        
-        console.log('📊 Fetched Attendance Data:');
-        console.log('   Raw API response:', attendanceRecord);
-        console.log('   Date:', attendanceDateStr);
-        console.log('   Check-in time string (raw from API):', attendanceRecord.check_in_time);
-        console.log('   Check-in Date object (after parsing):', checkInTime);
-        console.log('   Check-in formatted:', checkInTime ? checkInTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }) : 'N/A');
-        console.log('   Check-out time string:', attendanceRecord.check_out_time);
-        console.log('   Is active session:', !attendanceRecord.check_out_time);
-        
-        // Update system attendance state to reflect API data
-        // Employee is considered checked in if they have a check-in time and no check-out time
-        // For active sessions (no checkout), calculate elapsed time from check-in
-        const isActiveSession = !!checkInTime && !checkOutTime;
-        let currentWorkingTime = attendanceRecord.net_working_time_minutes || 0;
-        
-        if (isActiveSession && checkInTime) {
-          // Calculate elapsed time in minutes from check-in to now for active sessions
+    const timerInterval = setInterval(() => {
+      const newTimers = {};
+      activeBreaks.forEach(breakItem => {
+        if (breakItem.break_start_time) {
+          const [startHour, startMin, startSec] = breakItem.break_start_time.split(':').map(Number);
           const now = new Date();
-          currentWorkingTime = (now - checkInTime) / (1000 * 60);
-          console.log('   Current working time (calculated):', currentWorkingTime.toFixed(2), 'minutes');
+          const currentHour = now.getHours();
+          const currentMin = now.getMinutes();
+          const currentSec = now.getSeconds();
+          
+          const startTotalSeconds = (startHour * 3600) + (startMin * 60) + (startSec || 0);
+          const nowTotalSeconds = (currentHour * 3600) + (currentMin * 60) + currentSec;
+          
+          let elapsedSeconds = nowTotalSeconds - startTotalSeconds;
+          if (elapsedSeconds < 0) elapsedSeconds += 24 * 3600; // Handle midnight wraparound
+          
+          newTimers[breakItem.id] = elapsedSeconds;
         }
-        
-        setSystemAttendance(prev => ({
-          ...prev,
-          checkedIn: isActiveSession,
-          checkInTime: checkInTime,
-          checkOutTime: checkOutTime,
-          totalWorkingTime: currentWorkingTime,
-          status: attendanceRecord.status?.toLowerCase() || 'present'
-        }));
-        
-        // Format the attendance data for display
-        // Use calculated working time for active sessions
-        const displayHours = isActiveSession 
-          ? (currentWorkingTime / 60).toFixed(1)
-          : (attendanceRecord.net_working_time_minutes ? (attendanceRecord.net_working_time_minutes / 60).toFixed(1) : '0.0');
-        
-        const formattedData = [{
-          date: attendanceDateStr,
-          day: new Date(attendanceDateStr).getDate(),
-          status: attendanceRecord.status?.toLowerCase() || 'present',
-          checkIn: checkInTime
-            ? checkInTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
-            : '-',
-          checkOut: checkOutTime
-            ? checkOutTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
-            : '-',
-          hours: displayHours,
-          remarks: attendanceRecord.remarks || (checkOutTime ? 'Checked out' : 'Active session'),
-          breaks: attendanceRecord.breaks || [],
-          total_breaks_taken: attendanceRecord.total_breaks_taken || 0,
-          total_break_duration_minutes: attendanceRecord.total_break_duration_minutes || 0,
-          // Include all break count fields from the API response
-          smoke_break_count: attendanceRecord.smoke_break_count || 0,
-          smoke_break_duration_minutes: attendanceRecord.smoke_break_duration_minutes || 0,
-          dinner_break_count: attendanceRecord.dinner_break_count || 0,
-          dinner_break_duration_minutes: attendanceRecord.dinner_break_duration_minutes || 0,
-          washroom_break_count: attendanceRecord.washroom_break_count || 0,
-          washroom_break_duration_minutes: attendanceRecord.washroom_break_duration_minutes || 0,
-          prayer_break_count: attendanceRecord.prayer_break_count || 0,
-          prayer_break_duration_minutes: attendanceRecord.prayer_break_duration_minutes || 0
-        }];
-        
-        setAttendanceData(formattedData);
+      });
+      setBreakTimers(newTimers);
+    }, 1000);
+
+    return () => clearInterval(timerInterval);
+  }, [activeBreaks]);
+
+  // Format elapsed time as MM:SS or H:MM:SS
+  const formatElapsedTime = (seconds) => {
+    if (!seconds) return '0:00';
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    if (hours > 0) {
+      return `${hours}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
+    return `${minutes}:${String(secs).padStart(2, '0')}`;
+  };
+
+  // Reset pagination when status filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter]);
+
+  const getEmployeeId = () => {
+    // Try multiple possible property names and log for debugging
+    const id = user?.employeeId || user?.employee_id || user?.id;
+    console.log('🔍 Getting employee ID:', { 
+      user, 
+      employeeId: user?.employeeId,
+      employee_id: user?.employee_id,
+      id: user?.id,
+      resolved: id 
+    });
+    
+    if (!id) {
+      console.error('❌ No employee ID found in user object!', user);
+      alert('Unable to determine employee ID. Please logout and login again.');
+      return null;
+    }
+    
+    return id;
+  };
+
+  const fetchTodayAttendance = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      const employeeId = getEmployeeId();
+      
+      if (!employeeId) {
+        setLoading(false);
+        return;
+      }
+
+      const response = await fetch(endpoints.attendance.today(employeeId), {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+      if (data.success && data.data) {
+        const todayRecord = data.data;
+        console.log('✅ Today attendance data:', todayRecord);
+        console.log('📊 Check-in status:', {
+          check_in_time: todayRecord.check_in_time,
+          check_out_time: todayRecord.check_out_time,
+          isCheckedIn: data.isCheckedIn || (todayRecord.check_in_time && !todayRecord.check_out_time)
+        });
+        setAttendanceData(todayRecord);
+        setIsCheckedIn(data.isCheckedIn || (todayRecord.check_in_time && !todayRecord.check_out_time));
+      } else {
+        console.warn('⚠️ No attendance data received:', data);
       }
     } catch (error) {
       console.error('Error fetching attendance:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Fetch attendance data on component mount
-  useEffect(() => {
-    // First, fetch TODAY'S attendance to update systemAttendance state (check-in status)
-    const fetchTodayData = async () => {
-      try {
-        const token = localStorage.getItem('token') || localStorage.getItem('authToken');
-        const user = JSON.parse(localStorage.getItem('user') || '{}');
-        // Use consistent employee ID
-        const employeeId = getEmployeeId();
-        
-        if (!token) return;
-        
-        console.log('📅 Fetching TODAY\'s attendance to sync check-in status...');
-        
-        const response = await fetch(
-          endpoints.attendance.today(employeeId),
-          {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          }
-        );
-        
-        if (response.ok) {
-          const data = await response.json();
-          if (data.success && data.data) {
-            const attendanceRecord = data.data;
-            const attendanceDateStr = attendanceRecord.attendance_date.includes('T')
-              ? attendanceRecord.attendance_date.split('T')[0]
-              : attendanceRecord.attendance_date;
-            
-            // Parse check-in time using Pakistan timezone helper
-            const checkInTime = attendanceRecord.check_in_time 
-              ? parsePakistanTime(attendanceDateStr, attendanceRecord.check_in_time)
-              : null;
-            const checkOutTime = attendanceRecord.check_out_time
-              ? parsePakistanTime(attendanceDateStr, attendanceRecord.check_out_time)
-              : null;
-            
-            // Update system attendance state with today's data
-            const isActiveSession = !!checkInTime && !checkOutTime;
-            let currentWorkingTime = attendanceRecord.net_working_time_minutes || 0;
-            
-            console.log('🔍 TIME PARSING DEBUG:');
-            console.log('   API check_in_time:', attendanceRecord.check_in_time);
-            console.log('   API current_session_minutes:', attendanceRecord.current_session_minutes);
-            console.log('   Parsed checkInTime (UTC):', checkInTime?.toUTCString());
-            console.log('   Parsed checkInTime (local):', checkInTime?.toString());
-            console.log('   isActiveSession:', isActiveSession);
-            
-            if (isActiveSession) {
-              // Use current_session_minutes from backend (already calculated correctly)
-              if (attendanceRecord.current_session_minutes !== undefined) {
-                currentWorkingTime = attendanceRecord.current_session_minutes;
-                console.log(`⏱️ USING BACKEND current_session_minutes: ${currentWorkingTime} minutes`);
-              } else {
-                // Fallback: calculate from check-in time if backend value not available
-                const now = getPakistanDate();
-                currentWorkingTime = (now - checkInTime) / (1000 * 60);
-                console.log(`⏱️ FALLBACK CALCULATION: ${currentWorkingTime.toFixed(2)} minutes`);
-              }
-            }
-            
-            setSystemAttendance(prev => {
-              // Only reset totalWorkingTime on initial check-in or checkout
-              // If already checked in, preserve the local timer that increments smoothly
-              const shouldUpdateTimer = !prev.checkedIn || !isActiveSession;
-              
-              return {
-                ...prev,
-                checkedIn: isActiveSession,
-                checkInTime: checkInTime,
-                checkOutTime: checkOutTime,
-                totalWorkingTime: shouldUpdateTimer ? currentWorkingTime : prev.totalWorkingTime,
-                status: attendanceRecord.status?.toLowerCase() || 'present'
-              };
-            });
-            
-            // IMPORTANT: Also update attendanceData immediately with today's record
-            // This ensures getCheckInStatus() uses the latest data from database
-            const todayStr = attendanceDateStr;
-            
-            console.log('📊 UPDATING attendanceData with today\'s record:');
-            console.log('   Date:', todayStr);
-            console.log('   Check-in:', attendanceRecord.check_in_time);
-            console.log('   Check-out:', attendanceRecord.check_out_time);
-            
-            setAttendanceData(prev => {
-              const existingIndex = prev.findIndex(r => r.date === todayStr);
-              
-              // Calculate hours: use current_session_minutes if still checked in, otherwise use net_working_time_minutes
-              let hoursValue = '0.0';
-              if (attendanceRecord.check_out_time) {
-                // Checked out - use finalized working time
-                hoursValue = attendanceRecord.net_working_time_minutes ? (attendanceRecord.net_working_time_minutes / 60).toFixed(1) : '0.0';
-              } else if (attendanceRecord.current_session_minutes !== undefined) {
-                // Still checked in - use real-time current session
-                hoursValue = (attendanceRecord.current_session_minutes / 60).toFixed(1);
-              }
-              
-              const updatedRecord = {
-                date: todayStr,
-                day: new Date(todayStr).getDate(),
-                status: attendanceRecord.status?.toLowerCase() || 'present',
-                checkIn: attendanceRecord.check_in_time || '-',
-                checkOut: attendanceRecord.check_out_time || '-',
-                hours: hoursValue,
-                check_out_time: attendanceRecord.check_out_time || null,
-                check_in_time: attendanceRecord.check_in_time || null
-              };
-              
-              console.log('   Updated record:', updatedRecord);
-              
-              if (existingIndex >= 0) {
-                const updated = [...prev];
-                updated[existingIndex] = { ...updated[existingIndex], ...updatedRecord };
-                return updated;
-              } else {
-                return [updatedRecord, ...prev];
-              }
-            });
-            
-            console.log('✅ Check-in status synced: checkedIn =', isActiveSession, ', checkInTime =', checkInTime);
-          } else {
-            // response.ok but no data - this means no record exists for today (404 from API)
-            console.log('ℹ️ No attendance record for today - employee not yet checked in');
-            setSystemAttendance(prev => ({
-              ...prev,
-              checkedIn: false,
-              checkInTime: null,
-              checkOutTime: null,
-              totalWorkingTime: 0,
-              status: 'absent'
-            }));
-          }
-          // Mark attendance data as loaded so component can render
-          setIsAttendanceDataLoaded(true);
-        } else {
-          // 404 or other error response
-          console.log(`⚠️ Failed to fetch today's attendance: ${response.status}`);
-          setSystemAttendance(prev => ({
-            ...prev,
-            checkedIn: false,
-            checkInTime: null,
-            checkOutTime: null,
-            totalWorkingTime: 0,
-            status: 'absent'
-          }));
-          // Mark attendance data as loaded even on error
-          setIsAttendanceDataLoaded(true);
-        }
-      } catch (error) {
-        console.error('Error fetching today\'s attendance:', error);
-        // Mark data as loaded even if fetch fails, so component doesn't hang
-        setIsAttendanceDataLoaded(true);
-      }
-    };
-    
-    // Fetch immediately and also set up an interval to keep refreshing
-    fetchTodayData();
-    const interval = setInterval(fetchTodayData, 10000); // Refresh every 10 seconds
-
-    // Then fetch historical/monthly data for both charts and attendance sheet
-    const fetchHistoricalData = async () => {
-      try {
-        const token = localStorage.getItem('token') || localStorage.getItem('authToken');
-        const employeeId = getEmployeeId();
-        
-        if (!token) return;
-        
-        const currentYear = new Date().getFullYear();
-        const currentMonth = new Date().getMonth() + 1;
-        
-        console.log(`📅 Fetching attendance for ${currentMonth}/${currentYear}...`);
-        
-        const response = await fetch(
-          endpoints.attendance.monthly(employeeId, currentYear, currentMonth),
-          {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          }
-        );
-        
-        if (response.ok) {
-          const data = await response.json();
-          if (data.success && data.data) {
-            console.log(`✅ Fetched ${data.data.length} historical attendance records`);
-            console.log('📦 RAW API RESPONSE - First record:', JSON.stringify(data.data[0], null, 2));
-            
-            // Convert to formatted data
-            const historicalData = data.data.map((record, idx) => {
-              // Use the attendance_date as-is since backend now returns YYYY-MM-DD format
-              // This is already the correct local date, not UTC
-              const attendanceDateStr = record.attendance_date.includes('T')
-                ? record.attendance_date.split('T')[0]  // If it still has time component
-                : record.attendance_date;  // If it's already YYYY-MM-DD
-              
-              if (idx === 0) {
-                console.log('🔍 FIRST RECORD TRANSFORMATION:');
-                console.log('   Input record:', JSON.stringify(record, null, 2));
-                console.log('   check_in_time field:', record.check_in_time);
-                console.log('   check_out_time field:', record.check_out_time);
-              }
-                
-              return {
-                date: attendanceDateStr,
-                day: parseInt(attendanceDateStr.split('-')[2]),  // Parse day from YYYY-MM-DD
-                status: record.status?.toLowerCase() || 'present',
-                checkIn: record.check_in_time
-                  ? formatPakistanTimeString(record.check_in_time)
-                  : '-',
-                checkOut: record.check_out_time
-                  ? formatPakistanTimeString(record.check_out_time)
-                  : '-',
-                check_in_time: record.check_in_time || null,
-                check_out_time: record.check_out_time || null,
-                hours: record.net_working_time_minutes && record.net_working_time_minutes > 0 ? (record.net_working_time_minutes / 60).toFixed(1) : '-',
-                grossHours: record.gross_working_time_minutes && record.gross_working_time_minutes > 0 ? (record.gross_working_time_minutes / 60).toFixed(1) : '-',
-                remarks: record.remarks || (record.check_out_time ? 'Checked out' : 'Active session'),
-                lateByMinutes: record.late_by_minutes || 0,
-                overtimeHours: record.overtime_hours && parseFloat(record.overtime_hours) > 0 ? parseFloat(record.overtime_hours).toFixed(2) : '-',
-                overtimeMinutes: record.overtime_minutes || 0,
-                breaks: record.breaks || [],
-                total_breaks_taken: record.total_breaks_taken || 0,
-                total_break_duration_minutes: record.total_break_duration_minutes || 0,
-                smoke_break_count: record.smoke_break_count || 0,
-                smoke_break_duration_minutes: record.smoke_break_duration_minutes || 0,
-                dinner_break_count: record.dinner_break_count || 0,
-                dinner_break_duration_minutes: record.dinner_break_duration_minutes || 0,
-                washroom_break_count: record.washroom_break_count || 0,
-                washroom_break_duration_minutes: record.washroom_break_duration_minutes || 0,
-                prayer_break_count: record.prayer_break_count || 0,
-                prayer_break_duration_minutes: record.prayer_break_duration_minutes || 0
-              };
-            });
-            
-            // IMPORTANT: Merge historical data with existing today's data
-            // Don't overwrite - today's data has fresh check_in/check_out from the dedicated fetch
-            console.log('📋 MERGING historical data with existing attendance data');
-            console.log('   Current attendanceData length:', attendanceData?.length);
-            console.log('   New historicalData length:', historicalData.length);
-            
-            setAttendanceData(prevData => {
-              // Keep today's record if it exists (it has fresh data from fetchTodayData)
-              // IMPORTANT: Use getPakistanDate() for correct timezone matching with database records
-              const pkDate = getPakistanDate();
-              const todayStr = `${pkDate.getFullYear()}-${String(pkDate.getMonth() + 1).padStart(2, '0')}-${String(pkDate.getDate()).padStart(2, '0')}`;
-              const todayRecord = prevData.find(r => r.date === todayStr);
-              
-              if (todayRecord) {
-                console.log('   ✅ Preserving today\'s record from previous fetch');
-                // Merge: use today's record, then add historical records that aren't today
-                const merged = historicalData.filter(r => r.date !== todayStr);
-                return [todayRecord, ...merged];
-              } else {
-                console.log('   ℹ️ No today record found, using historical data as-is');
-                return historicalData;
-              }
-            });
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching historical attendance:', error);
-      }
-    };
-    
-    // Then fetch historical data
-    fetchHistoricalData();
-
-    return () => clearInterval(interval);
-  }, []);
-
-  return {
-    attendanceData,
-    systemAttendance,
-    setSystemAttendance,
-    handleSystemCheckIn,
-    handleSystemCheckOut,
-    updateWorkingTime,
-    setBreakStatus,
-    setAttendanceData,
-    getTodayStatus,
-    getAttendanceStats,
-    fetchAttendanceData,
-    isAttendanceDataLoaded
-  };
-};
-
-// Attendance Sheet Component with Month and Year Filters
-const AttendanceSheet = ({ attendanceData, onExport, onFilter }) => {
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState('date');
-  const [sortOrder, setSortOrder] = useState('desc');
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  const [monthlyData, setMonthlyData] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-
-  // Fetch monthly attendance data from API
-  useEffect(() => {
-    const fetchMonthlyData = async () => {
-      try {
-        setIsLoading(true);
-        const token = localStorage.getItem('token') || localStorage.getItem('authToken');
-        const employeeId = getEmployeeId();
-
-        if (!token) {
-          console.log('No authentication token found');
-          return;
-        }
-
-        // API expects month as 1-12, JavaScript getMonth() returns 0-11
-        const apiMonth = selectedMonth + 1;
-        
-        const response = await fetch(
-          endpoints.attendance.monthly(employeeId, selectedYear, apiMonth),
-          {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          }
-        );
-
-        if (!response.ok) {
-          console.warn(`Monthly data fetch failed: ${response.status}`);
-          return;
-        }
-
-        const data = await response.json();
-        
-        if (data.success && data.data) {
-          // Format API data to match attendanceData structure
-          const formattedData = data.data.map(record => {
-            const statusLower = record.status ? record.status.toLowerCase() : 'absent';
-            const { status: _, ...rest } = record; // Exclude the original status field
-            
-            // Calculate hours: use current_session_minutes if still checked in, otherwise use net_working_time_minutes
-            let hoursValue = '0.0';
-            if (record.check_out_time) {
-              // Checked out - use finalized working time
-              hoursValue = record.net_working_time_minutes ? (record.net_working_time_minutes / 60).toFixed(1) : '0.0';
-            } else if (record.current_session_minutes !== undefined) {
-              // Still checked in - use real-time current session
-              hoursValue = (record.current_session_minutes / 60).toFixed(1);
-            }
-            
-            return {
-              date: record.attendance_date,
-              day: new Date(record.attendance_date).getDate(),
-              status: statusLower,
-              checkIn: record.check_in_time 
-                ? formatPakistanTimeString(record.check_in_time)
-                : '-',
-              checkOut: record.check_out_time
-                ? formatPakistanTimeString(record.check_out_time)
-                : '-',
-              hours: hoursValue,
-              overtimeHours: record.overtime_hours ? parseFloat(record.overtime_hours).toFixed(2) : '0.0',
-              grossHours: record.gross_working_time_minutes ? (record.gross_working_time_minutes / 60).toFixed(1) : '0.0',
-              lateByMinutes: record.late_by_minutes || 0,
-              remarks: record.remarks || '-',
-              ...rest  // Include all other fields EXCEPT the original capitalized status
-            };
-          });
-          
-          setMonthlyData(formattedData);
-          console.log(`📅 Fetched ${formattedData.length} records for ${selectedMonth + 1}/${selectedYear}`, formattedData);
-        }
-      } catch (error) {
-        console.error('Error fetching monthly attendance data:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchMonthlyData();
-  }, [selectedMonth, selectedYear]);
-
-  // Use monthly data from API if available, otherwise fall back to passed attendanceData
-  const dataToDisplay = monthlyData.length > 0 ? monthlyData : attendanceData;
-
-  // Get available years - show years 2025 and 2026
-  const availableYears = [2026, 2025];
-
-  // Get available months for selected year
-  const availableMonths = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
-
-  // Month names for display
-  const monthNames = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
-  ];
-
-  // Filter and sort attendance data with month and year filters
-  const filteredData = dataToDisplay
-    .filter(record => {
-      const matchesStatus = filterStatus === 'all' || record.status === filterStatus;
-      const term = searchTerm.toLowerCase();
-      const matchesSearch = (record.date || '').toLowerCase().includes(term) ||
-                          ((record.remarks || '').toLowerCase().includes(term));
-      
-      return matchesStatus && matchesSearch;
-    })
-    .sort((a, b) => {
-      let aValue, bValue;
-      
-      switch (sortBy) {
-        case 'date':
-          aValue = new Date(a.date);
-          bValue = new Date(b.date);
-          break;
-        case 'hours':
-          aValue = parseFloat(a.hours);
-          bValue = parseFloat(b.hours);
-          break;
-        case 'status':
-          aValue = a.status;
-          bValue = b.status;
-          break;
-        default:
-          aValue = a[sortBy];
-          bValue = b[sortBy];
-      }
-      
-      if (sortOrder === 'asc') {
-        return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
-      } else {
-        return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
-      }
-    });
-
-  const handleSort = (column) => {
-    if (sortBy === column) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortBy(column);
-      setSortOrder('asc');
-    }
-  };
-
-  const getStatusInfo = (status) => {
-    switch (status) {
-      case 'present':
-        return { color: 'bg-green-100 text-green-800', text: 'Present' };
-      case 'late':
-        return { color: 'bg-yellow-100 text-yellow-800', text: 'Late' };
-      case 'absent':
-        return { color: 'bg-red-100 text-red-800', text: 'Absent' };
-      case 'off':
-        return { color: 'bg-gray-100 text-gray-800', text: 'Day Off' };
-      default:
-        return { color: 'bg-blue-100 text-blue-800', text: 'Pending' };
-    }
-  };
-
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
-
-  // Calculate monthly statistics from FULL monthly data (not filtered)
-  const monthlyStats = {
-    present: dataToDisplay.filter(r => r.status === 'present' || r.status === 'late').length,
-    late: dataToDisplay.filter(r => r.status === 'late').length,
-    absent: dataToDisplay.filter(r => r.status === 'absent').length,
-    totalWorkingDays: dataToDisplay.filter(r => r.status !== 'off' && r.status !== 'pending').length,
-    totalHours: dataToDisplay.reduce((total, record) => total + parseFloat(record.hours || 0), 0),
-    averageHours: dataToDisplay.length > 0 ? 
-      (dataToDisplay.reduce((total, record) => total + parseFloat(record.hours || 0), 0) / dataToDisplay.length).toFixed(1) : 0
-  };
-  
-  console.log('📊 Monthly Stats Debug:', {
-    dataToDisplayLength: dataToDisplay.length,
-    dataToDisplay: dataToDisplay,
-    monthlyStats: monthlyStats
-  });
-
-  const exportToCSV = () => {
-    const timestamp = new Date().toLocaleString();
-    const employeeName = "MH"; // Replace with actual employee name from auth
-    
-    // CSV with metadata and summary
-    const csvLines = [
-      `"Digious CRM - Attendance Report"`,
-      `"Generated:","${timestamp}"`,
-      `"Employee:","${employeeName}"`,
-      `"Period:","${monthNames[selectedMonth]} ${selectedYear}"`,
-      `"Total Records:","${filteredData.length}"`,
-      ``,
-      `"Summary Statistics"`,
-      `"Present Days:","${monthlyStats.present}"`,
-      `"Late Arrivals:","${monthlyStats.late}"`,
-      `"Absent Days:","${monthlyStats.absent}"`,
-      `"Total Hours:","${monthlyStats.totalHours.toFixed(1)}"`,
-      `"Average Hours/Day:","${monthlyStats.averageHours}"`,
-      `"Attendance Rate:","${((monthlyStats.present / monthlyStats.totalWorkingDays) * 100).toFixed(1)}%"`,
-      ``,
-      `"Detailed Records"`,
-      `"Date","Day","Status","Check In","Check Out","Hours","Remarks"`,
-      ...filteredData.map(row => [
-        `"${formatDate(row.date)}"`,
-        `"${row.day}"`,
-        `"${getStatusInfo(row.status).text}"`,
-        `"${row.checkIn}"`,
-        `"${row.checkOut}"`,
-        `"${row.hours}"`,
-        `"${row.remarks}"`
-      ].join(','))
-    ];
-
-    const csvContent = csvLines.join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Digious-Attendance-${employeeName}-${monthNames[selectedMonth]}_${selectedYear}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
-    
-    // Show success notification
-    alert(`âœ… Attendance report exported successfully!\n\nFile: Digious-Attendance-${employeeName}-${monthNames[selectedMonth]}_${selectedYear}.csv\nRecords: ${filteredData.length}`);
-  };
-
-  // Quick month navigation
-  const navigateMonth = (direction) => {
-    if (direction === 'prev') {
-      if (selectedMonth === 0) {
-        setSelectedMonth(11);
-        setSelectedYear(selectedYear - 1);
-      } else {
-        setSelectedMonth(selectedMonth - 1);
-      }
-    } else {
-      if (selectedMonth === 11) {
-        setSelectedMonth(0);
-        setSelectedYear(selectedYear + 1);
-      } else {
-        setSelectedMonth(selectedMonth + 1);
-      }
-    }
-  };
-
-  return (
-    <div className="space-y-6">
-      {/* Preloader */}
-      {isLoading && (
-        <div className="w-full fixed inset-0 flex items-center justify-center z-100">
-          <div className="bg-white rounded-2xl p-8 shadow-2xl flex flex-col items-center gap-4">
-            <div className="relative w-16 h-16">
-              <div className="absolute inset-0 border-4 border-blue-100 rounded-full"></div>
-              <div className="absolute inset-0 border-4 border-transparent border-t-blue-600 rounded-full animate-spin"></div>
-            </div>
-            <div className="text-center">
-              <p className="text-slate-700 font-semibold">Loading...</p>
-              <p className="text-xs text-slate-500 mt-1">Fetching attendance data</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Header with Controls */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900">Attendance Records</h3>
-          <p className="text-sm text-gray-600">
-            Showing {filteredData.length} records for {monthNames[selectedMonth]} {selectedYear}
-          </p>
-        </div>
-        
-        <div className="flex flex-wrap gap-2">
-          {/* Month Navigation */}
-          <div className="flex items-center gap-2 bg-white border border-gray-300 rounded-lg p-1">
-            <button
-              onClick={() => navigateMonth('prev')}
-              className="p-1 hover:bg-gray-100 rounded transition-colors"
-              title="Previous month"
-            >
-              <ArrowLeft className="h-4 w-4 text-gray-600" />
-            </button>
-            
-            <select
-              value={selectedMonth}
-              onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-              className="px-2 py-1 border-0 focus:ring-0 text-sm font-medium"
-            >
-              {monthNames.map((month, index) => (
-                <option key={month} value={index}>
-                  {month}
-                </option>
-              ))}
-            </select>
-
-            <select
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-              className="px-2 py-1 border-0 focus:ring-0 text-sm font-medium"
-            >
-              {availableYears.map(year => (
-                <option key={year} value={year}>
-                  {year}
-                </option>
-              ))}
-            </select>
-
-            <button
-              onClick={() => navigateMonth('next')}
-              className="p-1 hover:bg-gray-100 rounded transition-colors"
-              title="Next month"
-            >
-              <ArrowRight className="h-4 w-4 text-gray-600" />
-            </button>
-          </div>
-
-          {/* Search */}
-          {/* <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search records..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-            />
-          </div> */}
-
-          {/* Filter */}
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-          >
-            <option value="all">All Status</option>
-            <option value="present">Present</option>
-            <option value="late">Late</option>
-            <option value="absent">Absent</option>
-            <option value="off">Day Off</option>
-          </select>
-
-          {/* Export Button with Dropdown */}
-          <div className="relative group">
-            <button
-              onClick={exportToCSV}
-              className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5 text-sm font-medium"
-            >
-              <Download className="h-4 w-4" />
-              <span>Export Report</span>
-            </button>
-            <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-xl border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
-              <div className="py-1">
-                <button
-                  onClick={exportToCSV}
-                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 flex items-center gap-2"
-                >
-                  <FileText className="h-4 w-4" />
-                  Export as CSV
-                </button>
-                <div className="w-full px-4 py-2 text-left text-sm text-gray-400 cursor-not-allowed flex items-center gap-2">
-                  <FileText className="h-4 w-4" />
-                  Export as PDF (Soon)
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Analytics Dashboard */}
-      {/* hello */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 ">
-        {/* Attendance Distribution Chart */}
-        {/* <div className="bg-white rounded-xl border border-blue-100 p-6 shadow-sm hover:shadow-md transition-all">
-          <div className="flex items-center justify-between mb-4">
-            <h4 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-              <PieChart className="h-5 w-5 text-blue-600" />
-              Attendance Distribution
-            </h4>
-            <span className="text-xs text-gray-500 bg-blue-50 px-2 py-1 rounded">Monthly</span>
-          </div>
-          <ResponsiveContainer width="100%" height={250}>
-            <RePieChart>
-              <Pie
-                data={[
-                  { name: 'Present', value: monthlyStats.present, color: '#10b981' },
-                  { name: 'Late', value: monthlyStats.late, color: '#f59e0b' },
-                  { name: 'Absent', value: monthlyStats.absent, color: '#ef4444' },
-                ]}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                outerRadius={80}
-                fill="#8884d8"
-                dataKey="value"
-              >
-                {[
-                  { name: 'Present', value: monthlyStats.present, color: '#10b981' },
-                  { name: 'Late', value: monthlyStats.late, color: '#f59e0b' },
-                  { name: 'Absent', value: monthlyStats.absent, color: '#ef4444' },
-                ].map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip />
-            </RePieChart>
-          </ResponsiveContainer>
-          <div className="mt-4 flex justify-center gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-              <span className="text-sm text-gray-600">Present ({monthlyStats.present})</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-              <span className="text-sm text-gray-600">Late ({monthlyStats.late})</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-              <span className="text-sm text-gray-600">Absent ({monthlyStats.absent})</span>
-            </div>
-          </div>
-        </div> */}
-
-        {/* Working Hours Trend */}
-        {/* <div className="bg-white rounded-xl border border-blue-100 p-6 shadow-sm hover:shadow-md transition-all">
-          <div className="flex items-center justify-between mb-4">
-            <h4 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-              <LineChart className="h-5 w-5 text-blue-600" />
-              Working Hours Trend
-            </h4>
-            <span className="text-xs text-gray-500 bg-blue-50 px-2 py-1 rounded">Last 7 Days</span>
-          </div>
-          <ResponsiveContainer width="100%" height={250}>
-            <AreaChart
-              data={filteredData.slice(-7).map(record => ({
-                date: new Date(record.date).getDate(),
-                hours: parseFloat(record.hours),
-                status: record.status
-              }))}
-            >
-              <defs>
-                <linearGradient id="colorHours" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
-                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.1}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis 
-                dataKey="date" 
-                stroke="#6b7280"
-                tick={{ fontSize: 12 }}
-                label={{ value: 'Date', position: 'insideBottom', offset: -5, style: { fontSize: 12, fill: '#6b7280' } }}
-              />
-              <YAxis 
-                stroke="#6b7280"
-                tick={{ fontSize: 12 }}
-                label={{ value: 'Hours', angle: -90, position: 'insideLeft', style: { fontSize: 12, fill: '#6b7280' } }}
-              />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: '#fff', 
-                  border: '1px solid #e5e7eb', 
-                  borderRadius: '8px',
-                  boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
-                }}
-              />
-              <Area 
-                type="monotone" 
-                dataKey="hours" 
-                stroke="#3b82f6" 
-                strokeWidth={2}
-                fillOpacity={1} 
-                fill="url(#colorHours)" 
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div> */}
-      </div>
-      
-
-      {/* Enhanced Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-gradient-to-br from-green-50 to-emerald-100 rounded-xl p-5 border border-green-200 shadow-sm hover:shadow-md transition-all group">
-          <div className="flex items-start justify-between">
-            <div>
-              <div className="text-xs font-medium text-green-700 uppercase tracking-wide mb-1">Present Days</div>
-              <div className="text-3xl font-bold text-green-900">{monthlyStats.present}</div>
-              <div className="text-xs text-green-600 mt-1">
-                {monthlyStats.totalWorkingDays > 0 
-                  ? Math.round((monthlyStats.present / monthlyStats.totalWorkingDays) * 100)
-                  : 0}% attendance
-              </div>
-            </div>
-            <div className="bg-green-500 rounded-lg p-2 group-hover:scale-110 transition-transform">
-              <CheckCircle className="h-6 w-6 text-white" />
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-gradient-to-br from-yellow-50 to-amber-100 rounded-xl p-5 border border-yellow-200 shadow-sm hover:shadow-md transition-all group">
-          <div className="flex items-start justify-between">
-            <div>
-              <div className="text-xs font-medium text-yellow-700 uppercase tracking-wide mb-1">Late Arrivals</div>
-              <div className="text-3xl font-bold text-yellow-900">{monthlyStats.late}</div>
-              <div className="text-xs text-yellow-600 mt-1">Needs improvement</div>
-            </div>
-            <div className="bg-yellow-500 rounded-lg p-2 group-hover:scale-110 transition-transform">
-              <Clock className="h-6 w-6 text-white" />
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-gradient-to-br from-red-50 to-rose-100 rounded-xl p-5 border border-red-200 shadow-sm hover:shadow-md transition-all group">
-          <div className="flex items-start justify-between">
-            <div>
-              <div className="text-xs font-medium text-red-700 uppercase tracking-wide mb-1">Absent Days</div>
-              <div className="text-3xl font-bold text-red-900">{monthlyStats.absent}</div>
-              <div className="text-xs text-red-600 mt-1">Unplanned leaves</div>
-            </div>
-            <div className="bg-red-500 rounded-lg p-2 group-hover:scale-110 transition-transform">
-              <X className="h-6 w-6 text-white" />
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-gradient-to-br from-blue-50 to-cyan-100 rounded-xl p-5 border border-blue-200 shadow-sm hover:shadow-md transition-all group">
-          <div className="flex items-start justify-between">
-            <div>
-              <div className="text-xs font-medium text-blue-700 uppercase tracking-wide mb-1">Total Hours</div>
-              <div className="text-3xl font-bold text-blue-900">{monthlyStats.totalHours.toFixed(0)}h</div>
-              <div className="text-xs text-blue-600 mt-1">Avg: {monthlyStats.averageHours}h/day</div>
-            </div>
-            <div className="bg-blue-500 rounded-lg p-2 group-hover:scale-110 transition-transform">
-              <Clock4 className="h-6 w-6 text-white" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Weekly Performance Bar Chart */}
-      {/* <div className="bg-white rounded-xl border border-blue-100 p-6 shadow-sm hover:shadow-md transition-all">
-        <div className="flex items-center justify-between mb-4">
-          <h4 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-            <BarChart3 className="h-5 w-5 text-blue-600" />
-            Daily Performance Overview
-          </h4>
-          <div className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-green-500" />
-            <span className="text-xs text-gray-500">Last 14 Days</span>
-          </div>
-        </div>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart
-            data={filteredData.slice(-14).map(record => ({
-              date: new Date(record.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-              hours: parseFloat(record.hours),
-              target: 9,
-              status: record.status
-            }))}
-          >
-            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
-            <XAxis 
-              dataKey="date" 
-              stroke="#6b7280"
-              tick={{ fontSize: 11 }}
-              angle={-45}
-              textAnchor="end"
-              height={80}
-            />
-            <YAxis 
-              stroke="#6b7280"
-              tick={{ fontSize: 12 }}
-              label={{ value: 'Hours Worked', angle: -90, position: 'insideLeft', style: { fontSize: 12, fill: '#6b7280' } }}
-            />
-            <Tooltip 
-              contentStyle={{ 
-                backgroundColor: '#fff', 
-                border: '1px solid #e5e7eb', 
-                borderRadius: '8px',
-                boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
-              }}
-            />
-            <Legend />
-            <Bar dataKey="hours" fill="#3b82f6" radius={[8, 8, 0, 0]} name="Hours Worked" />
-            <Bar dataKey="target" fill="#10b981" radius={[8, 8, 0, 0]} name="Target (9h)" opacity={0.3} />
-          </BarChart>
-        </ResponsiveContainer>
-      </div> */}
-
-      {/* Attendance Table */}
-      <div className="bg-white rounded-xl border border-blue-100 overflow-hidden shadow-sm hover:shadow-md transition-all">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gradient-to-r from-blue-50 to-cyan-50 border-b border-blue-100">
-              <tr>
-                <th 
-                  className="px-6 py-3 text-left text-xs font-bold text-blue-900 uppercase tracking-wider cursor-pointer hover:bg-blue-100 transition-colors"
-                  onClick={() => handleSort('date')}
-                >
-                  <div className="flex items-center gap-1">
-                    Date
-                    {sortBy === 'date' && (
-                      <ChevronDown className={`h-4 w-4 transition-transform ${sortOrder === 'asc' ? 'rotate-180' : ''}`} />
-                    )}
-                  </div>
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-bold text-blue-900 uppercase tracking-wider">
-                  Day
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-bold text-blue-900 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-bold text-blue-900 uppercase tracking-wider">
-                  Check In
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-bold text-blue-900 uppercase tracking-wider">
-                  Check Out
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-bold text-blue-900 uppercase tracking-wider">
-                  Late Arrival
-                </th>
-                <th 
-                  className="px-6 py-3 text-left text-xs font-bold text-blue-900 uppercase tracking-wider cursor-pointer hover:bg-blue-100 transition-colors"
-                  onClick={() => handleSort('hours')}
-                >
-                  <div className="flex items-center gap-1">
-                    Net Hours
-                    {sortBy === 'hours' && (
-                      <ChevronDown className={`h-4 w-4 transition-transform ${sortOrder === 'asc' ? 'rotate-180' : ''}`} />
-                    )}
-                  </div>
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-bold text-blue-900 uppercase tracking-wider">
-                  Overtime
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-bold text-blue-900 uppercase tracking-wider">
-                  Gross Hours
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-bold text-blue-900 uppercase tracking-wider">
-                  Remarks
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-blue-100">
-              {filteredData.map((record, index) => {
-                const statusInfo = getStatusInfo(record.status);
-                const recordDate = new Date(record.date);
-                const dayName = recordDate.toLocaleDateString('en-US', { weekday: 'long' });
-                
-                return (
-                  <tr key={index} className="hover:bg-blue-50 transition-colors duration-200">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
-                        {formatDate(record.date)}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-500 capitalize">
-                        {dayName}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusInfo.color}`}>
-                        {statusInfo.text}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {record.checkIn}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {record.checkOut}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {record.lateByMinutes > 0 ? (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700">
-                          {record.lateByMinutes >= 60 
-                            ? (record.lateByMinutes / 60).toFixed(1) + 'h late'
-                            : record.lateByMinutes + 'm late'
-                          }
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                          On time
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {record.hours === '-' ? (
-                        <span className="text-sm text-gray-500">-</span>
-                      ) : (
-                        <div className={`text-sm font-medium ${
-                          parseFloat(record.hours) >= 8 ? 'text-green-600' : 
-                          parseFloat(record.hours) >= 6 ? 'text-yellow-600' : 'text-red-600'
-                        }`}>
-                          {record.hours}h
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {record.overtimeHours === '-' ? (
-                        <span className="text-sm text-gray-500">-</span>
-                      ) : (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
-                          {record.overtimeHours}h
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {record.hours === '-' || record.hours === '0.0' ? (
-                        <span className="text-sm text-gray-500">-</span>
-                      ) : (
-                        <div className="text-sm font-medium text-blue-600">
-                          {record.grossHours}h
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-600 max-w-xs truncate" title={record.remarks}>
-                        {record.remarks}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-
-        {filteredData.length === 0 && (
-          <div className="text-center py-12">
-            <Table className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No records found</h3>
-            <p className="text-gray-500">
-              {searchTerm || filterStatus !== 'all' 
-                ? 'Try adjusting your search or filter criteria'
-                : `No attendance records for ${monthNames[selectedMonth]} ${selectedYear}`
-              }
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* Monthly Analysis */}
-      
-    </div>
-  );
-};
-
-export function EmployeeAttendancePage() {
-  const {
-    attendanceData,
-    systemAttendance,
-    setSystemAttendance,
-    handleSystemCheckIn,
-    handleSystemCheckOut,
-    updateWorkingTime,
-    setBreakStatus,
-    setAttendanceData,
-    getTodayStatus,
-    getAttendanceStats,
-    fetchAttendanceData,
-    isAttendanceDataLoaded
-  } = useAttendance();
-
-  const [isLoading, setIsLoading] = useState(false);
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' or 'attendance-sheet'
-  const [breakRules, setBreakRules] = useState([]);
-  const [breakData, setBreakData] = useState({});
-  const [todayBreaksFromDB, setTodayBreaksFromDB] = useState([]); // Store breaks fetched from database
-
-  // Overtime debt tracking
-  const [overtimeDebt, setOvertimeDebt] = useState({
-    totalDebt: 0,
-    breakOvertime: 0,
-    lateOvertime: 0,
-    workedOvertime: 0,
-    netDebt: 0,
-    history: []
-  });
-
-  // Monthly summary (aggregated from monthly attendance records)
-  const [monthlySummary, setMonthlySummary] = useState({
-    overtimeMinutes: 0,
-    totalBreakMinutes: 0,
-    netWorkingMinutes: 0
-  });
-
-  // Fetch break rules from backend
-  useEffect(() => {
-    // Set loading state on component mount
-    setIsLoading(true);
-
-    // Request notification permission
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission();
-    }
-
-    const fetchBreakRules = async () => {
-      try {
-        console.log('📥 Fetching break rules from backend...');
-        const response = await fetch(
-          endpoints.rules.breakRules,
-          {
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          }
-        );
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data.success && data.data) {
-            console.log('✅ Break rules fetched successfully:', data.data);
-            setBreakRules(data.data);
-            
-            // Initialize break data with rules from database
-            const initialBreakData = {};
-            data.data.forEach(rule => {
-              const ruleType = rule.type.toLowerCase();
-              console.log(`   🔧 Initializing break data for: ${ruleType} (${rule.limit}m limit)`);
-              initialBreakData[ruleType] = {
-                active: false,
-                startTime: null,
-                totalDuration: 0,
-                exceededDuration: 0,
-                breakLimit: rule.limit,
-                breakCount: 0,
-                autoEndTimer: null,
-                autoSaveInterval: null
-              };
-            });
-            console.log('   📊 Initial break data:', initialBreakData);
-            setBreakData(prev => ({ ...prev, ...initialBreakData }));
-
-            // IMPORTANT: Fetch any ongoing breaks from database and restore them
-            await fetchAndRestoreOngoingBreaks(initialBreakData);
-          }
-        } else {
-          console.warn('❌ Failed to fetch break rules, using defaults');
-        }
-      } catch (error) {
-        console.error('❌ Error fetching break rules:', error);
-        // Will use default breakTypes if fetch fails
-      } finally {
-        // Set loading to false after initial data is loaded
-        setIsLoading(false);
-      }
-    };
-
-    fetchBreakRules();
-    
-    // Also fetch today's breaks from database
-    fetchTodayBreaksFromDB();
-    
-    // Set up interval to refresh today's breaks every 30 seconds
-    const breaksFetchInterval = setInterval(() => {
-      fetchTodayBreaksFromDB();
-    }, 30 * 1000);
-    
-    return () => clearInterval(breaksFetchInterval);
-  }, []);
-
-  // Fetch ongoing breaks from database and restore them to UI
-  const fetchAndRestoreOngoingBreaks = async (breakRulesData) => {
+  const fetchMonthlyAttendance = async () => {
     try {
-      const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+      const token = localStorage.getItem('token');
       const employeeId = getEmployeeId();
-
-      if (!token) {
-        console.warn('⚠️ No token available, cannot fetch ongoing breaks');
-        return;
-      }
-
-      console.log('🔄 Fetching ongoing breaks from database...');
       
+      if (!employeeId) return;
+      
+      // Use selected month and year from filter
+      const response = await fetch(endpoints.attendance.monthly(employeeId, selectedYear, selectedMonth), {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        console.log('✅ Monthly attendance fetched:', data.data);
+        setMonthlyAttendance(data.data || []);
+      }
+    } catch (error) {
+      console.error('Error fetching monthly attendance:', error);
+    }
+  };
+
+  const fetchActiveBreaks = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const employeeId = getEmployeeId();
+      
+      if (!employeeId) return;
+
       const response = await fetch(endpoints.attendance.ongoingBreaks(employeeId), {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -1867,363 +213,81 @@ export function EmployeeAttendancePage() {
         }
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.data && data.data.length > 0) {
-          console.log('✅ Ongoing breaks found:', data.data);
-
-          // Restore each ongoing break to the UI
-          const now = new Date();
-          data.data.forEach(ongoingBreak => {
-            const breakType = ongoingBreak.break_type.toLowerCase();
-            const startTimeStr = ongoingBreak.break_start_time;
-
-            // Determine the correct local date for the break start time.
-            // For early-morning breaks (00:00 - 05:59) the break belongs to the PREVIOUS day.
-            // Prefer server-provided attendance_date when available.
-            const pad = (n) => String(n).padStart(2, '0');
-            const nowLocal = new Date();
-            let dateForBreak = `${nowLocal.getFullYear()}-${pad(nowLocal.getMonth() + 1)}-${pad(nowLocal.getDate())}`;
-
-            // If server returned an attendance_date for this break, use it (robustness)
-            if (ongoingBreak.attendance_date) {
-              // attendance_date may be a full ISO string or YYYY-MM-DD
-              dateForBreak = String(ongoingBreak.attendance_date).split('T')[0];
-
-              // If break time is early morning (00:00-05:59) the real timestamp is on the next calendar day
-              const hour = parseInt((startTimeStr || '00:00:00').split(':')[0], 10) || 0;
-              if (hour >= 0 && hour < 6) {
-                const d = new Date(dateForBreak + 'T00:00:00');
-                d.setDate(d.getDate() + 1);
-                dateForBreak = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-              }
-            } else {
-              // Fallback: determine by break hour (local interpretation)
-              const hour = parseInt((startTimeStr || '00:00:00').split(':')[0], 10) || 0;
-              if (hour >= 0 && hour < 6) {
-                const yday = new Date(nowLocal);
-                yday.setDate(yday.getDate() - 1);
-                dateForBreak = `${yday.getFullYear()}-${pad(yday.getMonth() + 1)}-${pad(yday.getDate())}`;
-              }
-            }
-
-            const breakStartTime = new Date(`${dateForBreak}T${startTimeStr}`);
-            const currentDuration = (now - breakStartTime) / (1000 * 60); // Duration in minutes
-
-            console.log(`🔧 Restoring break: ${ongoingBreak.break_type}`);
-            console.log(`   Start Time: ${startTimeStr}`);
-            console.log(`   Current Duration: ${currentDuration.toFixed(2)}m`);
-            console.log(`   Saved Duration: ${ongoingBreak.break_duration_minutes}m`);
-            console.log(`   Break ID: ${ongoingBreak.id}`);
-
-            // Decide which duration to display: prefer the real-time calculation
-            // but fall back to server value if it's close (tolerate small differences).
-            const serverDuration = ongoingBreak.break_duration_minutes || 0;
-            const durationDiff = Math.abs(serverDuration - currentDuration);
-            const chosenDuration = durationDiff > 10 ? currentDuration : Math.max(serverDuration, currentDuration);
-
-            // Update breakData to show break as active
-            setBreakData(prev => {
-              const updated = { ...prev };
-              if (updated[breakType]) {
-                updated[breakType] = {
-                  ...updated[breakType],
-                  active: true,
-                  startTime: breakStartTime,
-                  totalDuration: chosenDuration,
-                  breakCount: (updated[breakType].breakCount || 0) + 1,
-                  breakId: ongoingBreak.id
-                };
-                console.log(`   ✅ Updated breakData[${breakType}]:`, updated[breakType]);
-                console.log(`       (serverDuration: ${serverDuration}m, calculated: ${currentDuration.toFixed(2)}m, chosen: ${chosenDuration.toFixed(2)}m)`);
-              } else {
-                console.warn(`   ⚠️ breakType '${breakType}' not found in breakData`);
-              }
-              return updated;
-            });
-
-            // Pause working time since there's an active break
-            setBreakStatus(true);
-
-            // Resume auto-save interval for this break
-            console.log(`   ✅ Setting up auto-save interval for ${ongoingBreak.break_type}`);
-            const autoSaveInterval = setInterval(() => {
-              autoSaveBreakProgress(breakType, breakStartTime);
-            }, 30 * 1000);
-
-            // Store the interval ID
-            setBreakData(prev => ({
-              ...prev,
-              [breakType]: {
-                ...prev[breakType],
-                autoSaveInterval: autoSaveInterval
-              }
-            }));
-          });
-        } else {
-          console.log('ℹ️ No ongoing breaks found');
-        }
-      } else {
-        console.warn('⚠️ Failed to fetch ongoing breaks:', response.status);
+      const data = await response.json();
+      if (data.success) {
+        setActiveBreaks(data.data || []);
       }
     } catch (error) {
-      console.error('❌ Error fetching ongoing breaks:', error);
+      console.error('Error fetching active breaks:', error);
     }
   };
 
-  // Fetch today's completed breaks from database
-  const fetchTodayBreaksFromDB = async () => {
+  const handleCheckIn = async () => {
     try {
-      const token = localStorage.getItem('token') || localStorage.getItem('authToken');
-      const employeeId = getEmployeeId();
-
-      if (!token) {
-        console.warn('⚠️ No token available, cannot fetch today\'s breaks');
-        return;
-      }
-
-      console.log('📊 Fetching today\'s completed breaks from database...');
-      
-      const response = await fetch(endpoints.attendance.todayBreaks(employeeId), {
+      const token = localStorage.getItem('token');
+      const response = await fetch(endpoints.attendance.checkIn, {
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
-        }
+        },
+        body: JSON.stringify({
+          employee_id: getEmployeeId(),
+          email: user?.email || 'hr@digious.com',
+          name: user?.name || 'HR Manager',
+          device_info: 'Web Browser'
+        })
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.data) {
-          console.log('✅ Today\'s breaks fetched:', data.data);
-          setTodayBreaksFromDB(data.data);
-        }
+      const data = await response.json();
+      if (data.success) {
+        console.log('✅ Check-in successful:', data);
+        setIsCheckedIn(true);
+        await fetchTodayAttendance();
+        await fetchMonthlyAttendance();
       } else {
-        console.warn('⚠️ Failed to fetch today\'s breaks:', response.status);
+        console.error('❌ Check-in failed:', data.message);
+        alert(data.message || 'Check-in failed');
       }
     } catch (error) {
-      console.error('❌ Error fetching today\'s breaks:', error);
+      console.error('Check-in error:', error);
+      alert('Failed to check in');
     }
   };
 
-    // Sync breakData with attendance data (component-level) when attendance is updated
-    useEffect(() => {
-      if (!attendanceData || attendanceData.length === 0) return;
-
-      // Prefer today's attendance record when syncing break data
-      const todayStr = new Date().toISOString().split('T')[0];
-      let record = attendanceData.find(r => r.date === todayStr);
-      if (!record) {
-        // Fallback: try the last record in the array (most recent)
-        record = attendanceData[attendanceData.length - 1] || attendanceData[0];
-      }
-
-      console.log('🔄 Syncing breakData from attendanceData in component...');
-      console.log('   Selected record date (preferred today):', todayStr);
-      console.log('   Using record date:', record?.date);
-      console.log('   Record keys:', Object.keys(record || {}));
-      console.log('   Full record:', record);
-
-      setBreakData(prev => {
-        const updated = { ...prev };
-
-        const breakTypeMap = {
-          smoke: { countField: 'smoke_break_count', durationField: 'smoke_break_duration_minutes' },
-          dinner: { countField: 'dinner_break_count', durationField: 'dinner_break_duration_minutes' },
-          washroom: { countField: 'washroom_break_count', durationField: 'washroom_break_duration_minutes' },
-          prayer: { countField: 'prayer_break_count', durationField: 'prayer_break_duration_minutes' }
-        };
-
-        Object.keys(breakTypeMap).forEach(type => {
-          const fields = breakTypeMap[type];
-          const count = record[fields.countField] || 0;
-          const duration = record[fields.durationField] || 0;
-
-          console.log(`   Syncing ${type}: count=${count} (from ${fields.countField}), duration=${duration}m (from ${fields.durationField})`);
-
-          const prevInfo = prev[type] || { active: false, startTime: null, totalDuration: 0, exceededDuration: 0, breakLimit: 0, breakCount: 0 };
-
-          updated[type] = {
-            ...prevInfo,
-            breakCount: count,
-            totalDuration: duration
-          };
-        });
-
-        console.log('✅ Component breakData synced:', updated);
-        return updated;
-      });
-    }, [attendanceData]);
-
-  // Map break rules to icons and colors
-  const breakTypeMap = {
-    'smoke': { icon: Cigarette, color: 'bg-orange-500' },
-    'dinner': { icon: Utensils, color: 'bg-purple-500' },
-    'washroom': { icon: ToiletIcon, color: 'bg-blue-500' },
-    'pray': { icon: Calendar1, color: 'bg-green-500' },
-    'prayer': { icon: Calendar1, color: 'bg-green-500' }
-  };
-
-  // Build breakTypes array dynamically from breakRules
-  const breakTypes = breakRules.length > 0 
-    ? breakRules.map(rule => {
-        const typeKey = rule.type.toLowerCase();
-        const mapping = breakTypeMap[typeKey] || { icon: Coffee, color: 'bg-gray-500' };
-        return {
-          id: typeKey,
-          name: rule.name,
-          icon: mapping.icon,
-          color: mapping.color,
-          limit: rule.limit
-        };
-      })
-    : [
-        { 
-          id: 'smoke', 
-          name: 'Smoke', 
-          icon: Cigarette, 
-          color: 'bg-orange-500',
-          limit: 2
-        },
-        { 
-          id: 'dinner', 
-          name: 'Dinner', 
-          icon: Utensils,
-          color: 'bg-purple-500',
-          limit: 40
-        },
-        { 
-          id: 'washroom', 
-          name: 'Washroom', 
-          icon: ToiletIcon, 
-          color: 'bg-blue-500',
-          limit: 10
-        },
-        { 
-          id: 'pray', 
-          name: 'Prayer', 
-          icon: Calendar1, 
-          color: 'bg-green-500',
-          limit: 10
-        }
-      ];
-
-  // Calculate total break time and exceeded time
-  const calculateTotalBreakTime = () => {
-    // Calculate from database breaks instead of local breakData to avoid double-counting
-    const totalDuration = todayBreaksFromDB.reduce((sum, b) => sum + (b.break_duration_minutes || 0), 0);
-    
-    const exceededDuration = 0; // Breaks are stored as actual records, no need for exceeded calculation
-    
-    return {
-      totalDuration,
-      exceededDuration,
-      allowedDuration: totalDuration - exceededDuration
-    };
-  };
-
-  // Calculate working hours summary with overtime consideration
-  const calculateWorkingHoursSummary = () => {
-    const breakSummary = calculateTotalBreakTime();
-    
-    // Calculate total working minutes from attendance data (historical records)
-    let totalNetMinutes = 0;
-    let totalGrossMinutes = 0;
-    
-    if (attendanceData && attendanceData.length > 0) {
-      attendanceData.forEach(record => {
-        // Only count hours that are valid numbers (not '-')
-        if (record.hours && record.hours !== '-' && !isNaN(parseFloat(record.hours))) {
-          totalNetMinutes += parseFloat(record.hours) * 60;
-        }
-        if (record.grossHours && record.grossHours !== '-' && !isNaN(parseFloat(record.grossHours))) {
-          totalGrossMinutes += parseFloat(record.grossHours) * 60;
-        }
-      });
-    }
-    
-    // For current session, add systemAttendance.totalWorkingTime if checked in
-    const netWorkingTime = systemAttendance.checkedIn 
-      ? totalNetMinutes + systemAttendance.totalWorkingTime
-      : totalNetMinutes;
-    
-    const grossWorkingTime = systemAttendance.checkedIn
-      ? totalGrossMinutes + systemAttendance.totalWorkingTime
-      : totalGrossMinutes;
-    
-    // Calculate overtime anytime (no time restriction)
-    // Users can checkout at any time BEFORE 9 AM - it will be treated as normal checkout
-    // Auto-checkout only triggers at 9 AM if user forgot to manually checkout
-    // Policy: Checkout must happen BEFORE 9:00 AM (e.g., 6:30 AM, 8:15 AM, 8:59 AM all OK)
-    const requiredWorkingTime = 9 * 60; // 540 minutes
-    let overtimeRequired = 0;
-    
-    // Overtime is calculated for all manual checkouts before 9 AM
-    overtimeRequired = Math.max(0, requiredWorkingTime - netWorkingTime + overtimeDebt.netDebt);
-    console.log('📊 Overtime calculation: Available for checkout before 9 AM');
-    
-    return {
-      totalBreakTime: breakSummary.totalDuration,
-      exceededBreakTime: breakSummary.exceededDuration,
-      netWorkingTime: Math.max(0, netWorkingTime - breakSummary.allowedDuration),
-      grossWorkingTime,
-      efficiency: grossWorkingTime > 0 
-        ? Math.max(0, (((netWorkingTime - breakSummary.allowedDuration) / grossWorkingTime) * 100)).toFixed(1)
-        : 0,
-      overtimeRequired,
-      requiredWorkingTime
-    };
-  };
-
-  // Update current time and calculate break durations
-  useEffect(() => {
-    const timer = setInterval(() => {
-      const now = new Date();
-      setCurrentTime(now);
-      updateWorkingTime();
-      
-      // Update active break durations
-      breakTypes.forEach(breakType => {
-        const breakInfo = breakData[breakType.id];
-        if (breakInfo && breakInfo.active && breakInfo.startTime) {
-          const currentDuration = (now - breakInfo.startTime) / (1000 * 60);
-          
-          // Check if break exceeded limit
-          if (currentDuration > breakType.limit) {
-            const exceededTime = currentDuration - breakType.limit;
-            
-            // Add overtime debt only once when it first exceeds
-            if (exceededTime > 0 && breakInfo.exceededDuration === 0) {
-              console.log(`⚠️ BREAK EXCEEDED: ${breakType.name} - Duration: ${currentDuration.toFixed(2)}m, Limit: ${breakType.limit}m, Exceeded: ${exceededTime.toFixed(2)}m`);
-              addOvertimeDebt('break', exceededTime, `${breakType.name} exceeded by ${Math.round(exceededTime)} minutes`);
-            }
-          }
-        }
-      });
-    }, 1000); // Update every 1 second for smooth timer display
-
-    return () => clearInterval(timer);
-  }, [systemAttendance.checkedIn, systemAttendance.checkInTime, systemAttendance.totalWorkingTime, systemAttendance.isOnBreak, breakData, breakTypes, updateWorkingTime]);
-
-  // Save break immediately when started (before end is triggered)
-  const saveBreakStart = async (breakType, startTime) => {
+  const handleCheckOut = async () => {
     try {
-      const token = localStorage.getItem('token') || localStorage.getItem('authToken');
-      const employeeId = getEmployeeId();
-      
-      if (!token) {
-        console.warn('⚠️ No token available, cannot save break start');
-        return null;
+      const token = localStorage.getItem('token');
+      const response = await fetch(endpoints.attendance.checkOut, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          employee_id: getEmployeeId()
+        })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        console.log('✅ Check-out successful:', data);
+        setIsCheckedIn(false);
+        await fetchTodayAttendance();
+        await fetchMonthlyAttendance();
+      } else {
+        console.error('❌ Check-out failed:', data.message);
+        alert(data.message || 'Check-out failed');
       }
+    } catch (error) {
+      console.error('Check-out error:', error);
+      alert('Failed to check out');
+    }
+  };
 
-      const breakConfig = breakTypes.find(b => b.id === breakType);
-      const capitalizedBreakType = breakType.charAt(0).toUpperCase() + breakType.slice(1);
-      const breakStartTimeStr = startTime.toTimeString().split(' ')[0];
-
-      console.log('💾 IMMEDIATE SAVE: Recording break start in database...');
-      console.log('   Employee ID:', employeeId);
-      console.log('   Break Type:', capitalizedBreakType);
-      console.log('   Start Time:', breakStartTimeStr);
-      
+  const handleBreakStart = async (breakType) => {
+    try {
+      const token = localStorage.getItem('token');
       const response = await fetch(endpoints.attendance.breakStart, {
         method: 'POST',
         headers: {
@@ -2231,48 +295,57 @@ export function EmployeeAttendancePage() {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          employee_id: employeeId,
-          break_type: capitalizedBreakType,
-          break_start_time: breakStartTimeStr,
-          reason: `${breakConfig.name} break - Auto-saved on start`
+          employee_id: getEmployeeId(),
+          break_type: breakType,
+          reason: `${breakType.charAt(0).toUpperCase() + breakType.slice(1)} break`
         })
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        console.log('✅ Break start immediately saved:', data);
-        return data.data?.id; // Return the break ID for updating later
+      const data = await response.json();
+      if (data.success) {
+        fetchActiveBreaks();
       } else {
-        const errorData = await response.json().catch(() => ({}));
-        console.warn('⚠️ Failed to save break start:', response.status, errorData.message);
-        return null;
+        alert(data.message || 'Failed to start break');
       }
     } catch (error) {
-      console.error('❌ Error saving break start:', error);
-      return null;
+      console.error('Start break error:', error);
+      alert('Failed to start break');
     }
   };
 
-  // Auto-save break progress every 30 seconds
-  const autoSaveBreakProgress = async (breakType, startTime) => {
+  const handleBreakEnd = async (breakId) => {
     try {
-      const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+      const token = localStorage.getItem('token');
       const employeeId = getEmployeeId();
       
-      if (!token) {
-        console.warn('⚠️ No token available, cannot auto-save break progress');
+      // Find the break details from activeBreaks
+      const breakRecord = activeBreaks.find(b => b.id === breakId);
+      if (!breakRecord) {
+        alert('Break record not found');
         return;
       }
 
-      const capitalizedBreakType = breakType.charAt(0).toUpperCase() + breakType.slice(1);
+      // Calculate duration from start time to now
+      // Parse times correctly: HH:MM:SS format
+      const [startHour, startMin, startSec] = breakRecord.break_start_time.split(':').map(Number);
       const now = new Date();
-      const duration = (now - startTime) / (1000 * 60); // Duration in minutes
-      const currentTime = now.toTimeString().split(' ')[0];
-
-      console.log(`💾 AUTO-SAVE (30s): ${capitalizedBreakType} break - Duration: ${duration.toFixed(2)}m`);
+      const currentHour = now.getHours();
+      const currentMin = now.getMinutes();
+      const currentSec = now.getSeconds();
       
-      // Call the break-progress endpoint to update duration in real-time
-      const response = await fetch(endpoints.attendance.breakProgress, {
+      // Convert both to total minutes since midnight for accurate calculation
+      const startTotalSeconds = (startHour * 3600) + (startMin * 60) + (startSec || 0);
+      const nowTotalSeconds = (currentHour * 3600) + (currentMin * 60) + currentSec;
+      
+      // Calculate duration in minutes (handle midnight crossing)
+      let durationSeconds = nowTotalSeconds - startTotalSeconds;
+      if (durationSeconds < 0) {
+        // Break started before midnight, ended after - add 24 hours
+        durationSeconds += (24 * 3600);
+      }
+      const duration = Math.max(0, Math.floor(durationSeconds / 60));
+
+      const response = await fetch(endpoints.attendance.breakEnd, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -2280,1198 +353,931 @@ export function EmployeeAttendancePage() {
         },
         body: JSON.stringify({
           employee_id: employeeId,
-          break_type: capitalizedBreakType,
-          current_time: currentTime,
-          current_duration_minutes: Math.floor(duration)
+          break_type: breakRecord.break_type,
+          break_end_time: now.toTimeString().split(' ')[0],
+          break_duration_minutes: duration
         })
       });
 
-      if (response.ok) {
-        console.log(`   ✅ Break progress auto-saved: ${Math.floor(duration)}m`);
+      const data = await response.json();
+      if (data.success) {
+        fetchActiveBreaks();
+        fetchTodayAttendance();
       } else {
-        const errorData = await response.json().catch(() => ({}));
-        console.warn('⚠️ Failed to auto-save break progress:', response.status, errorData.message);
+        alert(data.message || 'Failed to end break');
       }
     } catch (error) {
-      console.error('❌ Error auto-saving break progress:', error);
+      console.error('End break error:', error);
+      alert('Failed to end break');
     }
   };
 
-  // Enhanced Break Management with Overtime Tracking
-  const handleBreakStart = (breakType) => {
-    const now = new Date();
-    console.log('🔵 ════════════════════════════════════════');
-    console.log('🔵 BREAK STARTED');
-    console.log('🔵 ════════════════════════════════════════');
-    console.log('   Break Type:', breakType.toUpperCase());
-    console.log('   Start Time:', now.toLocaleTimeString());
-    console.log('   Start Date:', now.toLocaleDateString());
-    console.log('   Current breakData:', breakData[breakType]);
+  const getWorkingHours = () => {
+    if (!attendanceData?.check_in_time) return '0h 0m';
     
-    if (breakData[breakType].active) {
-      console.log('   ❌ Break already active, returning');
-      return;
+    const [checkInHour, checkInMin, checkInSec] = attendanceData.check_in_time.split(':').map(Number);
+    const checkInTotalMinutes = checkInHour * 60 + checkInMin;
+    
+    let checkOutTotalMinutes = 0;
+    let isCurrentTime = false;
+    
+    if (attendanceData.check_out_time) {
+      const [checkOutHour, checkOutMin, checkOutSec] = attendanceData.check_out_time.split(':').map(Number);
+      checkOutTotalMinutes = checkOutHour * 60 + checkOutMin;
+    } else {
+      // Use current time in Pakistan timezone
+      // IMPORTANT: Use getUTCHours/getUTCMinutes because getPakistanDate() returns a Date with shifted milliseconds
+      // The UTC hours/minutes of that shifted Date represent the Pakistan time
+      const now = getPakistanDate ? getPakistanDate() : new Date();
+      checkOutTotalMinutes = now.getUTCHours() * 60 + now.getUTCMinutes();
+      isCurrentTime = true;
     }
-
-    const breakConfig = breakTypes.find(b => b.id === breakType);
-    const breakLimit = breakConfig ? breakConfig.limit : 10;
     
-    console.log('   Break Name:', breakConfig?.name || 'Unknown');
-    console.log('   Time Limit:', breakLimit, 'minutes');
-    console.log('   1-minute warning will trigger at:', new Date(now.getTime() + (breakLimit - 1) * 60 * 1000).toLocaleTimeString());
-
-    // IMPORTANT: Save break immediately to database when it starts
-    saveBreakStart(breakType, now);
-
-    // Set 1-minute warning timer (60 seconds before break ends)
-    const warningTimer = setTimeout(() => {
-      console.log(`   ⏰ 1-MINUTE WARNING: ${breakType.toUpperCase()} break will end in 1 minute`);
-      
-      // Play beep sound
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-      
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      
-      oscillator.frequency.value = 800; // Hz
-      oscillator.type = 'sine';
-      
-      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-      
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.5);
-      
-      // Show browser notification
-      if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification(`⏰ ${breakConfig?.name || breakType.toUpperCase()} Break Ending Soon`, {
-          body: `You have 1 minute remaining. Your break will end in 60 seconds.`,
-          icon: '⏰',
-          tag: `break-warning-${breakType}`,
-          requireInteraction: true
-        });
-      }
-      
-      // Show alert
-      alert(`⏰ ${breakConfig?.name || breakType.toUpperCase()} Break: 1 minute remaining!\n\nYour break will end in 60 seconds.\n\nClick "End Break" when ready, or the break will continue.`);
-    }, (breakLimit - 1) * 60 * 1000);
-
-    // Set auto-end timer (this will NOT auto-end, but will trigger after break limit)
-    // The break continues until user manually ends it - no auto-termination
-    const autoEndTimer = setTimeout(() => {
-      console.log(`   ℹ️ BREAK LIMIT REACHED: ${breakType.toUpperCase()} has been running for ${breakLimit} minutes`);
-      console.log(`   🔄 Break will continue until manually ended by user`);
-      
-      // Show notification that break time exceeded
-      if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification(`⏱️ ${breakConfig?.name || breakType.toUpperCase()} Break Time Extended`, {
-          body: `Your break has exceeded the ${breakLimit} minute limit and is continuing.`,
-          tag: `break-extended-${breakType}`
-        });
-      }
-    }, breakLimit * 60 * 1000);
-
-    // Set auto-save interval (every 30 seconds, update break progress in database)
-    const autoSaveInterval = setInterval(() => {
-      autoSaveBreakProgress(breakType, now);
-    }, 30 * 1000); // Every 30 seconds
-
-    setBreakData(prev => {
-      console.log('   ✅ Setting break as active');
-      console.log('   ✅ Auto-save interval set (every 30 seconds)');
-      return {
-        ...prev,
-        [breakType]: {
-          ...prev[breakType],
-          active: true,
-          startTime: now,
-          warningTimer: warningTimer,
-          autoEndTimer: autoEndTimer,
-          autoSaveInterval: autoSaveInterval, // Store interval ID to clear later
-        }
-      };
+    let grossMinutes = 0;
+    const isNightShift = checkInTotalMinutes >= 21 * 60; // Check-in after 9 PM
+    
+    // DEBUG: Log calculation details
+    console.log('🕐 Working Hours Calculation:', {
+      check_in_time: attendanceData.check_in_time,
+      check_out_time: attendanceData.check_out_time,
+      checkInTotalMinutes,
+      checkOutTotalMinutes,
+      isCurrentTime,
+      isNightShift,
+      difference: checkOutTotalMinutes - checkInTotalMinutes
     });
-
-    // Pause working time tracking
-    setBreakStatus(true);
-    console.log('   ✅ Break is now ACTIVE - Working time paused');
-    console.log('🔵 ════════════════════════════════════════\n');
+    
+    if (isNightShift) {
+      // Night shift - need to handle midnight wraparound
+      if (checkOutTotalMinutes >= checkInTotalMinutes) {
+        // Same day checkout (unlikely for night shift but possible)
+        grossMinutes = checkOutTotalMinutes - checkInTotalMinutes;
+      } else {
+        // Next day checkout - crossed midnight
+        const minutesUntilMidnight = (24 * 60) - checkInTotalMinutes;
+        const minutesAfterMidnight = checkOutTotalMinutes;
+        grossMinutes = minutesUntilMidnight + minutesAfterMidnight;
+      }
+    } else if (checkOutTotalMinutes < checkInTotalMinutes) {
+      // Checkout time is less than check-in (crossed midnight) - old day shift or early morning
+      const minutesUntilMidnight = (24 * 60) - checkInTotalMinutes;
+      const minutesAfterMidnight = checkOutTotalMinutes;
+      grossMinutes = minutesUntilMidnight + minutesAfterMidnight;
+    } else {
+      // Regular day shift
+      grossMinutes = checkOutTotalMinutes - checkInTotalMinutes;
+    }
+    
+    const hours = Math.floor(grossMinutes / 60);
+    const minutes = grossMinutes % 60;
+    
+    console.log('📊 Calculated working hours:', {
+      grossMinutes,
+      hours,
+      minutes,
+      result: `${hours}h ${minutes}m`
+    });
+    
+    return `${hours}h ${minutes}m`;
   };
 
-  const handleBreakEnd = async (breakType) => {
-    const now = new Date();
-    console.log('🔴 ════════════════════════════════════════');
-    console.log('🔴 BREAK ENDED');
-    console.log('🔴 ════════════════════════════════════════');
-    console.log('   Break Type:', breakType.toUpperCase());
-    console.log('   End Time:', now.toLocaleTimeString());
-    console.log('   Current breakData:', breakData[breakType]);
-    
-    if (!breakData[breakType].active) {
-      console.log('   ❌ Break not active, returning');
-      console.log('🔴 ════════════════════════════════════════\n');
-      return;
-    }
+  const getStatusColor = () => {
+    // Check if there's a check-in time
+    if (!attendanceData?.check_in_time) return 'text-[#009336]';
+    // If checked out, return blue
+    if (attendanceData?.check_out_time) return 'text-[#009336]';
+    // If checked in, return status color (Present/Late/etc)
+    return attendanceData?.status === 'Present' ? 'text-green-500' : 
+           attendanceData?.status === 'Late' ? 'text-orange-500' : 'text-orange-500';
+  };
 
-    const breakConfig = breakTypes.find(b => b.id === breakType);
-    const breakLimit = breakConfig ? breakConfig.limit : 10;
-    const breakStartTime = breakData[breakType].startTime; // Capture start time before clearing
+  const getStatusText = () => {
+    // Check if there's a check-in time
+    if (!attendanceData?.check_in_time) return 'Not Checked In';
+    // If there's a check-out time, show checked out
+    if (attendanceData?.check_out_time) return 'Checked Out';
+    // If checked in with no check-out, show status (Present/Late/etc)
+    return attendanceData?.status || 'Present';
+  };
 
-    console.log('   End time:', now.toLocaleTimeString());
-    console.log('   Start time:', breakStartTime?.toLocaleTimeString());
-
-    // Clear auto-end timer
-    if (breakData[breakType].autoEndTimer) {
-      clearTimeout(breakData[breakType].autoEndTimer);
-      console.log('   ⏰ Auto-end timer cleared');
-    }
-
-    // Clear warning timer
-    if (breakData[breakType].warningTimer) {
-      clearTimeout(breakData[breakType].warningTimer);
-      console.log('   🔔 Warning timer cleared');
-    }
-
-    // Clear auto-save interval
-    if (breakData[breakType].autoSaveInterval) {
-      clearInterval(breakData[breakType].autoSaveInterval);
-      console.log('   💾 Auto-save interval cleared');
-    }
-
-    // Mark as ending to prevent double clicks
-    setBreakData(prev => ({
-      ...prev,
-      [breakType]: {
-        ...prev[breakType],
-        ending: true
-      }
+  // Prepare chart data
+  const getWeeklyData = () => {
+    const last7Days = monthlyAttendance.slice(-7).map(record => ({
+      date: new Date(record.attendance_date).toLocaleDateString('en-US', { weekday: 'short' }),
+      hours: Math.floor((record.net_working_time_minutes || 0) / 60),
+      status: record.status
     }));
+    return last7Days;
+  };
 
-    // Update break end time in database (break was already saved on start)
-    const updateBreakEnd = async () => {
-      try {
-        const token = localStorage.getItem('token') || localStorage.getItem('authToken');
-        const employeeId = getEmployeeId();
-        
-        if (!token) {
-          console.warn('⚠️ No token available, cannot update break end time');
-          return { ok: false };
-        }
+  const getStatusDistribution = () => {
+    const statusCount = monthlyAttendance.reduce((acc, record) => {
+      acc[record.status] = (acc[record.status] || 0) + 1;
+      return acc;
+    }, {});
 
-        const capitalizedBreakType = breakType.charAt(0).toUpperCase() + breakType.slice(1);
-        const duration = (now - breakStartTime) / (1000 * 60);
-
-        console.log('💾 Updating break end time in database...');
-        console.log('   Employee ID:', employeeId);
-        console.log('   Break Type:', capitalizedBreakType);
-        console.log('   Duration:', duration.toFixed(2), 'minutes');
-        console.log('   Break End Time:', now.toTimeString().split(' ')[0]);
-        
-        const response = await fetch(endpoints.attendance.breakEnd, {
-          method: 'PATCH',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            employee_id: employeeId,
-            break_type: capitalizedBreakType,
-            break_end_time: now.toTimeString().split(' ')[0],
-            break_duration_minutes: Math.floor(duration)
-          })
-        });
-
-        return response;
-      } catch (error) {
-        console.error('❌ Error updating break end time:', error);
-        return { ok: false };
-      }
+    const COLORS = {
+      'Present': '#10b981',
+      'Late': '#f59e0b',
+      'Absent': '#ef4444',
+      'Leave': '#8b5cf6'
     };
 
-    // Call the update function and wait for result
-    const resp = await updateBreakEnd();
-
-    try {
-      if (resp && resp.ok) {
-        const data = await resp.json();
-        console.log('✅ Break end time successfully updated:', data);
-
-        // Update local breakData (finalize end)
-        setBreakData(prev => {
-          const breakInfo = prev[breakType];
-          if (!breakInfo || !breakInfo.startTime) return prev;
-
-          const duration = (now - breakInfo.startTime) / (1000 * 60); // Calculate actual duration
-          const exceeded = Math.max(0, duration - breakLimit);
-
-          // Add to overtime debt if exceeded
-          if (exceeded > 0) {
-            addOvertimeDebt('break', exceeded, `${breakConfig.name} exceeded by ${Math.round(exceeded)} minutes`);
-          }
-
-          const updated = {
-            ...prev,
-            [breakType]: {
-              ...breakInfo,
-              active: false,
-              ending: false,
-              startTime: null,
-              warningTimer: null,
-              autoEndTimer: null,
-              totalDuration: breakInfo.totalDuration + duration,
-              exceededDuration: breakInfo.exceededDuration + exceeded,
-              breakCount: breakInfo.breakCount + 1,
-            }
-          };
-
-          console.log('   Updated breakData for', breakType, ':', updated[breakType]);
-          return updated;
-        });
-
-        // Resume working time tracking
-        setBreakStatus(false);
-        console.log('   ✅ Break ended successfully');
-
-        // Refetch both attendance data AND today's breaks to update UI with break information
-        console.log('🔄 Refetching attendance data and today\'s breaks to sync records...');
-        setTimeout(() => {
-          fetchAttendanceData();
-          fetchTodayBreaksFromDB(); // Also refresh the breaks summary
-        }, 300);
-
-      } else {
-        // Failure: attempt to read server response for debugging
-        try {
-          const errData = await resp.json();
-          console.error('❌ Break end failed - server response:', errData);
-          showToast && showToast(errData.message || 'Failed to end break. Changes will be refreshed from server.', 'error');
-        } catch (parseError) {
-          console.error('❌ Break end failed - unable to parse server response', parseError);
-          showToast && showToast('Failed to end break. Changes will be refreshed from server.', 'error');
-        }
-
-        // revert ending flag and keep break active
-        setBreakData(prev => ({
-          ...prev,
-          [breakType]: {
-            ...prev[breakType],
-            ending: false
-          }
-        }));
-
-        // Refresh UI from server state to reflect true DB state
-        setTimeout(() => {
-          fetchAttendanceData();
-          fetchTodayBreaksFromDB();
-        }, 300);
-      }
-    } catch (e) {
-      console.error('❌ Error handling break end response:', e);
-      showToast && showToast('Failed to end break due to network error', 'error');
-      setTimeout(() => {
-        fetchAttendanceData();
-        fetchTodayBreaksFromDB();
-      }, 300);
-    }
-
-    console.log('🔴 ════════════════════════════════════════\n');
+    return Object.entries(statusCount).map(([status, count]) => ({
+      name: status,
+      value: count,
+      color: COLORS[status] || '#6b7280'
+    }));
   };
 
-  // Manual break end button
-  const handleManualBreakEnd = (breakType) => {
-    handleBreakEnd(breakType);
-  };
-
-  // Overtime debt management
-  const addOvertimeDebt = (type, minutes, reason) => {
-    setOvertimeDebt(prev => {
-      const newDebt = {
-        totalDebt: prev.totalDebt + minutes,
-        breakOvertime: type === 'break' ? prev.breakOvertime + minutes : prev.breakOvertime,
-        lateOvertime: type === 'late' ? prev.lateOvertime + minutes : prev.lateOvertime,
-        workedOvertime: prev.workedOvertime,
-        netDebt: prev.netDebt + minutes,
-        history: [
-          ...prev.history,
-          {
-            type,
-            minutes,
-            reason,
-            date: new Date().toISOString(),
-            timestamp: new Date()
-          }
-        ]
-      };
-      
-      return newDebt;
-    });
-  };
-
-  // Track late arrivals
-  const handleSystemCheckInWrapper = async () => {
-    if (!canCheckIn()) return;
-    
-    setIsLoading(true);
-    
-    try {
-      const now = new Date();
-      const expectedStart = new Date();
-      expectedStart.setHours(9, 15, 0, 0);
-      
-      const lateBy = (now - expectedStart) / (1000 * 60);
-      const gracePeriod = 15;
-      
-      if (lateBy > gracePeriod) {
-        const lateMinutes = Math.round(lateBy - gracePeriod);
-        addOvertimeDebt('late', lateMinutes, `Late arrival by ${lateMinutes} minutes`);
-      }
-      
-      await handleSystemCheckIn();
-      
-      // Refetch attendance data after successful check-in to get the created record
-      // Wait a bit for backend to process the record
-      await new Promise(resolve => setTimeout(resolve, 800));
-      await fetchAttendanceData();
-    } catch (error) {
-      alert('âŒ Failed to check in. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleSystemCheckOutWrapper = async () => {
-    if (!canCheckOut()) return;
-    
-    setIsLoading(true);
-    
-    try {
-      await handleSystemCheckOut();
-    } catch (error) {
-      alert('âŒ Failed to check out. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Handle overtime work
-  const handleOvertimeWork = (minutes) => {
-    setOvertimeDebt(prev => {
-      const newWorkedOvertime = prev.workedOvertime + minutes;
+  const getMonthlyStats = () => {
+    if (monthlyAttendance.length === 0) {
       return {
-        ...prev,
-        workedOvertime: newWorkedOvertime,
-        netDebt: Math.max(0, prev.totalDebt - newWorkedOvertime)
-      };
-    });
-  };
-
-  // Format duration for display
-  const formatDuration = (minutes) => {
-    // Ensure minutes is a number and prevent negative values
-    let mins = typeof minutes === 'number' ? minutes : parseFloat(minutes) || 0;
-    
-    // Safety check: prevent negative durations from displaying
-    if (mins < 0) {
-      console.warn(`⚠️ formatDuration received negative value: ${mins}m, resetting to 0`);
-      mins = 0;
-    }
-    
-    const hours = Math.floor(mins / 60);
-    const remainingMins = Math.floor(mins % 60);
-    
-    if (hours > 0) {
-      return `${hours}h ${remainingMins}m`;
-    }
-    return `${remainingMins}m`;
-  };
-
-  // Format date for display
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
-
-  // Get status icon and color
-  const getStatusInfo = (status) => {
-    switch (status) {
-      case 'present':
-        return { icon: Check, color: 'text-green-600 bg-green-100', text: 'Present' };
-      case 'late':
-        return { icon: Clock4, color: 'text-yellow-600 bg-yellow-100', text: 'Late' };
-      case 'absent':
-        return { icon: X, color: 'text-red-600 bg-red-100', text: 'Absent' };
-      case 'off':
-        return { icon: Calendar, color: 'text-gray-600 bg-gray-100', text: 'Day Off' };
-      default:
-        return { icon: Clock, color: 'text-blue-600 bg-blue-100', text: 'Pending' };
-    }
-  };
-
-  // Check if employee can check in/out - use DATABASE as source of truth
-  const canCheckIn = () => {
-    // Use systemAttendance.checkedIn as source of truth for real-time state
-    // This is synced with backend isCheckedIn flag
-    return !systemAttendance.checkedIn && !isLoading;
-  };
-
-  const canCheckOut = () => {
-    // Can check out if: 1) Already checked in, 2) Not on break, 3) Has minimum time worked
-    if (!systemAttendance.checkedIn) return false;
-    if (systemAttendance.isOnBreak) return false;
-    return !isLoading;
-  };
-
-  // Get check-in status message - uses BOTH DATABASE and IN-MEMORY state
-  const getCheckInStatus = () => {
-    // Get today's record from attendance data (source of truth from database)
-    // Use getPakistanDate to get Pakistan timezone instead of browser timezone
-    const pkDate = getPakistanDate();
-    const todayStr = `${pkDate.getFullYear()}-${String(pkDate.getMonth() + 1).padStart(2, '0')}-${String(pkDate.getDate()).padStart(2, '0')}`;
-    const todayRecord = attendanceData?.find(r => r.date === todayStr);
-    
-    console.log('📋 getCheckInStatus DEBUG:');
-    console.log('   Pakistan today date:', todayStr);
-    console.log('   systemAttendance.checkedIn:', systemAttendance.checkedIn);
-    console.log('   systemAttendance.checkInTime:', systemAttendance.checkInTime);
-    console.log('   attendanceData records:', attendanceData?.length);
-    if (attendanceData?.length > 0) {
-      console.log('   First few dates:', attendanceData.slice(0, 3).map(r => `${r.date} (checkin: ${r.check_in_time}, checkout: ${r.check_out_time})`));
-      console.log('   📝 Full first record fields:', Object.keys(attendanceData[0]));
-      console.log('   📝 Full first record data:', JSON.stringify(attendanceData[0], null, 2));
-    }
-    console.log('   Today record found:', !!todayRecord);
-    
-    // Use systemAttendance which has properly parsed Pakistan timezone Date objects
-    // systemAttendance is populated from fetchAttendanceData() which calls parsePakistanTime()
-    const hasCheckOut = systemAttendance.checkOutTime !== null && systemAttendance.checkOutTime !== undefined;
-    const hasCheckIn = systemAttendance.checkInTime !== null && systemAttendance.checkInTime !== undefined;
-    
-    // If system shows checkout, display it
-    if (hasCheckOut && systemAttendance.checkOutTime) {
-      console.log('   ✅ User has checked out (from systemAttendance)');
-      const timeStr = systemAttendance.checkOutTime.toLocaleTimeString('en-US', { 
-        hour: '2-digit', 
-        minute: '2-digit',
-        hour12: true 
-      });
-      return {
-        checked: false,
-        message: `Checked out at ${timeStr}`,
-        time: systemAttendance.checkOutTime
+        totalHours: 0,
+        averageHours: 0,
+        maxHours: 0,
+        minHours: 0,
+        workDays: 0,
+        totalBreakTime: 0
       };
     }
+
+    const totalMinutes = monthlyAttendance.reduce((sum, record) => sum + (record.net_working_time_minutes || 0), 0);
+    const totalBreakMinutes = monthlyAttendance.reduce((sum, record) => sum + (record.total_break_duration_minutes || 0), 0);
+    const workDays = monthlyAttendance.filter(r => r.status === 'Present' || r.status === 'Late').length;
+    const hours = monthlyAttendance.map(r => (r.net_working_time_minutes || 0) / 60);
     
-    // If system shows check-in but no checkout, user is currently checked in
-    if (hasCheckIn && !hasCheckOut) {
-      console.log('   ✅ Detected active check-in session from systemAttendance');
-      const timeStr = systemAttendance.checkInTime.toLocaleTimeString('en-US', { 
-        hour: '2-digit', 
-        minute: '2-digit',
-        hour12: true 
-      });
-      return {
-        checked: true,
-        message: `Checked in at ${timeStr}`,
-        time: systemAttendance.checkInTime
-      };
-    }
-    
-    // FALLBACK: If we reach here, user is not checked in
-    return { checked: false, message: 'Not checked in yet', time: null };
+    return {
+      totalHours: Math.floor(totalMinutes / 60),
+      totalMinutes: totalMinutes % 60,
+      averageHours: workDays > 0 ? Math.floor(totalMinutes / workDays / 60) : 0,
+      averageMinutes: workDays > 0 ? (totalMinutes / workDays) % 60 : 0,
+      maxHours: Math.floor(Math.max(...hours, 0)),
+      minHours: hours.length > 0 ? Math.floor(Math.min(...hours.filter(h => h > 0), Infinity)) : 0,
+      workDays: workDays,
+      totalBreakMinutes: totalBreakMinutes
+    };
   };
 
-  // Calculate current break duration for active breaks
-  const getCurrentBreakDuration = (breakType) => {
-    const breakInfo = breakData[breakType];
-    if (breakInfo && breakInfo.active && breakInfo.startTime) {
-      const now = new Date();
-      return (now - breakInfo.startTime) / (1000 * 60);
-    }
-    return 0;
+  const getMonthlyData = () => {
+    return monthlyAttendance.map(record => ({
+      date: new Date(record.attendance_date).getDate(),
+      hours: Math.floor((record.net_working_time_minutes || 0) / 60),
+      minutes: (record.net_working_time_minutes || 0) % 60,
+      status: record.status
+    })).sort((a, b) => a.date - b.date);
   };
 
-  const workingHoursSummary = calculateWorkingHoursSummary();
-  const breakSummary = calculateTotalBreakTime();
-  const stats = getAttendanceStats();
-
-  // Calculate today's break time specifically
-  const getTodayBreakTime = () => {
-    if (!attendanceData || attendanceData.length === 0) return 0;
-    const todayStr = new Date().toISOString().split('T')[0];
-    const todayRecord = attendanceData.find(r => r.date === todayStr);
-    if (!todayRecord) return breakSummary.totalDuration; // Fallback to current breakData total
-    
-    // Sum today's breaks from API data
-    const todayBreaks = (todayRecord.smoke_break_duration_minutes || 0) +
-                        (todayRecord.dinner_break_duration_minutes || 0) +
-                        (todayRecord.washroom_break_duration_minutes || 0) +
-                        (todayRecord.prayer_break_duration_minutes || 0);
-    return todayBreaks || breakSummary.totalDuration;
+  // Format minutes to "Xh Ym" format (e.g., 120 minutes -> "2h 0m", 90 -> "1h 30m", 45 -> "45m")
+  const formatTimeDisplay = (minutes) => {
+    if (!minutes || minutes === 0) return '0m';
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    if (hours === 0) return `${mins}m`;
+    if (mins === 0) return `${hours}h`;
+    return `${hours}h ${mins}m`;
   };
 
-  // Calculate month's total break time
-  const getMonthBreakTime = () => {
-    if (!attendanceData || attendanceData.length === 0) return breakSummary.totalDuration;
-    return attendanceData.reduce((total, record) => {
-      const recordBreaks = (record.smoke_break_duration_minutes || 0) +
-                          (record.dinner_break_duration_minutes || 0) +
-                          (record.washroom_break_duration_minutes || 0) +
-                          (record.prayer_break_duration_minutes || 0);
-      return total + recordBreaks;
-    }, 0);
-  };
-
-  const todayBreakTime = getTodayBreakTime();
-  const monthBreakTime = getMonthBreakTime();
-
-  // Filter only days when employee came (present or late)
-  const attendanceHistory = attendanceData.filter(day => 
-    day.status === 'present' || day.status === 'late'
-  );
-
-  // Compute live displayMinutes and percent for session timer (uses Pakistan timezone)
-  let displayMinutes = Math.floor(systemAttendance.totalWorkingTime || 0);
-  if (systemAttendance.checkedIn && systemAttendance.checkInTime) {
-    try {
-      // Normalize checkInTime to a Date object if it's a string
-      let checkInDate = systemAttendance.checkInTime;
-      if (typeof checkInDate === 'string') {
-        const parsed = new Date(checkInDate);
-        if (!isNaN(parsed.getTime())) checkInDate = parsed;
-      }
-
-      if (checkInDate instanceof Date && !isNaN(checkInDate.getTime())) {
-        const nowPk = getPakistanDate();
-        const diffMinutes = Math.floor((nowPk.getTime() - checkInDate.getTime()) / (1000 * 60));
-        // Sanity check: if diff is reasonable (0 <= diff <= 24h), use it; otherwise fallback to totalWorkingTime
-        if (diffMinutes >= 0 && diffMinutes <= 24 * 60) {
-          displayMinutes = diffMinutes;
-        } else {
-          console.warn('Unusual session length detected, using server-provided totalWorkingTime as fallback', { diffMinutes, totalWorkingTime: systemAttendance.totalWorkingTime });
-        }
-      } else {
-        console.warn('Invalid checkInTime value, falling back to totalWorkingTime', systemAttendance.checkInTime);
-      }
-    } catch (e) {
-      console.error('Error computing displayMinutes:', e);
-    }
-  }
-  const displayPercent = Math.min(Math.round((displayMinutes / 540) * 100), 100);
-
-  // Tab navigation
-  const tabs = [
-    { id: 'dashboard', name: 'Attendance Dashboard', icon: ShieldUser },
-    { id: 'attendance-sheet', name: 'Attendance Sheet', icon: Table }
+  const breakTypes = [
+    { type: 'Smoke', label: 'Smoke Break', icon: Cigarette, color: 'bg-gray-500', duration: 5 },
+    { type: 'Dinner', label: 'Dinner Break', icon: Utensils, color: 'bg-orange-500', duration: 60 },
+    { type: 'Washroom', label: 'Washroom Break', icon: User, color: 'bg-blue-500', duration: 10 },
+    { type: 'Prayer', label: 'Prayer Break', icon: Activity, color: 'bg-purple-500', duration: 10 }
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 relative overflow-hidden">
+    <div className="flex h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-cyan-50">
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <DashboardHeader 
+          title="My Attendance Dashboard"
+          subtitle="Manage your daily attendance and working hours"
+          role={role}
+          currentTime={currentTime}
+        />
 
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 -right-1/3 w-[800px] h-[800px] bg-blue-100 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
-        <div className="absolute bottom-0 -left-1/3 w-[800px] h-[800px] bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl opacity-15"></div>
-        <div className="absolute top-1/2 left-1/4 w-[600px] h-[600px] bg-cyan-100 rounded-full mix-blend-multiply filter blur-3xl opacity-10"></div>
-      </div>
-
-      {/* Fast Preloader */}
-      {isLoading && (
-        <div className="fixed inset-0 bg-white/80 backdrop-blur-sm z-50 flex items-center justify-center pointer-events-auto">
-          <div className="flex flex-col items-center gap-4">
-            <div className="w-12 h-12 border-3 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-            <p className="text-gray-600 font-medium">Loading attendance...</p>
+        {/* Tabs */}
+        <div className="bg-white border-b border-gray-200 px-6">
+          <div className="flex gap-4">
+            <button
+              onClick={() => setActiveTab('dashboard')}
+              className={`flex items-center gap-2 px-4 py-3 font-semibold border-b-2 transition-all ${
+                activeTab === 'dashboard'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <Shield className="w-5 h-5" />
+              Attendance Dashboard
+            </button>
+            <button
+              onClick={() => setActiveTab('sheet')}
+              className={`flex items-center gap-2 px-4 py-3 font-semibold border-b-2 transition-all ${
+                activeTab === 'sheet'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <Table className="w-5 h-5" />
+              Attendance Sheet
+            </button>
           </div>
         </div>
-      )}
 
-      {/* Show loading screen while attendance data is being fetched on initial load */}
-      {!isAttendanceDataLoaded && (
-        <div className="fixed inset-0 bg-white/90 backdrop-blur-sm z-40 flex items-center justify-center">
-          <div className="flex flex-col items-center gap-4">
-            <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-            <p className="text-gray-700 font-medium">Syncing check-in status...</p>
-          </div>
-        </div>
-      )}
-
-      <div className="relative z-10 p-6 lg:p-8  mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <h1 className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
-                Attendance Dashboard
-              </h1>
-              <p className="text-gray-600 mt-2">Manage your daily attendance and working hours</p>
-            </div>
-            <div className="bg-white rounded-xl border border-blue-200 p-4 shadow-sm">
-              <div className="flex items-center gap-2 text-lg font-semibold text-blue-600">
-                <Clock className="h-5 w-5" />
-                {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+        <main className="flex-1 overflow-y-auto p-6">
+          {activeTab === 'dashboard' && (
+            <>
+          {/* Status Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {/* Current Status */}
+            <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-2xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center">
+                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
+                    attendanceData?.check_in_time && !attendanceData?.check_out_time ? 'bg-green-100' : attendanceData?.check_out_time ? 'bg-blue-100' : 'bg-white'
+                  }`}>
+                    <CheckCircle className={`w-6 h-6 ${getStatusColor()}`} />
+                  </div>
+                  <div className="ml-4">
+                    <h3 className="text-sm font-medium text-green-800">Status</h3>
+                    <p className={`text-xl font-bold ${getStatusColor()}`}>
+                      {getStatusText()}
+                    </p>
+                  </div>
+                </div>
               </div>
-              <div className="text-sm text-gray-600 mt-1">
-                {currentTime.toLocaleDateString('en-US', { 
-                  weekday: 'short', 
-                  month: 'short', 
-                  day: 'numeric' 
+              {attendanceData?.check_in_time && (
+                <p className="text-sm text-green">
+                  Checked in at: {attendanceData.check_in_time}
+                </p>
+              )}
+            </div>
+
+            {/* Working Hours */}
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-2xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center">
+                  <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center">
+                    <Clock className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div className="ml-4">
+                    <h3 className="text-sm font-medium text-blue-800">Working Hours</h3>
+                    <p className="text-xl font-bold text-blue-600">
+                      {getWorkingHours()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <p className="text-sm text-gray-500">
+                Expected: 9h 0m
+              </p>
+            </div>
+
+            {/* Total Breaks */}
+            <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-2xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center">
+                  <div className="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center">
+                    <PauseCircle className="w-6 h-6 text-purple-600" />
+                  </div>
+                  <div className="ml-4">
+                    <h3 className="text-sm font-medium text-purple-800">Total Breaks</h3>
+                    <p className="text-xl font-bold text-purple-600">
+                      {attendanceData?.total_breaks_taken || 0}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <p className="text-sm text-gray-500">
+                Time: {formatTimeDisplay(attendanceData?.total_break_duration_minutes || 0)}
+              </p>
+            </div>
+
+            {/* Late Arrivals */}
+            <div className="bg-gradient-to-br from-amber-50 to-amber-100 border border-amber-200 rounded-2xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center">
+                  <div className="w-12 h-12 bg-orange-100 rounded-2xl flex items-center justify-center">
+                    <AlertCircle className="w-6 h-6 text-orange-600" />
+                  </div>
+                  <div className="ml-4">
+                    <h3 className="text-sm font-medium text-orange-800">Late By</h3>
+                    <p className="text-xl font-bold text-orange-600">
+                      {attendanceData?.late_by_minutes || 0}m
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <p className="text-sm text-gray-500">
+                Minutes late today
+              </p>
+            </div>
+          </div>
+
+          {/* Main Action Area */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Check In/Out Section */}
+            <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-200">
+              <div className="text-center">
+                <div className="mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Attendance</h2>
+                  <div className="text-3xl font-mono font-bold text-blue-600">
+                    {currentTime.toLocaleTimeString('en-US', { 
+                      hour12: false,
+                      timeZone: 'Asia/Karachi'
+                    })}
+                  </div>
+                  <p className="text-gray-500 mt-1">
+                    {currentTime.toLocaleDateString('en-US', { 
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                      timeZone: 'Asia/Karachi'
+                    })}
+                  </p>
+                </div>
+
+                {!loading && (
+                  <div className="space-y-4">
+                    {isCheckedIn || (attendanceData?.check_in_time && !attendanceData?.check_out_time) ? (
+                      <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-4">
+                        <CheckCircle className="w-8 h-8 text-green-500 mx-auto mb-2" />
+                        <p className="text-green-700 font-semibold">You are checked in</p>
+                        {attendanceData?.check_in_time && (
+                          <p className="text-sm text-green-600">
+                            Checked in at {attendanceData.check_in_time}
+                          </p>
+                        )}
+                      </div>
+                    ) : attendanceData?.check_out_time ? (
+                      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
+                        <LogOut className="w-8 h-8 text-blue-500 mx-auto mb-2" />
+                        <p className="text-blue-700 font-semibold">You have checked out</p>
+                        <p className="text-sm text-blue-600">
+                          Checked out at {attendanceData.check_out_time}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-4">
+                        <LogIn className="w-8 h-8 text-gray-500 mx-auto mb-2" />
+                        <p className="text-gray-600">Ready to check in</p>
+                      </div>
+                    )}
+
+                    <div className="flex gap-4">
+                      <button
+                        onClick={handleCheckIn}
+                        disabled={attendanceData?.check_in_time || attendanceData?.check_out_time}
+                        className={`flex-1 py-3 px-6 rounded-xl font-semibold transition-all duration-300 ${
+                          attendanceData?.check_in_time || attendanceData?.check_out_time
+                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                            : 'bg-green-500 hover:bg-green-600 text-white shadow-lg hover:shadow-green-500/25'
+                        }`}
+                      >
+                        <LogIn className="w-5 h-5 inline mr-2" />
+                        Check In
+                      </button>
+                      
+                      <button
+                        onClick={handleCheckOut}
+                        disabled={!attendanceData?.check_in_time || !!attendanceData?.check_out_time}
+                        className={`flex-1 py-3 px-6 rounded-xl font-semibold transition-all duration-300 ${
+                          attendanceData?.check_in_time && !attendanceData?.check_out_time
+                            ? 'bg-blue-500 hover:bg-blue-600 text-white shadow-lg hover:shadow-blue-500/25'
+                            : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        }`}
+                      >
+                        <LogOut className="w-5 h-5 inline mr-2" />
+                        Check Out
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {loading && (
+                  <div className="animate-pulse">
+                    <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto mb-4"></div>
+                    <div className="h-12 bg-gray-200 rounded mb-4"></div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Break Management */}
+            <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-200">
+              <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                <PauseCircle className="w-6 h-6 text-purple-600" />
+                Break Management
+              </h2>
+              
+              {/* Break Type Cards Grid */}
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                {breakTypes.map((breakType) => {
+                  const Icon = breakType.icon;
+                  const isActive = activeBreaks.some(b => b.break_type === breakType.type);
+                  
+                  return (
+                    <button
+                      key={breakType.type}
+                      onClick={() => handleBreakStart(breakType.type)}
+                      disabled={!isCheckedIn || isActive || attendanceData?.check_out_time}
+                      className={`p-5 rounded-xl text-center transition-all duration-300 border ${
+                        !isCheckedIn || isActive || attendanceData?.check_out_time
+                          ? 'bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed'
+                          : 'bg-white border-gray-200 hover:border-purple-300 hover:shadow-md text-gray-900'
+                      }`}
+                    >
+                      <Icon className="w-6 h-6 mx-auto mb-2 opacity-70" />
+                      <div className="text-sm font-semibold">{breakType.label}</div>
+                      <div className="text-xs text-gray-500 mt-1">{breakType.duration}m</div>
+                    </button>
+                  );
                 })}
               </div>
-            </div>
-          </div>
-        </div>
 
-        {/* Tab Navigation */}
-        <div className="mb-8">
-          <div className="flex gap-3 border-b border-gray-200 pb-4">
-            {tabs.map((tab) => {
-              const Icon = tab.icon;
-              const isActive = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 py-2 px-4 rounded-lg font-medium text-sm transition-all duration-200 ${
-                    isActive
-                      ? 'bg-blue-50 text-blue-600 border border-blue-200 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                  }`}
-                >
-                  <Icon className="h-4 w-4" />
-                  {tab.name}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Tab Content */}
-        {activeTab === 'dashboard' ? (
-          <>
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 mb-6">
-              <div className="bg-white rounded-lg p-4 border border-blue-200 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between mb-2">
-                  <Clock className="h-5 w-5 text-blue-600" />
-                  <span className="text-xs font-medium text-blue-600 uppercase">Status</span>
-                </div>
-                <p className="text-xl font-bold text-gray-900">{getTodayStatus().status.toUpperCase()}</p>
-                <p className="text-xs text-gray-600 mt-1">{getTodayStatus().checkIn}</p>
-              </div>
-
-              <div className="bg-white rounded-lg p-4 border border-green-200 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between mb-2">
-                  <CheckCircle className="h-5 w-5 text-green-600" />
-                  <span className="text-xs font-medium text-green-600 uppercase">Present</span>
-                </div>
-                <p className="text-2xl font-bold text-gray-900">{stats.present}</p>
-                <p className="text-xs text-gray-600 mt-1">{stats.attendancePercentage}% rate</p>
-              </div>
-
-              <div className="bg-white rounded-lg p-4 border border-purple-200 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between mb-2">
-                  <PieChart className="h-5 w-5 text-purple-600" />
-                  <span className="text-xs font-medium text-purple-600 uppercase">Rate</span>
-                </div>
-                <p className="text-2xl font-bold text-gray-900">{stats.attendancePercentage}%</p>
-                <p className="text-xs text-gray-600 mt-1">This month</p>
-              </div>
-
-              <div className="bg-white rounded-lg p-4 border border-orange-200 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between mb-2">
-                  <AlertCircle className="h-5 w-5 text-orange-600" />
-                  <span className="text-xs font-medium text-orange-600 uppercase">Late</span>
-                </div>
-                <p className="text-2xl font-bold text-gray-900">{stats.late}</p>
-                <p className="text-xs text-gray-600 mt-1">Late arrivals</p>
-              </div>
-
-              <div className="bg-white rounded-lg p-4 border border-red-200 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between mb-2">
-                  <PauseCircle className="h-5 w-5 text-red-600" />
-                  <span className="text-xs font-medium text-red-600 uppercase">Inactive</span>
-                </div>
-                <p className="text-2xl font-bold text-gray-900">{formatDuration(todayBreakTime)}</p>
-                <p className="text-xs text-gray-600 mt-1">Today | Month: {formatDuration(monthBreakTime)}</p>
-              </div>
-              {/* Hours card removed (Net working) per design request */}
-            </div>
-
-            {/* Main Content Area */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Left Column - Check In/Out */}
-              <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <LogIn className="h-5 w-5 text-blue-600" />
-                  Attendance
-                </h2>
-                
-                {/* Status Display */}
-                <div className={`mb-4 p-4 rounded-lg border-2 transition-all ${
-                  getCheckInStatus().checked 
-                    ? 'bg-green-50 border-green-300' 
-                    : 'bg-yellow-50 border-yellow-300'
-                }`}>
-                  <div className="flex items-center gap-2 mb-2">
-                    {getCheckInStatus().checked ? (
-                      <>
-                        <CheckCircle className="h-5 w-5 text-green-600" />
-                        <span className="font-semibold text-green-900">You are checked in</span>
-                      </>
-                    ) : (
-                      <>
-                        <AlertCircle className="h-5 w-5 text-yellow-600" />
-                        <span className="font-semibold text-yellow-900">Not checked in</span>
-                      </>
-                    )}
+              {/* Active Breaks Alert */}
+              {activeBreaks.length > 0 && (
+                <div className="mb-6 bg-amber-50 border border-amber-200 rounded-lg p-4">
+                  <h3 className="text-sm font-semibold text-amber-900 mb-3 flex items-center gap-2">
+                    <Timer className="w-4 h-4" />
+                    Active Breaks
+                  </h3>
+                  <div className="space-y-2">
+                    {activeBreaks.map((breakItem) => (
+                      <div key={breakItem.id} className="flex items-center justify-between bg-white rounded-lg p-3 border border-amber-100">
+                        <div className="flex-1">
+                          <span className="text-sm font-medium text-gray-700">
+                            {breakItem.break_type.charAt(0).toUpperCase() + breakItem.break_type.slice(1)} Break
+                          </span>
+                          <div className="mt-1 flex items-center gap-2">
+                            <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                              <div 
+                                className="h-full bg-gradient-to-r from-amber-400 to-amber-500 transition-all"
+                                style={{
+                                  width: `${Math.min(100, (breakTimers[breakItem.id] || 0) / (breakItem.break_type === 'Dinner' ? 60 : breakItem.break_type === 'Smoke' ? 5 : 10) * 100)}%`
+                                }}
+                              />
+                            </div>
+                            <span className="text-xs font-mono font-bold text-amber-700 min-w-[50px]">
+                              {formatElapsedTime(breakTimers[breakItem.id] || 0)}
+                            </span>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleBreakEnd(breakItem.id)}
+                          className="ml-3 text-xs bg-red-500 text-white px-3 py-1 rounded-full hover:bg-red-600 transition-colors whitespace-nowrap"
+                        >
+                          End Break
+                        </button>
+                      </div>
+                    ))}
                   </div>
-                  {/* Removed: avoid showing DB-derived check-in message (may be timezone-mismatched).
-                      Rely on systemAttendance state and the session timer for accurate display. */}
-                  {attendanceData.length === 0 && (
-                    <p className="text-xs text-gray-500 mt-2 italic">Loading attendance data...</p>
-                  )}
                 </div>
+              )}
+
+              {/* Today's Break Summary */}
+              {attendanceData && (
+                <div className="pt-6 border-t border-gray-200">
+                  <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-4">Today's Breaks</h3>
+                  
+                  {/* Main Stats */}
+                  <div className="space-y-3 mb-4">
+                    <div className="flex justify-between items-center">
+                      <p className="text-gray-700 font-medium">Total Breaks:</p>
+                      <p className="text-2xl font-bold text-purple-600">{attendanceData.total_breaks_taken || 0}</p>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <p className="text-gray-700 font-medium">Total Time:</p>
+                      <p className="text-2xl font-bold text-purple-600">{formatTimeDisplay(attendanceData.total_break_duration_minutes || 0)}</p>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <p className="text-gray-700 font-medium">Active:</p>
+                      <p className="text-2xl font-bold text-purple-600">{activeBreaks.length}</p>
+                    </div>
+                  </div>
+                  
+                  {/* Break Details by Type - Always Show */}
+                  <div className="pt-4 border-t border-purple-200">
+                    <h4 className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-3">Break Details</h4>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div className="flex justify-between items-center bg-gray-50 p-2 rounded">
+                        <span className="text-gray-700">Smoke Break:</span>
+                        <span className="font-semibold text-purple-600">0x</span>
+                      </div>
+                      <div className="flex justify-between items-center bg-gray-50 p-2 rounded">
+                        <span className="text-gray-700">Dinner Break:</span>
+                        <span className="font-semibold text-purple-600">0x</span>
+                      </div>
+                      <div className="flex justify-between items-center bg-gray-50 p-2 rounded">
+                        <span className="text-gray-700">Washroom Break:</span>
+                        <span className="font-semibold text-purple-600">0x</span>
+                      </div>
+                      <div className="flex justify-between items-center bg-gray-50 p-2 rounded">
+                        <span className="text-gray-700">Prayer Break:</span>
+                        <span className="font-semibold text-purple-600">0x</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Charts Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+            {/* Weekly Working Hours Chart */}
+            <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
+              <h3 className="text-lg font-bold text-gray-900 mb-4">Weekly Working Hours</h3>
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={getWeeklyData()}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="hours" fill="#3b82f6" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Status Distribution Chart */}
+            <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
+              <h3 className="text-lg font-bold text-gray-900 mb-4">Attendance Status Distribution</h3>
+              <ResponsiveContainer width="100%" height={250}>
+                <PieChart>
+                  <Pie
+                    data={getStatusDistribution()}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={(entry) => `${entry.name}: ${entry.value}`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {getStatusDistribution().map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+        </>
+          )}
+
+          {activeTab === 'sheet' && (
+            <div className="space-y-6">
+              {/* Header Section */}
+              <div className="bg-white rounded-lg p-6 text-black/90 shadow-md">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                  <div>
+                    <h2 className="text-2xl font-bold mb-1">Attendance Records</h2>
+                    <p className="text-black/70 text-sm">
+                      <span className="font-semibold">{
+                        monthlyAttendance.filter(r => 
+                          statusFilter === 'All Status' || r.status === statusFilter
+                        ).length
+                      }</span> records in <span className="font-semibold">{
+                        new Date(2026, selectedMonth - 1).toLocaleDateString('en-US', { month: 'long' })
+                      } {selectedYear}</span>
+                    </p>
+                  </div>
+                  
+                  {/* Month/Year Navigation */}
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        if (selectedMonth === 1) {
+                          setSelectedMonth(12);
+                          setSelectedYear(selectedYear - 1);
+                        } else {
+                          setSelectedMonth(selectedMonth - 1);
+                        }
+                      }}
+                      className="px-3 py-2 bg-blue-500 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 font-semibold text-sm"
+                      title="Previous month"
+                    >
+                      ← Prev
+                    </button>
+
+                    <select
+                      value={selectedMonth}
+                      onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                      className="px-3 py-2 rounded-lg bg-white text-gray-700 font-semibold cursor-pointer border border-gray-300 hover:border-blue-400 transition-colors"
+                    >
+                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(m => (
+                        <option key={m} value={m}>
+                          {new Date(2026, m - 1).toLocaleDateString('en-US', { month: 'short' })}
+                        </option>
+                      ))}
+                    </select>
+                    
+                    <select
+                      value={selectedYear}
+                      onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                      className="px-3 py-2 rounded-lg bg-white text-gray-700 font-semibold cursor-pointer border border-gray-300 hover:border-blue-400 transition-colors"
+                    >
+                      {[2024, 2025, 2026, 2027].map(y => (
+                        <option key={y} value={y}>{y}</option>
+                      ))}
+                    </select>
+
+                    <button
+                      onClick={() => {
+                        if (selectedMonth === 12) {
+                          setSelectedMonth(1);
+                          setSelectedYear(selectedYear + 1);
+                        } else {
+                          setSelectedMonth(selectedMonth + 1);
+                        }
+                      }}
+                      className="px-3 py-2 bg-blue-500 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 font-semibold text-sm"
+                      title="Next month"
+                    >
+                      Next →
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Monthly Statistics Section */}
+              <div className="mt-8">
+                <h3 className="text-2xl font-bold text-gray-900 mb-6">Monthly Overview</h3>
                 
-                <div className="space-y-3">
-                  <button 
-                    onClick={async () => {
-                      console.log('🔄 Manual refresh triggered');
-                      await fetchAttendanceData();
-                    }}
-                    className="w-full flex items-center justify-center gap-2 p-2 rounded-lg font-medium transition-all bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm"
-                  >
-                    <RefreshCw className="h-3 w-3" />
-                    <span>Refresh Status</span>
-                  </button>
-                  
-                  <button 
-                    onClick={handleSystemCheckInWrapper}
-                    disabled={!canCheckIn()}
-                    className={`w-full flex items-center justify-center gap-2 p-3 rounded-lg font-medium transition-all ${
-                      canCheckIn() 
-                        ? 'bg-green-600 hover:bg-green-700 text-white shadow-md hover:shadow-lg' 
-                        : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                    }`}
-                  >
-                    <LogIn className="h-4 w-4" />
-                    <span>Check In</span>
-                  </button>
-                  
-                  <button 
-                    onClick={handleSystemCheckOutWrapper}
-                    disabled={!canCheckOut()}
-                    className={`w-full flex items-center justify-center gap-2 p-3 rounded-lg font-medium transition-all ${
-                      canCheckOut() 
-                        ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg' 
-                        : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                    }`}
-                  >
-                    <LogOut className="h-4 w-4" />
-                    <span>Check Out</span>
-                  </button>
+                {/* Monthly Stats Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                  {/* Total Working Hours */}
+                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-2xl p-6">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-sm font-medium text-blue-800">Total Hours</h4>
+                      <Clock className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <p className="text-3xl font-bold text-blue-600">{getMonthlyStats().totalHours}h {getMonthlyStats().totalMinutes}m</p>
+                    <p className="text-xs text-blue-600 mt-1">total this month</p>
+                  </div>
+
+                  {/* Average Daily Hours */}
+                  <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-2xl p-6">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-sm font-medium text-purple-800">Average Daily</h4>
+                      <Activity className="w-5 h-5 text-purple-600" />
+                    </div>
+                    <p className="text-3xl font-bold text-purple-600">{getMonthlyStats().averageHours}h {Math.round(getMonthlyStats().averageMinutes)}m</p>
+                    <p className="text-xs text-purple-600 mt-1">per work day</p>
+                  </div>
+
+                  {/* Work Days */}
+                  <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-2xl p-6">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-sm font-medium text-green-800">Work Days</h4>
+                      <CheckCircle className="w-5 h-5 text-green-600" />
+                    </div>
+                    <p className="text-3xl font-bold text-green-600">{getMonthlyStats().workDays}</p>
+                    <p className="text-xs text-green-600 mt-1">days present/late</p>
+                  </div>
+
+                  {/* Total Break Time */}
+                  <div className="bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 rounded-2xl p-6">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-sm font-medium text-orange-800">Break Time</h4>
+                      <PauseCircle className="w-5 h-5 text-orange-600" />
+                    </div>
+                    <p className="text-3xl font-bold text-orange-600">{Math.floor(getMonthlyStats().totalBreakMinutes / 60)}h {getMonthlyStats().totalBreakMinutes % 60}m</p>
+                    <p className="text-xs text-orange-600 mt-1">total break time</p>
+                  </div>
                 </div>
 
-                {systemAttendance.checkedIn && (
-                  <div className="mt-4 p-6 bg-gradient-to-br from-blue-50 via-blue-50 to-cyan-50 rounded-lg border-2 border-blue-300 shadow-md">
-                    <div className="flex items-center justify-between mb-4">
-                      <span className="text-sm font-semibold text-gray-700 uppercase tracking-wide">⏱️ Session Timer</span>
-                      <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-full">
-                        {systemAttendance.isOnBreak ? '🔸 ON BREAK' : '🟢 WORKING'}
-                      </span>
-                    </div>
-
-                    {/* Display timer calculated from displayMinutes (computed above) */}
-                    <div className="text-5xl font-black text-blue-600 font-mono tracking-tighter">
-                      {(() => {
-                        const hours = Math.floor((displayMinutes || 0) / 60);
-                        const minutes = (displayMinutes || 0) % 60;
-                        return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
-                      })()}
-                    </div>
-                    <p className="text-xs text-gray-500 mt-2">hours : minutes</p>
-                    
-                    <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden mb-3">
-                      <div 
-                        className="bg-gradient-to-r from-blue-500 to-cyan-500 h-full transition-all duration-300"
-                        style={{ width: `${Math.min(((displayMinutes || 0) / 540) * 100, 100)}%` }}
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between text-xs text-gray-600 px-1">
-                      <span>Session started at {systemAttendance.checkInTime?.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) || 'N/A'}</span>
-                      <span className="text-blue-600 font-semibold ml-2">{displayPercent}% of daily target</span>
-                    </div>
-                    
-
-                    
-                    <div className="flex items-center gap-2 mt-3 text-xs text-gray-600 bg-white bg-opacity-50 p-2 rounded">
-                      {systemAttendance.isOnBreak ? (
-                        <><Clock className="h-3 w-3 text-amber-600" /> <span className="text-amber-700 font-semibold">Break in progress</span></>
-                      ) : (
-                        <><Activity className="h-3 w-3 text-green-600 animate-pulse" /> <span className="text-green-700 font-semibold">Working...</span></>
-                      )}
-                    </div>
+                {/* Monthly Working Hours Chart */}
+                {monthlyAttendance.length > 0 && (
+                  <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
+                    <h3 className="text-lg font-bold text-gray-900 mb-4">Daily Working Hours - {selectedMonth} {selectedYear}</h3>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={getMonthlyData()}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="date" />
+                        <YAxis />
+                        <Tooltip formatter={(value) => `${value}h`} labelFormatter={(label) => `Day ${label}`} />
+                        <Bar dataKey="hours" fill="#3b82f6" radius={[8, 8, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
                   </div>
                 )}
               </div>
 
-              {/* Right Column - Break Management */}
-              {systemAttendance.checkedIn ? (
-              <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <Coffee className="h-5 w-5 text-purple-600" />
-                  Break Management
-                </h2>
-                <div className="grid grid-cols-2 gap-3">
-                  {breakTypes.map((breakType) => {
-                    const breakInfo = breakData[breakType.id];
-                    const currentDuration = getCurrentBreakDuration(breakType.id);
-                    const isExceeding = currentDuration > breakType.limit;
-                    
-                    return (
-                      <div key={breakType.id} className="space-y-2">
-                        <button 
-                          onClick={() => handleBreakStart(breakType.id)}
-                          disabled={!breakInfo || breakInfo.active}
-                          className={`w-full flex flex-col items-center justify-center p-3 rounded-lg border transition ${
-                            breakInfo && breakInfo.active
-                              ? `${breakType.color} text-white`
-                              : `bg-gray-50 border-gray-200 hover:border-gray-300`
-                          }`}
+
+              {/* Filter Buttons */}
+              <div className="space-y-3">
+                <p className="text-gray-700 font-bold text-sm uppercase tracking-wide">Filter by Status</p>
+                <div className="flex flex-wrap gap-2">
+                  {/* All Status Button */}
+                  <button
+                    onClick={() => setStatusFilter('All Status')}
+                    className={`px-6 py-3 rounded-full font-semibold transition-all text-sm shadow-md ${
+                      statusFilter === 'All Status'
+                        ? 'bg-[#349DFF] text-white shadow-lg scale-105'
+                        : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-blue-400'
+                    }`}
+                  >
+                    📊 All ({monthlyAttendance.length})
+                  </button>
+
+                  {/* Present Button */}
+                  <button
+                    onClick={() => setStatusFilter('Present')}
+                    className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${
+                      statusFilter === 'Present'
+                        ? 'bg-green-600 text-white'
+                        : 'bg-white text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    Present ({monthlyAttendance.filter(r => r.status === 'Present').length})
+                  </button>
+
+                  <button
+                    onClick={() => setStatusFilter('Late')}
+                    className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${
+                      statusFilter === 'Late'
+                        ? 'bg-orange-600 text-white'
+                        : 'bg-white text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    Late ({monthlyAttendance.filter(r => r.status === 'Late').length})
+                  </button>
+
+                  <button
+                    onClick={() => setStatusFilter('Absent')}
+                    className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${
+                      statusFilter === 'Absent'
+                        ? 'bg-red-600 text-white'
+                        : 'bg-white text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    Absent ({monthlyAttendance.filter(r => r.status === 'Absent').length})
+                  </button>
+
+                  <button
+                    onClick={() => setStatusFilter('Leave')}
+                    className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${
+                      statusFilter === 'Leave'
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-white text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    Leave ({monthlyAttendance.filter(r => r.status === 'Leave').length})
+                    </button>
+                </div>
+              </div>
+
+              {/* Attendance Table */}
+              <div className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden relative z-10">
+                <div className="px-6 py-4 border-b border-gray-200 bg-white text-black/90">
+                  <h2 className="text-lg font-bold">Detailed Attendance</h2>
+                </div>
+                
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-[#349DFF] text-white">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-sm font-semibold">Date</th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold">Check In</th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold">Check Out</th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold">Status</th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold">Working Hours</th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold">Breaks</th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold">Late By</th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold">Overtime</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {monthlyAttendance.filter(r => 
+                        statusFilter === 'All Status' || r.status === statusFilter
+                      ).length === 0 ? (
+                        <tr>
+                          <td colSpan="8" className="px-4 py-8 text-center text-gray-500">
+                            No attendance records found for the selected filters
+                          </td>
+                        </tr>
+                      ) : (() => {
+                        const filteredRecords = monthlyAttendance.filter(r => 
+                          statusFilter === 'All Status' || r.status === statusFilter
+                        );
+                        const totalPages = Math.ceil(filteredRecords.length / RECORDS_PER_PAGE);
+                        const startIndex = (currentPage - 1) * RECORDS_PER_PAGE;
+                        const endIndex = startIndex + RECORDS_PER_PAGE;
+                        const paginatedRecords = filteredRecords.slice(startIndex, endIndex);
+
+                        return paginatedRecords.map((record, index) => (
+                          <tr key={record.id} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+                            <td className="px-4 py-3 text-sm text-gray-700">
+                              {new Date(record.attendance_date).toLocaleDateString('en-US', {
+                                weekday: 'short',
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric'
+                              })}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-700">
+                              {record.check_in_time || '-'}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-700">
+                              {record.check_out_time || '-'}
+                            </td>
+                            <td className="px-4 py-3 text-sm">
+                              <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                                record.status === 'Present' ? 'bg-green-100 text-green-700' :
+                                record.status === 'Late' ? 'bg-orange-100 text-orange-700' :
+                                record.status === 'Absent' ? 'bg-red-100 text-red-700' :
+                                'bg-purple-100 text-purple-700'
+                              }`}>
+                                {record.status}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-700">
+                              {record.net_working_time_minutes 
+                                ? `${Math.floor(record.net_working_time_minutes / 60)}h ${record.net_working_time_minutes % 60}m`
+                                : '-'}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-700">
+                              {record.total_breaks_taken || 0} ({record.total_break_duration_minutes || 0}m)
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-700">
+                              {record.late_by_minutes ? `${record.late_by_minutes}m` : '-'}
+                            </td>
+                            <td className="px-4 py-3 text-sm">
+                              {record.overtime_minutes > 0 ? (
+                                <span className="px-2 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
+                                  {Math.floor(record.overtime_minutes / 60)}h {record.overtime_minutes % 60}m
+                                </span>
+                              ) : (
+                                <span className="text-gray-500">-</span>
+                              )}
+                            </td>
+                          </tr>
+                        ));
+                      })()}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Pagination Controls */}
+                {(() => {
+                  const filteredRecords = monthlyAttendance.filter(r => 
+                    statusFilter === 'All Status' || r.status === statusFilter
+                  );
+                  const totalPages = Math.ceil(filteredRecords.length / RECORDS_PER_PAGE);
+                  
+                  return totalPages > 1 ? (
+                    <div className="border-t border-gray-200 p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                      <div className="text-sm text-gray-600">
+                        Showing page <span className="font-semibold text-gray-900">{currentPage}</span> of <span className="font-semibold text-gray-900">{totalPages}</span>
+                        <span className="ml-4">Total: <span className="font-semibold text-gray-900">{filteredRecords.length}</span> records</span>
+                      </div>
+                      
+                      <div className="flex gap-2 flex-wrap">
+                        <button
+                          onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                          disabled={currentPage === 1}
+                          className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200 transition-colors font-semibold text-sm"
                         >
-                          {breakType.icon && <breakType.icon className="h-4 w-4 mb-1" />}
-                          <span className="text-xs font-medium">
-                            {breakInfo && breakInfo.active ? 'Active' : breakType.name}
-                          </span>
-                          <span className="text-xs mt-1">
-                            {breakInfo && breakInfo.active ? 
-                              `${Math.round(currentDuration)}m / ${breakType.limit}m` : 
-                              `${breakType.limit}m`
-                            }
-                          </span>
-                          {isExceeding && (
-                            <span className="text-xs text-red-200 mt-1">EXCEEDED!</span>
-                          )}
+                          ← Previous
                         </button>
                         
-                        {breakInfo && breakInfo.active && (
-                          <button 
-                            onClick={() => handleManualBreakEnd(breakType.id)}
-                            disabled={!!breakInfo.ending}
-                            className={`w-full flex items-center justify-center p-2 rounded-lg border border-gray-200 ${breakInfo.ending ? 'opacity-60 cursor-not-allowed bg-gray-100' : 'hover:border-gray-300 bg-white'} text-xs`}
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                          <button
+                            key={page}
+                            onClick={() => setCurrentPage(page)}
+                            className={`px-3 py-2 rounded-lg font-semibold transition-colors text-sm ${
+                              currentPage === page
+                                ? 'bg-blue-500 text-white'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
                           >
-                            {breakInfo.ending ? (
-                              <>
-                                <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
-                                Ending...
-                              </>
-                            ) : (
-                              <>
-                                <CheckCircle className="h-3 w-3 mr-1" />
-                                End Break
-                              </>
-                            )}
+                            {page}
                           </button>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Break Summary */}
-                <div className="mt-4 p-4 bg-purple-50 rounded-lg border border-purple-200">
-                  <h4 className="text-sm font-semibold text-gray-900 mb-3">Today's Breaks</h4>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Total Breaks:</span>
-                      <span className="font-semibold text-purple-600">
-                        {todayBreaksFromDB.length}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Total Time:</span>
-                      <span className="font-semibold text-purple-600">
-                        {formatDuration(
-                          todayBreaksFromDB.reduce((sum, b) => sum + (b.break_duration_minutes || 0), 0)
-                        )}
-                      </span>
-                    </div>
-                    {breakSummary.exceededDuration > 0 && (
-                      <div className="flex justify-between">
-                        <span className="text-red-600">Exceeded:</span>
-                        <span className="font-semibold text-red-600">+{formatDuration(breakSummary.exceededDuration)}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Active:</span>
-                      <span className="font-semibold text-blue-600">
-                        {breakTypes.filter(breakType => breakData[breakType.id]?.active).length}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  {/* Individual Break Counts - Show from Database */}
-                  <div className="mt-3 pt-3 border-t border-purple-200">
-                    <h5 className="text-xs font-semibold text-gray-700 mb-2">Break Details:</h5>
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                      {breakTypes.map((breakType) => {
-                        // Count breaks from database for this type
-                        const dbBreaks = todayBreaksFromDB.filter(b => b.break_type.toLowerCase() === breakType.id);
-                        const totalCount = dbBreaks.length;
-                        const totalDuration = dbBreaks.reduce((sum, b) => sum + (b.break_duration_minutes || 0), 0);
+                        ))}
                         
-                        return (
-                          <div key={breakType.id} className="flex justify-between items-center bg-white rounded px-2 py-1">
-                            <span className="text-gray-600">{breakType.name}:</span>
-                            <div className="text-right">
-                              <span className="font-semibold text-purple-700 block">{totalCount}x</span>
-                              {totalDuration > 0 && <span className="text-gray-500 text-xs">{totalDuration}m</span>}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-              </div>
-              ) : (
-              <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm flex flex-col items-center justify-center min-h-64">
-                <Clock className="h-12 w-12 text-gray-300 mb-3" />
-                <h3 className="text-lg font-semibold text-gray-600 mb-2">Break Management</h3>
-                <p className="text-gray-500 text-sm text-center">Check in to manage breaks</p>
-              </div>
-              )}
-            </div>
-
-            {/* Analytics Graphs - Monthly Statistics */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-              {/* Attendance Distribution Chart */}
-              <div className="bg-white rounded-lg border border-blue-200 p-6 shadow-sm hover:shadow-md transition-all">
-                <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <PieChart className="h-5 w-5 text-blue-600" />
-                  Attendance Distribution
-                </h4>
-                {attendanceData && attendanceData.length > 0 ? (
-                  <>
-                    <ResponsiveContainer width="100%" height={250}>
-                      <RePieChart>
-                        <Pie
-                          data={[
-                            { name: 'Present', value: Math.max(1, stats.present), color: '#10b981' },
-                            { name: 'Late', value: Math.max(1, stats.late), color: '#f59e0b' },
-                            { name: 'Absent', value: Math.max(1, stats.absent), color: '#ef4444' },
-                          ]}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={false}
-                          label={({ name, value, percent }) => value > 0 ? `${name} ${(percent * 100).toFixed(0)}%` : ''}
-                          outerRadius={80}
-                          fill="#8884d8"
-                          dataKey="value"
+                        <button
+                          onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                          disabled={currentPage === totalPages}
+                          className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200 transition-colors font-semibold text-sm"
                         >
-                          {[
-                            { name: 'Present', value: stats.present, color: '#10b981' },
-                            { name: 'Late', value: stats.late, color: '#f59e0b' },
-                            { name: 'Absent', value: stats.absent, color: '#ef4444' },
-                          ].map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <Tooltip formatter={(value) => value > 0 ? value : 0} />
-                      </RePieChart>
-                    </ResponsiveContainer>
-                    <div className="mt-4 flex justify-center gap-4 flex-wrap">
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                        <span className="text-sm text-gray-600">Present ({stats.present})</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                        <span className="text-sm text-gray-600">Late ({stats.late})</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                        <span className="text-sm text-gray-600">Absent ({stats.absent})</span>
+                          Next →
+                        </button>
                       </div>
                     </div>
-                  </>
-                ) : (
-                  <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
-                    <p className="text-gray-500 text-sm">No attendance data available</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Working Hours Trend */}
-              <div className="bg-white rounded-lg border border-blue-200 p-6 shadow-sm hover:shadow-md transition-all">
-                <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <LineChart className="h-5 w-5 text-blue-600" />
-                  Working Hours Trend
-                </h4>
-                {attendanceData && attendanceData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={250}>
-                    <AreaChart
-                      data={attendanceData.map((record, idx) => ({
-                        date: new Date(record.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-                        hours: record.hours && record.hours !== '-' ? parseFloat(record.hours) : 0,
-                        status: record.status,
-                        key: idx
-                      }))}
-                      margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-                    >
-                      <defs>
-                        <linearGradient id="colorHours" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
-                          <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.1}/>
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                      <XAxis 
-                        dataKey="date" 
-                        stroke="#6b7280"
-                        tick={{ fontSize: 12 }}
-                      />
-                      <YAxis 
-                        stroke="#6b7280"
-                        tick={{ fontSize: 12 }}
-                        domain={[0, 10]}
-                        label={{ value: 'Hours', angle: -90, position: 'insideLeft', offset: 10 }}
-                      />
-                      <Tooltip 
-                        contentStyle={{ 
-                          backgroundColor: '#fff', 
-                          border: '1px solid #e5e7eb', 
-                          borderRadius: '8px',
-                          boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
-                        }}
-                        formatter={(value) => [value.toFixed(1) + 'h', 'Hours']}
-                      />
-                      <Area 
-                        type="monotone" 
-                        dataKey="hours" 
-                        stroke="#3b82f6" 
-                        strokeWidth={2}
-                        fillOpacity={1} 
-                        fill="url(#colorHours)" 
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
-                    <p className="text-gray-500 text-sm">No data available</p>
-                  </div>
-                )}
+                  ) : null;
+                })()}
               </div>
             </div>
-
-            {/* Daily Performance Bar Chart */}
-            <div className="bg-white rounded-lg border border-blue-200 p-6 shadow-sm hover:shadow-md transition-all mt-6">
-              <div className="flex items-center justify-between mb-4">
-                <h4 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5 text-blue-600" />
-                  Daily Performance
-                </h4>
-                <span className="text-xs text-gray-500 bg-blue-50 px-2 py-1 rounded">Last 14 Days</span>
-              </div>
-              {attendanceData && attendanceData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart
-                    data={attendanceData.map((record, idx) => ({
-                      date: new Date(record.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-                      hours: record.hours && record.hours !== '-' ? parseFloat(record.hours) : 0,
-                      target: 9,
-                      status: record.status,
-                      key: idx
-                    }))}
-                    margin={{ top: 20, right: 30, left: 0, bottom: 60 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
-                    <XAxis 
-                      dataKey="date" 
-                      stroke="#6b7280"
-                      tick={{ fontSize: 11 }}
-                      angle={-45}
-                      textAnchor="end"
-                    />
-                    <YAxis 
-                      stroke="#6b7280"
-                      tick={{ fontSize: 12 }}
-                      domain={[0, 12]}
-                      label={{ value: 'Hours', angle: -90, position: 'insideLeft', offset: 10 }}
-                    />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: '#fff', 
-                        border: '1px solid #e5e7eb', 
-                        borderRadius: '8px',
-                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
-                      }}
-                      formatter={(value) => [value.toFixed(1), value === 9 ? 'Target (9h)' : 'Hours Worked']}
-                      labelFormatter={(label) => `Date: ${label}`}
-                    />
-                    <Legend wrapperStyle={{ paddingTop: '20px' }} />
-                    <Bar dataKey="hours" fill="#3b82f6" radius={[8, 8, 0, 0]} name="Hours Worked" />
-                    <Bar dataKey="target" fill="#10b981" radius={[8, 8, 0, 0]} name="Target (9h)" opacity={0.4} />
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="h-96 flex items-center justify-center bg-gray-50 rounded-lg">
-                  <p className="text-gray-500 text-sm">No performance data available</p>
-                </div>
-              )}
-            </div>
-
-            {/* Attendance History Table */}
-            {/* <div className="mt-8 bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Attendance History</h2>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-gray-200">
-                      <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Date</th>
-                      <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Status</th>
-                      <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Check In</th>
-                      <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Check Out</th>
-                      <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Hours</th>
-                      <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Remarks</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {attendanceHistory.slice(0, 10).map((day, index) => {
-                      const statusInfo = getStatusInfo(day.status);
-                      return (
-                        <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
-                          <td className="py-3 px-4 text-sm text-gray-900">{formatDate(day.date)}</td>
-                          <td className="py-3 px-4">
-                            <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${statusInfo.color}`}>
-                              {statusInfo.text}
-                            </span>
-                          </td>
-                          <td className="py-3 px-4 text-sm text-gray-900">{day.checkIn}</td>
-                          <td className="py-3 px-4 text-sm text-gray-900">{day.checkOut}</td>
-                          <td className="py-3 px-4 text-sm font-medium text-gray-900">{day.hours}h</td>
-                          <td className="py-3 px-4 text-sm text-gray-600">{day.remarks}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div> */}
-          </>
-        ) : (
-          <AttendanceSheet 
-            attendanceData={attendanceData}
-            onExport={() => {}}
-            onFilter={() => {}}
-          />
-        )}
+          )}
+        </main>
       </div>
     </div>
   );
-}
+};
+
+export default HRMyAttendance;
+export const EmployeeAttendancePage = HRMyAttendance;
 

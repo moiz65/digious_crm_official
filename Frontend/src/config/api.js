@@ -13,8 +13,6 @@ export const config = {
   ENVIRONMENT: process.env.REACT_APP_ENV || 'development',
   APP_NAME: process.env.REACT_APP_NAME || 'Digious CRM',
   APP_VERSION: process.env.REACT_APP_VERSION || '1.0.0',
-  SESSION_TIMEOUT: parseInt(process.env.REACT_APP_SESSION_TIMEOUT) || 30,
-  INACTIVITY_WARNING: parseInt(process.env.REACT_APP_INACTIVITY_WARNING) || 5,
   ENABLE_ANALYTICS: process.env.REACT_APP_ENABLE_ANALYTICS === 'true',
   ENABLE_DEBUG: process.env.REACT_APP_ENABLE_DEBUG === 'true',
 };

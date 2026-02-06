@@ -7,8 +7,9 @@ const { getPakistanISO } = require('./utils/timezone');
 const app = express();
 
 // Middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Increase request body size to accommodate base64 image uploads (e.g., profile/banner/images)
+app.use(express.json({ limit: process.env.REQUEST_SIZE_LIMIT || '20mb' }));
+app.use(express.urlencoded({ extended: true, limit: process.env.REQUEST_SIZE_LIMIT || '20mb' }));
 
 // CORS Configuration
 const corsOptions = {
@@ -55,6 +56,10 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
+// Serve static files for uploads
+app.use('/uploads', express.static('uploads'));
+console.log('✅ Static file serving enabled for /uploads directory');
+
 // Test route
 app.get('/api/health', (req, res) => {
   res.status(200).json({
@@ -92,6 +97,16 @@ app.use((req, res) => {
 // Error handler
 app.use((err, req, res, next) => {
   console.error('Error:', err);
+
+  // Handle large payloads from body-parser
+  if (err && (err.type === 'entity.too.large' || err.status === 413)) {
+    return res.status(413).json({
+      success: false,
+      message: 'Payload too large. The server limits request body size — upload smaller files or use multipart upload.',
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
+
   res.status(500).json({
     success: false,
     message: 'Internal server error',
