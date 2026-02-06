@@ -56,6 +56,10 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
+// Serve static files for uploads
+app.use('/uploads', express.static('uploads'));
+console.log('✅ Static file serving enabled for /uploads directory');
+
 // Test route
 app.get('/api/health', (req, res) => {
   res.status(200).json({

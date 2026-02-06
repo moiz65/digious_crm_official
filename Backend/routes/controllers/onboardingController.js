@@ -435,41 +435,19 @@ exports.getAllEmployees = async (req, res) => {
   try {
     const [employees] = await pool.query(`
   SELECT 
-    eo.*,
-
-    -- Salary details
-    es.base_salary,
-    es.total_salary,
-
-    -- Allowances
-    ea.allowance_name,
-    ea.allowance_amount,
-
-    -- Static resources (e.g. laptop)
-    er.laptop,
-    er.laptop_serial,
-
-    -- Dynamic resources
-    edr.resource_name,
-    edr.resource_serial
+    eo.id,
+    eo.name,
+    eo.email,
+    eo.phone,
+    eo.department,
+    eo.sub_department,
+    eo.designation,
+    eo.employment_status,
+    eo.join_date,
+    eo.status,
+    eo.created_at
 
   FROM employee_onboarding eo
-
-  -- Salary
-  LEFT JOIN employee_salary es 
-    ON eo.id = es.employee_id
-
-  -- Allowances
-  LEFT JOIN employee_allowances ea 
-    ON eo.id = ea.employee_id
-
-  -- Static resources
-  LEFT JOIN employee_resources er 
-    ON eo.id = er.employee_id
-
-  -- Dynamic resources
-  LEFT JOIN employee_dynamic_resources edr 
-    ON eo.id = edr.employee_id
 
   ORDER BY eo.created_at DESC
 `);

@@ -355,6 +355,62 @@ const EmployeeProfileService = {
   },
 
   /**
+   * Upload required documents to local storage
+   * Saves files in Backend/uploads/documents/{id}_{docType}_{timestamp}/
+   */
+  async uploadRequiredDocuments(employeeId, documents) {
+    try {
+      const documentsWithBase64 = [];
+
+      // Convert all files to base64
+      for (const doc of documents) {
+        if (doc.file) {
+          const base64 = await this.fileToBase64(doc.file);
+          documentsWithBase64.push({
+            base64: base64,
+            document_type: doc.document_type || doc.type,
+            document_name: doc.document_name || doc.name,
+            fileName: doc.file.name,
+            expiry_date: doc.expiry_date || null
+          });
+        }
+      }
+
+      if (documentsWithBase64.length === 0) {
+        throw new Error('No files selected');
+      }
+
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/employees/profile/${employeeId}/upload-required-documents`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ documents: documentsWithBase64 })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to upload documents');
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error uploading required documents:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Helper to convert File to Base64
+   */
+  fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+    });
+  },
+
+  /**
    * Update employee achievements
    */
   async updateEmployeeAchievements(employeeId, achievements) {

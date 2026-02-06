@@ -1318,13 +1318,6 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW 
 
 -- --------------------------------------------------------
 
---
--- Structure for view `employee_performance_summary`
---
-DROP TABLE IF EXISTS `employee_performance_summary`;
-
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `employee_performance_summary`  AS SELECT `eo`.`id` AS `id`, `eo`.`name` AS `full_name`, `eo`.`employee_id` AS `employee_id`, `ep`.`next_review_date` AS `next_review_date`, CASE WHEN `ep`.`next_review_date` is null THEN 'Not Scheduled' WHEN `ep`.`next_review_date` < curdate() THEN 'Overdue' WHEN `ep`.`next_review_date` <= curdate() + interval 30 day THEN 'Due Soon' ELSE 'Scheduled' END AS `review_status`, to_days(`ep`.`next_review_date`) - to_days(curdate()) AS `days_until_review`, 0 AS `completed_goals`, 0 AS `in_progress_goals`, 0 AS `total_goals`, 0 AS `avg_goal_progress` FROM (`employee_onboarding` `eo` left join `employee_profiles` `ep` on(`eo`.`id` = `ep`.`employee_id`)) WHERE `eo`.`status` <> 'Inactive' ;
-
 -- --------------------------------------------------------
 
 --

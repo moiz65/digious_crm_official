@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import HrSidebar from '../../components/HrSidebar';
 import { DashboardHeader } from '../../components/DashboardComponents';
+import HrSidebar from '../../components/HrSidebar';
 import { useAuth } from '../../context/AuthContext';
 import { endpoints } from '../../config/api';
 import { getPakistanDate } from '../../utils/timezone';
@@ -35,7 +35,7 @@ import {
 const HRMyAttendance = () => {
   const { user, role } = useAuth();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [activeItem, setActiveItem] = useState('my-attendance');
+  const [sidebarActiveItem, setSidebarActiveItem] = useState('attendance');
   const [activeTab, setActiveTab] = useState('dashboard'); // dashboard or sheet
   const [currentTime, setCurrentTime] = useState(new Date());
   const [attendanceData, setAttendanceData] = useState(null);
@@ -493,6 +493,44 @@ const HRMyAttendance = () => {
     }));
   };
 
+  const getMonthlyStats = () => {
+    if (monthlyAttendance.length === 0) {
+      return {
+        totalHours: 0,
+        averageHours: 0,
+        maxHours: 0,
+        minHours: 0,
+        workDays: 0,
+        totalBreakTime: 0
+      };
+    }
+
+    const totalMinutes = monthlyAttendance.reduce((sum, record) => sum + (record.net_working_time_minutes || 0), 0);
+    const totalBreakMinutes = monthlyAttendance.reduce((sum, record) => sum + (record.total_break_duration_minutes || 0), 0);
+    const workDays = monthlyAttendance.filter(r => r.status === 'Present' || r.status === 'Late').length;
+    const hours = monthlyAttendance.map(r => (r.net_working_time_minutes || 0) / 60);
+    
+    return {
+      totalHours: Math.floor(totalMinutes / 60),
+      totalMinutes: totalMinutes % 60,
+      averageHours: workDays > 0 ? Math.floor(totalMinutes / workDays / 60) : 0,
+      averageMinutes: workDays > 0 ? (totalMinutes / workDays) % 60 : 0,
+      maxHours: Math.floor(Math.max(...hours, 0)),
+      minHours: hours.length > 0 ? Math.floor(Math.min(...hours.filter(h => h > 0), Infinity)) : 0,
+      workDays: workDays,
+      totalBreakMinutes: totalBreakMinutes
+    };
+  };
+
+  const getMonthlyData = () => {
+    return monthlyAttendance.map(record => ({
+      date: new Date(record.attendance_date).getDate(),
+      hours: Math.floor((record.net_working_time_minutes || 0) / 60),
+      minutes: (record.net_working_time_minutes || 0) % 60,
+      status: record.status
+    })).sort((a, b) => a.date - b.date);
+  };
+
   // Format minutes to "Xh Ym" format (e.g., 120 minutes -> "2h 0m", 90 -> "1h 30m", 45 -> "45m")
   const formatTimeDisplay = (minutes) => {
     if (!minutes || minutes === 0) return '0m';
@@ -512,19 +550,18 @@ const HRMyAttendance = () => {
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-cyan-50">
+      {/* Sidebar */}
       <HrSidebar 
         isCollapsed={isSidebarCollapsed}
         setIsCollapsed={setIsSidebarCollapsed}
-        activeItem={activeItem}
-        setActiveItem={setActiveItem}
+        activeItem={sidebarActiveItem}
+        setActiveItem={setSidebarActiveItem}
       />
-      
+
       <div className="flex-1 flex flex-col overflow-hidden">
         <DashboardHeader 
           title="My Attendance Dashboard"
           subtitle="Manage your daily attendance and working hours"
-          isSidebarCollapsed={isSidebarCollapsed}
-          setIsSidebarCollapsed={setIsSidebarCollapsed}
           role={role}
           currentTime={currentTime}
         />
@@ -897,6 +934,7 @@ const HRMyAttendance = () => {
               </ResponsiveContainer>
             </div>
           </div>
+
         </>
           )}
 
@@ -975,34 +1013,70 @@ const HRMyAttendance = () => {
                 </div>
               </div>
 
-              {/* Quick Stats Grid */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-white rounded-lg p-4 shadow border-l-4 border-[#349DFF]">
-                  <p className="text-gray-600 text-xs font-semibold uppercase">Total</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">{monthlyAttendance.length}</p>
-                </div>
+              {/* Monthly Statistics Section */}
+              <div className="mt-8">
+                <h3 className="text-2xl font-bold text-gray-900 mb-6">Monthly Overview</h3>
                 
-                <div className="bg-white rounded-lg p-4 shadow border-l-4 border-green-600">
-                  <p className="text-gray-600 text-xs font-semibold uppercase">Present</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">
-                    {monthlyAttendance.filter(r => r.status === 'Present').length}
-                  </p>
+                {/* Monthly Stats Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                  {/* Total Working Hours */}
+                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-2xl p-6">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-sm font-medium text-blue-800">Total Hours</h4>
+                      <Clock className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <p className="text-3xl font-bold text-blue-600">{getMonthlyStats().totalHours}h {getMonthlyStats().totalMinutes}m</p>
+                    <p className="text-xs text-blue-600 mt-1">total this month</p>
+                  </div>
+
+                  {/* Average Daily Hours */}
+                  <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-2xl p-6">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-sm font-medium text-purple-800">Average Daily</h4>
+                      <Activity className="w-5 h-5 text-purple-600" />
+                    </div>
+                    <p className="text-3xl font-bold text-purple-600">{getMonthlyStats().averageHours}h {Math.round(getMonthlyStats().averageMinutes)}m</p>
+                    <p className="text-xs text-purple-600 mt-1">per work day</p>
+                  </div>
+
+                  {/* Work Days */}
+                  <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-2xl p-6">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-sm font-medium text-green-800">Work Days</h4>
+                      <CheckCircle className="w-5 h-5 text-green-600" />
+                    </div>
+                    <p className="text-3xl font-bold text-green-600">{getMonthlyStats().workDays}</p>
+                    <p className="text-xs text-green-600 mt-1">days present/late</p>
+                  </div>
+
+                  {/* Total Break Time */}
+                  <div className="bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 rounded-2xl p-6">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-sm font-medium text-orange-800">Break Time</h4>
+                      <PauseCircle className="w-5 h-5 text-orange-600" />
+                    </div>
+                    <p className="text-3xl font-bold text-orange-600">{Math.floor(getMonthlyStats().totalBreakMinutes / 60)}h {getMonthlyStats().totalBreakMinutes % 60}m</p>
+                    <p className="text-xs text-orange-600 mt-1">total break time</p>
+                  </div>
                 </div>
-                
-                <div className="bg-white rounded-lg p-4 shadow border-l-4 border-orange-600">
-                  <p className="text-gray-600 text-xs font-semibold uppercase">Late</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">
-                    {monthlyAttendance.filter(r => r.status === 'Late').length}
-                  </p>
-                </div>
-                
-                <div className="bg-white rounded-lg p-4 shadow border-l-4 border-red-600">
-                  <p className="text-gray-600 text-xs font-semibold uppercase">Absent</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">
-                    {monthlyAttendance.filter(r => r.status === 'Absent').length}
-                  </p>
-                </div>
+
+                {/* Monthly Working Hours Chart */}
+                {monthlyAttendance.length > 0 && (
+                  <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
+                    <h3 className="text-lg font-bold text-gray-900 mb-4">Daily Working Hours - {selectedMonth} {selectedYear}</h3>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={getMonthlyData()}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="date" />
+                        <YAxis />
+                        <Tooltip formatter={(value) => `${value}h`} labelFormatter={(label) => `Day ${label}`} />
+                        <Bar dataKey="hours" fill="#3b82f6" radius={[8, 8, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
               </div>
+
 
               {/* Filter Buttons */}
               <div className="space-y-3">
@@ -1115,11 +1189,25 @@ const HRMyAttendance = () => {
                                 day: 'numeric'
                               })}
                             </td>
-                            <td className="px-4 py-3 text-sm text-gray-700">
-                              {record.check_in_time || '-'}
+                            <td className="px-4 py-3 text-sm">
+                              {record.check_in_time ? (
+                                <div className="flex items-center gap-2">
+                                  <LogIn className="w-4 h-4 text-green-600" />
+                                  <span className="font-mono font-semibold text-green-700">{record.check_in_time}</span>
+                                </div>
+                              ) : (
+                                <span className="text-gray-400">-</span>
+                              )}
                             </td>
-                            <td className="px-4 py-3 text-sm text-gray-700">
-                              {record.check_out_time || '-'}
+                            <td className="px-4 py-3 text-sm">
+                              {record.check_out_time ? (
+                                <div className="flex items-center gap-2">
+                                  <LogOut className="w-4 h-4 text-red-600" />
+                                  <span className="font-mono font-semibold text-red-700">{record.check_out_time}</span>
+                                </div>
+                              ) : (
+                                <span className="text-gray-400">-</span>
+                              )}
                             </td>
                             <td className="px-4 py-3 text-sm">
                               <span className={`px-2 py-1 rounded-full text-xs font-semibold ${

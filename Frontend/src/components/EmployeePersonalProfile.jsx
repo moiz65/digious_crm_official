@@ -249,16 +249,16 @@ const EmployeePersonalProfileV2 = ({ employeeId, onBack }) => {
         },
 
         bankInfo: {
-          accountNumber: financialSummary?.bank_account?.account_number_masked || null,
-          bankName: financialSummary?.bank_account?.bank_name || null,
-          accountType: financialSummary?.bank_account?.account_type || null,
-          accountTitle: financialSummary?.bank_account?.account_title_name || null,
+          accountNumber: financialSummary?.bank_account?.account_number_masked || (onboardingDetails?.bank_account ? `****${(onboardingDetails.bank_account || '').slice(-4)}` : null),
+          bankName: financialSummary?.bank_account?.bank_name || onboardingDetails?.bank_name || null,
+          accountType: financialSummary?.bank_account?.account_type || onboardingDetails?.account_type || null,
+          accountTitle: financialSummary?.bank_account?.account_title_name || onboardingDetails?.account_title_name || null,
         },
 
         financialInfo: {
           bankAccountSummary: profileData?.bank_accounts_summary,
-          // Use financial summary values (base salary, total allowances)
-          baseSalary: financialSummary?.base_salary ? Number(financialSummary.base_salary) : null,
+          // Use financial summary values (base salary, total allowances) with fallback to onboarding
+          baseSalary: financialSummary?.base_salary ? Number(financialSummary.base_salary) : (onboardingDetails?.base_salary ? Number(onboardingDetails.base_salary) : null),
           totalAllowances: financialSummary?.total_allowances !== undefined ? Number(financialSummary.total_allowances) : 0,
           allowancesList: Array.isArray(financialSummary?.allowances) ? financialSummary.allowances.map(a => ({
             name: a.name || a.allowance_name || '',
@@ -556,6 +556,11 @@ const EmployeePersonalProfileV2 = ({ employeeId, onBack }) => {
   const [docType, setDocType] = useState("");
   const [docDesc, setDocDesc] = useState("");
   const [isUploadingDoc, setIsUploadingDoc] = useState(false);
+  
+  // Required documents state
+  const [requiredDocFile, setRequiredDocFile] = useState(null);
+  const [requiredDocName, setRequiredDocName] = useState("");
+  const [isUploadingReqDoc, setIsUploadingReqDoc] = useState(false);
 
   // Banner select handler
   const handleBannerSelect = (e) => {
@@ -720,6 +725,54 @@ const EmployeePersonalProfileV2 = ({ employeeId, onBack }) => {
   // Remove document
   const removeDocument = (docId) => {
     setEmployee(prev => ({ ...prev, documents: (prev.documents || []).filter(d => d.id !== docId) }));
+  };
+
+  // Required Documents Upload Handler
+  const handleRequiredDocFileChange = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    setRequiredDocFile(file);
+  };
+
+  const uploadRequiredDocument = async () => {
+    if (!requiredDocFile || !requiredDocName.trim() || !employee) {
+      setError('Please select a document file and enter document name');
+      return;
+    }
+    try {
+      setIsUploadingReqDoc(true);
+      setError(null);
+
+      // Prepare document for upload
+      const documentsToUpload = [{
+        file: requiredDocFile,
+        document_type: requiredDocName.trim(),
+        document_name: requiredDocName.trim(),
+        name: requiredDocName.trim()
+      }];
+
+      // Use the service to upload required documents
+      const result = await EmployeeProfileService.uploadRequiredDocuments(employee.id, documentsToUpload);
+
+      if (!result.success) {
+        throw new Error(result.message || 'Required document upload failed');
+      }
+
+      setSuccessMessage('Required document uploaded successfully!');
+      setTimeout(() => setSuccessMessage(null), 3000);
+
+      // Refresh employee data to show newly uploaded document
+      await fetchEmployeeProfile(employee.id);
+
+      // Reset form
+      setRequiredDocFile(null);
+      setRequiredDocName('');
+    } catch (err) {
+      console.error('Error uploading required document:', err);
+      setError(err.message || 'Required document upload failed');
+    } finally {
+      setIsUploadingReqDoc(false);
+    }
   };
 
   // Resource management (equipment, documents, other)
@@ -1392,38 +1445,49 @@ const EmployeePersonalProfileV2 = ({ employeeId, onBack }) => {
             <div className="mt-4">
               <div className="min-h-0">
                 <CardSection title="Required Documents" icon={<FileText className="h-5 w-5" />}>
-                  <div className="flex flex-wrap items-center gap-2">
-                    {canEdit('documents') ? (
-                      <>
-                        <select value={docType} onChange={(e)=>setDocType(e.target.value)} className="border rounded-md p-1 text-sm">
-                          <option value="">Type</option>
-                          <option value="contract">Contract</option>
-                          <option value="identification">Identification</option>
-                          <option value="certificate">Certificate</option>
-                          <option value="other">Other</option>
-                        </select>
-                        <input type="file" onChange={handleDocFileChange} className="border rounded-md p-1 text-sm bg-white" />
-                        <input type="text" value={docDesc} onChange={(e)=>setDocDesc(e.target.value)} placeholder="Desc" className="border rounded-md p-1 text-sm w-36" />
-                        <button onClick={uploadDocument} disabled={isUploadingDoc} className="px-3 py-1 bg-blue-600 text-white rounded-md text-sm">{isUploadingDoc ? 'Uploading...' : 'Upload'}</button>
-                      </>
-                    ) : (
-                      <p className="text-sm text-gray-500">Documents are managed through onboarding. Contact HR to update documents.</p>
-                    )}
-                  </div>
-
-                  <div className="mt-3 space-y-2 max-h-40 overflow-auto">
-                    {(Array.isArray(employee?.documents) ? employee.documents : []).slice(0,8).map(d => (
-                      <div key={d.id} className="flex items-center justify-between p-2 border rounded-md">
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium truncate">{d.fileName}</p>
-                          <p className="text-xs text-gray-500">{d.type} • {new Date(d.uploadedAt).toLocaleDateString()}</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <a href={d.url} target="_blank" rel="noreferrer" className="text-blue-600 text-sm">Open</a>
-                          {canEdit('documents') && <button onClick={()=>removeDocument(d.id)} className="text-red-600 text-sm">Remove</button>}
-                        </div>
+                  {canEdit('documents') && (
+                    <div className="space-y-3 mb-4 pb-4 border-b">
+                      <input 
+                        type="text" 
+                        value={requiredDocName} 
+                        onChange={(e)=>setRequiredDocName(e.target.value)} 
+                        placeholder="Document name" 
+                        className="border rounded-md p-2 text-sm w-full" 
+                      />
+                      <div className="flex gap-2">
+                        <input type="file" onChange={handleRequiredDocFileChange} className="border rounded-md p-2 text-sm bg-white flex-1" />
+                        <button onClick={uploadRequiredDocument} disabled={isUploadingReqDoc} className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm whitespace-nowrap">{isUploadingReqDoc ? 'Uploading...' : 'Upload'}</button>
                       </div>
-                    ))}
+                      {requiredDocFile && (
+                        <p className="text-xs text-gray-600">Selected: {requiredDocFile.name}</p>
+                      )}
+                    </div>
+                  )}
+                  
+                  {/* Display uploaded documents */}
+                  <div className="space-y-2">
+                    {(Array.isArray(employee?.requiredDocuments) && employee.requiredDocuments.length > 0) ? (
+                      employee.requiredDocuments.map((doc, idx) => (
+                        <div key={doc.id || idx} className="flex items-center justify-between p-3 border rounded-md bg-green-50 border-green-200 hover:bg-green-100 transition">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-gray-900 truncate">{doc.document_name || doc.document_type}</p>
+                            <p className="text-xs text-green-600 mt-1">✓ Uploaded {doc.uploaded_at ? new Date(doc.uploaded_at).toLocaleDateString() : ''}</p>
+                          </div>
+                          <div className="flex items-center gap-2 ml-3">
+                            <a 
+                              href={`http://localhost:5000/${doc.document_url}`} 
+                              target="_blank" 
+                              rel="noreferrer" 
+                              className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition"
+                            >
+                              Open
+                            </a>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-sm text-gray-500 italic py-2">No documents uploaded yet{canEdit('documents') ? '. Upload documents using the form above.' : '. Contact HR to upload documents.'}</p>
+                    )}
                   </div>
                 </CardSection>
               </div>

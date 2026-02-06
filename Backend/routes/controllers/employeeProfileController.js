@@ -1,5 +1,8 @@
 const pool = require('../../config/database');
 const cloudinary = require('../../config/cloudinary');
+const fs = require('fs');
+const path = require('path');
+const crypto = require('crypto');
 
 /**
  * Get employee profile by ID (from employee_onboarding and employee_profiles)
@@ -206,6 +209,20 @@ const getFinancialSummary = async (req, res) => {
       if (salRows.length > 0) {
         salary = salRows[0];
         console.log(`✅ [Financial Summary] Found salary: base=${salary.base_salary}, total=${salary.total_salary}`);
+      } else {
+        // Fallback to employee_onboarding table - use the numeric id directly
+        console.log(`📋 [Financial Summary] No salary in employee_salary, checking employee_onboarding with id=${id}...`);
+        const [onboardRows] = await pool.query(
+          'SELECT base_salary, total_salary FROM employee_onboarding WHERE id = ?',
+          [id]
+        );
+        if (onboardRows.length > 0) {
+          salary = { 
+            base_salary: onboardRows[0].base_salary,
+            total_salary: onboardRows[0].total_salary
+          };
+          console.log(`✅ [Financial Summary] Found salary in onboarding: base=${salary.base_salary}, total=${salary.total_salary}`);
+        }
       }
     } catch (err) {
       console.warn(`⚠️ [Financial Summary] Error querying salary:`, err.message);
@@ -229,21 +246,22 @@ const getFinancialSummary = async (req, res) => {
     // Get bank account info (masked)
     let bankAccount = null;
     try {
+      // Try both ID formats since empId might be the ID or the employee_id string
       const [baRows] = await pool.query(
         `SELECT
            id AS bank_account_id,
-           CONCAT(SUBSTRING(account_number, 1, 4), '****', SUBSTRING(account_number, -4)) AS account_number_masked,
+           CONCAT('****', SUBSTRING(account_number, -4)) AS account_number_masked,
            account_title_name,
            bank_name,
            account_type
          FROM employee_bank_accounts
-         WHERE employee_id = ? AND is_primary = 1
+         WHERE id = ? OR employee_id = ?
          LIMIT 1`,
-        [empId]
+        [id, empId]
       );
       if (baRows.length > 0) {
         bankAccount = baRows[0];
-        console.log(`✅ [Financial Summary] Found primary bank account: ${bankAccount.bank_name}`);
+        console.log(`✅ [Financial Summary] Found bank account: ${bankAccount.bank_name}`);
       }
     } catch (err) {
       console.warn(`⚠️ [Financial Summary] Error querying bank accounts:`, err.message);
@@ -943,10 +961,10 @@ const uploadDocumentsToCloudinary = async (req, res) => {
       });
     }
 
-    // Update documents_json in database
+    // Update documents_json in database (use employee_onboarding table)
     const [updateResult] = await pool.query(
-      'UPDATE employee_profiles SET documents_json = ?, updated_at = NOW() WHERE employee_id = ?',
-      [JSON.stringify(uploadedDocs), id]
+      'UPDATE employee_onboarding SET documents_json = ?, updated_at = NOW() WHERE id = ? OR employee_id = ?',
+      [JSON.stringify(uploadedDocs), id, id]
     );
 
     if (updateResult.affectedRows === 0) {
@@ -1384,11 +1402,16 @@ const getEmployeeRequiredDocuments = async (req, res) => {
     try {
       console.log(`📖 [Get Documents] Querying employee_required_documents table...`);
       const [documents] = await pool.query(
-        'SELECT id, document_type, document_name, document_url, status, expiry_date, uploaded_at FROM employee_required_documents WHERE employee_id = ?',
+        `SELECT id, document_type, document_name, document_url, status, expiry_date, uploaded_at 
+         FROM employee_required_documents 
+         WHERE employee_id = ? 
+         AND document_url IS NOT NULL 
+         AND TRIM(document_url) != '' 
+         AND status != 'pending'`,
         [id]
       );
 
-      console.log(`📖 [Get Documents] Found ${documents.length} documents in table`);
+      console.log(`📖 [Get Documents] Found ${documents.length} uploaded documents in table`);
 
       if (documents.length > 0) {
         documents.forEach(doc => {
@@ -1401,7 +1424,12 @@ const getEmployeeRequiredDocuments = async (req, res) => {
           data: documents
         });
       }
-      console.log(`⚠️ [Get Documents] No documents found in table, trying JSON fallback...`);
+      console.log(`✅ [Get Documents] No uploaded documents found - returning empty array`);
+      return res.status(200).json({
+        success: true,
+        message: 'No uploaded documents found',
+        data: []
+      });
     } catch (err) {
       console.warn(`⚠️ [Get Documents] Table error:`, err.message);
       if (err && err.code !== 'ER_NO_SUCH_TABLE') {
@@ -1731,6 +1759,18 @@ const updateEmployeeAchievements = async (req, res) => {
       });
     }
 
+    // Helper function to convert ISO date to YYYY-MM-DD format
+    const formatDateForMySQL = (dateStr) => {
+      if (!dateStr) return null;
+      try {
+        const date = new Date(dateStr);
+        if (isNaN(date.getTime())) return null;
+        return date.toISOString().split('T')[0]; // Returns YYYY-MM-DD
+      } catch (err) {
+        return null;
+      }
+    };
+
     console.log(`🏆 [Achievements Update] Total achievements to process: ${achievements.length}`);
 
     // Try updating in employee_achievements table first
@@ -1745,9 +1785,13 @@ const updateEmployeeAchievements = async (req, res) => {
       let insertCount = 0;
       for (const ach of achievements) {
         console.log(`➕ [Achievements Update] Inserting:`, ach);
+        // Convert ISO dates to YYYY-MM-DD format for MySQL
+        const issueDate = formatDateForMySQL(ach.issue_date);
+        const expiryDate = formatDateForMySQL(ach.expiry_date);
+        
         await pool.query(
           'INSERT INTO employee_achievements (employee_id, achievement_type, title, description, issuer_organization, issue_date, expiry_date, credential_url, attachment_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-          [id, ach.achievement_type || 'award', ach.title, ach.description || null, ach.issuer_organization || null, ach.issue_date || null, ach.expiry_date || null, ach.credential_url || null, ach.attachment_url || null]
+          [id, ach.achievement_type || 'award', ach.title, ach.description || null, ach.issuer_organization || null, issueDate, expiryDate, ach.credential_url || null, ach.attachment_url || null]
         );
         insertCount++;
       }
@@ -1800,6 +1844,124 @@ const updateEmployeeAchievements = async (req, res) => {
   }
 };
 
+/**
+ * Upload required documents to local storage
+ * Stores files in Backend/uploads/documents/{employeeId}_{docType}_{timestamp}/
+ */
+const uploadRequiredDocuments = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { documents } = req.body;
+
+    console.log(`\n📤 [Document Upload] Employee ID: ${id}`);
+    console.log(`📤 [Document Upload] Received ${documents.length} documents`);
+
+    if (!Array.isArray(documents) || documents.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Documents array is required'
+      });
+    }
+
+    // Create uploads directory if it doesn't exist
+    const uploadsDir = path.join(__dirname, '../../uploads/documents');
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+      console.log(`✅ Created uploads directory: ${uploadsDir}`);
+    }
+
+    const uploadedDocs = [];
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5); // Format: 2026-02-05T17-06-09
+
+    for (const doc of documents) {
+      if (!doc.base64 || !doc.document_type) {
+        console.warn(`⚠️  Skipping document - missing base64 or type`);
+        continue;
+      }
+
+      try {
+        // Create folder for this document: {id}_{docType}_{timestamp}
+        const folderName = `${id}_${doc.document_type}_${timestamp}`;
+        const docFolder = path.join(uploadsDir, folderName);
+        
+        if (!fs.existsSync(docFolder)) {
+          fs.mkdirSync(docFolder, { recursive: true });
+        }
+
+        // Generate filename
+        const extension = doc.fileName ? path.extname(doc.fileName) : '.pdf';
+        const fileName = `${doc.document_type}_${Date.now()}${extension}`;
+        const filePath = path.join(docFolder, fileName);
+
+        // Decode base64 and save file
+        const base64Data = doc.base64.replace(/^data:[^;]+;base64,/, '');
+        const buffer = Buffer.from(base64Data, 'base64');
+        fs.writeFileSync(filePath, buffer);
+
+        // Store relative path for database
+        const relativePath = `uploads/documents/${folderName}/${fileName}`;
+
+        console.log(`✅ Saved document: ${relativePath}`);
+
+        uploadedDocs.push({
+          id: uploadedDocs.length + 1,
+          employee_id: id,
+          document_type: doc.document_type,
+          document_name: doc.document_name || doc.document_type,
+          document_url: relativePath,
+          status: 'submitted',
+          expiry_date: doc.expiry_date || null,
+          uploaded_at: new Date()
+        });
+      } catch (uploadError) {
+        console.error(`❌ Error saving document "${doc.document_type}":`, uploadError.message);
+      }
+    }
+
+    if (uploadedDocs.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No documents were successfully uploaded'
+      });
+    }
+
+    // Update database with document URLs
+    try {
+      // Insert new documents (replace on duplicate to allow updates too)
+      for (const doc of uploadedDocs) {
+        await pool.query(
+          `INSERT INTO employee_required_documents 
+           (employee_id, document_type, document_name, document_url, status, uploaded_at, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, NOW(), NOW(), NOW())
+           ON DUPLICATE KEY UPDATE 
+           document_url = VALUES(document_url), 
+           status = VALUES(status), 
+           uploaded_at = NOW(), 
+           updated_at = NOW()`,
+          [id, doc.document_type, doc.document_name, doc.document_url, doc.status]
+        );
+      }
+      console.log(`✅ Saved ${uploadedDocs.length} documents to database`);
+    } catch (dbError) {
+      console.error(`⚠️  Database error:`, dbError.message);
+      // Continue even if database fails - files are saved locally
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `Successfully uploaded ${uploadedDocs.length} document(s)`,
+      data: uploadedDocs
+    });
+  } catch (error) {
+    console.error('❌ [Document Upload] Error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to upload documents',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   getEmployeeProfile,
   getProfileSummary,
@@ -1822,5 +1984,6 @@ module.exports = {
   getEmployeeAchievements,
   updateEmployeeSocialLinks,
   updateEmployeeRequiredDocuments,
+  uploadRequiredDocuments,
   updateEmployeeAchievements
 };

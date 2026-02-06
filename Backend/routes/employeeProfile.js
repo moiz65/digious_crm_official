@@ -31,6 +31,7 @@ router.put('/profile/:id/achievements', authMiddleware, employeeProfileControlle
 router.post('/profile/:id/upload-profile-photo', authMiddleware, employeeProfileController.uploadProfilePhoto);
 router.post('/profile/:id/upload-banner', authMiddleware, employeeProfileController.uploadBannerImage);
 router.post('/profile/:id/upload-documents', authMiddleware, employeeProfileController.uploadDocumentsToCloudinary);
+router.post('/profile/:id/upload-required-documents', authMiddleware, employeeProfileController.uploadRequiredDocuments);
 
 // DELETE routes
 router.delete('/profile/:id', authMiddleware, employeeProfileController.deleteEmployeeProfile);
