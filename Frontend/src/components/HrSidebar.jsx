@@ -17,6 +17,7 @@ import {
   Menu,
   X,
   Shield,
+  UserRoundCog,
   Database
 } from 'lucide-react';
 
@@ -74,7 +75,7 @@ const HrSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) =
   const menuItems = [
     { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard', path: '/hr/dashboard' },
     { id: 'employees', icon: Users, label: 'Employee Management', path: '/hr/employee-management' },
-    { id: 'leaves', icon: Calendar, label: 'Leave Management', path: '/hr/leave-management' },
+    { id: 'applicationmemos', icon: Calendar, label: 'Applications & Memos', path: '/hr/applications-memos' },
     { 
       id: 'attendance', 
       icon: UserCheck, 
@@ -85,7 +86,7 @@ const HrSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) =
         { id: 'my-attendance', label: 'My Attendance', path: '/hr/my-attendance', icon: User }
       ]
     },
-    { id: 'applications', icon: FileText, label: 'Applications & Memos', path: '/hr/applications' },
+    // { id: 'applications', icon: FileText, label: 'Applications & Memos', path: '/hr/applications' },
     { id: 'reports', icon: BarChart3, label: 'Reports & Analytics', path: '/hr/reports' },
     { 
       id: 'settings', 
@@ -93,8 +94,9 @@ const HrSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) =
       label: 'Settings', 
       hasSubmenu: true,
       submenu: [
-        { id: 'user-roles', label: 'User Roles & Permissions', icon: Shield, path: '/hr/user-roles' },
+        { id: 'user-roles', label: 'User Roles', icon: Shield, path: '/hr/user-roles' },
         { id: 'system-config', label: 'System Configuration', icon: Database, path: '/hr/system-config' },
+        { id: 'role-management', label: 'Role Management', icon: UserRoundCog, path: '/hr/role-management' },
       ]
     },
   ];
