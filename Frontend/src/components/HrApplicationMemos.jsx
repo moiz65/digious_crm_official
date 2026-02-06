@@ -73,6 +73,18 @@ const getEndOfMonth = () => {
   return new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString().split('T')[0];
 };
 
+// Generate application number
+const generateApplicationNumber = () => {
+  const year = new Date().getFullYear();
+  const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+  return `APP-${year}-${randomNum}`;
+};
+
+// Generate tracking ID
+const generateTrackingId = () => {
+  return `TRK-${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`;
+};
+
 // Applied Applications (Applications submitted by users)
 const appliedApplications = [
   {
@@ -382,7 +394,9 @@ const departmentsList = [
   { value: 'IT Support', label: 'IT Support' },
   { value: 'Facilities', label: 'Facilities' },
   { value: 'Sales', label: 'Sales' },
-  { value: 'Productions', label: 'Productions' }
+  { value: 'Productions', label: 'Productions' },
+  { value: 'All Departments', label: 'All Departments' }
+
 ];
 
 // Department-wise application types (matching employee version)
@@ -485,6 +499,12 @@ export default function OfficeApplicationsSystem() {
   });
   const [showNewAppModal, setShowNewAppModal] = useState(false);
   const [showNewMemoModal, setShowNewMemoModal] = useState(false);
+  const [currentUser, setCurrentUser] = useState({
+    name: "Alex Johnson",
+    id: "EMP-101",
+    designation: "Senior Executive",
+    department: "Human Resources"
+  });
 
   // Stats calculations
   const stats = useMemo(() => {
@@ -627,7 +647,51 @@ export default function OfficeApplicationsSystem() {
   // Handle new application form submission
   const handleNewApplicationSubmit = (applicationData) => {
     console.log('New application submitted:', applicationData);
+    
+    // Generate a new application ID
+    const newId = appliedApplications.length > 0 
+      ? Math.max(...appliedApplications.map(app => app.id)) + 1 
+      : 1;
+    
+    // Get current time
+    const now = new Date();
+    const currentDate = now.toISOString().split('T')[0];
+    const currentTime = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+    
+    // Create new application object
+    const newApplication = {
+      id: newId,
+      applicationNumber: generateApplicationNumber(),
+      department: applicationData.department,
+      applicantName: currentUser.name,
+      applicantId: currentUser.id,
+      applicantDesignation: currentUser.designation,
+      applicationType: applicationData.type,
+      subject: applicationData.type,
+      appliedDate: currentDate,
+      appliedTime: currentTime,
+      status: 'submitted',
+      priority: applicationData.priority,
+      attachments: applicationData.documents?.map(doc => doc.name) || [],
+      estimatedProcessingTime: "3 days",
+      currentStatus: "Pending initial review",
+      lastUpdated: currentDate,
+      trackingId: generateTrackingId(),
+      notes: applicationData.description
+    };
+    
+    // In a real app, you would save to backend here
+    // For now, we'll just log it
+    console.log('New application created:', newApplication);
+    
+    // Show success message
+    alert(`Application submitted successfully!\n\nApplication Number: ${newApplication.applicationNumber}\nTracking ID: ${newApplication.trackingId}\n\nYou can track your application using the tracking ID.`);
+    
     setShowNewAppModal(false);
+    
+    // In a real app, you would refresh the appliedApplications data from backend
+    // For demo purposes, we'll show an alert and switch to the Applied tab
+    setActiveTab('applied');
   };
 
   // Handle new memo form submission
@@ -938,17 +1002,17 @@ export default function OfficeApplicationsSystem() {
                   All Applications ({filteredAllApplications.length})
                 </h3>
                 <div className="flex items-center gap-3">
-                  {/* <button 
+                  <button 
                     onClick={() => setShowNewAppModal(true)}
                     className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium"
                   >
                     <Plus className="h-4 w-4" />
                     New Application
-                  </button> */}
-                  {/* <button className="flex items-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium">
+                  </button>
+                  <button className="flex items-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium">
                     <Printer size={16} />
                     Print List
-                  </button> */}
+                  </button>
                 </div>
               </div>
             </div>
@@ -1065,7 +1129,7 @@ export default function OfficeApplicationsSystem() {
                   Applied Applications ({filteredAppliedApplications.length})
                 </h3>
                 <div className="flex items-center gap-3">
-                  {/* <button 
+                  <button 
                     onClick={() => setShowNewAppModal(true)}
                     className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium"
                   >
@@ -1075,7 +1139,7 @@ export default function OfficeApplicationsSystem() {
                   <button className="flex items-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium">
                     <Printer size={16} />
                     Print List
-                  </button> */}
+                  </button>
                 </div>
               </div>
             </div>
@@ -1187,10 +1251,10 @@ export default function OfficeApplicationsSystem() {
                     <FileDown size={16} />
                     Receive New
                   </button> */}
-                  {/* <button className="flex items-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium">
+                  <button className="flex items-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium">
                     <Printer size={16} />
                     Print List
-                  </button> */}
+                  </button>
                 </div>
               </div>
             </div>
@@ -1269,16 +1333,6 @@ export default function OfficeApplicationsSystem() {
                             <Eye size={12} className="inline mr-1" />
                             View
                           </button>
-                          {/* <button
-                            onClick={() => handleApplicationAction(app.id, 'process')}
-                            className="px-3 py-1.5 bg-green-50 hover:bg-green-100 text-green-700 rounded-lg text-xs font-medium"
-                          >
-                            <FileCheck size={12} className="inline mr-1" />
-                            Process
-                          </button> */}
-                          {/* <button className="p-1.5 hover:bg-slate-100 rounded">
-                            <MoreVertical size={16} className="text-slate-500" />
-                          </button> */}
                         </div>
                       </td>
                     </tr>
@@ -1441,10 +1495,15 @@ const NewApplicationModal = ({ onClose, onSave }) => {
     const isOtherSelected = formData.applicationType === 'Other';
     const subjectValue = isOtherSelected ? formData.customSubject : formData.applicationType;
     
+    if (!formData.department || !formData.applicationType || (isOtherSelected && !formData.customSubject) || !formData.description) {
+      alert('Please fill all required fields marked with *');
+      return;
+    }
+
     const applicationData = {
       department: formData.department,
       type: subjectValue,
-      notes: formData.description,
+      description: formData.description,
       priority: formData.priority,
       documents: uploadedFiles.map(file => ({
         name: file.name,
@@ -1454,6 +1513,24 @@ const NewApplicationModal = ({ onClose, onSave }) => {
     };
 
     onSave(applicationData);
+  };
+
+  // Reset form
+  const resetForm = () => {
+    setFormData({
+      department: '',
+      applicationType: '',
+      customSubject: '',
+      description: '',
+      priority: 'medium',
+      attachments: []
+    });
+    setUploadedFiles([]);
+  };
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
   };
 
   // Get application types for selected department
@@ -1469,7 +1546,7 @@ const NewApplicationModal = ({ onClose, onSave }) => {
       <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center p-6 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900">Submit New Application</h3>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg">
+          <button onClick={handleClose} className="p-1 hover:bg-gray-100 rounded-lg">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -1610,7 +1687,7 @@ const NewApplicationModal = ({ onClose, onSave }) => {
           <div className="flex gap-3 pt-4">
             <button 
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="flex-1 px-4 py-3 text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition duration-200"
             >
               Cancel
@@ -1730,7 +1807,8 @@ const NewMemoModal = ({ onClose, onSave }) => {
                 <option value="Team Lead">Team Lead</option>
                 <option value="Manager">Manager</option>
                 <option value="IT Department">IT Department</option>
-                <option value="Finance Department">Finance Department</option>
+                <option value="Finance Department">Finance Department</option> 
+                <option value="All Departments">All Departments</option> 
               </select>
             </div>
           </div>

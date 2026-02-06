@@ -31,6 +31,7 @@ import ApplicationsMemos from './pages/HR/ApplicationsMemos';
 import UserRoles_and_Permissions from './pages/HR/UserRoles_and_Permissions';
 import RoleTemplates from './pages/HR/RoleTemplates';
 import Applications_and_Memos from './pages/HR/Applications_and_Memos';
+import HrReportsManagement from './pages/HR/HrReportsManagement';
 
 // Employee Pages
 import EmployeeDashboard from './pages/Employee/EmployeeDashboard';
@@ -158,10 +159,10 @@ function AppContent() {
               }
             />
             <Route
-              path="/hr/reports"
+              path="/hr/reports-management"
               element={
                 <ProtectedRoute requiredRole="hr">
-                  <HRDashboard />
+                  <HrReportsManagement />
                 </ProtectedRoute>
               }
             />
