@@ -3,11 +3,11 @@
 import { useState, useEffect } from 'react';
 import { endpoints } from '../config/api';
 import BreakSummary from './BreakSummary';
-
+import TodayBreaksSummary from './TodayBreaksSummary';
 import { getPakistanDate } from '../utils/timezone';
 import { 
   Calendar, Users, CheckCircle, XCircle, Clock, FileText, Download, 
-  Filter, Plus, Search, AlertCircle, ChevronDown, Settings, Eye, Loader,
+  Filter, Plus, Search, AlertCircle, ChevronDown, Settings, Eye, 
   Edit3, Trash2, MoreVertical, UserPlus, RotateCcw, BarChart3,
   Send, Mail, Bell, Shield, Zap, Crown, Coffee, Sun, Moon,
   ArrowLeft, ArrowRight, User, Target, PieChart, ChevronUp,
@@ -285,18 +285,6 @@ const StatusDistributionChart = ({ data, title }) => {
 const BreakDetailsModal = ({ isOpen, onClose, breaks, date, employeeName }) => {
   if (!isOpen) return null;
 
-  // Loading state: breaks === null
-  if (breaks === null) {
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-2xl w-full max-w-2xl p-6 flex flex-col items-center">
-          <Loader className="h-8 w-8 text-blue-600 animate-spin" />
-          <p className="text-gray-600 mt-3">Loading break details...</p>
-        </div>
-      </div>
-    );
-  }
-
   const formatTime = (timeString) => {
     if (!timeString || timeString === '-') return 'N/A';
     return timeString;
@@ -338,9 +326,8 @@ const BreakDetailsModal = ({ isOpen, onClose, breaks, date, employeeName }) => {
 
     return {
       totalBreaks,
-      // Use floor so partial minutes don't round up (show 1m 41s as 1m in minute summary)
-      totalDuration: Math.floor(totalDuration),
-      averageDuration: totalBreaks > 0 ? Math.floor(totalDuration / totalBreaks) : 0
+      totalDuration: Math.round(totalDuration),
+      averageDuration: totalBreaks > 0 ? Math.round(totalDuration / totalBreaks) : 0
     };
   };
 
@@ -1808,46 +1795,11 @@ const EmployeeDetailView = ({
     return breaks;
   };
 
-  const handleViewBreaks = async (date) => {
-    // Show modal and a loading state while we fetch real break records
-    setSelectedDateBreaks(null); // null = loading
+  const handleViewBreaks = (date) => {
+    const breaks = getEmployeeBreaksForDate(employee.id, date);
+    setSelectedDateBreaks(breaks);
     setSelectedBreakDate(date);
     setIsBreakModalOpen(true);
-
-    try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(`${endpoints.attendance.breakSummary}?employee_id=${employee.id}&date=${date}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (!res.ok) throw new Error('Failed to fetch break summary');
-      const json = await res.json();
-
-      if (json.success && json.data && json.data.breakStats && Array.isArray(json.data.breakStats.allBreaks)) {
-        const mapped = json.data.breakStats.allBreaks.map((b, idx) => ({
-          id: b.id || `${employee.id}-${date}-${idx}`,
-          type: b.type || b.break_type || b.label || 'short',
-          breakStart: b.startTime || b.breakStart || b.break_start_time || b.start_time || '-',
-          breakEnd: b.endTime || b.breakEnd || b.break_end_time || b.end_time || '-',
-          notes: b.reason || b.notes || ''
-        }));
-
-        setSelectedDateBreaks(mapped);
-        return;
-      }
-
-      // If API didn't return expected data, fallback to synthetic generation
-      const synthetic = getEmployeeBreaksForDate(employee.id, date);
-      setSelectedDateBreaks(synthetic);
-    } catch (err) {
-      console.error('Error fetching breaks for date', err);
-      const synthetic = getEmployeeBreaksForDate(employee.id, date);
-      setSelectedDateBreaks(synthetic);
-    }
   };
 
   const getEmployeeAttendance = (employeeId) => {
@@ -1992,7 +1944,10 @@ const EmployeeDetailView = ({
           </div>
         </div> */}
 
-
+        {/* Today's Breaks Summary */}
+        <div className="mb-8">
+          <TodayBreaksSummary employeeId={employee.id} refreshInterval={30000} />
+        </div>
 
         {/* Uninformed Section */}
         {unexplainedAbsences.length > 0 && (
@@ -3566,7 +3521,7 @@ export function HrAttendancePage() {
   const [filters, setFilters] = useState({
     department: 'all',
     status: 'all',
-    timeRange: 'today',
+    timeRange: 'this_month',
     viewType: 'calendar',
     dateRange: {
       start: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toLocaleDateString('en-CA'),
@@ -3774,11 +3729,14 @@ export function HrAttendancePage() {
     // Fetch employees from database
     const fetchEmployees = async () => {
       try {
+        console.log('🔍 Fetching employees from:', endpoints.employees.base);
         const response = await fetch(endpoints.employees.base);
         const data = await response.json();
+        console.log('📋 Raw API Response:', data);
         
         // Handle both direct array response and object with data property
         const employeesList = Array.isArray(data) ? data : (data.data || data.employees || []);
+        console.log('✅ Extracted employees list:', employeesList);
         
         const employeesData = employeesList.map(emp => ({
           id: emp.id,
@@ -3794,9 +3752,10 @@ export function HrAttendancePage() {
           leavesTaken: 0,
           leavesRemaining: 20
         }));
+        console.log('👥 Formatted employees:', employeesData);
         setEmployees(employeesData);
       } catch (error) {
-        console.error('Error fetching employees:', error);
+        console.error('❌ Error fetching employees:', error);
         // Fallback: set empty array
         setEmployees([]);
       }
@@ -3808,16 +3767,23 @@ export function HrAttendancePage() {
         // Get work date (based on 6 AM threshold for night shift)
         const todayDate = getWorkDate();
         
+        console.log('📅 Fetching attendance for date:', todayDate);
+        
         // Fetch all historical attendance data (includes real check-ins)
         // Request large limit to ensure we get all historical records
-        const historyResponse = await fetch(endpoints.attendance.all + '?limit=1000');
+        console.log('🔍 Fetching history from:', endpoints.attendance.all + '?limit=10000&page=1');
+        const historyResponse = await fetch(endpoints.attendance.all + '?limit=10000&page=1');
         const historyData = await historyResponse.json();
+        console.log('📊 History API response:', historyData);
         const historicalList = Array.isArray(historyData) ? historyData : (historyData.data || historyData.attendance || []);
+        console.log('✅ Historical records count:', historicalList.length);
         
         // Fetch today's attendance data WITH absent records (so we see all employees for today)
         const todayResponse = await fetch(endpoints.attendance.all + `-with-absent?date=${todayDate}`);
         const todayData = await todayResponse.json();
+        console.log('📋 Today API response:', todayData);
         const todayList = Array.isArray(todayData) ? todayData : (todayData.data || []);
+        console.log('✅ Today records count:', todayList.length);
         
         // Combine both: today's data (with absent records) + historical data (excluding today's records)
         const combinedAttendance = [
@@ -3916,7 +3882,7 @@ export function HrAttendancePage() {
           
           return {
             id: record.id,
-            employeeId: record.employee_id,
+            employeeId: typeof record.employee_id === 'string' ? parseInt(record.employee_id.replace(/\D/g, '')) || record.employee_id : record.employee_id,
             name: record.name,
             email: record.email,
             date: attendanceDateStr,
@@ -4364,20 +4330,22 @@ export function HrAttendancePage() {
       }
     }
     
-    const now = new Date();
+    // Use the calendar's current date for month-based filters when viewing calendar
+    const referenceDate = filters.viewType === 'calendar' ? currentDate : new Date();
+    
     switch (filters.timeRange) {
       case 'today':
         const today = getWorkDate(); // Use work date based on night shift schedule
         filteredData = filteredData.filter(att => att.date === today);
         break;
       case 'yesterday':
-        const yesterdayDate = new Date(now);
+        const yesterdayDate = new Date(referenceDate);
         yesterdayDate.setDate(yesterdayDate.getDate() - 1);
         const yesterday = yesterdayDate.toLocaleDateString('en-CA'); // Use local timezone
         filteredData = filteredData.filter(att => att.date === yesterday);
         break;
       case 'this_week':
-        const startOfWeek = new Date(now);
+        const startOfWeek = new Date(referenceDate);
         startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
         const endOfWeek = new Date(startOfWeek);
         endOfWeek.setDate(endOfWeek.getDate() + 6);
@@ -4387,7 +4355,7 @@ export function HrAttendancePage() {
         });
         break;
       case 'last_week':
-        const weekAgo = new Date(now);
+        const weekAgo = new Date(referenceDate);
         weekAgo.setDate(weekAgo.getDate() - 7);
         const startOfLastWeek = new Date(weekAgo);
         startOfLastWeek.setDate(startOfLastWeek.getDate() - startOfLastWeek.getDay());
@@ -4399,16 +4367,16 @@ export function HrAttendancePage() {
         });
         break;
       case 'this_month':
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        const startOfMonth = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), 1);
+        const endOfMonth = new Date(referenceDate.getFullYear(), referenceDate.getMonth() + 1, 0);
         filteredData = filteredData.filter(att => {
           const attDate = new Date(att.date);
           return attDate >= startOfMonth && attDate <= endOfMonth;
         });
         break;
       case 'last_month':
-        const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+        const startOfLastMonth = new Date(referenceDate.getFullYear(), referenceDate.getMonth() - 1, 1);
+        const endOfLastMonth = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), 0);
         filteredData = filteredData.filter(att => {
           const attDate = new Date(att.date);
           return attDate >= startOfLastMonth && attDate <= endOfLastMonth;
@@ -4509,7 +4477,97 @@ export function HrAttendancePage() {
               ))}
             </div>
 
-            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-5 mb-8">
+              {/* Present Today Card */}
+              <div className="group relative bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-6 border border-green-200 shadow-sm hover:shadow-lg hover:border-green-300 transition-all duration-300 overflow-hidden">
+                <div className="absolute top-0 right-0 w-20 h-20 bg-green-100 rounded-full -mr-8 -mt-8 opacity-40 group-hover:opacity-60 transition-opacity"></div>
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-sm font-semibold text-gray-700">Present Today</h3>
+                    <div className="p-2.5 bg-green-100 rounded-lg">
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                    </div>
+                  </div>
+                  <div className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">{stats.presentToday}</div>
+                  <p className="text-sm text-green-700 mt-2 flex items-center font-medium">
+                    <Users className="h-4 w-4 mr-1.5" />
+                    {stats.totalEmployees > 0 ? Math.round((stats.presentToday / stats.totalEmployees) * 100) : 0}% attendance rate
+                  </p>
+                </div>
+              </div>
+
+              {/* On Leave Card */}
+              <div className="group relative bg-gradient-to-br from-orange-50 to-amber-50 rounded-2xl p-6 border border-orange-200 shadow-sm hover:shadow-lg hover:border-orange-300 transition-all duration-300 overflow-hidden">
+                <div className="absolute top-0 right-0 w-20 h-20 bg-orange-100 rounded-full -mr-8 -mt-8 opacity-40 group-hover:opacity-60 transition-opacity"></div>
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-sm font-semibold text-gray-700">On Leave</h3>
+                    <div className="p-2.5 bg-orange-100 rounded-lg">
+                      <Calendar className="h-5 w-5 text-orange-600" />
+                    </div>
+                  </div>
+                  <div className="text-3xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">{stats.onLeave}</div>
+                  <p className="text-sm text-orange-700 mt-2 flex items-center font-medium">
+                    <Clock className="h-4 w-4 mr-1.5" />
+                    {stats.totalLeavesTaken} total this month
+                  </p>
+                </div>
+              </div>
+
+              {/* Monthly Rate Card */}
+              <div className="group relative bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-6 border border-blue-200 shadow-sm hover:shadow-lg hover:border-blue-300 transition-all duration-300 overflow-hidden">
+                <div className="absolute top-0 right-0 w-20 h-20 bg-blue-100 rounded-full -mr-8 -mt-8 opacity-40 group-hover:opacity-60 transition-opacity"></div>
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-sm font-semibold text-gray-700">Monthly Rate</h3>
+                    <div className="p-2.5 bg-blue-100 rounded-lg">
+                      <PieChart className="h-5 w-5 text-blue-600" />
+                    </div>
+                  </div>
+                  <div className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">{stats.monthlyAttendanceRate}%</div>
+                  <p className="text-sm text-blue-700 mt-2 flex items-center font-medium">
+                    <BarChart3 className="h-4 w-4 mr-1.5" />
+                    Overall performance
+                  </p>
+                </div>
+              </div>
+
+              {/* Late Today Card */}
+              <div className="group relative bg-gradient-to-br from-red-50 to-rose-50 rounded-2xl p-6 border border-red-200 shadow-sm hover:shadow-lg hover:border-red-300 transition-all duration-300 overflow-hidden">
+                <div className="absolute top-0 right-0 w-20 h-20 bg-red-100 rounded-full -mr-8 -mt-8 opacity-40 group-hover:opacity-60 transition-opacity"></div>
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-sm font-semibold text-gray-700">Late Today</h3>
+                    <div className="p-2.5 bg-red-100 rounded-lg">
+                      <Clock className="h-5 w-5 text-red-600" />
+                    </div>
+                  </div>
+                  <div className="text-3xl font-bold bg-gradient-to-r from-red-600 to-rose-600 bg-clip-text text-transparent">{stats.lateToday}</div>
+                  <p className="text-sm text-red-700 mt-2 flex items-center font-medium">
+                    <AlertCircle className="h-4 w-4 mr-1.5" />
+                    Late arrivals
+                  </p>
+                </div>
+              </div>
+
+              {/* Uninformed Card */}
+              <div className="group relative bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 border border-purple-200 shadow-sm hover:shadow-lg hover:border-purple-300 transition-all duration-300 overflow-hidden">
+                <div className="absolute top-0 right-0 w-20 h-20 bg-purple-100 rounded-full -mr-8 -mt-8 opacity-40 group-hover:opacity-60 transition-opacity"></div>
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-sm font-semibold text-gray-700">Uninformed</h3>
+                    <div className="p-2.5 bg-purple-100 rounded-lg">
+                      <UserX className="h-5 w-5 text-purple-600" />
+                    </div>
+                  </div>
+                  <div className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">{stats.unexplainedAbsences}</div>
+                  <p className="text-sm text-purple-700 mt-2 flex items-center font-medium">
+                    <AlertCircle className="h-4 w-4 mr-1.5" />
+                    Need follow-up
+                  </p>
+                </div>
+              </div>
+            </div>
 
             {activeTab === 'overview' && (
               <>
