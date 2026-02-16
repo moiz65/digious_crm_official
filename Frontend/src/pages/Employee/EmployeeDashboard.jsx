@@ -47,7 +47,7 @@ const EmployeeDashboard = () => {
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-3">{stat.label}</p>
-                    <p className="text-3xl font-semibold bg-gradient-to-r ${stat.color} bg-clip-text text-black/90">{stat.value}</p>
+                    <p className={`text-3xl font-semibold bg-gradient-to-r ${stat.color} bg-clip-text text-black/90`}>{stat.value}</p>
                   </div>
                   <div className={`p-3 rounded-xl bg-gradient-to-br ${stat.iconBg} shadow-md group-hover:scale-110 transition-transform`}>
                     <Icon className="w-6 h-6 text-white" />

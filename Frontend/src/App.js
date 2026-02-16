@@ -38,6 +38,7 @@ import EmployeeDashboard from './pages/Employee/EmployeeDashboard';
 import EmployeeAttendance from './pages/Employees/EmployeeAtt';
 import EmployeeDetails from './pages/Employees/EmployeeDetails';
 import ApplicationandMemoEmployees from './pages/Employees/ApplicationandMemoEmployees';
+import EmployeesSettings from './pages/Employees/EmployeeSettings';
 
 function AppContent() {
   return (
@@ -222,6 +223,14 @@ function AppContent() {
               element={
                 <ProtectedRoute requiredRole="employee">
                   <ApplicationandMemoEmployees />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/employee/settings"
+              element={
+                <ProtectedRoute requiredRole="employee">
+                  <EmployeesSettings />
                 </ProtectedRoute>
               }
             />
