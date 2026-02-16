@@ -7,6 +7,15 @@ import config from '../config/api';
 
 const API_BASE_URL = config.FULL_API_URL;
 
+// Helper to build auth headers
+const getAuthHeaders = (extra = {}) => {
+  const token = localStorage.getItem('token');
+  return {
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...extra,
+  };
+};
+
 // Helper to convert File to Base64
 const fileToBase64 = (file) => {
   return new Promise((resolve, reject) => {
@@ -23,7 +32,9 @@ const EmployeeProfileService = {
    */
   async getProfile(employeeId) {
     try {
-      const response = await fetch(`${API_BASE_URL}/employees/profile/${employeeId}`);
+      const response = await fetch(`${API_BASE_URL}/employees/profile/${employeeId}`, {
+        headers: getAuthHeaders()
+      });
       if (!response.ok) throw new Error('Failed to fetch profile');
       return await response.json();
     } catch (error) {
@@ -37,7 +48,10 @@ const EmployeeProfileService = {
    */
   async getProfileSummary(employeeId) {
     try {
-      const response = await fetch(`${API_BASE_URL}/employees/profile/${employeeId}/summary`);
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/employees/profile/${employeeId}/summary`, {
+        headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
+      });
       if (!response.ok) throw new Error('Failed to fetch profile summary');
       return await response.json();
     } catch (error) {
@@ -51,7 +65,9 @@ const EmployeeProfileService = {
    */
   async getFinancialSummary(employeeId) {
     try {
-      const response = await fetch(`${API_BASE_URL}/employees/profile/${employeeId}/financial`);
+      const response = await fetch(`${API_BASE_URL}/employees/profile/${employeeId}/financial`, {
+        headers: getAuthHeaders()
+      });
       if (!response.ok) throw new Error('Failed to fetch financial summary');
       return await response.json();
     } catch (error) {
@@ -65,7 +81,9 @@ const EmployeeProfileService = {
    */
   async getAttendanceSummary(employeeId) {
     try {
-      const response = await fetch(`${API_BASE_URL}/employees/profile/${employeeId}/attendance`);
+      const response = await fetch(`${API_BASE_URL}/employees/profile/${employeeId}/attendance`, {
+        headers: getAuthHeaders()
+      });
       if (!response.ok) throw new Error('Failed to fetch attendance summary');
       return await response.json();
     } catch (error) {
@@ -79,7 +97,9 @@ const EmployeeProfileService = {
    */
   async getPerformanceSummary(employeeId) {
     try {
-      const response = await fetch(`${API_BASE_URL}/employees/profile/${employeeId}/performance`);
+      const response = await fetch(`${API_BASE_URL}/employees/profile/${employeeId}/performance`, {
+        headers: getAuthHeaders()
+      });
       if (!response.ok) throw new Error('Failed to fetch performance summary');
       return await response.json();
     } catch (error) {
@@ -223,7 +243,9 @@ const EmployeeProfileService = {
    */
   async getEmployeeResources(employeeId) {
     try {
-      const response = await fetch(`${API_BASE_URL}/employees/profile/${employeeId}/resources`);
+      const response = await fetch(`${API_BASE_URL}/employees/profile/${employeeId}/resources`, {
+        headers: getAuthHeaders()
+      });
       if (!response.ok) throw new Error('Failed to fetch resources');
       return await response.json();
     } catch (error) {
@@ -237,7 +259,9 @@ const EmployeeProfileService = {
    */
   async getEmployeeSkills(employeeId) {
     try {
-      const response = await fetch(`${API_BASE_URL}/employees/profile/${employeeId}/skills`);
+      const response = await fetch(`${API_BASE_URL}/employees/profile/${employeeId}/skills`, {
+        headers: getAuthHeaders()
+      });
       if (!response.ok) throw new Error('Failed to fetch skills');
       return await response.json();
     } catch (error) {
@@ -273,7 +297,9 @@ const EmployeeProfileService = {
    */
   async getEmployeeSocialLinks(employeeId) {
     try {
-      const response = await fetch(`${API_BASE_URL}/employees/profile/${employeeId}/social-links`);
+      const response = await fetch(`${API_BASE_URL}/employees/profile/${employeeId}/social-links`, {
+        headers: getAuthHeaders()
+      });
       if (!response.ok) throw new Error('Failed to fetch social links');
       return await response.json();
     } catch (error) {
@@ -287,7 +313,9 @@ const EmployeeProfileService = {
    */
   async getEmployeeRequiredDocuments(employeeId) {
     try {
-      const response = await fetch(`${API_BASE_URL}/employees/profile/${employeeId}/required-documents`);
+      const response = await fetch(`${API_BASE_URL}/employees/profile/${employeeId}/required-documents`, {
+        headers: getAuthHeaders()
+      });
       if (!response.ok) throw new Error('Failed to fetch required documents');
       return await response.json();
     } catch (error) {
@@ -301,7 +329,9 @@ const EmployeeProfileService = {
    */
   async getEmployeeAchievements(employeeId) {
     try {
-      const response = await fetch(`${API_BASE_URL}/employees/profile/${employeeId}/achievements`);
+      const response = await fetch(`${API_BASE_URL}/employees/profile/${employeeId}/achievements`, {
+        headers: getAuthHeaders()
+      });
       if (!response.ok) throw new Error('Failed to fetch achievements');
       return await response.json();
     } catch (error) {

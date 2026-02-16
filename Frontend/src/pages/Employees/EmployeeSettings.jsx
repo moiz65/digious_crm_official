@@ -21,8 +21,8 @@ const EmployeeSettings = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         <DashboardHeader
-          title="Employee Settings"
-          subtitle="Manage employee-related settings and preferences"
+          title="Settings"
+          
         />
         
 
