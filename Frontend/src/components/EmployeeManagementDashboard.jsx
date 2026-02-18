@@ -5,15 +5,15 @@ const EmployeeManagementDashboard = () => {
   const [activeTab, setActiveTab] = useState('profile');
   const [settings, setSettings] = useState({
     // Profile Information
-    name: 'John Smith',
-    email: 'john.smith@acmecorp.com',
-    phone: '+1 (555) 123-4567',
-    department: 'Engineering',
-    position: 'Senior Developer',
-    employeeId: 'EMP-2024-001',
-    joinDate: '2024-01-15',
-    location: 'San Francisco, CA',
-    timezone: 'PST (UTC-8)',
+    name: 'Muhammad Hamza',
+    email: 'muhammad.hamza@digioussolutions.com',
+    phone: '+92 334 129 7373',
+    department: 'Production',
+    position: 'Developer',
+    employeeId: 'EMP-2024-0033',
+    joinDate: '2024-03-01',
+    location: 'Karachi, Pakistan',
+    timezone: 'Est (UTC-5)',
     
     // Profile Image
     profileImage: null,
@@ -494,8 +494,8 @@ const EmployeeManagementDashboard = () => {
                       </svg>
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900">MacBook Pro - Chrome</p>
-                      <p className="text-sm text-gray-500">San Francisco, CA • Current session</p>
+                      <p className="font-medium text-gray-900">Dell - Chrome</p>
+                      <p className="text-sm text-gray-500">Karachi, Pakistan • Current session</p>
                     </div>
                   </div>
                   <span className="px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
@@ -511,8 +511,8 @@ const EmployeeManagementDashboard = () => {
                       </svg>
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900">iPhone 14 - Safari</p>
-                      <p className="text-sm text-gray-500">San Francisco, CA • 2 hours ago</p>
+                      <p className="font-medium text-gray-900">iPhone 11 Pro - Safari</p>
+                      <p className="text-sm text-gray-500">Karachi, Pakistan • 2 hours ago</p>
                     </div>
                   </div>
                   <button className="text-sm text-red-600 hover:text-red-800">
