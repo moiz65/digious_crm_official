@@ -1770,7 +1770,7 @@ const ApplicationDetailModal = ({ application, onClose, employee, onEdit }) => {
     
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/v1/applications/${application.id}/withdraw`, {
+      const response = await fetch(`https://digious-crm-official.onrender.com/api/v1/applications/${application.id}/withdraw`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -1797,7 +1797,7 @@ const ApplicationDetailModal = ({ application, onClose, employee, onEdit }) => {
     setActionLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/v1/applications/${application.id}/approve`, {
+      const response = await fetch(`https://digious-crm-official.onrender.com/api/v1/applications/${application.id}/approve`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -1835,7 +1835,7 @@ const ApplicationDetailModal = ({ application, onClose, employee, onEdit }) => {
     setActionLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/v1/applications/${application.id}/reject`, {
+      const response = await fetch(`https://digious-crm-official.onrender.com/api/v1/applications/${application.id}/reject`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
