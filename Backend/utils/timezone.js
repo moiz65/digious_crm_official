@@ -12,13 +12,42 @@
  * @returns {Date} Date object representing current time in Pakistan
  */
 const getPakistanDate = () => {
-  const now = new Date(); // Get UTC time
-  // Create a new date object with Pakistan time (UTC+5)
-  // Offset is in milliseconds: 5 hours = 5 * 60 * 60 * 1000 = 18000000 ms
-  const pktOffset = 5 * 60 * 60 * 1000; // 5 hours in milliseconds
-  const utcTime = now.getTime(); // Time in UTC
-  const pktTime = new Date(utcTime + pktOffset);
-  return pktTime;
+  const now = new Date(); // Get current time
+  
+  // Get UTC components
+  const utcYear = now.getUTCFullYear();
+  const utcMonth = now.getUTCMonth();
+  const utcDate = now.getUTCDate();
+  const utcHours = now.getUTCHours();
+  const utcMinutes = now.getUTCMinutes();
+  const utcSeconds = now.getUTCSeconds();
+  const utcMilliseconds = now.getUTCMilliseconds();
+  
+  // Add 5 hours for Pakistan timezone
+  let hours = utcHours + 5;
+  let date = utcDate;
+  let month = utcMonth;
+  let year = utcYear;
+  
+  // Handle overflow when adding 5 hours
+  if (hours >= 24) {
+    hours -= 24;
+    date += 1;
+    // Handle month/year overflow
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    if (date > daysInMonth) {
+      date = 1;
+      month += 1;
+      if (month > 11) {
+        month = 0;
+        year += 1;
+      }
+    }
+  }
+  
+  // Create date object with Pakistan time components
+  const pktDate = new Date(year, month, date, hours, utcMinutes, utcSeconds, utcMilliseconds);
+  return pktDate;
 };
 
 /**
@@ -28,9 +57,9 @@ const getPakistanDate = () => {
  */
 const getPakistanDateString = () => {
   const date = getPakistanDate();
-  const year = date.getUTCFullYear();
-  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-  const day = String(date.getUTCDate()).padStart(2, '0');
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 };
 
@@ -42,9 +71,9 @@ const getPakistanDateString = () => {
  */
 const getPakistanTimeString = () => {
   const date = getPakistanDate();
-  const hours = String(date.getUTCHours()).padStart(2, '0');
-  const minutes = String(date.getUTCMinutes()).padStart(2, '0');
-  const seconds = String(date.getUTCSeconds()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
   return `${hours}:${minutes}:${seconds}`;
 };
 
@@ -55,9 +84,9 @@ const getPakistanTimeString = () => {
  */
 const getUTCTimeString = () => {
   const date = getPakistanDate();
-  const hours = String(date.getUTCHours()).padStart(2, '0');
-  const minutes = String(date.getUTCMinutes()).padStart(2, '0');
-  const seconds = String(date.getUTCSeconds()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
   return `${hours}:${minutes}:${seconds}`;
 };
 
@@ -98,9 +127,9 @@ const convertToPakistanTime = (date) => {
  */
 const formatPakistanDate = (date) => {
   const pkDate = convertToPakistanTime(date);
-  const year = pkDate.getUTCFullYear();
-  const month = String(pkDate.getUTCMonth() + 1).padStart(2, '0');
-  const day = String(pkDate.getUTCDate()).padStart(2, '0');
+  const year = pkDate.getFullYear();
+  const month = String(pkDate.getMonth() + 1).padStart(2, '0');
+  const day = String(pkDate.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 };
 

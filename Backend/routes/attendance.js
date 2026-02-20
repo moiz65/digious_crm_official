@@ -17,16 +17,25 @@ router.get('/today-breaks/:employee_id', authMiddleware, attendanceController.ge
 router.get('/today/:employee_id', attendanceController.getTodayAttendance);
 router.get('/monthly/:employee_id', attendanceController.getMonthlyAttendance);
 router.get('/break-summary', attendanceController.getBreakSummary); // Get break summary for a specific employee and date
+router.get('/pending-checkout', authMiddleware, attendanceController.getPendingCheckout); // NEW: Check for pending checkout from previous shift
+
+// Absence Management Routes
+router.post('/generate-absent', attendanceController.generateAbsentRecords); // Generate absent records from joining date
+router.post('/auto-mark-absent', attendanceController.autoMarkAbsentByDateRange); // Auto-mark absent for date range
+router.get('/absent-today', attendanceController.getTodayAbsentEmployees); // Get today's absent employees (auto-generate)
+router.get('/absent-by-date', attendanceController.getAbsentEmployeesByDate); // Get absent by specific date
+router.get('/absent-by-range', attendanceController.getAbsentEmployeesByDateRange); // Get absent by date range
+router.get('/absent-summary', attendanceController.getAbsentSummaryByEmployee); // Get absence summary per employee
+router.get('/all-with-absent', attendanceController.getAllAttendanceWithAbsent); // New endpoint with absent records
 
 // Admin Routes (Public for HR Dashboard)
-router.post('/generate-absent', attendanceController.generateAbsentRecords); // Generate absent records from joining date
-router.get('/all-with-absent', attendanceController.getAllAttendanceWithAbsent); // New endpoint with absent records
 router.get('/all', attendanceController.getAllAttendance);
 router.get('/breaks', attendanceController.getAllBreaks);
 router.get('/summary', authMiddleware, attendanceController.getAttendanceSummary);
 router.get('/overtime', authMiddleware, attendanceController.getOvertimeReport);
 router.post('/auto-fix-working-hours', attendanceController.autoFixMissingWorkingHours); // Auto-fix missing working hours
 router.post('/auto-checkout', attendanceController.autoCheckoutExpiredSessions); // Auto-checkout for expired sessions at 9 AM
+router.post('/fix-status/:id', attendanceController.fixStatusById); // Admin: fix status and late_by_minutes for early check-ins
 router.post('/fix-checkout/:id', attendanceController.fixCheckoutById); // Admin: fix a single attendance by id
 
 module.exports = router;

@@ -9,7 +9,19 @@ const crypto = require('crypto');
  */
 const getEmployeeProfile = async (req, res) => {
   try {
-    const { id } = req.params;
+    let { id } = req.params;
+    
+    // Handle both user_as_employees.id and employee_onboarding.id
+    // First, check if this is a user_as_employees.id and convert to employee_onboarding.id
+    const [userMapping] = await pool.query(
+      'SELECT employee_id FROM user_as_employees WHERE id = ?',
+      [id]
+    );
+    
+    if (userMapping.length > 0) {
+      id = userMapping[0].employee_id;
+      console.log(`🔄 Converted user_as_employees.id to employee_onboarding.id: ${id}`);
+    }
     
     // Get from employee_onboarding
     const [onboarding] = await pool.query(
@@ -87,7 +99,19 @@ const getEmployeeProfile = async (req, res) => {
  */
 const getProfileSummary = async (req, res) => {
   try {
-    const { id } = req.params;
+    let { id } = req.params;
+    
+    // Handle both user_as_employees.id and employee_onboarding.id
+    // First, check if this is a user_as_employees.id and convert to employee_onboarding.id
+    const [userMapping] = await pool.query(
+      'SELECT employee_id FROM user_as_employees WHERE id = ?',
+      [id]
+    );
+    
+    if (userMapping.length > 0) {
+      id = userMapping[0].employee_id;
+      console.log(`🔄 Converted user_as_employees.id to employee_onboarding.id: ${id}`);
+    }
     
     // Get from employee_onboarding
     const [onboarding] = await pool.query(
@@ -179,7 +203,19 @@ const getProfileSummary = async (req, res) => {
  */
 const getFinancialSummary = async (req, res) => {
   try {
-    const { id } = req.params;
+    let { id } = req.params;
+    
+    // Handle both user_as_employees.id and employee_onboarding.id
+    const [userMapping] = await pool.query(
+      'SELECT employee_id FROM user_as_employees WHERE id = ?',
+      [id]
+    );
+    
+    if (userMapping.length > 0) {
+      id = userMapping[0].employee_id;
+      console.log(`🔄 Converted user_as_employees.id to employee_onboarding.id: ${id}`);
+    }
+    
     console.log(`\n💰 [Financial Summary] Employee ID: ${id}`);
 
     // Get employee basic info
@@ -304,7 +340,18 @@ const getFinancialSummary = async (req, res) => {
  */
 const getAttendanceSummary = async (req, res) => {
   try {
-    const { id } = req.params;
+    let { id } = req.params;
+    
+    // Handle both user_as_employees.id and employee_onboarding.id
+    const [userMapping] = await pool.query(
+      'SELECT employee_id FROM user_as_employees WHERE id = ?',
+      [id]
+    );
+    
+    if (userMapping.length > 0) {
+      id = userMapping[0].employee_id;
+      console.log(`🔄 Converted user_as_employees.id to employee_onboarding.id: ${id}`);
+    }
     
     const [rows] = await pool.query(
       'SELECT * FROM employee_attendance_summary WHERE id = ?',
@@ -338,7 +385,18 @@ const getAttendanceSummary = async (req, res) => {
  */
 const getPerformanceSummary = async (req, res) => {
   try {
-    const { id } = req.params;
+    let { id } = req.params;
+    
+    // Handle both user_as_employees.id and employee_onboarding.id
+    const [userMapping] = await pool.query(
+      'SELECT employee_id FROM user_as_employees WHERE id = ?',
+      [id]
+    );
+    
+    if (userMapping.length > 0) {
+      id = userMapping[0].employee_id;
+      console.log(`🔄 Converted user_as_employees.id to employee_onboarding.id: ${id}`);
+    }
     
     const [rows] = await pool.query(
       'SELECT * FROM employee_performance_summary WHERE id = ?',
@@ -1107,7 +1165,18 @@ const uploadProfilePhoto = async (req, res) => {
 
 const getEmployeeResources = async (req, res) => {
   try {
-    const { id } = req.params;
+    let { id } = req.params;
+
+    // Handle both user_as_employees.id and employee_onboarding.id
+    const [userMapping] = await pool.query(
+      'SELECT employee_id FROM user_as_employees WHERE id = ?',
+      [id]
+    );
+    
+    if (userMapping.length > 0) {
+      id = userMapping[0].employee_id;
+      console.log(`🔄 Converted user_as_employees.id to employee_onboarding.id: ${id}`);
+    }
 
     // Same approach as getProfileSummary - get from employee_profiles (if exists)
     let profiles = [];
@@ -1221,7 +1290,18 @@ const getEmployeeResources = async (req, res) => {
  */
 const getEmployeeSkills = async (req, res) => {
   try {
-    const { id } = req.params;
+    let { id } = req.params;
+
+    // Handle both user_as_employees.id and employee_onboarding.id
+    const [userMapping] = await pool.query(
+      'SELECT employee_id FROM user_as_employees WHERE id = ?',
+      [id]
+    );
+    
+    if (userMapping.length > 0) {
+      id = userMapping[0].employee_id;
+      console.log(`🔄 Converted user_as_employees.id to employee_onboarding.id: ${id}`);
+    }
 
     // First, try to get skills from employee_onboarding.skills_json
     const [onboarding] = await pool.query(
@@ -1308,7 +1388,19 @@ const getEmployeeSkills = async (req, res) => {
  */
 const getEmployeeSocialLinks = async (req, res) => {
   try {
-    const { id } = req.params;
+    let { id } = req.params;
+    
+    // Handle both user_as_employees.id and employee_onboarding.id
+    const [userMapping] = await pool.query(
+      'SELECT employee_id FROM user_as_employees WHERE id = ?',
+      [id]
+    );
+    
+    if (userMapping.length > 0) {
+      id = userMapping[0].employee_id;
+      console.log(`🔄 Converted user_as_employees.id to employee_onboarding.id: ${id}`);
+    }
+    
     console.log(`\n📖 [Get Social Links] Employee ID: ${id}`);
 
     // Try employee_social_links table first
@@ -1395,7 +1487,19 @@ const getEmployeeSocialLinks = async (req, res) => {
  */
 const getEmployeeRequiredDocuments = async (req, res) => {
   try {
-    const { id } = req.params;
+    let { id } = req.params;
+    
+    // Handle both user_as_employees.id and employee_onboarding.id
+    const [userMapping] = await pool.query(
+      'SELECT employee_id FROM user_as_employees WHERE id = ?',
+      [id]
+    );
+    
+    if (userMapping.length > 0) {
+      id = userMapping[0].employee_id;
+      console.log(`🔄 Converted user_as_employees.id to employee_onboarding.id: ${id}`);
+    }
+    
     console.log(`\n📖 [Get Documents] Employee ID: ${id}`);
 
     // Try employee_required_documents table first
@@ -1486,7 +1590,19 @@ const getEmployeeRequiredDocuments = async (req, res) => {
  */
 const getEmployeeAchievements = async (req, res) => {
   try {
-    const { id } = req.params;
+    let { id } = req.params;
+    
+    // Handle both user_as_employees.id and employee_onboarding.id
+    const [userMapping] = await pool.query(
+      'SELECT employee_id FROM user_as_employees WHERE id = ?',
+      [id]
+    );
+    
+    if (userMapping.length > 0) {
+      id = userMapping[0].employee_id;
+      console.log(`🔄 Converted user_as_employees.id to employee_onboarding.id: ${id}`);
+    }
+    
     console.log(`\n📖 [Get Achievements] Employee ID: ${id}`);
 
     // Try employee_achievements table first

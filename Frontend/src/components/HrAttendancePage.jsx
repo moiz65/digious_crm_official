@@ -2041,7 +2041,7 @@ const EmployeeDetailView = ({
               
               <div className="space-y-3">
                 <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3">
-                  <div className="text-sm text-blue-100 mb-1">Total / Used</div>
+                  <div className="text-sm text-blue-100 mb-1">Used/ Total</div>
                   <div className="text-3xl font-bold">{empLeaves?.casualLeavesTaken || 0}/{empLeaves?.casualLeaves || 8}</div>
                 </div>
                 
@@ -2062,7 +2062,7 @@ const EmployeeDetailView = ({
               
               <div className="space-y-3">
                 <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3">
-                  <div className="text-sm text-red-100 mb-1">Total / Used</div>
+                  <div className="text-sm text-red-100 mb-1">Used/ Total</div>
                   <div className="text-3xl font-bold">{empLeaves?.sickLeavesTaken || 0}/{empLeaves?.sickLeaves || 8}</div>
                 </div>
                 
@@ -2083,7 +2083,7 @@ const EmployeeDetailView = ({
               
               <div className="space-y-3">
                 <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3">
-                  <div className="text-sm text-green-100 mb-1">Total / Used</div>
+                  <div className="text-sm text-green-100 mb-1">Used/ Total</div>
                   <div className="text-3xl font-bold">{empLeaves?.annualLeavesTaken || 0}/{empLeaves?.annualLeaves || 12}</div>
                 </div>
                 
@@ -2157,9 +2157,10 @@ const EmployeeDetailView = ({
                       <option value="present">Present</option>
                       <option value="late">Late</option>
                       <option value="leave">On Leave</option>
+                      <option value="paid_leave">Paid Leave (PL)</option>
                       <option value="halfday">Half Day</option>
                       <option value="absent">Absent</option>
-                      <option value="unexplained">Uninformed</option>
+                      <option value="unexplained">Uninformed Absent (UA)</option>
                       <option value="not-recorded">Not Recorded</option>
                     </select>
 
@@ -2210,7 +2211,8 @@ const EmployeeDetailView = ({
                           const matchesFilter = (() => {
                             if (monthStatusFilter === 'all') return true;
                             if (monthStatusFilter === 'not-recorded') return !rec;
-                            if (monthStatusFilter === 'unexplained') return rec && rec.status === 'absent' && (!rec.notes || rec.notes === 'No notification' || rec.notes.includes('No explanation'));
+                            if (monthStatusFilter === 'unexplained') return rec && ((rec.status === 'absent' && (!rec.notes || rec.notes === 'No notification' || rec.notes.includes('No explanation'))) || rec.status === 'Uninformed Absent' || rec.status === 'uninformed absent');
+                            if (monthStatusFilter === 'paid_leave') return rec && (rec.status === 'Paid Leave' || rec.status === 'paid leave' || rec.status === 'leave');
                             return rec && rec.status === monthStatusFilter;
                           })();
 
@@ -2224,12 +2226,14 @@ const EmployeeDetailView = ({
                           const status = rec ? rec.status : 'not-recorded';
                           const getBadge = () => {
                             if (isWeekend) return { text: 'Off', color: 'bg-gray-400 text-white' };
-                            if (isHoliday) return { text: 'Holiday', color: 'bg-purple-500 text-white' };
-                            if (isUnexplained) return { text: 'Unexp.', color: 'bg-red-500 text-white' };
+                            if (isHoliday) return { text: 'Hol', color: 'bg-purple-500 text-white' };
+                            if (isUnexplained) return { text: 'UA', color: 'bg-red-600 text-white' };
                             if (status === 'present') return { text: 'P', color: 'bg-green-500 text-white' };
                             if (status === 'late') return { text: 'L', color: 'bg-orange-500 text-white' };
-                            if (status === 'leave') return { text: 'Leave', color: 'bg-blue-500 text-white' };
+                            if (status === 'paid leave' || status === 'Paid Leave') return { text: 'PL', color: 'bg-teal-500 text-white' };
+                            if (status === 'leave' || status === 'On Leave') return { text: 'PL', color: 'bg-teal-500 text-white' };
                             if (status === 'halfday') return { text: 'Half', color: 'bg-yellow-500 text-white' };
+                            if (status === 'uninformed absent' || status === 'Uninformed Absent') return { text: 'UA', color: 'bg-red-600 text-white' };
                             if (status === 'absent') return { text: 'A', color: 'bg-red-500 text-white' };
                             return { text: '-', color: 'bg-gray-200 text-gray-700' };
                           };
@@ -2403,6 +2407,8 @@ const EmployeeListView = ({
   setSelectedEmployee, 
   setEmployeeView, 
   attendanceData, 
+  monthlyAbsentSummary,
+  currentDate,
   employeeLeaves,
   selectedEmployees,
   toggleEmployeeSelection,
@@ -2414,14 +2420,30 @@ const EmployeeListView = ({
   onAddEmployee
 }) => {
   const getEmployeeStats = (employeeId) => {
-    const empAttendance = attendanceData.filter(att => att.employeeId === employeeId);
-    // Count present AND late as attended (working)
-    const present = empAttendance.filter(a => a.status === 'present' || a.status === 'late').length;
-    const leave = empAttendance.filter(a => a.status === 'leave').length;
-    const halfday = empAttendance.filter(a => a.status === 'halfday').length;
-    const absent = empAttendance.filter(a => a.status === 'absent').length;
-    const totalHours = empAttendance.reduce((sum, a) => sum + parseFloat(a.hours), 0);
-    const totalOvertime = empAttendance.reduce((sum, a) => sum + parseFloat(a.overtime), 0);
+    // Filter attendance to current month only
+    const curYear  = (currentDate || new Date()).getFullYear();
+    const curMonth = (currentDate || new Date()).getMonth();
+    const empAttendance = attendanceData.filter(att => {
+      if (att.employeeId !== employeeId) return false;
+      const d = new Date(att.date);
+      return d.getFullYear() === curYear && d.getMonth() === curMonth;
+    });
+
+    const present  = empAttendance.filter(a => a.status === 'present' || a.status === 'late').length;
+    const leave    = empAttendance.filter(a => a.status === 'leave').length;
+    const halfday  = empAttendance.filter(a => a.status === 'halfday').length;
+
+    // Use monthlyAbsentSummary for accurate absent count (includes historical absences)
+    const absentSummaryEntry = (monthlyAbsentSummary || []).find(s => {
+      // employee_id may be a string like "EMP-001" or a number
+      return String(s.employee_id) === String(employeeId);
+    });
+    const absent = absentSummaryEntry ? absentSummaryEntry.total_absent_days : empAttendance.filter(a => a.status === 'absent').length;
+
+    const totalHours  = empAttendance.reduce((sum, a) => sum + parseFloat(a.hours) || 0, 0);
+    const totalOvertime = empAttendance.reduce((sum, a) => sum + parseFloat(a.overtime) || 0, 0);
+    const totalAttended = present;
+    const totalDays = present + absent + leave + halfday;
 
     return {
       present,
@@ -2430,7 +2452,7 @@ const EmployeeListView = ({
       absent,
       totalHours: totalHours.toFixed(1),
       totalOvertime: totalOvertime.toFixed(1),
-      attendanceRate: empAttendance.length > 0 ? ((present / empAttendance.length) * 100).toFixed(1) : '0.0'
+      attendanceRate: totalDays > 0 ? ((totalAttended / totalDays) * 100).toFixed(1) : '0.0'
     };
   };
 
@@ -2439,7 +2461,12 @@ const EmployeeListView = ({
   return (
     <div className="bg-white rounded-3xl p-7 border border-gray-200 shadow-md">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">Employee Attendance</h2>
+        <div>
+          <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">Employee Attendance</h2>
+          <p className="text-sm text-gray-500 mt-0.5">
+            Monthly summary for {(currentDate || new Date()).toLocaleString('default', { month: 'long', year: 'numeric' })}
+          </p>
+        </div>
         <div className="flex items-center space-x-3">
           <div className="relative">
             <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -2888,8 +2915,9 @@ const OverviewTab = ({
                 <option value="present">Present</option>
                 <option value="absent">Absent</option>
                 <option value="leave">On Leave</option>
+                <option value="paid_leave">Paid Leave (PL)</option>
                 <option value="halfday">Half Day</option>
-                <option value="unexplained">Uninformed</option>
+                <option value="unexplained">Uninformed Absent (UA)</option>
               </select>
             </div>
             <div className="flex items-center space-x-2">
@@ -3514,6 +3542,9 @@ export function HrAttendancePage() {
   const [attendanceSort, setAttendanceSort] = useState('name');
   const [editingAttendance, setEditingAttendance] = useState(null);
 
+  // Monthly absent summary for EmployeeListView accuracy
+  const [monthlyAbsentSummary, setMonthlyAbsentSummary] = useState([]);
+
   // Add monthly filter state
   const [monthlyFilter, setMonthlyFilter] = useState('stacked');
   const [timeRange, setTimeRange] = useState('weekly');
@@ -3989,6 +4020,23 @@ export function HrAttendancePage() {
     fetchAttendance();
     fetchRules();
     fetchBreaks();
+
+    // Fetch absent summary for current month (for EmployeeListView accurate absent counts)
+    const fetchMonthlyAbsentSummary = async () => {
+      try {
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        const start = new Date(year, month, 1).toLocaleDateString('en-CA');
+        const end   = new Date(year, month + 1, 0).toLocaleDateString('en-CA');
+        const res = await fetch(endpoints.attendance.absentSummary(start, end));
+        const data = await res.json();
+        setMonthlyAbsentSummary(data.summary || []);
+      } catch (err) {
+        console.warn('Could not fetch monthly absent summary:', err);
+        setMonthlyAbsentSummary([]);
+      }
+    };
+    fetchMonthlyAbsentSummary();
 
     // Set default holidays
     const sampleHolidays = [
@@ -4627,6 +4675,8 @@ export function HrAttendancePage() {
                 setSelectedEmployee={setSelectedEmployee}
                 setEmployeeView={setEmployeeView}
                 attendanceData={attendanceData}
+                monthlyAbsentSummary={monthlyAbsentSummary}
+                currentDate={currentDate}
                 employeeLeaves={employeeLeaves}
                 selectedEmployees={selectedEmployees}
                 toggleEmployeeSelection={toggleEmployeeSelection}
