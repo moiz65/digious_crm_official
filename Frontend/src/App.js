@@ -19,6 +19,8 @@ import Employees from './pages/SuperAdmin/Employee';
 import ApplicationandMemos from './pages/SuperAdmin/ApplicationandMemos';
 import AdminApplicationsMemos from './pages/SuperAdmin/ApplicationsMemos';
 import AdminSalesManagement from './pages/SuperAdmin/AdminSalesManagement';
+import PayrollManagement from './pages/SuperAdmin/PayrollManagement';
+
 
 // HR Pages
 import HRDashboard from './pages/HR/HRDashboard';
@@ -69,6 +71,14 @@ function AppContent() {
                 </ProtectedRoute>
               }
             />
+            <Route
+          path="/admin/payroll"  // This is correct
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <PayrollManagement />
+            </ProtectedRoute>
+          }
+        />
             <Route
               path="/admin/attendance"
               element={
@@ -245,6 +255,7 @@ function AppContent() {
             {/* superAdmin */}
             <Route path="/employees" element={<Employees />} /> 
             <Route path="/add-employees" element={<EmployeeOnboarding />} />
+              
             {/* superAdmin */}
             <Route path="/employeedetails" element={<EmployeeDetails />} />
             <Route path="/application-memos" element={<ApplicationandMemos />} />
