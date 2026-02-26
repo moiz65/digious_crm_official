@@ -51,6 +51,13 @@ export const endpoints = {
     generateAbsent: `${config.FULL_API_URL}/attendance/generate-absent`,
     base: `${config.FULL_API_URL}/attendance`,
     
+    // Absence Management endpoints
+    absentToday: `${config.FULL_API_URL}/attendance/absent-today`,
+    absentByDate: (date) => `${config.FULL_API_URL}/attendance/absent-by-date?date=${date}`,
+    absentByRange: (startDate, endDate) => `${config.FULL_API_URL}/attendance/absent-by-range?start_date=${startDate}&end_date=${endDate}`,
+    absentSummary: (startDate, endDate) => `${config.FULL_API_URL}/attendance/absent-summary${startDate && endDate ? `?start_date=${startDate}&end_date=${endDate}` : ''}`,
+    allWithAbsent: `${config.FULL_API_URL}/attendance/all-with-absent`,
+    
     // Break endpoints
     breakStart: `${config.FULL_API_URL}/attendance/break-start`,
     breakEnd: `${config.FULL_API_URL}/attendance/break-end`,
@@ -87,10 +94,57 @@ export const endpoints = {
     balances: `${config.FULL_API_URL}/leaves/balances`,
     types: `${config.FULL_API_URL}/leaves/types`,
     calendar: `${config.FULL_API_URL}/leaves/calendar`,
+    employeeBalance: (employeeId) => `${config.FULL_API_URL}/leaves/employee/${employeeId}/leaveBalance`,
+    all: `${config.FULL_API_URL}/leaves/all`,
+    statistics: `${config.FULL_API_URL}/leaves/statistics`,
   },
 
   // Health check
   health: `${API_BASE_URL}/api/health`,
+
+  // Applications endpoints
+  applications: {
+    base: `${config.FULL_API_URL}/applications`,
+    getById: (id) => `${config.FULL_API_URL}/applications/${id}`,
+    getByEmployee: (employeeId) => `${config.FULL_API_URL}/applications/employee/${employeeId}`,
+    create: `${config.FULL_API_URL}/applications`,
+    update: (id) => `${config.FULL_API_URL}/applications/${id}`,
+    updateStatus: (id) => `${config.FULL_API_URL}/applications/${id}/status`,
+    delete: (id) => `${config.FULL_API_URL}/applications/${id}`,
+    addDocument: (id) => `${config.FULL_API_URL}/applications/${id}/documents`,
+    getStats: (employeeId) => `${config.FULL_API_URL}/applications/stats/${employeeId}`,
+    getAll: `${config.FULL_API_URL}/applications/all`,
+    searchEmployees: `${config.FULL_API_URL}/applications/employees/search`,
+    assignedToMe: `${config.FULL_API_URL}/applications/assigned-to-me`,
+    approve: (id) => `${config.FULL_API_URL}/applications/${id}/approve`,
+    reject: (id) => `${config.FULL_API_URL}/applications/${id}/reject`,
+    withdraw: (id) => `${config.FULL_API_URL}/applications/${id}/withdraw`,
+    withdrawAssignment: (id) => `${config.FULL_API_URL}/applications/${id}/withdraw-assignment`,
+    updatePriority: (id) => `${config.FULL_API_URL}/applications/${id}/priority`,
+    approvalLog: (id) => `${config.FULL_API_URL}/applications/${id}/approval-log`,
+    assignees: (id) => `${config.FULL_API_URL}/applications/${id}/assignees`
+  },
+
+  // Checkout Missing Management endpoints
+  checkoutMissing: `${config.FULL_API_URL}/checkout-missing`,
+
+  // Adjustment endpoints
+  adjustments: {
+    approvedTickets: `${config.FULL_API_URL}/adjustments/approved-tickets`,
+    tickets: `${config.FULL_API_URL}/adjustments/tickets`,
+    employeeData: (employeeId) => `${config.FULL_API_URL}/adjustments/employee-data/${employeeId}`,
+    updateAttendance: (id) => `${config.FULL_API_URL}/adjustments/attendance/${id}`,
+    addAttendance: `${config.FULL_API_URL}/adjustments/attendance`,
+    updateLeaves: (employeeId) => `${config.FULL_API_URL}/adjustments/leaves/${employeeId}`,
+    updateAbsent: (id) => `${config.FULL_API_URL}/adjustments/absent/${id}`,
+    addAbsent: `${config.FULL_API_URL}/adjustments/absent`,
+    deleteAbsent: (id) => `${config.FULL_API_URL}/adjustments/absent/${id}`,
+    convertAbsentToPaidLeave: (id) => `${config.FULL_API_URL}/adjustments/absent/${id}/convert-to-paid-leave`,
+    resolveCheckoutMissing: (id) => `${config.FULL_API_URL}/adjustments/checkout-missing/${id}`,
+    closeTicket: (applicationId) => `${config.FULL_API_URL}/adjustments/close-ticket/${applicationId}`,
+    ignoreTicket: (applicationId) => `${config.FULL_API_URL}/adjustments/ignore-ticket/${applicationId}`,
+    log: (applicationId) => `${config.FULL_API_URL}/adjustments/log/${applicationId}`,
+  }
 };
 
 // Helper function to build URL with query parameters
@@ -111,6 +165,28 @@ export const getAuthHeaders = () => {
     'Content-Type': 'application/json',
     ...(token && { 'Authorization': `Bearer ${token}` }),
   };
+};
+
+// Helper function to decode JWT and extract user info
+export const getDecodedToken = () => {
+  const token = localStorage.getItem('token');
+  if (!token) return null;
+  
+  try {
+    // JWT format: header.payload.signature
+    const payload = token.split('.')[1];
+    const decoded = JSON.parse(atob(payload));
+    return decoded;
+  } catch (error) {
+    console.error('Error decoding token:', error);
+    return null;
+  }
+};
+
+// Helper function to get current employee ID from token
+export const getCurrentEmployeeId = () => {
+  const decoded = getDecodedToken();
+  return decoded?.employeeId || null;
 };
 
 // API request helper with error handling

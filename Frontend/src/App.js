@@ -34,6 +34,8 @@ import UserRoles_and_Permissions from './pages/HR/UserRoles_and_Permissions';
 import RoleTemplates from './pages/HR/RoleTemplates';
 import Applications_and_Memos from './pages/HR/Applications_and_Memos';
 import HrReportsManagement from './pages/HR/HrReportsManagement';
+import HrSettings from './pages/HR/HrSettings';
+import AttendanceAdjustment from './pages/HR/AttendanceAdjustment';
 
 // Employee Pages
 import EmployeeDashboard from './pages/Employee/EmployeeDashboard';
@@ -154,6 +156,14 @@ function AppContent() {
               }
             />
             <Route
+              path="/hr/attendance-adjustment"
+              element={
+                <ProtectedRoute requiredRole="hr">
+                  <AttendanceAdjustment />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/hr/applications"
               element={
                 <ProtectedRoute requiredRole="hr">
@@ -200,6 +210,14 @@ function AppContent() {
                   <RoleTemplates />
                   </ProtectedRoute>
                
+              }
+            />
+            <Route
+              path="/hr/settings"
+              element={
+                <ProtectedRoute requiredRole="hr">
+                  <HrSettings />
+                </ProtectedRoute>
               }
             />
             

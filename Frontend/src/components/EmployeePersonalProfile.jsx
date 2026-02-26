@@ -10,7 +10,23 @@ import {
 import EmployeeProfileService from "../services/employeeProfileService";
 import config from '../config/api';
 
-const EmployeePersonalProfileV2 = ({ employeeId, onBack }) => {
+const EmployeePersonalProfileV2 = ({ employeeId: propsEmployeeId, onBack }) => {
+  // Get employeeId from props or from localStorage (logged-in user)
+  const [employeeId, setEmployeeId] = useState(() => {
+    if (propsEmployeeId) return propsEmployeeId;
+    
+    try {
+      const userData = localStorage.getItem('user');
+      if (userData) {
+        const user = JSON.parse(userData);
+        return user.employeeId || user.employee_id || user.id;
+      }
+    } catch (e) {
+      console.error('Error reading user from localStorage:', e);
+    }
+    return null;
+  });
+
   const [activeTab, setActiveTab] = useState("overview");
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -1005,7 +1021,12 @@ const EmployeePersonalProfileV2 = ({ employeeId, onBack }) => {
 
   useEffect(() => {
     // Fetch actual employee data from database via API
-    fetchEmployeeProfile(employeeId || 1);
+    if (employeeId) {
+      fetchEmployeeProfile(employeeId);
+    } else {
+      setError('No employee selected. Please select an employee from the list.');
+      setLoading(false);
+    }
   }, [employeeId]);
 
   if (loading) {
@@ -1014,6 +1035,17 @@ const EmployeePersonalProfileV2 = ({ employeeId, onBack }) => {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
           <p className="mt-4 text-gray-600 font-medium">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error && !employee) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 flex items-center justify-center">
+        <div className="text-center bg-white p-8 rounded-2xl shadow-lg">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <p className="text-gray-600 font-medium">{error}</p>
         </div>
       </div>
     );

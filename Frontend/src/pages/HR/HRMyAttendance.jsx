@@ -1,41 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardHeader } from '../../components/DashboardComponents';
-import HrSidebar from '../../components/HrSidebar';
 import { useAuth } from '../../context/AuthContext';
 import { endpoints } from '../../config/api';
 import { getPakistanDate } from '../../utils/timezone';
+import HrSidebar from '../../components/HrSidebar';
 import {
-  CheckCircle,
-  Clock,
-  LogIn,
-  LogOut,
-  User,
-  Activity,
-  AlertCircle,
-  Timer,
-  PauseCircle,
-  Utensils,
-  Cigarette,
-  Table,
-  Shield
+  CheckCircle,Clock,LogIn,LogOut,User,Activity,AlertCircle,Timer,PauseCircle,Utensils,Cigarette,Table,Shield
 } from 'lucide-react';
 import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,PieChart,Pie,Cell
 } from 'recharts';
+
+// Helper function to parse YYYY-MM-DD string correctly without timezone shift
+const parseAttendanceDate = (dateStr) => {
+  // Expected format: "2026-02-09"
+  if (typeof dateStr === 'string' && dateStr.includes('-')) {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    // Create date at midnight local time (not UTC) to avoid timezone shifts
+    return new Date(year, month - 1, day);
+  }
+  return new Date(dateStr);
+};
 
 const HRMyAttendance = () => {
   const { user, role } = useAuth();
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [sidebarActiveItem, setSidebarActiveItem] = useState('attendance');
   const [activeTab, setActiveTab] = useState('dashboard'); // dashboard or sheet
   const [currentTime, setCurrentTime] = useState(new Date());
   const [attendanceData, setAttendanceData] = useState(null);
@@ -48,7 +36,24 @@ const HRMyAttendance = () => {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [currentPage, setCurrentPage] = useState(1);
-  const RECORDS_PER_PAGE = 10;
+  const [chartView, setChartView] = useState('monthly');
+  const [pendingCheckout, setPendingCheckout] = useState(null); // NEW: Track pending checkout from previous shift
+  const [isOverlapWindow, setIsOverlapWindow] = useState(false); // NEW: Track if in overlap window (9 AM - 9 PM)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [sidebarActiveItem, setSidebarActiveItem] = useState('my-attendance');
+
+  // Leave summary state (defaults — replace with API data when available)
+  const [leaveSummary, setLeaveSummary] = useState({
+    casual: { used: 0, total: 8 },
+    sick:   { used: 0, total: 8 },
+    annual: { used: 0, total: 12 }
+  });
+  
+  // Calculate RECORDS_PER_PAGE dynamically based on month (30 or 31 days)
+  const getDaysInMonth = (month, year) => {
+    return new Date(year, month, 0).getDate();
+  };
+  const RECORDS_PER_PAGE = getDaysInMonth(selectedMonth, selectedYear);
 
   // Update current time every second
   useEffect(() => {
@@ -60,10 +65,12 @@ const HRMyAttendance = () => {
 
   // Fetch data on component mount
   useEffect(() => {
-    console.log('🔍 HRMyAttendance mounted with user:', user);
+    console.log('[INFO] HRMyAttendance mounted with user:', user);
     fetchTodayAttendance();
+    fetchPendingCheckout(); // Check for pending checkout from previous shift
     fetchActiveBreaks();
     fetchMonthlyAttendance();
+    fetchLeaveBalance();
   }, []);
 
   // Re-fetch monthly attendance when filters change
@@ -121,7 +128,7 @@ const HRMyAttendance = () => {
   const getEmployeeId = () => {
     // Try multiple possible property names and log for debugging
     const id = user?.employeeId || user?.employee_id || user?.id;
-    console.log('🔍 Getting employee ID:', { 
+    console.log('[INFO] Getting employee ID:', { 
       user, 
       employeeId: user?.employeeId,
       employee_id: user?.employee_id,
@@ -130,12 +137,135 @@ const HRMyAttendance = () => {
     });
     
     if (!id) {
-      console.error('❌ No employee ID found in user object!', user);
+      console.error('[ERROR] No employee ID found in user object!', user);
       alert('Unable to determine employee ID. Please logout and login again.');
       return null;
     }
     
     return id;
+  };
+
+  // ============================================================
+  // CHECKOUT DEADLINE CHECK: 9:00 AM Deadline (Next Morning)
+  // ============================================================
+  // Night shift employees MUST checkout BEFORE 9:00 AM the NEXT morning
+  // Deadline is only relevant if employee is currently checked in
+  // IMPORTANT: Deadline is 9 AM the NEXT calendar day from check-in date
+  const isCheckoutDeadlineExceeded = () => {
+    // Only check deadline if employee is currently checked in
+    if (!attendanceData?.check_in_time || attendanceData?.check_out_time) {
+      return false; // No active check-in, no deadline
+    }
+    
+    const now = getPakistanDate ? getPakistanDate() : new Date();
+    const currentHour = now.getHours();
+    const currentMin = now.getMinutes();
+    const currentTotalMinutes = currentHour * 60 + currentMin;
+    const nineAM = 9 * 60; // 540 minutes = 09:00
+    
+    // Get check-in date from attendance record
+    // The deadline is 9 AM on the NEXT day after check-in
+    // If current time is >= 9 AM AND we're past the check-in date, deadline is exceeded
+    
+    // For now, only mark as exceeded if current time is >= 9 AM
+    // This will be improved if needed with date comparison
+    return currentTotalMinutes >= nineAM;
+  };
+
+  // Get formatted time until 9 AM or time passed since 9 AM
+  const getTimeUntilDeadline = () => {
+    // Only calculate if employee is checked in
+    if (!attendanceData?.check_in_time || attendanceData?.check_out_time) {
+      return { text: '', exceeded: false };
+    }
+    
+    const now = getPakistanDate ? getPakistanDate() : new Date();
+    const currentHour = now.getHours();
+    const currentMin = now.getMinutes();
+    const currentTotalMinutes = currentHour * 60 + currentMin;
+    const nineAM = 9 * 60;
+    
+    if (currentTotalMinutes < nineAM) {
+      // Time remaining until 9 AM TOMORROW morning
+      const minutesLeft = nineAM - currentTotalMinutes;
+      const hours = Math.floor(minutesLeft / 60);
+      const mins = minutesLeft % 60;
+      return { 
+        text: `${hours}h ${mins}m until 9:00 AM tomorrow`, 
+        exceeded: false,
+        hoursMinutes: `${hours}h ${mins}m`
+      };
+    } else {
+      // Time passed since 9 AM (deadline exceeded)
+      const minutesPassed = currentTotalMinutes - nineAM;
+      const hours = Math.floor(minutesPassed / 60);
+      const mins = minutesPassed % 60;
+      return { 
+        text: `${hours}h ${mins}m past deadline`, 
+        exceeded: true,
+        hoursMinutes: `${hours}h ${mins}m`
+      };
+    }
+  };
+
+  // ============================================================
+  // OVERLAP WINDOW CHECK: 9 AM - 9 PM
+  // ============================================================
+  // This is the critical window where employees need to checkout
+  // from previous shift OR can check in for next shift
+  // During this window, pending checkout from previous shift should block new check-in
+  const isInOverlapWindow = () => {
+    const now = getPakistanDate ? getPakistanDate() : new Date();
+    const currentHour = now.getHours();
+    const currentMin = now.getMinutes();
+    const currentTotalMinutes = currentHour * 60 + currentMin;
+    const nineAM = 9 * 60;  // 540 minutes
+    const ninePM = 21 * 60; // 1260 minutes
+    
+    // Return true if current time is between 9 AM and 9 PM
+    return currentTotalMinutes >= nineAM && currentTotalMinutes < ninePM;
+  };
+
+  // NEW: Fetch pending checkout from any previous shift
+  const fetchPendingCheckout = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const employeeId = getEmployeeId();
+      
+      if (!employeeId) {
+        setPendingCheckout(null);
+        return;
+      }
+
+      // Query attendance endpoint to check for pending checkouts
+      // This asks: "Do I have any record with check_in_time but NO check_out_time?"
+      const response = await fetch(`${endpoints.base}/attendance/pending-checkout?employee_id=${employeeId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data) {
+          console.log('[INFO] Pending checkout found:', data.data);
+          setPendingCheckout(data.data);
+          setIsOverlapWindow(isInOverlapWindow());
+        } else {
+          setPendingCheckout(null);
+        }
+      } else {
+        // If endpoint doesn't exist yet, fallback to checking via the checkIn error
+        // This will be triggered when user tries to check in
+        setPendingCheckout(null);
+      }
+    } catch (error) {
+      console.error('Error checking pending checkout:', error);
+      // Don't block functionality if check fails
+      setPendingCheckout(null);
+    }
   };
 
   const fetchTodayAttendance = async () => {
@@ -159,8 +289,8 @@ const HRMyAttendance = () => {
       const data = await response.json();
       if (data.success && data.data) {
         const todayRecord = data.data;
-        console.log('✅ Today attendance data:', todayRecord);
-        console.log('📊 Check-in status:', {
+        console.log('[SUCCESS] Today attendance data:', todayRecord);
+        console.log('[INFO] Check-in status:', {
           check_in_time: todayRecord.check_in_time,
           check_out_time: todayRecord.check_out_time,
           isCheckedIn: data.isCheckedIn || (todayRecord.check_in_time && !todayRecord.check_out_time)
@@ -168,7 +298,7 @@ const HRMyAttendance = () => {
         setAttendanceData(todayRecord);
         setIsCheckedIn(data.isCheckedIn || (todayRecord.check_in_time && !todayRecord.check_out_time));
       } else {
-        console.warn('⚠️ No attendance data received:', data);
+        console.warn('[WARNING] No attendance data received:', data);
       }
     } catch (error) {
       console.error('Error fetching attendance:', error);
@@ -182,7 +312,10 @@ const HRMyAttendance = () => {
       const token = localStorage.getItem('token');
       const employeeId = getEmployeeId();
       
-      if (!employeeId) return;
+      if (!employeeId) {
+        console.log('[WARNING] No employee ID available for monthly attendance fetch');
+        return;
+      }
       
       // Use selected month and year from filter
       const response = await fetch(endpoints.attendance.monthly(employeeId, selectedYear, selectedMonth), {
@@ -194,11 +327,19 @@ const HRMyAttendance = () => {
 
       const data = await response.json();
       if (data.success) {
-        console.log('✅ Monthly attendance fetched:', data.data);
+        console.log('[SUCCESS] Monthly attendance fetched:', data.data);
+        // Log sample record to debug
+        if (data.data && data.data.length > 0) {
+          console.log('[DEBUG] Sample record structure:', data.data[0]);
+          console.log('[DEBUG] Sample net_working_time_minutes:', data.data[0].net_working_time_minutes);
+          console.log('[DEBUG] Sample overtime_hours:', data.data[0].overtime_hours);
+        }
         setMonthlyAttendance(data.data || []);
+      } else {
+        console.warn('[WARNING] Failed to fetch monthly attendance:', data);
       }
     } catch (error) {
-      console.error('Error fetching monthly attendance:', error);
+      console.error('[ERROR] Error fetching monthly attendance:', error);
     }
   };
 
@@ -225,6 +366,53 @@ const HRMyAttendance = () => {
     }
   };
 
+  const fetchLeaveBalance = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const employeeId = getEmployeeId();
+      
+      if (!employeeId) {
+        console.log('[WARNING] No employee ID available for leave balance fetch');
+        return;
+      }
+
+      console.log('[INFO] Fetching leave balance for employee:', employeeId);
+      const response = await fetch(endpoints.leaves.employeeBalance(employeeId), {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        console.log('[SUCCESS] Leave balance fetched:', data);
+        // Format the response data to match our state structure
+        setLeaveSummary({
+          casual: {
+            used: data.casual.used,
+            total: data.casual.total,
+            remaining: data.casual.remaining
+          },
+          sick: {
+            used: data.sick.used,
+            total: data.sick.total,
+            remaining: data.sick.remaining
+          },
+          annual: {
+            used: data.annual.used,
+            total: data.annual.total,
+            remaining: data.annual.remaining
+          }
+        });
+      } else {
+        console.warn('[WARNING] Failed to fetch leave balance:', data);
+      }
+    } catch (error) {
+      console.error('[ERROR] Error fetching leave balance:', error);
+    }
+  };
+
   const handleCheckIn = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -244,12 +432,18 @@ const HRMyAttendance = () => {
 
       const data = await response.json();
       if (data.success) {
-        console.log('✅ Check-in successful:', data);
+        console.log('[SUCCESS] Check-in successful:', data);
         setIsCheckedIn(true);
         await fetchTodayAttendance();
+        await fetchPendingCheckout(); // Re-check pending after check-in
         await fetchMonthlyAttendance();
       } else {
-        console.error('❌ Check-in failed:', data.message);
+        console.error('[ERROR] Check-in failed:', data.message);
+        // If error is due to pending checkout, fetch it and display warning
+        if (data.data?.reason === 'PENDING_CHECKOUT_EXISTS' && data.data?.pendingRecord) {
+          setPendingCheckout(data.data.pendingRecord);
+          setIsOverlapWindow(isInOverlapWindow());
+        }
         alert(data.message || 'Check-in failed');
       }
     } catch (error) {
@@ -274,12 +468,13 @@ const HRMyAttendance = () => {
 
       const data = await response.json();
       if (data.success) {
-        console.log('✅ Check-out successful:', data);
+        console.log('[SUCCESS] Check-out successful:', data);
         setIsCheckedIn(false);
         await fetchTodayAttendance();
+        await fetchPendingCheckout(); // Re-check pending after checkout
         await fetchMonthlyAttendance();
       } else {
-        console.error('❌ Check-out failed:', data.message);
+        console.error('[ERROR] Check-out failed:', data.message);
         alert(data.message || 'Check-out failed');
       }
     } catch (error) {
@@ -400,7 +595,7 @@ const HRMyAttendance = () => {
     const isNightShift = checkInTotalMinutes >= 21 * 60; // Check-in after 9 PM
     
     // DEBUG: Log calculation details
-    console.log('🕐 Working Hours Calculation:', {
+    console.log('[DEBUG] Working Hours Calculation:', {
       check_in_time: attendanceData.check_in_time,
       check_out_time: attendanceData.check_out_time,
       checkInTotalMinutes,
@@ -434,7 +629,7 @@ const HRMyAttendance = () => {
     const hours = Math.floor(grossMinutes / 60);
     const minutes = grossMinutes % 60;
     
-    console.log('📊 Calculated working hours:', {
+    console.log('[INFO] Calculated working hours:', {
       grossMinutes,
       hours,
       minutes,
@@ -459,19 +654,208 @@ const HRMyAttendance = () => {
     if (!attendanceData?.check_in_time) return 'Not Checked In';
     // If there's a check-out time, show checked out
     if (attendanceData?.check_out_time) return 'Checked Out';
+    
+    // Override: If early check-in (before shift start 21:00), show as Present not Late
+    if (attendanceData?.check_in_time) {
+      const [hour, min] = attendanceData.check_in_time.split(':').map(Number);
+      const checkInMinutes = hour * 60 + min;
+      const shiftStart = 21 * 60; // 21:00
+      const nineAM = 9 * 60; // 09:00
+      
+      // If checked in between 09:00 AM and shift start (21:00), it's Present (early arrival)
+      if (checkInMinutes >= nineAM && checkInMinutes < shiftStart) {
+        return 'Present';
+      }
+    }
+    
     // If checked in with no check-out, show status (Present/Late/etc)
     return attendanceData?.status || 'Present';
   };
 
   // Prepare chart data
   const getWeeklyData = () => {
-    const last7Days = monthlyAttendance.slice(-7).map(record => ({
-      date: new Date(record.attendance_date).toLocaleDateString('en-US', { weekday: 'short' }),
-      hours: Math.floor((record.net_working_time_minutes || 0) / 60),
-      status: record.status
+    // Get current date (today)
+    const today = new Date();
+    
+    // Get start of week (Monday)
+    const dayOfWeek = today.getDay();
+    const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); // Adjust when day is Sunday
+    const startOfWeek = new Date(today.setDate(diff));
+    startOfWeek.setHours(0, 0, 0, 0);
+    
+    // Get end of week (Sunday) - 6 days after start
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(endOfWeek.getDate() + 6);
+    endOfWeek.setHours(23, 59, 59, 999);
+    
+    // Create a map of all days in the week with hours
+    const weekDays = {};
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(startOfWeek);
+      date.setDate(date.getDate() + i);
+      const dateStr = date.toLocaleDateString('en-US', { weekday: 'short', month: 'numeric', day: 'numeric' });
+      weekDays[dateStr] = { hours: 0, status: 'Absent', raw_minutes: 0 };
+    }
+    
+    // Populate with actual attendance data
+    monthlyAttendance
+      .filter(r => {
+        const recordDate = parseAttendanceDate(r.attendance_date);
+        return recordDate >= startOfWeek && recordDate <= endOfWeek;
+      })
+      .forEach(record => {
+        const dateStr = parseAttendanceDate(record.attendance_date).toLocaleDateString('en-US', { weekday: 'short', month: 'numeric', day: 'numeric' });
+        let hours = record.net_working_time_minutes ? Math.floor(record.net_working_time_minutes / 60) : 0;
+        let rawMinutes = record.net_working_time_minutes || 0;
+        
+        // If this is today and user is checked in (no checkout), calculate current working hours
+        const recordDate = parseAttendanceDate(record.attendance_date);
+        const isToday = recordDate.toDateString() === today.toDateString();
+        if (isToday && record.check_in_time && !record.check_out_time) {
+          // Calculate current working hours from check-in to now
+          const [checkInHour, checkInMin, checkInSec] = record.check_in_time.split(':').map(Number);
+          const checkInTotalMinutes = checkInHour * 60 + checkInMin;
+          
+          const now = new Date();
+          const currentTotalMinutes = now.getHours() * 60 + now.getMinutes();
+          
+          let grossMinutes = 0;
+          const isNightShift = checkInTotalMinutes >= 21 * 60; // Check-in after 9 PM
+          
+          if (isNightShift) {
+            // Night shift: from check-in time to current time (crossing midnight)
+            const minutesUntilMidnight = 24 * 60 - checkInTotalMinutes;
+            const minutesAfterMidnight = currentTotalMinutes;
+            grossMinutes = minutesUntilMidnight + minutesAfterMidnight;
+          } else {
+            // Day shift: check if still on same day or crossed midnight
+            const timeDifferenceMinutes = currentTotalMinutes - checkInTotalMinutes;
+            if (timeDifferenceMinutes >= 0) {
+              grossMinutes = timeDifferenceMinutes;
+            } else {
+              // Crossed midnight (checked in before midnight, now after midnight)
+              const minutesUntilMidnight = 24 * 60 - checkInTotalMinutes;
+              const minutesAfterMidnight = currentTotalMinutes;
+              grossMinutes = minutesUntilMidnight + minutesAfterMidnight;
+            }
+          }
+          
+          // Subtract breaks if any
+          const breakMinutes = record.total_break_duration_minutes || 0;
+          const netMinutes = Math.max(0, grossMinutes - breakMinutes);
+          
+          hours = Math.floor(netMinutes / 60);
+          rawMinutes = netMinutes;
+        }
+        
+        weekDays[dateStr] = {
+          hours: hours,
+          status: record.status,
+          raw_minutes: rawMinutes
+        };
+      });
+    
+    const weekData = Object.entries(weekDays).map(([date, data]) => ({
+      date: date,
+      hours: data.hours,
+      status: data.status,
+      raw_minutes: data.raw_minutes
     }));
-    return last7Days;
+    
+    console.log('[DEBUG] Weekly data (Mon-Sun of current week):', weekData);
+    return weekData;
   };
+
+  const getMonthlyChartData = () => {
+    // Get current date
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth() + 1;
+    
+    // Get first day of month
+    const firstDay = new Date(currentYear, today.getMonth(), 1);
+    
+    // Create a map of all days from 1st to today
+    const monthDays = {};
+    for (let i = 1; i <= today.getDate(); i++) {
+      const date = new Date(currentYear, today.getMonth(), i);
+      const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      monthDays[dateStr] = { hours: 0, status: 'Absent', raw_minutes: 0 };
+    }
+    
+    // Populate with actual attendance data
+    monthlyAttendance
+      .filter(r => {
+        const recordDate = new Date(r.attendance_date);
+        return recordDate.getFullYear() === currentYear && 
+               recordDate.getMonth() === today.getMonth() &&
+               recordDate.getDate() <= today.getDate();
+      })
+      .forEach(record => {
+        const dateStr = parseAttendanceDate(record.attendance_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        let hours = record.net_working_time_minutes ? Math.floor(record.net_working_time_minutes / 60) : 0;
+        let rawMinutes = record.net_working_time_minutes || 0;
+        
+        // If this is today and user is checked in (no checkout), calculate current working hours
+        const recordDate = parseAttendanceDate(record.attendance_date);
+        const isToday = recordDate.toDateString() === today.toDateString();
+        if (isToday && record.check_in_time && !record.check_out_time) {
+          // Calculate current working hours from check-in to now
+          const [checkInHour, checkInMin, checkInSec] = record.check_in_time.split(':').map(Number);
+          const checkInTotalMinutes = checkInHour * 60 + checkInMin;
+          
+          const now = new Date();
+          const currentTotalMinutes = now.getHours() * 60 + now.getMinutes();
+          
+          let grossMinutes = 0;
+          const isNightShift = checkInTotalMinutes >= 21 * 60; // Check-in after 9 PM
+          
+          if (isNightShift) {
+            // Night shift: from check-in time to current time (crossing midnight)
+            const minutesUntilMidnight = 24 * 60 - checkInTotalMinutes;
+            const minutesAfterMidnight = currentTotalMinutes;
+            grossMinutes = minutesUntilMidnight + minutesAfterMidnight;
+          } else {
+            // Day shift: check if still on same day or crossed midnight
+            const timeDifferenceMinutes = currentTotalMinutes - checkInTotalMinutes;
+            if (timeDifferenceMinutes >= 0) {
+              grossMinutes = timeDifferenceMinutes;
+            } else {
+              // Crossed midnight (checked in before midnight, now after midnight)
+              const minutesUntilMidnight = 24 * 60 - checkInTotalMinutes;
+              const minutesAfterMidnight = currentTotalMinutes;
+              grossMinutes = minutesUntilMidnight + minutesAfterMidnight;
+            }
+          }
+          
+          // Subtract breaks if any
+          const breakMinutes = record.total_break_duration_minutes || 0;
+          const netMinutes = Math.max(0, grossMinutes - breakMinutes);
+          
+          hours = Math.floor(netMinutes / 60);
+          rawMinutes = netMinutes;
+        }
+        
+        monthDays[dateStr] = {
+          hours: hours,
+          status: record.status,
+          raw_minutes: rawMinutes
+        };
+      });
+    
+    const chartData = Object.entries(monthDays).map(([date, data]) => ({
+      date: date,
+      hours: data.hours,
+      status: data.status,
+      total: data.raw_minutes,
+      days_worked: data.hours > 0 ? 1 : 0
+    }));
+    
+    console.log('[DEBUG] Monthly chart data (1st to today):', chartData);
+    return chartData.length > 0 ? chartData : [{ date: 'No Data', hours: 0, status: 'N/A', total: 0, days_worked: 0 }];
+  };
+
+
 
   const getStatusDistribution = () => {
     const statusCount = monthlyAttendance.reduce((acc, record) => {
@@ -524,7 +908,7 @@ const HRMyAttendance = () => {
 
   const getMonthlyData = () => {
     return monthlyAttendance.map(record => ({
-      date: new Date(record.attendance_date).getDate(),
+      date: parseAttendanceDate(record.attendance_date).getDate(),
       hours: Math.floor((record.net_working_time_minutes || 0) / 60),
       minutes: (record.net_working_time_minutes || 0) % 60,
       status: record.status
@@ -550,14 +934,13 @@ const HRMyAttendance = () => {
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-cyan-50">
-      {/* Sidebar */}
+
       <HrSidebar 
         isCollapsed={isSidebarCollapsed}
         setIsCollapsed={setIsSidebarCollapsed}
         activeItem={sidebarActiveItem}
         setActiveItem={setSidebarActiveItem}
       />
-
       <div className="flex-1 flex flex-col overflow-hidden">
         <DashboardHeader 
           title="My Attendance Dashboard"
@@ -673,7 +1056,20 @@ const HRMyAttendance = () => {
                   <div className="ml-4">
                     <h3 className="text-sm font-medium text-orange-800">Late By</h3>
                     <p className="text-xl font-bold text-orange-600">
-                      {attendanceData?.late_by_minutes || 0}m
+                      {(() => {
+                        // Override: If early check-in (before shift start 21:00), show 0m late
+                        if (attendanceData?.check_in_time) {
+                          const [hour, min] = attendanceData.check_in_time.split(':').map(Number);
+                          const checkInMinutes = hour * 60 + min;
+                          const shiftStart = 21 * 60;
+                          const nineAM = 9 * 60;
+                          
+                          if (checkInMinutes >= nineAM && checkInMinutes < shiftStart) {
+                            return '0m'; // Early check-in is not late
+                          }
+                        }
+                        return (attendanceData?.late_by_minutes || 0) + 'm';
+                      })()}
                     </p>
                   </div>
                 </div>
@@ -735,7 +1131,7 @@ const HRMyAttendance = () => {
                       </div>
                     )}
 
-                    <div className="flex gap-4">
+                    <div className="flex gap-4 mb-4">
                       <button
                         onClick={handleCheckIn}
                         disabled={attendanceData?.check_in_time || attendanceData?.check_out_time}
@@ -761,6 +1157,32 @@ const HRMyAttendance = () => {
                         <LogOut className="w-5 h-5 inline mr-2" />
                         Check Out
                       </button>
+                    </div>
+
+                    
+
+                    {/* Leave Summary - titled, full-width responsive cards */}
+                    <div className="mt-10 w-full">
+                      <h1 className="text-sm font-semibold text-gray-700 mb-3">Leave Summary</h1>
+                      <div className="flex flex-col sm:flex-row gap-4 w-full items-stretch justify-between">
+                        <div className="flex-1 min-w-0 bg-gray-50 border border-gray-100 rounded-lg p-6 flex flex-col items-center justify-center min-h-[86px]">
+                          <p className="text-sm text-gray-600">Casual Leaves</p>
+                          <p className="text-xs text-gray-500 mt-1">Used/ Total</p>
+                          <p className="text-2xl font-bold text-gray-900 mt-3">{leaveSummary.casual.used}/{leaveSummary.casual.total}</p>
+                        </div>
+
+                        <div className="flex-1 min-w-0 bg-gray-50 border border-gray-100 rounded-lg p-6 flex flex-col items-center justify-center min-h-[86px]">
+                          <p className="text-sm text-gray-600">Sick Leaves</p>
+                          <p className="text-xs text-gray-500 mt-1">Used/ Total</p>
+                          <p className="text-2xl font-bold text-gray-900 mt-3">{leaveSummary.sick.used}/{leaveSummary.sick.total}</p>
+                        </div>
+
+                        <div className="flex-1 min-w-0 bg-gray-50 border border-gray-100 rounded-lg p-6 flex flex-col items-center justify-center min-h-[86px]">
+                          <p className="text-sm text-gray-600">Annual Leaves</p>
+                          <p className="text-xs text-gray-500 mt-1">Used/ Total</p>
+                          <p className="text-2xl font-bold text-gray-900 mt-3">{leaveSummary.annual.used}/{leaveSummary.annual.total}</p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -895,25 +1317,49 @@ const HRMyAttendance = () => {
           </div>
 
           {/* Charts Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-            {/* Weekly Working Hours Chart */}
+          <div className="space-y-6 mt-8">
+            {/* Chart View Filter */}
             <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">Weekly Working Hours</h3>
-              <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={getWeeklyData()}>
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-bold text-gray-900">Working Hours Trend</h3>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setChartView('monthly')}
+                    className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${
+                      chartView === 'monthly'
+                        ? 'bg-blue-500 text-white shadow-lg'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    Monthly
+                  </button>
+
+
+                </div>
+              </div>
+
+              {/* Working Hours Chart */}
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={
+                  chartView === 'monthly' ? getMonthlyChartData() :
+                  getWeeklyData()
+                }>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="hours" fill="#3b82f6" />
+                  <YAxis label={{ value: 'Hours', angle: -90, position: 'insideLeft' }} />
+                  <Tooltip 
+                    formatter={(value) => `${value}h`}
+                    labelFormatter={(label) => `${label}`}
+                  />
+                  <Bar dataKey="hours" fill="#3b82f6" name="Working Hours" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
 
             {/* Status Distribution Chart */}
             <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">Attendance Status Distribution</h3>
-              <ResponsiveContainer width="100%" height={250}>
+              <h3 className="text-lg font-bold text-gray-900 mb-6">Attendance Status Distribution</h3>
+              <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
                     data={getStatusDistribution()}
@@ -1060,21 +1506,7 @@ const HRMyAttendance = () => {
                   </div>
                 </div>
 
-                {/* Monthly Working Hours Chart */}
-                {monthlyAttendance.length > 0 && (
-                  <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
-                    <h3 className="text-lg font-bold text-gray-900 mb-4">Daily Working Hours - {selectedMonth} {selectedYear}</h3>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <BarChart data={getMonthlyData()}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="date" />
-                        <YAxis />
-                        <Tooltip formatter={(value) => `${value}h`} labelFormatter={(label) => `Day ${label}`} />
-                        <Bar dataKey="hours" fill="#3b82f6" radius={[8, 8, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                )}
+
               </div>
 
 
@@ -1091,7 +1523,7 @@ const HRMyAttendance = () => {
                         : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-blue-400'
                     }`}
                   >
-                    📊 All ({monthlyAttendance.length})
+                    All ({monthlyAttendance.length})
                   </button>
 
                   {/* Present Button */}
@@ -1174,69 +1606,80 @@ const HRMyAttendance = () => {
                         const filteredRecords = monthlyAttendance.filter(r => 
                           statusFilter === 'All Status' || r.status === statusFilter
                         );
-                        const totalPages = Math.ceil(filteredRecords.length / RECORDS_PER_PAGE);
+                        
+                        // Sort by date in descending order (latest first)
+                        const sortedRecords = [...filteredRecords].sort((a, b) => {
+                          const dateA = new Date(a.attendance_date);
+                          const dateB = new Date(b.attendance_date);
+                          return dateB - dateA; // Latest dates first
+                        });
+                        
+                        const totalPages = Math.ceil(sortedRecords.length / RECORDS_PER_PAGE);
                         const startIndex = (currentPage - 1) * RECORDS_PER_PAGE;
                         const endIndex = startIndex + RECORDS_PER_PAGE;
-                        const paginatedRecords = filteredRecords.slice(startIndex, endIndex);
+                        const paginatedRecords = sortedRecords.slice(startIndex, endIndex);
 
                         return paginatedRecords.map((record, index) => (
-                          <tr key={record.id} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+                          <tr key={record.id || `absent-${record.attendance_date}`} className={`${
+                            record.is_absent ? 'bg-red-50 hover:bg-red-100' : index % 2 === 0 ? 'bg-gray-50 hover:bg-gray-100' : 'bg-white hover:bg-gray-50'
+                          } transition-colors`}>
                             <td className="px-4 py-3 text-sm text-gray-700">
-                              {new Date(record.attendance_date).toLocaleDateString('en-US', {
+                              {parseAttendanceDate(record.attendance_date).toLocaleDateString('en-US', {
                                 weekday: 'short',
                                 year: 'numeric',
                                 month: 'short',
                                 day: 'numeric'
                               })}
                             </td>
-                            <td className="px-4 py-3 text-sm">
-                              {record.check_in_time ? (
-                                <div className="flex items-center gap-2">
-                                  <LogIn className="w-4 h-4 text-green-600" />
-                                  <span className="font-mono font-semibold text-green-700">{record.check_in_time}</span>
-                                </div>
-                              ) : (
-                                <span className="text-gray-400">-</span>
-                              )}
+                            <td className="px-4 py-3 text-sm text-gray-700">
+                              {!record.check_in_time ? <span className="text-red-600 font-semibold">No Check-in</span> : record.check_in_time}
                             </td>
-                            <td className="px-4 py-3 text-sm">
-                              {record.check_out_time ? (
-                                <div className="flex items-center gap-2">
-                                  <LogOut className="w-4 h-4 text-red-600" />
-                                  <span className="font-mono font-semibold text-red-700">{record.check_out_time}</span>
-                                </div>
-                              ) : (
-                                <span className="text-gray-400">-</span>
-                              )}
+                            <td className="px-4 py-3 text-sm text-gray-700">
+                              {!record.check_in_time ? <span className="text-red-600 font-semibold">—</span> : (record.check_out_time || '-')}
                             </td>
                             <td className="px-4 py-3 text-sm">
                               <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
                                 record.status === 'Present' ? 'bg-green-100 text-green-700' :
                                 record.status === 'Late' ? 'bg-orange-100 text-orange-700' :
                                 record.status === 'Absent' ? 'bg-red-100 text-red-700' :
+                                record.status === 'Paid Leave' ? 'bg-teal-100 text-teal-700' :
+                                record.status === 'Uninformed Absent' ? 'bg-red-200 text-red-800' :
                                 'bg-purple-100 text-purple-700'
                               }`}>
-                                {record.status}
+                                {record.status === 'Paid Leave' ? 'PL' :
+                                 record.status === 'Uninformed Absent' ? 'UA' :
+                                 record.status === 'Present' ? 'P' :
+                                 record.status === 'Late' ? 'L' :
+                                 record.status === 'Absent' ? 'A' :
+                                 record.status}
                               </span>
                             </td>
                             <td className="px-4 py-3 text-sm text-gray-700">
-                              {record.net_working_time_minutes 
-                                ? `${Math.floor(record.net_working_time_minutes / 60)}h ${record.net_working_time_minutes % 60}m`
-                                : '-'}
+                              {record.is_absent ? <span className="text-red-600 font-semibold">—</span> : (
+                                record.net_working_time_minutes 
+                                  ? `${Math.floor(record.net_working_time_minutes / 60)}h ${record.net_working_time_minutes % 60}m`
+                                  : '-'
+                              )}
                             </td>
                             <td className="px-4 py-3 text-sm text-gray-700">
-                              {record.total_breaks_taken || 0} ({record.total_break_duration_minutes || 0}m)
+                              {record.is_absent ? <span className="text-red-600 font-semibold">—</span> : (
+                                (record.total_breaks_taken || 0) + ' (' + (record.total_break_duration_minutes || 0) + 'm)'
+                              )}
                             </td>
                             <td className="px-4 py-3 text-sm text-gray-700">
-                              {record.late_by_minutes ? `${record.late_by_minutes}m` : '-'}
+                              {record.is_absent ? <span className="text-red-600 font-semibold">—</span> : (record.late_by_minutes ? `${record.late_by_minutes}m` : '-')}
                             </td>
                             <td className="px-4 py-3 text-sm">
-                              {record.overtime_minutes > 0 ? (
-                                <span className="px-2 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
-                                  {Math.floor(record.overtime_minutes / 60)}h {record.overtime_minutes % 60}m
-                                </span>
+                              {record.is_absent ? (
+                                <span className="text-red-600 font-semibold">—</span>
                               ) : (
-                                <span className="text-gray-500">-</span>
+                                record.overtime_minutes > 0 ? (
+                                  <span className="px-2 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
+                                    {Math.floor(record.overtime_minutes / 60)}h {record.overtime_minutes % 60}m
+                                  </span>
+                                ) : (
+                                  <span className="text-gray-500">-</span>
+                                )
                               )}
                             </td>
                           </tr>
@@ -1251,13 +1694,21 @@ const HRMyAttendance = () => {
                   const filteredRecords = monthlyAttendance.filter(r => 
                     statusFilter === 'All Status' || r.status === statusFilter
                   );
-                  const totalPages = Math.ceil(filteredRecords.length / RECORDS_PER_PAGE);
+                  
+                  // Sort by date in descending order (latest first)
+                  const sortedRecords = [...filteredRecords].sort((a, b) => {
+                    const dateA = new Date(a.attendance_date);
+                    const dateB = new Date(b.attendance_date);
+                    return dateB - dateA; // Latest dates first
+                  });
+                  
+                  const totalPages = Math.ceil(sortedRecords.length / RECORDS_PER_PAGE);
                   
                   return totalPages > 1 ? (
                     <div className="border-t border-gray-200 p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                       <div className="text-sm text-gray-600">
                         Showing page <span className="font-semibold text-gray-900">{currentPage}</span> of <span className="font-semibold text-gray-900">{totalPages}</span>
-                        <span className="ml-4">Total: <span className="font-semibold text-gray-900">{filteredRecords.length}</span> records</span>
+                        <span className="ml-4">Total: <span className="font-semibold text-gray-900">{filteredRecords.length}</span> records <span className="text-gray-500 text-xs">(showing {RECORDS_PER_PAGE} per page)</span></span>
                       </div>
                       
                       <div className="flex gap-2 flex-wrap">
@@ -1304,4 +1755,7 @@ const HRMyAttendance = () => {
 };
 
 export default HRMyAttendance;
+export const EmployeeAttendancePage = HRMyAttendance;
+
+
 

@@ -14,37 +14,25 @@ import {
 import { DashboardHeader } from './DashboardComponents';
 
 const ApplicationsMemosEmployee = () => {
-  const [employee] = useState({
-    id: 1,
-    name: 'John Smith',
-    email: 'john.smith@company.com',
-    phone: '+1 (555) 123-4567',
-    department: 'Production',
-    position: 'Senior Developer',
-    employeeId: 'EMP-00124',
-    joinDate: '2022-03-15',
-    location: 'New York Office',
-    status: 'active',
-    avatar: 'JS',
-    manager: 'Sarah Johnson',
-    projects: ['Project Phoenix', 'Customer Portal'],
-    skills: ['React', 'Node.js', 'TypeScript', 'AWS']
-  });
-
+  const [employee, setEmployee] = useState(null);
   const [activeTab, setActiveTab] = useState('applications');
   const [showNewAppModal, setShowNewAppModal] = useState(false);
+  const [editingApplication, setEditingApplication] = useState(null);
   const [showNewMemoModal, setShowNewMemoModal] = useState(false);
   const [selectedApplication, setSelectedApplication] = useState(null);
   const [selectedMemo, setSelectedMemo] = useState(null);
   const [applications, setApplications] = useState([]);
+  const [assignedToMeApps, setAssignedToMeApps] = useState([]);
   const [memos, setMemos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [stats, setStats] = useState({
     myApplications: 0,
     pendingApps: 0,
     approvedApps: 0,
+    assignedToMe: 0,
     myMemos: 0,
-    unreadMemos: 0,
-    drafts: 2
+    unreadMemos: 0
   });
 
   // Attendance-like local state for header cards
@@ -82,147 +70,249 @@ const ApplicationsMemosEmployee = () => {
 
   // Sample data - employee's own applications and memos
   useEffect(() => {
-    const mockApplications = [
-      {
-        id: 1,
-        applicationNumber: 'APP-2024-001',
-        type: 'Annual Leave Request',
-        submissionDate: '2024-01-15',
-        status: 'pending',
-        priority: 'medium',
-        startDate: '2024-02-01',
-        endDate: '2024-02-05',
-        totalDays: 5,
-        notes: 'Family vacation',
-        assignedTo: 'HR Department',
-        lastUpdated: '2024-01-16',
-        documents: [
-          { name: 'Leave Form.pdf', size: '2.4 MB', uploaded: '2024-01-15' },
-          { name: 'Travel Itinerary.docx', size: '1.2 MB', uploaded: '2024-01-15' }
-        ]
-      },
-      {
-        id: 2,
-        applicationNumber: 'APP-2024-003',
-        type: 'Equipment Request',
-        submissionDate: '2024-01-10',
-        status: 'approved',
-        priority: 'high',
-        requestedItem: 'Dell XPS 15 Laptop',
-        reason: 'Current laptop performance issues',
-        approvedBy: 'IT Manager',
-        approvedDate: '2024-01-12',
-        notes: 'For development work',
-        estimatedDelivery: '2024-01-25',
-        documents: [
-          { name: 'Request Form.pdf', size: '1.8 MB', uploaded: '2024-01-10' }
-        ]
-      },
-      {
-        id: 3,
-        applicationNumber: 'APP-2024-002',
-        type: 'Training Request',
-        submissionDate: '2024-01-08',
-        status: 'rejected',
-        priority: 'low',
-        trainingProgram: 'Advanced React Course',
-        provider: 'Udemy',
-        cost: 199.99,
-        rejectionReason: 'Budget constraints',
-        notes: 'To improve frontend skills',
-        documents: [
-          { name: 'Course Details.pdf', size: '3.1 MB', uploaded: '2024-01-08' },
-          { name: 'Justification.docx', size: '0.8 MB', uploaded: '2024-01-08' }
-        ]
-      },
-      {
-        id: 4,
-        applicationNumber: 'APP-2024-004',
-        type: 'Remote Work Request',
-        submissionDate: '2024-01-05',
-        status: 'in_review',
-        priority: 'medium',
-        requestType: 'Hybrid (3 days remote)',
-        startDate: '2024-02-01',
-        duration: '3 months',
-        reason: 'Better work-life balance',
-        assignedTo: 'HR Department',
-        lastUpdated: '2024-01-06',
-        documents: [
-          { name: 'Remote Work Agreement.pdf', size: '2.1 MB', uploaded: '2024-01-05' }
-        ]
-      }
-    ];
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-    const mockMemos = [
-      {
-        id: 1,
-        memoNumber: 'MEMO-2024-001',
-        title: 'Remote Work Policy Update',
-        from: 'HR Department',
-        date: '2024-01-15',
-        priority: 'high',
-        category: 'Policy',
-        status: 'unread',
-        summary: 'Updated guidelines for remote work arrangements effective February 1st.',
-        attachments: 2,
-        actionsRequired: true,
-        deadline: '2024-01-25'
-      },
-      {
-        id: 2,
-        memoNumber: 'MEMO-2024-002',
-        title: 'Q1 Team Meeting Invitation',
-        from: 'Production Manager',
-        date: '2024-01-14',
-        priority: 'medium',
-        category: 'Meeting',
-        status: 'read',
-        summary: 'Invitation to Q1 Production team meeting. Please review agenda.',
-        attachments: 1,
-        actionsRequired: false,
-        deadline: '2024-01-20'
-      },
-      {
-        id: 3,
-        memoNumber: 'MEMO-2024-003',
-        title: 'New Security Guidelines',
-        from: 'IT Security Team',
-        date: '2024-01-12',
-        priority: 'urgent',
-        category: 'Security',
-        status: 'read',
-        summary: 'Important security updates required for all development environments.',
-        attachments: 3,
-        actionsRequired: true,
-        deadline: '2024-01-14'
-      }
-    ];
+        // Get employee ID from localStorage
+        const token = localStorage.getItem('token');
+        if (!token) {
+          setError('No authentication token found');
+          setLoading(false);
+          return;
+        }
 
-    setApplications(mockApplications);
-    setMemos(mockMemos);
-    
-    setStats({
-      myApplications: mockApplications.length,
-      pendingApps: mockApplications.filter(app => app.status === 'pending' || app.status === 'in_review').length,
-      approvedApps: mockApplications.filter(app => app.status === 'approved').length,
-      myMemos: mockMemos.length,
-      unreadMemos: mockMemos.filter(memo => memo.status === 'unread').length,
-      drafts: 2
-    });
+        // Get employee ID from user object in localStorage
+        let employeeId = null;
+        try {
+          const userData = JSON.parse(localStorage.getItem('user') || '{}');
+          employeeId = userData.employeeId || userData.employee_id || userData.id;
+        } catch (e) {
+          console.error('Error parsing user data:', e);
+        }
+        
+        if (!employeeId) {
+          setError('Employee ID not found. Please login again.');
+          setLoading(false);
+          return;
+        }
+
+        // Fetch employee's applications
+        const appsResponse = await fetch(
+          endpoints.applications.getByEmployee(employeeId),
+          {
+            method: 'GET',
+            headers: getAuthHeaders(),
+          }
+        );
+
+        if (!appsResponse.ok) {
+          throw new Error('Failed to fetch applications');
+        }
+
+        const appsData = await appsResponse.json();
+        
+        // Format applications data from API
+        const formattedApps = (appsData.data || []).map(app => ({
+          id: app.id,
+          applicationNumber: app.application_number,
+          type: app.application_type,
+          submissionDate: app.submission_date ? app.submission_date.split('T')[0] : '',
+          status: app.status || 'pending',
+          priority: app.priority || 'medium',
+          department: app.department,
+          subject: app.subject,
+          notes: app.description,
+          assignedTo: app.assigned_to_name || app.assigned_to || null,
+          assignedToEmployeeId: app.assigned_to_employee_id,
+          assignedToName: app.assigned_to_name,
+          assignedToDesignation: app.assigned_to_designation,
+          assignedToDepartment: app.assigned_to_department,
+          assignees: app.assignees || [],
+          currentStep: app.current_step || 0,
+          totalSteps: app.total_steps || 0,
+          isMultiAssign: app.is_multi_assign || false,
+          ccDepartment: app.cc_department,
+          lastUpdated: app.last_updated ? app.last_updated.split('T')[0] : app.submission_date?.split('T')[0],
+          documents: app.documents ? (typeof app.documents === 'string' ? JSON.parse(app.documents) : app.documents) : [],
+          metadata: app.metadata ? (typeof app.metadata === 'string' ? JSON.parse(app.metadata) : app.metadata) : {},
+          approved_by: app.approved_by,
+          approved_date: app.approved_date ? app.approved_date.split('T')[0] : null,
+          rejection_reason: app.rejection_reason
+        }));
+
+        setApplications(formattedApps);
+
+        // Fetch applications assigned to this employee
+        try {
+          const assignedResponse = await fetch(
+            endpoints.applications.assignedToMe,
+            { method: 'GET', headers: getAuthHeaders() }
+          );
+          if (assignedResponse.ok) {
+            const assignedData = await assignedResponse.json();
+            const formattedAssigned = (assignedData.data || []).map(app => ({
+              id: app.id,
+              applicationNumber: app.application_number,
+              type: app.application_type,
+              submissionDate: app.submission_date ? app.submission_date.split('T')[0] : '',
+              status: app.status || 'pending',
+              priority: app.priority || 'medium',
+              department: app.department,
+              subject: app.subject,
+              notes: app.description,
+              applicantName: app.applicant_name,
+              applicantEmail: app.applicant_email,
+              applicantDesignation: app.applicant_designation,
+              applicantDepartment: app.applicant_department,
+              assignedToName: app.assigned_to_name,
+              assignees: app.assignees || [],
+              currentStep: app.current_step || 0,
+              totalSteps: app.total_steps || 0,
+              isMultiAssign: app.is_multi_assign || false,
+              isMyTurn: app.is_my_turn || false,
+              myStepOrder: app.my_step_order || 0,
+              myStepStatus: app.my_step_status || 'pending',
+              ccDepartment: app.cc_department,
+              lastUpdated: app.last_updated ? app.last_updated.split('T')[0] : app.submission_date?.split('T')[0],
+              documents: app.documents ? (typeof app.documents === 'string' ? JSON.parse(app.documents) : app.documents) : [],
+              approved_by: app.approved_by,
+              approved_date: app.approved_date ? app.approved_date.split('T')[0] : null,
+              rejection_reason: app.rejection_reason
+            }));
+            setAssignedToMeApps(formattedAssigned);
+          }
+        } catch (assignErr) {
+          console.error('Error fetching assigned applications:', assignErr);
+        }
+
+        // Calculate stats
+        const pending = formattedApps.filter(a => a.status === 'pending').length;
+        const approved = formattedApps.filter(a => a.status === 'approved').length;
+
+        setStats({
+          myApplications: formattedApps.length,
+          pendingApps: pending,
+          approvedApps: approved,
+          assignedToMe: 0,
+          myMemos: 0,
+          unreadMemos: 0
+        });
+
+        // Set basic employee info from localStorage or use defaults
+        const empName = localStorage.getItem('employeeName') || 'Employee';
+        const empEmail = localStorage.getItem('employeeEmail') || '';
+        const empDept = localStorage.getItem('employeeDepartment') || '';
+
+        setEmployee({
+          id: employeeId,
+          name: empName,
+          email: empEmail,
+          phone: localStorage.getItem('employeePhone') || '',
+          department: empDept,
+          position: localStorage.getItem('employeePosition') || '',
+          employeeId: employeeId,
+          joinDate: localStorage.getItem('employeeJoinDate') || '',
+          status: 'active',
+          avatar: empName.split(' ').map(n => n[0]).join('')
+        });
+
+      } catch (err) {
+        console.error('Error loading data:', err);
+        setError(err.message || 'Failed to load applications');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
   }, []);
 
-  const handleAddApplication = (applicationData) => {
-    const newApp = {
-      id: applications.length + 1,
-      applicationNumber: `APP-2024-${String(applications.length + 1).padStart(3, '0')}`,
-      submissionDate: new Date().toISOString().split('T')[0],
-      lastUpdated: new Date().toISOString().split('T')[0],
-      status: 'pending',
-      ...applicationData
-    };
-    setApplications(prev => [...prev, newApp]);
-    setShowNewAppModal(false);
+  const handleAddApplication = async (applicationData) => {
+    try {
+      // Do NOT send employeeId - backend gets it from JWT token
+      const payload = {
+        department: applicationData.department,
+        application_type: applicationData.type,
+        subject: applicationData.type,
+        description: applicationData.notes,
+        priority: applicationData.priority || 'medium',
+        assignees: applicationData.assignees || [],
+        assigned_to_employee_id: applicationData.assignedToEmployeeId || null,
+        assigned_to: applicationData.assignedToName || null,
+        cc_department: applicationData.ccDepartment || null,
+        metadata: applicationData.metadata || null
+      };
+      
+      const response = await fetch(endpoints.applications.create, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to create application');
+      }
+
+      const result = await response.json();
+      const newApp = {
+        id: result.data.id,
+        application_number: result.data.application_number,
+        submissionDate: new Date().toISOString().split('T')[0],
+        lastUpdated: new Date().toISOString().split('T')[0],
+        status: 'pending',
+        ...applicationData
+      };
+      
+      setApplications(prev => [...prev, newApp]);
+      setShowNewAppModal(false);
+      alert(`Application ${result.data.application_number} created successfully!`);
+    } catch (error) {
+      console.error('Error creating application:', error);
+      alert(`Error: ${error.message}`);
+    }
+  };
+
+  // Update existing application (employee owner only)
+  const handleUpdateApplication = async (updatedData) => {
+    if (!editingApplication) return;
+
+    try {
+      const payload = {
+        department: updatedData.department,
+        application_type: updatedData.type,
+        subject: updatedData.type,
+        description: updatedData.notes,
+        priority: updatedData.priority || 'medium',
+        assignees: updatedData.assignees || [],
+        assigned_to_employee_id: updatedData.assignedToEmployeeId || null,
+        assigned_to: updatedData.assignedToName || null,
+        cc_department: updatedData.ccDepartment || null,
+        metadata: updatedData.metadata || null
+      };
+
+      const response = await fetch(`${endpoints.applications.base}/${editingApplication.id}`, {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to update application');
+      }
+
+      // Optimistic update: replace the application in state
+      setApplications(prev => prev.map(a => a.id === editingApplication.id ? ({ ...a, ...updatedData, priority: updatedData.priority || a.priority }) : a));
+      setEditingApplication(null);
+      setShowNewAppModal(false);
+      alert('Application updated successfully');
+    } catch (err) {
+      console.error('Error updating application:', err);
+      alert(err.message || 'Failed to update application');
+    }
   };
 
   const handleAddMemo = (memoData) => {
@@ -235,7 +325,6 @@ const ApplicationsMemosEmployee = () => {
       ...memoData
     };
     setMemos(prev => [...prev, newMemo]);
-    setShowNewMemoModal(false);
   };
 
   const handleMarkAsRead = (memoId) => {
@@ -327,55 +416,7 @@ const ApplicationsMemosEmployee = () => {
           </div>
         </div>
 
-        {/* Quick Actions */}
-        <div className="bg-white rounded-2xl border border-gray-200 p-4 mb-6">
-          <h3 className="font-semibold text-gray-900 mb-4">Quick Actions</h3>
-          <div className="grid grid-cols-2 md:grid-cols-2 gap-3">
-            <button 
-              onClick={() => setShowNewAppModal(true)}
-              className="flex flex-col items-center justify-center p-4 bg-blue-50 hover:bg-blue-100 rounded-xl transition duration-200 group"
-            >
-              <div className="p-2 bg-blue-100 rounded-lg mb-2 group-hover:scale-110 transition duration-200">
-                <FilePlus className="h-5 w-5 text-blue-600" />
-              </div>
-              <span className="text-sm font-medium text-gray-900">New Application</span>
-              <span className="text-xs text-gray-500">Submit a request</span>
-            </button>
 
-            <button 
-              onClick={() => setShowNewMemoModal(true)}
-              className="flex flex-col items-center justify-center p-4 bg-purple-50 hover:bg-purple-100 rounded-xl transition duration-200 group"
-            >
-              <div className="p-2 bg-purple-100 rounded-lg mb-2 group-hover:scale-110 transition duration-200">
-                <Send className="h-5 w-5 text-purple-600" />
-              </div>
-              <span className="text-sm font-medium text-gray-900">Send Memo</span>
-              <span className="text-xs text-gray-500">Internal communication</span>
-            </button>
-
-            {/* <button 
-              onClick={() => setActiveTab('applications')}
-              className="flex flex-col items-center justify-center p-4 bg-green-50 hover:bg-green-100 rounded-xl transition duration-200 group"
-            >
-              <div className="p-2 bg-green-100 rounded-lg mb-2 group-hover:scale-110 transition duration-200">
-                <Eye className="h-5 w-5 text-green-600" />
-              </div>
-              <span className="text-sm font-medium text-gray-900">Applications Status</span>
-              <span className="text-xs text-gray-500">Check applications</span>
-            </button> */}
-
-            {/* <button 
-              onClick={() => setActiveTab('memos')}
-              className="flex flex-col items-center justify-center p-4 bg-orange-50 hover:bg-orange-100 rounded-xl transition duration-200 group"
-            >
-              <div className="p-2 bg-orange-100 rounded-lg mb-2 group-hover:scale-110 transition duration-200">
-                <MailIcon className="h-5 w-5 text-orange-600" />
-              </div>
-              <span className="text-sm font-medium text-gray-900">Memos</span>
-              <span className="text-xs text-gray-500">View memos</span>
-            </button> */}
-          </div>
-        </div>
 
         {/* Main Content */}
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
@@ -390,18 +431,18 @@ const ApplicationsMemosEmployee = () => {
                   My Applications ({applications.length})
                 </button>
                 <button
+                  onClick={() => setActiveTab('assigned')}
+                  className={`flex items-center gap-2 px-6 py-4 text-sm font-medium whitespace-nowrap ${activeTab === 'assigned' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                >
+                  <UserPlus className="h-4 w-4" />
+                  Assigned to Me ({assignedToMeApps.length})
+                </button>
+                <button
                   onClick={() => setActiveTab('memos')}
                   className={`flex items-center gap-2 px-6 py-4 text-sm font-medium whitespace-nowrap ${activeTab === 'memos' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
                 >
                   <ClipboardList className="h-4 w-4" />
                   My Memos ({memos.length})
-                </button>
-                <button
-                  onClick={() => setActiveTab('drafts')}
-                  className={`flex items-center gap-2 px-6 py-4 text-sm font-medium whitespace-nowrap ${activeTab === 'drafts' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-                >
-                  <FileText className="h-4 w-4" />
-                  Drafts ({stats.drafts})
                 </button>
               </nav>
               <div className="flex items-center gap-3">
@@ -414,15 +455,7 @@ const ApplicationsMemosEmployee = () => {
                     New Application
                   </button>
                 )}
-                {activeTab === 'memos' && (
-                  <button 
-                    onClick={() => setShowNewMemoModal(true)}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition duration-200 flex items-center gap-2"
-                  >
-                    <Plus className="h-4 w-4" />
-                    New Memo
-                  </button>
-                )}
+
               </div>
             </div>
           </div>
@@ -434,6 +467,12 @@ const ApplicationsMemosEmployee = () => {
                 onSelect={setSelectedApplication}
               />
             )}
+            {activeTab === 'assigned' && (
+              <AssignedToMeTab 
+                applications={assignedToMeApps}
+                onSelect={setSelectedApplication}
+              />
+            )}
             {activeTab === 'memos' && (
               <MyMemosTab 
                 memos={memos}
@@ -441,33 +480,43 @@ const ApplicationsMemosEmployee = () => {
                 onMarkAsRead={handleMarkAsRead}
               />
             )}
-            {activeTab === 'drafts' && (
-              <DraftsTab drafts={[]} />
-            )}
           </div>
         </div>
 
         {/* Modals */}
         {showNewAppModal && (
           <NewApplicationModal
-            onClose={() => setShowNewAppModal(false)}
-            onSave={handleAddApplication}
+            onClose={() => { setShowNewAppModal(false); setEditingApplication(null); }}
+            onSave={editingApplication ? handleUpdateApplication : handleAddApplication}
             employee={employee}
+            initialData={editingApplication}
+            isEdit={!!editingApplication}
           />
         )}
 
-        {showNewMemoModal && (
-          <NewMemoModal
-            onClose={() => setShowNewMemoModal(false)}
-            onSave={handleAddMemo}
-            employee={employee}
-          />
-        )}
+
 
         {selectedApplication && (
           <ApplicationDetailModal
             application={selectedApplication}
             onClose={() => setSelectedApplication(null)}
+            employee={employee}
+            onEdit={(app) => {
+              setEditingApplication({
+                id: app.id,
+                department: app.department,
+                type: app.type,
+                customSubject: app.customSubject || '',
+                description: app.notes || app.description || '',
+                priority: app.priority || 'medium',
+                assignTo: app.assignedTo ? 'person' : 'department',
+                assignedToEmployeeId: app.assignedToEmployeeId || app.assigned_to_employee_id || null,
+                assignedToName: app.assignedTo || app.assignedToName || null,
+                ccDepartment: app.ccDepartment || app.cc_department || null,
+                documents: app.documents || []
+              });
+              setShowNewAppModal(true);
+            }}
           />
         )}
 
@@ -477,6 +526,8 @@ const ApplicationsMemosEmployee = () => {
             onClose={() => setSelectedMemo(null)}
             onMarkAsRead={handleMarkAsRead}
           />
+        )}
+          </>
         )}
       </div>
     </div>
@@ -627,6 +678,168 @@ const MyApplicationsTab = ({ applications, onSelect }) => {
   );
 };
 
+// Assigned to Me Tab Component
+const AssignedToMeTab = ({ applications, onSelect }) => {
+  const [filter, setFilter] = useState('all');
+  const [search, setSearch] = useState('');
+
+  const filteredApplications = applications.filter(app => {
+    if (filter !== 'all' && app.status !== filter) return false;
+    if (search && !app.type?.toLowerCase().includes(search.toLowerCase()) && 
+        !app.applicationNumber?.toLowerCase().includes(search.toLowerCase()) &&
+        !app.applicantName?.toLowerCase().includes(search.toLowerCase())) {
+      return false;
+    }
+    return true;
+  });
+
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case 'pending':
+        return <span className="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full">Pending</span>;
+      case 'approved':
+        return <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">Approved</span>;
+      case 'rejected':
+        return <span className="px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full">Rejected</span>;
+      case 'in_review':
+        return <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">In Review</span>;
+      default:
+        return <span className="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded-full">Unknown</span>;
+    }
+  };
+
+  const getPriorityBadge = (priority) => {
+    switch (priority) {
+      case 'urgent':
+        return <span className="px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full">Urgent</span>;
+      case 'high':
+        return <span className="px-2 py-1 text-xs bg-orange-100 text-orange-800 rounded-full">High</span>;
+      case 'medium':
+        return <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">Medium</span>;
+      default:
+        return <span className="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded-full">Low</span>;
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
+        <div className="flex-1">
+          <div className="relative">
+            <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search assigned applications..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-3">
+          <select 
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="all">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+            <option value="in_review">In Review</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        {filteredApplications.map(app => (
+          <div 
+            key={app.id} 
+            className="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md transition duration-200 cursor-pointer"
+            onClick={() => onSelect(app)}
+          >
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-purple-50 rounded-lg">
+                  <UserPlus className="h-4 w-4 text-purple-600" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-gray-900">{app.type}</h4>
+                  <p className="text-sm text-gray-600">{app.applicationNumber}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {getStatusBadge(app.status)}
+                {getPriorityBadge(app.priority)}
+              </div>
+            </div>
+
+            {/* Applicant Info */}
+            <div className="bg-blue-50 p-3 rounded-lg mb-3">
+              <p className="text-xs text-blue-600 font-medium mb-1">From</p>
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-full bg-blue-200 flex items-center justify-center text-xs font-bold text-blue-800">
+                  {app.applicantName ? app.applicantName.split(' ').map(n => n[0]).join('') : '?'}
+                </div>
+                <div>
+                  <p className="font-medium text-sm">{app.applicantName || 'Unknown'}</p>
+                  <p className="text-xs text-gray-500">{app.applicantDesignation || ''} {app.applicantDepartment ? `• ${app.applicantDepartment}` : ''}</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <p className="text-xs text-gray-500 mb-1">Department</p>
+                <p className="font-medium text-sm">{app.department}</p>
+              </div>
+              
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <p className="text-xs text-gray-500 mb-1">Submitted</p>
+                <p className="font-medium text-sm">{app.submissionDate}</p>
+              </div>
+              
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <p className="text-xs text-gray-500 mb-1">CC</p>
+                <p className="font-medium text-sm">{app.ccDepartment || 'None'}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                {app.notes && (
+                  <>
+                    <MessageSquare className="h-4 w-4" />
+                    <span className="truncate max-w-xs">{app.notes}</span>
+                  </>
+                )}
+              </div>
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSelect(app);
+                }}
+                className="px-3 py-1 text-sm bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100"
+              >
+                View Details
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {filteredApplications.length === 0 && (
+        <div className="text-center py-12">
+          <UserPlus className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No assigned applications</h3>
+          <p className="text-gray-600">No applications have been assigned to you yet.</p>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // My Memos Tab Component
 const MyMemosTab = ({ memos, onSelect, onMarkAsRead }) => {
   const [filter, setFilter] = useState('all');
@@ -767,33 +980,76 @@ const MyMemosTab = ({ memos, onSelect, onMarkAsRead }) => {
   );
 };
 
-// Drafts Tab Component
-const DraftsTab = ({ drafts }) => {
-  return (
-    <div className="text-center py-12">
-      <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-      <h3 className="text-lg font-medium text-gray-900 mb-2">No drafts found</h3>
-      <p className="text-gray-600">You don't have any saved drafts.</p>
-    </div>
-  );
-};
 
 
-// New Application Modal for Employee
-// New Application Modal for Employee
-// New Application Modal for Employee
-// New Application Modal for Employee
-// New Application Modal for Employee
-const NewApplicationModal = ({ onClose, onSave, employee }) => {
+
+// New Application Modal for Employee (supports create + edit)
+const NewApplicationModal = ({ onClose, onSave, employee, initialData = null, isEdit = false }) => {
+  // Generate unique application number
+  const generateApplicationNumber = () => {
+    const timestamp = Date.now().toString(36).toUpperCase();
+    const random = Math.random().toString(36).substring(2, 5).toUpperCase();
+    return `APP-${timestamp.slice(-4)}-${random}`;
+  };
+
   const [formData, setFormData] = useState({
     department: '', // Department
     type: '', // Application Type
     customSubject: '', // Custom subject when "Other" is selected
     description: '', // Description
-    documents: []
+    priority: 'medium',
+    assignTo: 'department', // 'department' or 'person'
+    documents: [],
+    leaveFromDate: '',
+    leaveToDate: ''
   });
 
   const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [applicationNumber, setApplicationNumber] = useState(generateApplicationNumber());
+  
+  // Employee search states (multi-assign)
+  const [employeeSearch, setEmployeeSearch] = useState('');
+  const [employeeSuggestions, setEmployeeSuggestions] = useState([]);
+  const [selectedEmployees, setSelectedEmployees] = useState([]); // Array of { employee_id, name, designation, department, email }
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchTimeout, setSearchTimeout] = useState(null);
+
+  // Prefill form when editing
+  useEffect(() => {
+    if (!initialData) return;
+
+    setFormData(prev => ({
+      ...prev,
+      department: initialData.department || prev.department,
+      type: initialData.type || prev.type,
+      customSubject: initialData.customSubject || prev.customSubject || '',
+      description: initialData.description || initialData.notes || prev.description,
+      priority: initialData.priority || prev.priority,
+      assignTo: initialData.assignTo || ((initialData.assignees && initialData.assignees.length > 0) || initialData.assignedToName ? 'person' : 'department'),
+      documents: initialData.documents || prev.documents || []
+    }));
+
+    if (initialData.documents && Array.isArray(initialData.documents)) {
+      setUploadedFiles(initialData.documents.map(d => ({ name: d.name, size: d.size || '—', type: d.type || 'pdf' })));
+    }
+
+    // Prefill multi-assign employees
+    if (initialData.assignees && initialData.assignees.length > 0) {
+      setSelectedEmployees(initialData.assignees.map(a => ({
+        employee_id: a.employee_id,
+        name: a.employee_name,
+        designation: a.designation || '',
+        department: a.emp_department || a.department || '',
+        email: a.email || ''
+      })));
+    } else if (initialData.assignedToEmployeeId || initialData.assignedToName) {
+      setSelectedEmployees([{ employee_id: initialData.assignedToEmployeeId, name: initialData.assignedToName, designation: '', department: '', email: '' }]);
+    }
+
+    if (initialData.applicationNumber) {
+      setApplicationNumber(initialData.applicationNumber);
+    }
+  }, [initialData]);
 
   // Department options
   const departments = [
@@ -872,18 +1128,93 @@ const NewApplicationModal = ({ onClose, onSave, employee }) => {
   // Check if "Other" is selected
   const isOtherSelected = formData.type === 'Other';
 
+  // Determine if HR is the target department
+  const isHRDepartment = formData.department === 'HR';
+
+  // CC logic: HR is always in CC unless application IS for HR
+  const ccDepartment = isHRDepartment ? null : 'HR';
+
+  // Employee search with debounce
+  const handleEmployeeSearch = (value) => {
+    setEmployeeSearch(value);
+    
+    if (searchTimeout) clearTimeout(searchTimeout);
+    
+    if (value.length < 2) {
+      setEmployeeSuggestions([]);
+      return;
+    }
+
+    const timeout = setTimeout(async () => {
+      try {
+        setSearchLoading(true);
+        const url = `${endpoints.applications.searchEmployees}?q=${encodeURIComponent(value)}`;
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: getAuthHeaders()
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          // Filter out already selected employees
+          const filtered = (data.data || []).filter(
+            emp => !selectedEmployees.some(sel => sel.employee_id === emp.employee_id)
+          );
+          setEmployeeSuggestions(filtered);
+        }
+      } catch (err) {
+        console.error('Error searching employees:', err);
+      } finally {
+        setSearchLoading(false);
+      }
+    }, 300);
+    
+    setSearchTimeout(timeout);
+  };
+
+  const handleSelectEmployee = (emp) => {
+    setSelectedEmployees(prev => [...prev, emp]);
+    setEmployeeSearch('');
+    setEmployeeSuggestions([]);
+  };
+
+  const handleRemoveEmployee = (employeeId) => {
+    setSelectedEmployees(prev => prev.filter(e => e.employee_id !== employeeId));
+  };
+
+  const handleClearAllEmployees = () => {
+    setSelectedEmployees([]);
+    setEmployeeSearch('');
+    setEmployeeSuggestions([]);
+  };
+
+  // Reorder assignees (move up/down in priority)
+  const handleMoveEmployee = (index, direction) => {
+    const newList = [...selectedEmployees];
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= newList.length) return;
+    [newList[index], newList[targetIndex]] = [newList[targetIndex], newList[index]];
+    setSelectedEmployees(newList);
+  };
+
   const handleFileUpload = (files) => {
-    const newFiles = Array.from(files).map(file => ({
+    // Only accept single PDF file (replace any existing)
+    const file = files[0];
+    if (!file) return;
+    
+    const newFile = {
       name: file.name,
       size: (file.size / 1024 / 1024).toFixed(2) + ' MB',
-      type: file.type.split('/')[1],
+      type: 'pdf',
       file: file
-    }));
-    setUploadedFiles(prev => [...prev, ...newFiles]);
+    };
+    
+    // Replace any existing file with the new one (single PDF only)
+    setUploadedFiles([newFile]);
   };
 
   const handleRemoveFile = (index) => {
-    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+    setUploadedFiles([]);
   };
 
   const handleSubmit = (e) => {
@@ -892,15 +1223,31 @@ const NewApplicationModal = ({ onClose, onSave, employee }) => {
     // Use custom subject if "Other" is selected, otherwise use the selected type
     const subjectValue = isOtherSelected ? formData.customSubject : formData.type;
     
+    // Build assignees array from selectedEmployees
+    const assigneesPayload = formData.assignTo === 'person' && selectedEmployees.length > 0
+      ? selectedEmployees.map(emp => ({
+          employee_id: emp.employee_id,
+          employee_name: emp.name
+        }))
+      : [];
+
     const applicationData = {
       department: formData.department,
       type: subjectValue,
       notes: formData.description,
+      priority: formData.priority || 'medium',
+      assignees: assigneesPayload,
+      assignedToEmployeeId: assigneesPayload.length === 1 ? assigneesPayload[0].employee_id : null,
+      assignedToName: assigneesPayload.length === 1 ? assigneesPayload[0].employee_name : null,
+      ccDepartment: ccDepartment,
       documents: uploadedFiles.map(file => ({
         name: file.name,
         size: file.size,
         uploaded: new Date().toISOString().split('T')[0]
-      }))
+      })),
+      metadata: (subjectValue && subjectValue.includes('Leave Request') && formData.leaveFromDate && formData.leaveToDate)
+        ? { leave_start_date: formData.leaveFromDate, leave_end_date: formData.leaveToDate }
+        : null
     };
 
     onSave(applicationData);
@@ -917,17 +1264,40 @@ const NewApplicationModal = ({ onClose, onSave, employee }) => {
         </div>
         
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          {/* Application Number (Read-only) */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Application Number</label>
+            <div className="relative">
+              <input 
+                type="text"
+                value={applicationNumber}
+                readOnly
+                className="w-full px-3 py-2 border border-gray-300 rounded-xl bg-gray-50 text-gray-700 font-medium cursor-not-allowed"
+              />
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-1">
+                <span className="text-xs text-gray-500">Auto-generated</span>
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">Unique identifier for your application</p>
+          </div>
+
           {/* Department */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Department *</label>
             <select 
               value={formData.department}
-              onChange={(e) => setFormData(prev => ({ 
-                ...prev, 
-                department: e.target.value,
-                type: '', // Reset type when department changes
-                customSubject: '' // Reset custom subject
-              }))}
+              onChange={(e) => {
+                setFormData(prev => ({ 
+                  ...prev, 
+                  department: e.target.value,
+                  type: '', 
+                  customSubject: '',
+                  assignTo: 'department'
+                }));
+                setSelectedEmployees([]);
+                setEmployeeSearch('');
+                setEmployeeSuggestions([]);
+              }}
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-xl"
             >
@@ -948,7 +1318,7 @@ const NewApplicationModal = ({ onClose, onSave, employee }) => {
               onChange={(e) => setFormData(prev => ({ 
                 ...prev, 
                 type: e.target.value,
-                customSubject: e.target.value === 'Other' ? '' : prev.customSubject // Reset custom subject if not "Other"
+                customSubject: e.target.value === 'Other' ? '' : prev.customSubject
               }))}
               required
               disabled={!formData.department}
@@ -985,6 +1355,217 @@ const NewApplicationModal = ({ onClose, onSave, employee }) => {
             </div>
           )}
 
+          {/* Leave Date Range (shown for leave requests) */}
+          {formData.type && formData.type.includes('Leave Request') && (
+            <div className="bg-teal-50 border border-teal-200 rounded-xl p-4 space-y-3">
+              <p className="text-sm font-semibold text-teal-800">Leave Duration</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">From Date *</label>
+                  <input
+                    type="date"
+                    value={formData.leaveFromDate}
+                    onChange={e => setFormData(prev => ({ ...prev, leaveFromDate: e.target.value }))}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">To Date *</label>
+                  <input
+                    type="date"
+                    value={formData.leaveToDate}
+                    min={formData.leaveFromDate}
+                    onChange={e => setFormData(prev => ({ ...prev, leaveToDate: e.target.value }))}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm"
+                  />
+                </div>
+              </div>
+              {formData.leaveFromDate && formData.leaveToDate && (
+                <p className="text-xs text-teal-600">
+                  {Math.max(1, Math.round((new Date(formData.leaveToDate) - new Date(formData.leaveFromDate)) / 86400000) + 1)} day(s) requested
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Assign To Section */}
+          {formData.department && (
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-gray-700">Assign To</label>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFormData(prev => ({ ...prev, assignTo: 'department' }));
+                    handleClearAllEmployees();
+                  }}
+                  className={`flex-1 px-4 py-2 rounded-xl border text-sm font-medium transition-colors ${
+                    formData.assignTo === 'department' 
+                      ? 'bg-blue-50 border-blue-300 text-blue-700' 
+                      : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  <Building className="h-4 w-4 inline mr-2" />
+                  Entire Department
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, assignTo: 'person' }))}
+                  className={`flex-1 px-4 py-2 rounded-xl border text-sm font-medium transition-colors ${
+                    formData.assignTo === 'person' 
+                      ? 'bg-purple-50 border-purple-300 text-purple-700' 
+                      : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  <Users className="h-4 w-4 inline mr-2" />
+                  Assign People
+                </button>
+              </div>
+
+              {formData.assignTo === 'department' && (
+                <div className="bg-blue-50 border border-blue-200 p-3 rounded-xl">
+                  <p className="text-sm text-blue-700">
+                    <Building className="h-4 w-4 inline mr-1" />
+                    This application will be sent to all members of <strong>{formData.department}</strong> department.
+                  </p>
+                </div>
+              )}
+
+              {formData.assignTo === 'person' && (
+                <div className="space-y-3">
+                  {/* Multi-assign info banner */}
+                  <div className="bg-purple-50 border border-purple-200 p-3 rounded-xl">
+                    <p className="text-xs text-purple-700">
+                      <Users className="h-3 w-3 inline mr-1" />
+                      Add multiple people in priority order. Approval flows sequentially: Person 1 approves → Person 2 → ... → Final approval.
+                      {!isHRDepartment && <span className="font-medium"> HR gives the final sign-off.</span>}
+                    </p>
+                  </div>
+
+                  {/* Search input */}
+                  <div className="relative">
+                    <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="text"
+                      value={employeeSearch}
+                      onChange={(e) => handleEmployeeSearch(e.target.value)}
+                      placeholder="Search employee to add..."
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    />
+                    {searchLoading && (
+                      <Loader className="h-4 w-4 absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 animate-spin" />
+                    )}
+                  </div>
+
+                  {/* Suggestions Dropdown */}
+                  {employeeSuggestions.length > 0 && (
+                    <div className="border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto bg-white">
+                      {employeeSuggestions.map(emp => (
+                        <button
+                          key={emp.employee_id}
+                          type="button"
+                          onClick={() => handleSelectEmployee(emp)}
+                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0 text-left"
+                        >
+                          <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-xs font-bold text-purple-800">
+                            {emp.name.split(' ').map(n => n[0]).join('')}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">{emp.name}</p>
+                            <p className="text-xs text-gray-500">{emp.designation} • {emp.department}</p>
+                          </div>
+                          <span className="text-xs text-purple-600 font-medium">+ Add</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {employeeSearch.length > 0 && employeeSearch.length < 2 && (
+                    <p className="text-xs text-gray-500">Type at least 2 characters to search</p>
+                  )}
+
+                  {/* Selected Employees List (Ordered) */}
+                  {selectedEmployees.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium text-gray-700">Approval Chain ({selectedEmployees.length} {selectedEmployees.length === 1 ? 'person' : 'people'})</p>
+                        {selectedEmployees.length > 1 && (
+                          <button type="button" onClick={handleClearAllEmployees} className="text-xs text-red-500 hover:text-red-700">
+                            Clear All
+                          </button>
+                        )}
+                      </div>
+                      {selectedEmployees.map((emp, index) => (
+                        <div key={emp.employee_id} className="bg-purple-50 border border-purple-200 p-3 rounded-xl">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              {/* Step number badge */}
+                              <div className="w-7 h-7 rounded-full bg-purple-600 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
+                                {index + 1}
+                              </div>
+                              <div className="w-9 h-9 rounded-full bg-purple-200 flex items-center justify-center text-sm font-bold text-purple-800 flex-shrink-0">
+                                {emp.name.split(' ').map(n => n[0]).join('')}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="font-semibold text-gray-900 text-sm truncate">{emp.name}</p>
+                                <p className="text-xs text-gray-500 truncate">
+                                  {emp.designation ? `${emp.designation} • ` : ''}{emp.department || ''}{emp.employee_id ? ` • ID: ${emp.employee_id}` : ''}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1 flex-shrink-0">
+                              {/* Move up */}
+                              {index > 0 && (
+                                <button type="button" onClick={() => handleMoveEmployee(index, 'up')} className="p-1 hover:bg-purple-100 rounded text-purple-600" title="Move up">
+                                  <ChevronUp className="h-4 w-4" />
+                                </button>
+                              )}
+                              {/* Move down */}
+                              {index < selectedEmployees.length - 1 && (
+                                <button type="button" onClick={() => handleMoveEmployee(index, 'down')} className="p-1 hover:bg-purple-100 rounded text-purple-600" title="Move down">
+                                  <ChevronDown className="h-4 w-4" />
+                                </button>
+                              )}
+                              {/* Remove */}
+                              <button type="button" onClick={() => handleRemoveEmployee(emp.employee_id)} className="p-1 hover:bg-red-100 rounded text-red-500 ml-1" title="Remove">
+                                <X className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      {!isHRDepartment && (
+                        <div className="bg-amber-50 border border-amber-200 p-2 rounded-xl flex items-center gap-2">
+                          <div className="w-7 h-7 rounded-full bg-amber-500 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
+                            {selectedEmployees.length + 1}
+                          </div>
+                          <p className="text-xs text-amber-700 font-medium">HR Department — Final Approval (auto-added)</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* CC Info */}
+          {formData.department && (
+            <div className={`p-3 rounded-xl border ${isHRDepartment ? 'bg-gray-50 border-gray-200' : 'bg-amber-50 border-amber-200'}`}>
+              <p className="text-sm font-medium text-gray-700 mb-1">CC (Carbon Copy)</p>
+              {isHRDepartment ? (
+                <p className="text-xs text-gray-500">No CC needed — this application is directed to HR department.</p>
+              ) : (
+                <p className="text-xs text-amber-700">
+                  <Shield className="h-3 w-3 inline mr-1" />
+                  HR Department will be in CC for this application.
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Description */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
@@ -1000,15 +1581,51 @@ const NewApplicationModal = ({ onClose, onSave, employee }) => {
 
           {/* Supporting Documents */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Supporting Documents (Optional)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Supporting Document (Optional)
+            </label>
+            
+            {/* Important Notice about Single PDF */}
+            <div className="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-xl">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                <div className="text-xs text-amber-800">
+                  <p className="font-medium mb-1">📄 Single PDF Only</p>
+                  <p>Only <strong>ONE PDF file</strong> is allowed per application (max 10MB).</p>
+                  <p className="mt-1">If you have multiple documents, please merge them into a single PDF file using:</p>
+                  <ul className="list-disc list-inside mt-1 ml-2">
+                    <li><a href="https://www.ilovepdf.com/merge_pdf" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">ilovepdf.com</a></li>
+                    <li><a href="https://smallpdf.com/merge-pdf" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">smallpdf.com</a></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
             <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center">
               <CloudUpload className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-              <p className="text-sm text-gray-600 mb-2">Drag & drop files here or click to browse</p>
-              <p className="text-xs text-gray-500 mb-4">Supports PDF, DOC, JPG, PNG up to 10MB each</p>
+              <p className="text-sm text-gray-600 mb-2">Click to upload your PDF document</p>
+              <p className="text-xs text-gray-500 mb-4">PDF only, max 10MB</p>
               <input
                 type="file"
-                multiple
-                onChange={(e) => handleFileUpload(e.target.files)}
+                accept=".pdf,application/pdf"
+                onChange={(e) => {
+                  const file = e.target.files[0];
+                  if (file) {
+                    // Validate PDF
+                    if (file.type !== 'application/pdf') {
+                      alert('Please upload a PDF file only.');
+                      e.target.value = '';
+                      return;
+                    }
+                    // Validate size (10MB)
+                    if (file.size > 10 * 1024 * 1024) {
+                      alert('File size must be less than 10MB. Please compress your PDF.');
+                      e.target.value = '';
+                      return;
+                    }
+                    handleFileUpload([file]);
+                  }
+                }}
                 className="hidden"
                 id="file-upload"
               />
@@ -1016,31 +1633,35 @@ const NewApplicationModal = ({ onClose, onSave, employee }) => {
                 htmlFor="file-upload"
                 className="inline-block px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 cursor-pointer"
               >
-                Browse Files
+                Choose PDF File
               </label>
             </div>
 
-            {/* Uploaded Files List */}
+            {/* Uploaded File Display (Single PDF) */}
             {uploadedFiles.length > 0 && (
-              <div className="mt-4 space-y-2">
-                {uploadedFiles.map((file, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <FileText className="h-5 w-5 text-gray-500" />
-                      <div>
-                        <p className="text-sm font-medium">{file.name}</p>
-                        <p className="text-xs text-gray-500">{file.size} • {file.type}</p>
-                      </div>
+              <div className="mt-4">
+                <div className="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                      <FileText className="h-6 w-6 text-green-600" />
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveFile(index)}
-                      className="p-1 hover:bg-gray-200 rounded"
-                    >
-                      <X className="h-4 w-4 text-gray-500" />
-                    </button>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">{uploadedFiles[0].name}</p>
+                      <p className="text-xs text-gray-500">{uploadedFiles[0].size} • PDF Document</p>
+                    </div>
                   </div>
-                ))}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUploadedFiles([]);
+                      document.getElementById('file-upload').value = '';
+                    }}
+                    className="p-2 hover:bg-green-100 rounded-lg transition-colors"
+                    title="Remove file"
+                  >
+                    <X className="h-5 w-5 text-green-700" />
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -1073,191 +1694,175 @@ const NewApplicationModal = ({ onClose, onSave, employee }) => {
   );
 };
 
-// New Memo Modal for Employee
-const NewMemoModal = ({ onClose, onSave, employee }) => {
-  const [formData, setFormData] = useState({
-    title: '',
-    category: 'Announcement',
-    priority: 'medium',
-    content: '',
-    recipients: ['HR Department', 'Team Lead'],
-    attachments: []
-  });
 
-  const [uploadedFiles, setUploadedFiles] = useState([]);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    const memoData = {
-      title: formData.title,
-      category: formData.category,
-      priority: formData.priority,
-      summary: formData.content.substring(0, 100) + '...',
-      attachments: uploadedFiles.length,
-      actionsRequired: formData.category === 'Request',
-      recipients: formData.recipients
-    };
-
-    onSave(memoData);
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center p-6 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Compose New Memo</h3>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-        
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* Sender Info */}
-          <div className="bg-blue-50 p-4 rounded-xl">
-            <p className="text-sm text-blue-600 font-medium mb-2">From</p>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
-                {employee.avatar}
-              </div>
-              <div>
-                <p className="font-medium">{employee.name}</p>
-                <p className="text-sm text-gray-600">{employee.department}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Memo Details */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
-              <input 
-                type="text"
-                value={formData.title}
-                onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                required
-                placeholder="Memo title..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-xl"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
-              <select 
-                value={formData.category}
-                onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-xl"
-              >
-                <option value="Announcement">Announcement</option>
-                <option value="Request">Request</option>
-                <option value="Update">Update</option>
-                <option value="Question">Question</option>
-                <option value="Feedback">Feedback</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Priority *</label>
-              <select 
-                value={formData.priority}
-                onChange={(e) => setFormData(prev => ({ ...prev, priority: e.target.value }))}
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-xl"
-              >
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-              </select>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Recipients *</label>
-              <select 
-                value={formData.recipients[0]}
-                onChange={(e) => setFormData(prev => ({ ...prev, recipients: [e.target.value] }))}
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-xl"
-              >
-                <option value="HR Department">HR Department</option>
-                <option value="Team Lead">Team Lead</option>
-                <option value="Manager">Manager</option>
-                <option value="IT Department">IT Department</option>
-                <option value="Finance Department">Finance Department</option>
-                <option value="All Departments">All Departments</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Memo Content */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Content *</label>
-            <textarea 
-              value={formData.content}
-              onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
-              required
-              rows="6"
-              placeholder="Write your memo here..."
-              className="w-full px-3 py-3 border border-gray-300 rounded-xl"
-            />
-          </div>
-
-          {/* File Upload */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Attachments (Optional)</label>
-            <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center">
-              <Paperclip className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-              <p className="text-sm text-gray-600 mb-2">Add supporting documents if needed</p>
-              <p className="text-xs text-gray-500 mb-4">Max file size: 10MB each</p>
-              <button
-                type="button"
-                onClick={() => document.getElementById('memo-file-upload').click()}
-                className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700"
-              >
-                Add Files
-              </button>
-              <input
-                type="file"
-                multiple
-                onChange={(e) => setUploadedFiles(prev => [...prev, ...Array.from(e.target.files)])}
-                className="hidden"
-                id="memo-file-upload"
-              />
-            </div>
-          </div>
-
-          {/* Submit Buttons */}
-          <div className="flex gap-3 pt-4">
-            <button 
-              type="button"
-              onClick={onClose}
-              className="flex-1 px-4 py-3 text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition duration-200"
-            >
-              Save Draft
-            </button>
-            <button 
-              type="submit"
-              className="flex-1 px-4 py-3 text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition duration-200"
-            >
-              Send Memo
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-};
 
 // Application Detail Modal (View only for employee)
-const ApplicationDetailModal = ({ application, onClose }) => {
+const ApplicationDetailModal = ({ application, onClose, employee, onEdit }) => {
+  const [showApproveForm, setShowApproveForm] = useState(false);
+  const [showRejectForm, setShowRejectForm] = useState(false);
+  const [approveNotes, setApproveNotes] = useState('');
+  const [rejectReason, setRejectReason] = useState('');
+  const [actionLoading, setActionLoading] = useState(false);
+
+  // Get current employee ID from JWT token
+  const getCurrentEmployeeId = () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return null;
+      
+      // JWT format: header.payload.signature
+      const payload = token.split('.')[1];
+      const decoded = JSON.parse(atob(payload));
+      return decoded?.employeeId || null;
+    } catch (error) {
+      console.error('Error decoding token:', error);
+      return null;
+    }
+  };
+
+  const currentEmployeeId = getCurrentEmployeeId();
+  const isOwner = application.employee_id && currentEmployeeId && String(application.employee_id) === String(currentEmployeeId);
+  const isPending = application.status === 'pending';
+  const canEdit = isOwner && isPending;
+  const canWithdraw = isOwner && !isPending;
+  
+  // Multi-assign approval handling - check if user is in approval chain
+  const myAssignee = application.assignees?.find(a => String(a.employee_id) === String(currentEmployeeId));
+  const isMyTurn = myAssignee && (application.current_step || application.currentStep) === myAssignee.step_order;
+  const canApproveReject = myAssignee && isMyTurn;
+
+  const handleEditApplication = () => {
+    // Delegate editing action to parent via onEdit prop (avoids referencing parent state inside this child)
+    if (typeof onEdit === 'function') {
+      onEdit({
+        id: application.id,
+        department: application.department,
+        type: application.type,
+        customSubject: application.customSubject || '',
+        description: application.notes || application.description || '',
+        priority: application.priority || 'medium',
+        assignTo: (application.assignees && application.assignees.length > 0) || application.assignedTo ? 'person' : 'department',
+        assignees: application.assignees || [],
+        assignedToEmployeeId: application.assignedToEmployeeId || application.assigned_to_employee_id || null,
+        assignedToName: application.assignedTo || application.assignedToName || null,
+        ccDepartment: application.ccDepartment || application.cc_department || null,
+        documents: application.documents || []
+      });
+      onClose();
+      return;
+    }
+
+    // Fallback: do nothing if parent didn't provide handler
+    console.warn('onEdit not provided to ApplicationDetailModal');
+  };
+
+  const handleWithdrawApplication = async () => {
+    if (!window.confirm('Are you sure you want to withdraw this application? This action cannot be undone.')) {
+      return;
+    }
+    
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`https://digious-crm-official.onrender.com/api/v1/applications/${application.id}/withdraw`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        alert('Application withdrawn successfully');
+        onClose();
+        // Refresh the page or trigger a refetch
+        window.location.reload();
+      } else {
+        const error = await response.json();
+        alert('Failed to withdraw application: ' + (error.message || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Error withdrawing application:', error);
+      alert('Error withdrawing application: ' + error.message);
+    }
+  };
+
+  const handleApproveApplication = async () => {
+    setActionLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`https://digious-crm-official.onrender.com/api/v1/applications/${application.id}/approve`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status: 'approved', notes: approveNotes || '' })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        const msg = result.message || `Application approved and forwarded.`;
+        alert(msg);
+        setShowApproveForm(false);
+        setApproveNotes('');
+        onClose();
+        window.location.reload();
+      } else {
+        const error = await response.json();
+        alert('Failed to approve: ' + (error.message || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Error approving application:', error);
+      alert('Error: ' + error.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleRejectApplication = async () => {
+    if (!rejectReason.trim()) {
+      alert('Rejection reason is required');
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`https://digious-crm-official.onrender.com/api/v1/applications/${application.id}/reject`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ rejection_reason: rejectReason })
+      });
+
+      if (response.ok) {
+        alert(`Application has been rejected.`);
+        setShowRejectForm(false);
+        setRejectReason('');
+        onClose();
+        window.location.reload();
+      } else {
+        const error = await response.json();
+        alert('Failed to reject: ' + (error.message || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Error rejecting application:', error);
+      alert('Error: ' + error.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'pending': return 'bg-yellow-100 text-yellow-800';
       case 'approved': return 'bg-green-100 text-green-800';
       case 'rejected': return 'bg-red-100 text-red-800';
       case 'in_review': return 'bg-blue-100 text-blue-800';
+      case 'in-progress': return 'bg-indigo-100 text-indigo-800';
+      case 'withdrawn': return 'bg-gray-100 text-gray-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -1268,6 +1873,8 @@ const ApplicationDetailModal = ({ application, onClose }) => {
       case 'approved': return 'Approved';
       case 'rejected': return 'Rejected';
       case 'in_review': return 'In Review';
+      case 'in-progress': return 'In Progress';
+      case 'withdrawn': return 'Withdrawn';
       default: return 'Unknown';
     }
   };
@@ -1334,6 +1941,114 @@ const ApplicationDetailModal = ({ application, onClose }) => {
                   </div>
                 </div>
 
+                {/* Approval Chain / Assigned To */}
+                {application.assignees && application.assignees.length > 0 ? (
+                  <div className="bg-purple-50 p-4 rounded-xl border border-purple-200">
+                    <p className="text-sm text-purple-600 font-medium mb-3">
+                      <Users className="h-4 w-4 inline mr-1" />
+                      Approval Chain ({application.assignees.length} {application.assignees.length === 1 ? 'step' : 'steps'})
+                    </p>
+                    <div className="space-y-2">
+                      {application.assignees.map((assignee, index) => {
+                        const isCurrent = application.currentStep === assignee.step_order;
+                        const isApproved = assignee.status === 'approved';
+                        const isRejected = assignee.status === 'rejected';
+                        const isPastStep = assignee.step_order < application.currentStep;
+                        
+                        return (
+                          <div key={assignee.id || index} className={`flex items-center gap-3 p-2 rounded-lg ${
+                            isCurrent ? 'bg-purple-100 border border-purple-300' : 
+                            isApproved ? 'bg-green-50 border border-green-200' : 
+                            isRejected ? 'bg-red-50 border border-red-200' : 
+                            'bg-white border border-gray-100'
+                          }`}>
+                            {/* Step indicator */}
+                            <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
+                              isApproved ? 'bg-green-500 text-white' : 
+                              isRejected ? 'bg-red-500 text-white' : 
+                              isCurrent ? 'bg-purple-600 text-white' : 
+                              'bg-gray-300 text-gray-600'
+                            }`}>
+                              {isApproved ? <Check className="h-3 w-3" /> : isRejected ? <X className="h-3 w-3" /> : index + 1}
+                            </div>
+                            <div className="w-8 h-8 rounded-full bg-purple-200 flex items-center justify-center text-xs font-bold text-purple-800 flex-shrink-0">
+                              {assignee.employee_name.split(' ').map(n => n[0]).join('')}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900 truncate">{assignee.employee_name}</p>
+                              <p className="text-xs text-gray-500">
+                                {assignee.designation ? `${assignee.designation} • ` : ''}
+                                {isApproved ? 'Approved' : isRejected ? 'Rejected' : isCurrent ? 'Awaiting action' : 'Pending'}
+                                {assignee.action_date ? ` • ${new Date(assignee.action_date).toLocaleDateString()}` : ''}
+                              </p>
+                            </div>
+                            {isCurrent && (
+                              <span className="text-xs bg-purple-600 text-white px-2 py-0.5 rounded-full flex-shrink-0">Current</span>
+                            )}
+                          </div>
+                        );
+                      })}
+                      {/* HR final approval indicator for non-HR apps */}
+                      {application.department !== 'HR' && application.department !== 'Human Resources' && (
+                        <div className={`flex items-center gap-3 p-2 rounded-lg ${
+                          application.currentStep > application.totalSteps && application.status !== 'approved' 
+                            ? 'bg-amber-50 border border-amber-300' 
+                            : application.status === 'approved' ? 'bg-green-50 border border-green-200' : 'bg-white border border-gray-100'
+                        }`}>
+                          <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
+                            application.status === 'approved' ? 'bg-green-500 text-white' : 
+                            application.currentStep > application.totalSteps ? 'bg-amber-500 text-white' : 
+                            'bg-gray-300 text-gray-600'
+                          }`}>
+                            {application.status === 'approved' ? <Check className="h-3 w-3" /> : application.assignees.length + 1}
+                          </div>
+                          <div className="w-8 h-8 rounded-full bg-amber-200 flex items-center justify-center text-xs font-bold text-amber-800 flex-shrink-0">
+                            HR
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900">HR Department</p>
+                            <p className="text-xs text-gray-500">
+                              {application.status === 'approved' ? `Approved by ${application.approved_by || 'HR'}` : 
+                               application.currentStep > application.totalSteps ? 'Awaiting HR final approval' : 'Final Approval'}
+                            </p>
+                          </div>
+                          {application.currentStep > application.totalSteps && application.status !== 'approved' && (
+                            <span className="text-xs bg-amber-500 text-white px-2 py-0.5 rounded-full flex-shrink-0">Current</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : application.assignedTo ? (
+                  <div className="bg-purple-50 p-4 rounded-xl border border-purple-200">
+                    <p className="text-sm text-purple-600 font-medium mb-2">
+                      <UserPlus className="h-4 w-4 inline mr-1" />
+                      Assigned To
+                    </p>
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-full bg-purple-200 flex items-center justify-center text-sm font-bold text-purple-800">
+                        {application.assignedTo.split(' ').map(n => n[0]).join('')}
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">{application.assignedTo}</p>
+                        {application.assignedToDepartment && (
+                          <p className="text-xs text-gray-600">{application.assignedToDesignation} • {application.assignedToDepartment}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+
+                {/* CC Department */}
+                {application.ccDepartment && (
+                  <div className="bg-amber-50 p-3 rounded-xl border border-amber-200">
+                    <p className="text-sm text-amber-700">
+                      <Shield className="h-3 w-3 inline mr-1" />
+                      <span className="font-medium">CC:</span> {application.ccDepartment} Department
+                    </p>
+                  </div>
+                )}
+
                 {/* Description */}
                 {application.notes && (
                   <div className="bg-gray-50 p-4 rounded-xl">
@@ -1353,10 +2068,10 @@ const ApplicationDetailModal = ({ application, onClose }) => {
                   </div>
                 )}
 
-                {application.rejectionReason && (
+                {(application.rejection_reason || application.rejectionReason) && (
                   <div className="bg-red-50 p-4 rounded-xl">
                     <p className="text-sm text-red-600 font-medium mb-1">Reason for Rejection</p>
-                    <p className="font-medium">{application.rejectionReason}</p>
+                    <p className="font-medium">{application.rejection_reason || application.rejectionReason}</p>
                   </div>
                 )}
               </div>
@@ -1395,24 +2110,137 @@ const ApplicationDetailModal = ({ application, onClose }) => {
               {/* Quick Actions */}
               <div>
                 <h4 className="font-semibold text-gray-900 mb-4">Actions</h4>
-                <div className="space-y-2">
-                  {application.documents && application.documents.length > 0 && (
-                    <button className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100">
-                      <Download className="h-4 w-4" />
-                      Download All
+
+                {/* Approval status indicator */}
+                {canApproveReject && (
+                  <div className="mb-3 p-2 bg-purple-50 border border-purple-200 rounded-lg">
+                    <p className="text-xs text-purple-700 font-medium">🟣 It's your turn to review this application</p>
+                  </div>
+                )}
+
+                {/* Inline Approve Form */}
+                {showApproveForm && (
+                  <div className="mb-3 p-4 bg-green-50 border border-green-200 rounded-xl">
+                    <h5 className="text-sm font-semibold text-green-800 mb-2">Approve & Forward to Next Step</h5>
+                    <textarea
+                      value={approveNotes}
+                      onChange={(e) => setApproveNotes(e.target.value)}
+                      rows="3"
+                      placeholder="Add approval remarks (optional)..."
+                      className="w-full px-3 py-2 border border-green-300 rounded-lg text-sm focus:ring-2 focus:ring-green-400 focus:border-green-400"
+                    />
+                    <div className="flex gap-2 mt-2">
+                      <button
+                        onClick={handleApproveApplication}
+                        disabled={actionLoading}
+                        className="flex-1 px-3 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 disabled:opacity-50 font-medium"
+                      >
+                        {actionLoading ? 'Processing...' : 'Confirm Approval'}
+                      </button>
+                      <button
+                        onClick={() => { setShowApproveForm(false); setApproveNotes(''); }}
+                        className="px-3 py-2 bg-gray-200 text-gray-700 text-sm rounded-lg hover:bg-gray-300"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Inline Reject Form */}
+                {showRejectForm && (
+                  <div className="mb-3 p-4 bg-red-50 border border-red-200 rounded-xl">
+                    <h5 className="text-sm font-semibold text-red-800 mb-2">Reject Application</h5>
+                    <textarea
+                      value={rejectReason}
+                      onChange={(e) => setRejectReason(e.target.value)}
+                      rows="3"
+                      placeholder="Provide reason for rejection (required)..."
+                      className="w-full px-3 py-2 border border-red-300 rounded-lg text-sm focus:ring-2 focus:ring-red-400 focus:border-red-400"
+                    />
+                    {!rejectReason.trim() && (
+                      <p className="text-xs text-red-500 mt-1">* Rejection reason is required</p>
+                    )}
+                    <div className="flex gap-2 mt-2">
+                      <button
+                        onClick={handleRejectApplication}
+                        disabled={actionLoading || !rejectReason.trim()}
+                        className="flex-1 px-3 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 disabled:opacity-50 font-medium"
+                      >
+                        {actionLoading ? 'Processing...' : 'Confirm Rejection'}
+                      </button>
+                      <button
+                        onClick={() => { setShowRejectForm(false); setRejectReason(''); }}
+                        className="px-3 py-2 bg-gray-200 text-gray-700 text-sm rounded-lg hover:bg-gray-300"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Action Buttons */}
+                {!showApproveForm && !showRejectForm && (
+                  <div className="space-y-2">
+                    {application.documents && application.documents.length > 0 && (
+                      <button className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100">
+                        <Download className="h-4 w-4" />
+                        Download All
+                      </button>
+                    )}
+                    <button className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-50 text-gray-700 rounded-xl hover:bg-gray-100">
+                      <Printer className="h-4 w-4" />
+                      Print Application
                     </button>
-                  )}
-                  <button className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-50 text-gray-700 rounded-xl hover:bg-gray-100">
-                    <Printer className="h-4 w-4" />
-                    Print Application
-                  </button>
-                  {application.status === 'pending' && (
-                    <button className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-yellow-50 text-yellow-600 rounded-xl hover:bg-yellow-100">
-                      <Edit className="h-4 w-4" />
-                      Edit Application
-                    </button>
-                  )}
-                </div>
+                    
+                    {/* Approve Button - Show if in approval chain and it's their turn */}
+                    {canApproveReject && (
+                      <button 
+                        onClick={() => setShowApproveForm(true)}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-50 text-green-600 rounded-xl hover:bg-green-100 font-medium">
+                        <CheckCircle className="h-4 w-4" />
+                        Approve & Forward
+                      </button>
+                    )}
+                    
+                    {/* Reject Button - Show if in approval chain and it's their turn */}
+                    {canApproveReject && (
+                      <button 
+                        onClick={() => setShowRejectForm(true)}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 font-medium">
+                        <XCircle className="h-4 w-4" />
+                        Reject Application
+                      </button>
+                    )}
+                    
+                    {/* Edit Button - Only for owner with pending status */}
+                    {canEdit && (
+                      <button 
+                        onClick={handleEditApplication}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-yellow-50 text-yellow-600 rounded-xl hover:bg-yellow-100 font-medium">
+                        <Edit className="h-4 w-4" />
+                        Edit Application
+                      </button>
+                    )}
+                    
+                    {/* Withdraw Button - For owner with non-pending status */}
+                    {canWithdraw && (
+                      <button 
+                        onClick={handleWithdrawApplication}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 font-medium">
+                        <X className="h-4 w-4" />
+                        Withdraw Application
+                      </button>
+                    )}
+                    
+                    {/* Info message if not owner */}
+                    {!isOwner && (
+                      <div className="p-3 bg-gray-50 rounded-xl text-sm text-gray-600 text-center">
+                        You can only edit your own applications
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Timeline */}
@@ -1429,14 +2257,40 @@ const ApplicationDetailModal = ({ application, onClose }) => {
                     </div>
                   </div>
                   
-                  {application.approvedDate && (
+                  {/* Show approval chain timeline */}
+                  {application.assignees && application.assignees.filter(a => a.status === 'approved' || a.status === 'rejected').map((assignee, index) => (
+                    <div key={assignee.id || index} className="flex items-center gap-3">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                        assignee.status === 'approved' ? 'bg-green-100' : 'bg-red-100'
+                      }`}>
+                        {assignee.status === 'approved' 
+                          ? <CheckCircle className="h-4 w-4 text-green-600" />
+                          : <X className="h-4 w-4 text-red-600" />
+                        }
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">
+                          {assignee.status === 'approved' ? 'Approved' : 'Rejected'} by {assignee.employee_name}
+                        </p>
+                        <p className="text-xs text-gray-600">
+                          Step {assignee.step_order}
+                          {assignee.action_date ? ` • ${new Date(assignee.action_date).toLocaleDateString()}` : ''}
+                        </p>
+                        {assignee.notes && (
+                          <p className="text-xs text-gray-500 italic">"{assignee.notes}"</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+
+                  {application.approved_by && (
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
                         <CheckCircle className="h-4 w-4 text-green-600" />
                       </div>
                       <div>
-                        <p className="font-medium">Approved</p>
-                        <p className="text-sm text-gray-600">{application.approvedDate}</p>
+                        <p className="font-medium">Final Approval by {application.approved_by}</p>
+                        <p className="text-sm text-gray-600">{application.approvedDate || application.approved_date}</p>
                       </div>
                     </div>
                   )}
@@ -1603,7 +2457,7 @@ const MemoDetailModal = ({ memo, onClose, onMarkAsRead }) => {
             </div>
           </div>
         </div>
-      </div>
+            </div>
     </div>
   );
 };

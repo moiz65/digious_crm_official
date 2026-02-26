@@ -83,7 +83,8 @@ const HrSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) =
       hasSubmenu: true,
       submenu: [
         { id: 'manage-attendance', label: 'Manage Attendance', path: '/hr/attendance', icon: Settings },
-        { id: 'my-attendance', label: 'My Attendance', path: '/hr/my-attendance', icon: User }
+        { id: 'my-attendance', label: 'My Attendance', path: '/hr/my-attendance', icon: User },
+        { id: 'attendance-adjustment', label: 'Adjustment', path: '/hr/attendance-adjustment', icon: BarChart3 }
       ]
     },
     // { id: 'applications', icon: FileText, label: 'Applications & Memos', path: '/hr/applications' },
@@ -97,6 +98,7 @@ const HrSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) =
         { id: 'user-roles', label: 'User Roles', icon: Shield, path: '/hr/user-roles' },
         // { id: 'system-config', label: 'System Configuration', icon: Database, path: '/hr/system-config' },
         { id: 'role-management', label: 'Role Management', icon: UserRoundCog, path: '/hr/role-management' },
+        { id: 'hr-settings', label: 'HR Settings', icon: Settings, path: '/hr/settings' },
       ]
     },
   ];

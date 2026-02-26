@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   LineChart,
   Line,
@@ -41,25 +41,10 @@ import {
   PieChart as PieChartIcon,
   CalendarDays,
   UserX,
+  Loader,
 } from "lucide-react";
 import HrSidebar from '../../components/HrSidebar';
-
-// Mock Data
-const departments = [
-  { name: "Production", totalEmployees: 45, onLeave: 8 },
-  { name: "Marketing", totalEmployees: 28, onLeave: 4 },
-  { name: "Sales", totalEmployees: 35, onLeave: 6 },
-  { name: "HR", totalEmployees: 15, onLeave: 2 },
-  { name: "Finance", totalEmployees: 22, onLeave: 3 },
-  { name: "Operations", totalEmployees: 38, onLeave: 7 },
-];
-
-const leaveTypes = [
-  { id: "annual", name: "Annual", color: "#2563eb" },
-  { id: "sick", name: "Sick", color: "#10b981" },
-  { id: "casual", name: "Casual", color: "#f59e0b" },
-  { id: "parental", name: "Parental", color: "#8b5cf6" },
-];
+import { endpoints, getAuthHeaders } from '../../config/api';
 
 // Simple date formatting
 const formatDate = (dateString) => {
@@ -67,123 +52,6 @@ const formatDate = (dateString) => {
   const date = new Date(dateString);
   return date.toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
 };
-
-// Employees on leave
-const employeesOnLeave = [
-  {
-    id: 1,
-    name: "John Doe",
-    avatar: "JD",
-    department: "Production",
-    position: "Senior Developer",
-    email: "john@company.com",
-    onLeave: true,
-    leaveUntil: "2026-05-10",
-  },
-  {
-    id: 2,
-    name: "Sarah Smith",
-    avatar: "SS",
-    department: "Marketing",
-    position: "Marketing Manager",
-    email: "sarah@company.com",
-    onLeave: true,
-    leaveUntil: "2026-05-05",
-  },
-];
-
-// Applied leaves
-const appliedLeaves = [
-  {
-    id: 1,
-    employee: { name: "John Doe", department: "Production", email: "john@company.com" },
-    type: "Annual",
-    startDate: "2026-05-01",
-    endDate: "2026-05-05",
-    duration: 5,
-    status: "approved",
-    reason: "Family vacation",
-    submittedAt: "2026-04-20",
-  },
-  {
-    id: 2,
-    employee: { name: "Sarah Smith", department: "Marketing", email: "sarah@company.com" },
-    type: "Sick",
-    startDate: "2026-05-02",
-    endDate: "2026-05-02",
-    duration: 1,
-    status: "pending",
-    reason: "Doctor appointment",
-    submittedAt: "2026-05-01",
-  },
-];
-
-// Applications data
-const applications = [
-  {
-    id: 1,
-    type: 'Leave Application',
-    employeeName: 'John Smith',
-    employeeEmail: 'john.smith@company.com',
-    department: 'Sales',
-    subject: 'Annual Leave Request',
-    description: 'Requesting 5 days annual leave for family vacation',
-    submittedDate: '2026-12-08',
-    startDate: '2026-12-15',
-    endDate: '2026-12-20',
-    status: 'Pending',
-    priority: 'Medium',
-  },
-  {
-    id: 2,
-    type: 'Transfer Request',
-    employeeName: 'Sarah Johnson',
-    employeeEmail: 'sarah.j@company.com',
-    department: 'Marketing',
-    subject: 'Department Transfer Request',
-    description: 'Requesting transfer to Digital Marketing team',
-    submittedDate: '2026-12-05',
-    status: 'Approved',
-    priority: 'High',
-  },
-  {
-    id: 3,
-    type: 'Reimbursement',
-    employeeName: 'Mike Chen',
-    employeeEmail: 'mike.chen@company.com',
-    department: 'Production',
-    subject: 'Travel Expense Reimbursement',
-    description: 'Client meeting travel expenses',
-    submittedDate: '2026-12-10',
-    amount: '$450',
-    status: 'Pending',
-    priority: 'Medium',
-  },
-];
-
-// Memos data
-const memos = [
-  {
-    id: 1,
-    type: 'Policy Update',
-    title: 'Updated Remote Work Policy',
-    content: 'Effective January 1st, 2026, employees can work remotely up to 3 days per week',
-    issuedBy: 'HR Department',
-    issuedDate: '2026-12-10',
-    department: 'All',
-    priority: 'High',
-  },
-  {
-    id: 2,
-    type: 'Announcement',
-    title: 'Holiday Schedule 2026',
-    content: 'Company holiday schedule for the year 2026 is now available',
-    issuedBy: 'HR Manager',
-    issuedDate: '2026-12-08',
-    department: 'All',
-    priority: 'Medium',
-  },
-];
 
 const ApplicationsMemos = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -198,13 +66,128 @@ const ApplicationsMemos = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
 
+  // Real data from API
+  const [applications, setApplications] = useState([]);
+  const [appliedLeaves, setAppliedLeaves] = useState([]);
+  const [memos, setMemos] = useState([]);
+  const [departments, setDepartments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Fetch applications for all employees
+  const fetchApplications = async () => {
+    try {
+      const response = await fetch(endpoints.applications.base, {
+        method: 'GET',
+        headers: getAuthHeaders(),
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch applications');
+      const result = await response.json();
+      
+      const formattedApps = result.data.map(app => ({
+        id: app.id,
+        type: app.application_type,
+        employeeName: app.employee_name || 'Unknown',
+        employeeEmail: app.employee_email || '',
+        department: app.department,
+        subject: app.subject,
+        description: app.description,
+        submittedDate: app.submission_date ? formatDate(app.submission_date) : 'N/A',
+        status: app.status ? app.status.charAt(0).toUpperCase() + app.status.slice(1) : 'pending',
+        priority: app.priority ? app.priority.charAt(0).toUpperCase() + app.priority.slice(1) : 'Medium',
+        application_number: app.application_number,
+        documents: app.documents || [],
+      }));
+      
+      setApplications(formattedApps);
+    } catch (err) {
+      console.error('Error fetching applications:', err);
+      setError('Failed to load applications');
+    }
+  };
+
+  // Fetch leaves
+  const fetchLeaves = async () => {
+    try {
+      const response = await fetch(endpoints.leaves.requests, {
+        method: 'GET',
+        headers: getAuthHeaders(),
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch leaves');
+      const result = await response.json();
+      
+      const formattedLeaves = result.data.map(leave => ({
+        id: leave.id,
+        employee: { 
+          name: leave.employee_name || 'Unknown', 
+          department: leave.department || '', 
+          email: leave.employee_email || '' 
+        },
+        type: leave.leave_type || leave.type,
+        startDate: leave.start_date || leave.startDate,
+        endDate: leave.end_date || leave.endDate,
+        duration: leave.duration || 1,
+        status: leave.status ? leave.status.toLowerCase() : 'pending',
+        reason: leave.reason || leave.description || '',
+        submittedAt: leave.created_at || leave.submittedAt,
+      }));
+      
+      setAppliedLeaves(formattedLeaves);
+    } catch (err) {
+      console.error('Error fetching leaves:', err);
+      // Don't set error for leaves since it's optional
+    }
+  };
+
+  // Extract unique departments from applications and leaves
+  const extractDepartments = (apps, leaves) => {
+    const deptSet = new Set();
+    apps.forEach(app => deptSet.add(app.department));
+    leaves.forEach(leave => deptSet.add(leave.employee.department));
+    
+    return Array.from(deptSet).map(dept => ({
+      name: dept,
+      totalEmployees: 0, // Could be calculated if needed
+      onLeave: leaves.filter(l => l.employee.department === dept).length,
+    })).filter(d => d.name); // Remove empty/undefined departments
+  };
+
+  // Fetch data on component mount
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        await Promise.all([
+          fetchApplications(),
+          fetchLeaves(),
+        ]);
+      } catch (err) {
+        console.error('Error loading data:', err);
+        setError('Failed to load data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  // Update departments when applications or leaves change
+  useEffect(() => {
+    const depts = extractDepartments(applications, appliedLeaves);
+    setDepartments(depts);
+  }, [applications, appliedLeaves]);
+
   // Stats calculations
   const stats = useMemo(() => ({
     totalEmployees: departments.reduce((sum, dept) => sum + dept.totalEmployees, 0),
     totalOnLeave: departments.reduce((sum, dept) => sum + dept.onLeave, 0),
     pendingApplications: applications.filter(app => app.status === 'Pending').length,
     totalMemos: memos.length,
-  }), []);
+  }), [departments, applications, memos]);
 
   // Filter functions
   const filteredApplications = useMemo(() => {
@@ -544,8 +527,27 @@ const ApplicationsMemos = () => {
 
         {/* Main Content */}
         <div className="flex-1 overflow-y-auto p-6">
-          {/* Tab Navigation */}
-          <div className="flex flex-wrap gap-2 mb-6">
+          {/* Loading State */}
+          {loading && (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center">
+                <Loader className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
+                <p className="text-gray-600">Loading data...</p>
+              </div>
+            </div>
+          )}
+
+          {/* Error State */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+              <p className="text-red-700">{error}</p>
+            </div>
+          )}
+
+          {!loading && (
+            <>
+              {/* Tab Navigation */}
+              <div className="flex flex-wrap gap-2 mb-6">
             {/* <button
               onClick={() => setActiveTab('dashboard')}
               className={`px-4 py-2 rounded-lg font-medium ${
@@ -642,6 +644,8 @@ const ApplicationsMemos = () => {
           {activeTab === 'applications' && renderApplications()}
           {activeTab === 'leaves' && renderLeaves()}
           {activeTab === 'memos' && renderMemos()}
+            </>
+          )}
         </div>
       </div>
 

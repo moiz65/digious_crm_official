@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import EmployeeSidebar from '../../components/EmployeeSidebar';
 // import { EmployeeAttendancePage } from '../../components/EmployeeAttendancePage';
 import EmployeePersonalProfile from '../../components/EmployeePersonalProfile';
@@ -7,6 +7,22 @@ const Attendance = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [activeItem, setActiveItem] = useState('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [employeeId, setEmployeeId] = useState(null);
+
+  // Get logged-in user's employee ID
+  useEffect(() => {
+    try {
+      const userData = localStorage.getItem('user');
+      if (userData) {
+        const user = JSON.parse(userData);
+        const id = user.employeeId || user.employee_id || user.id;
+        setEmployeeId(id);
+        console.log('✅ Employee ID loaded from localStorage:', id);
+      }
+    } catch (e) {
+      console.error('Error reading user from localStorage:', e);
+    }
+  }, []);
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -55,7 +71,7 @@ const Attendance = () => {
 
         {/* Dashboard Content */}
         <main className="flex-1 overflow-y-auto">
-          <EmployeePersonalProfile/>
+          <EmployeePersonalProfile employeeId={employeeId} />
         </main>
       </div>
 

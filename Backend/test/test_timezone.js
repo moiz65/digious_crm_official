@@ -1,4 +1,4 @@
-const { getPakistanDate, getPakistanDateString, getPakistanTimeString } = require('./utils/timezone');
+const { getPakistanDate, getPakistanDateString, getPakistanTimeString } = require('../utils/timezone');
 
 const now = getPakistanDate();
 console.log('Pakistan Date:', now);

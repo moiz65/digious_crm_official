@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   Calendar,
   Download,
@@ -53,7 +53,11 @@ import {
   FilePlus,
   MailIcon,
   CloudUpload,
+  ChevronUp,
+  ChevronDown,
+  ArrowRight,
 } from "lucide-react";
+import { getCurrentEmployeeId, endpoints, getAuthHeaders } from "../config/api";
 
 // Simple date formatting function
 const formatDate = (dateString) => {
@@ -61,6 +65,13 @@ const formatDate = (dateString) => {
   const date = new Date(dateString);
   const options = { month: 'short', day: '2-digit', year: 'numeric' };
   return date.toLocaleDateString('en-US', options);
+};
+
+// Simple time formatting function
+const formatTime = (dateString) => {
+  if (!dateString) return "N/A";
+  const date = new Date(dateString);
+  return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 };
 
 const getStartOfMonth = () => {
@@ -392,6 +403,8 @@ const departmentsList = [
 const departmentApplicationTypes = {
   'Human Resources': [
     { value: 'Annual Leave Request', label: 'Annual Leave Request' },
+    { value: 'Casual Leave Request', label: 'Casual Leave Request' },
+    { value: 'Sick Leave Request', label: 'Sick Leave Request' },
     { value: 'Remote Work Request', label: 'Remote Work Request' },
     { value: 'Overtime Request', label: 'Overtime Request' },
     { value: 'Resignation Request', label: 'Resignation Request' },
@@ -539,18 +552,75 @@ export default function OfficeApplicationsSystem() {
   });
 
   const [currentUser, setCurrentUser] = useState({
-    name: "Alex Johnson",
-    id: "EMP-101",
-    designation: "Senior Executive",
-    department: "Human Resources"
+    name: "",
+    id: null,
+    designation: "",
+    department: ""
   });
+
+  // Real data states
+  const [applications, setApplications] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Get current employee ID on mount and populate currentUser from JWT
+  useEffect(() => {
+    const empId = getCurrentEmployeeId();
+    setCurrentEmployeeId(empId);
+    
+    // Populate currentUser from JWT token
+    const decoded = JSON.parse(atob(localStorage.getItem('token')?.split('.')[1] || '') || '{}');
+    if (decoded) {
+      setCurrentUser({
+        name: decoded.name || '',
+        id: decoded.employeeId || null,
+        designation: decoded.designation || '',
+        department: decoded.department || 'Human Resources'
+      });
+    }
+  }, []);
+
+  // Fetch applications data
+  useEffect(() => {
+    const fetchApplications = async () => {
+      try {
+        setLoading(true);
+        const token = localStorage.getItem('token');
+        const response = await fetch('https://digious-crm-official.onrender.com/api/v1/applications/all', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': token ? `Bearer ${token}` : '',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        if (result.success) {
+          setApplications(result.data);
+        } else {
+          throw new Error(result.message || 'Failed to fetch applications');
+        }
+      } catch (err) {
+        console.error('Error fetching applications:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchApplications();
+  }, []);
 
   // Stats calculations
   const stats = useMemo(() => {
-    const totalApplied = appliedApplications.length;
-    const totalReceiving = receivingApplications.length;
-    const approvedApplied = appliedApplications.filter(app => app.status === 'approved' || app.status === 'completed').length;
-    const processedReceiving = receivingApplications.filter(app => app.status === 'approved' || app.status === 'processing').length;
+    const totalApplied = applications.filter(app => app.employee_id === currentUser.id).length;
+    const totalReceiving = applications.filter(app => app.employee_id !== currentUser.id).length;
+    const approvedApplied = applications.filter(app => app.employee_id === currentUser.id && (app.status === 'approved' || app.status === 'completed')).length;
+    const processedReceiving = applications.filter(app => app.employee_id !== currentUser.id && (app.status === 'approved' || app.status === 'processing')).length;
     
     return {
       totalApplied,
@@ -559,24 +629,24 @@ export default function OfficeApplicationsSystem() {
       processedReceiving,
       approvalRate: totalApplied > 0 ? ((approvedApplied / totalApplied) * 100).toFixed(1) : '0',
       processingRate: totalReceiving > 0 ? ((processedReceiving / totalReceiving) * 100).toFixed(1) : '0',
-      pendingApps: appliedApplications.filter(app => app.status === 'submitted' || app.status === 'in-progress').length,
+      pendingApps: applications.filter(app => app.employee_id === currentUser.id && (app.status === 'submitted' || app.status === 'in-progress')).length,
       unreadMemos: activeMemos.filter(memo => memo.status === 'unread').length,
       drafts: 2
     };
-  }, []);
+  }, [applications, currentUser.id]);
 
   // Filter all applications (combined applied and receiving) - Subject removed from search
   const filteredAllApplications = useMemo(() => {
-    const allApps = [...appliedApplications, ...receivingApplications];
-    let filtered = allApps;
+    let filtered = applications;
     
     if (selectedView === 'today') {
       const today = new Date().toISOString().split('T')[0];
       filtered = filtered.filter(app => 
-        app.appliedDate === today || app.receivedDate === today
+        app.submission_date?.split('T')[0] === today
       );
     } else if (selectedView === 'pending') {
       filtered = filtered.filter(app => 
+        app.status === 'pending' ||
         app.status === 'submitted' || 
         app.status === 'in-progress' || 
         app.status === 'received' || 
@@ -587,9 +657,8 @@ export default function OfficeApplicationsSystem() {
       filtered = filtered.filter(app => app.status === 'approved' || app.status === 'completed');
     } else if (selectedView === 'overdue') {
       filtered = filtered.filter(app => {
-        const dueDate = app.dueDate ? new Date(app.dueDate) : null;
-        const today = new Date();
-        return dueDate && dueDate < today && (app.status === 'received' || app.status === 'processing');
+        // For now, assume no due date in the table, or add logic later
+        return false;
       });
     }
     
@@ -597,24 +666,24 @@ export default function OfficeApplicationsSystem() {
       const matchesDepartment = selectedDepartment === 'all' || app.department === selectedDepartment;
       const matchesStatus = selectedStatus === 'all' || app.status === selectedStatus;
       const matchesType = selectedApplicationType === 'all' || 
-        (app.applicationType && app.applicationType === selectedApplicationType);
+        (app.application_type && app.application_type === selectedApplicationType);
       const matchesSearch = searchQuery === '' || 
         app.applicationNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         app.applicantName?.toLowerCase().includes(searchQuery.toLowerCase());
       
       return matchesDepartment && matchesStatus && matchesType && matchesSearch;
     });
-  }, [selectedDepartment, selectedStatus, selectedApplicationType, searchQuery, selectedView]);
+  }, [applications, selectedDepartment, selectedStatus, selectedApplicationType, searchQuery, selectedView]);
 
   // Filter applied applications - Subject removed from search
   const filteredAppliedApplications = useMemo(() => {
-    let filtered = appliedApplications;
+    let filtered = applications.filter(app => app.employee_id === currentUser.id);
     
     if (selectedView === 'today') {
       const today = new Date().toISOString().split('T')[0];
-      filtered = filtered.filter(app => app.appliedDate === today);
+      filtered = filtered.filter(app => app.submission_date?.split('T')[0] === today);
     } else if (selectedView === 'pending') {
-      filtered = filtered.filter(app => app.status === 'submitted' || app.status === 'in-progress');
+      filtered = filtered.filter(app => app.status === 'pending' || app.status === 'submitted' || app.status === 'in-progress');
     } else if (selectedView === 'approved') {
       filtered = filtered.filter(app => app.status === 'approved' || app.status === 'completed');
     }
@@ -622,43 +691,71 @@ export default function OfficeApplicationsSystem() {
     return filtered.filter(app => {
       const matchesDepartment = selectedDepartment === 'all' || app.department === selectedDepartment;
       const matchesStatus = selectedStatus === 'all' || app.status === selectedStatus;
-      const matchesType = selectedApplicationType === 'all' || app.applicationType === selectedApplicationType;
+      const matchesType = selectedApplicationType === 'all' || app.application_type === selectedApplicationType;
       const matchesSearch = searchQuery === '' || 
         app.applicationNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
         app.applicantName.toLowerCase().includes(searchQuery.toLowerCase());
       
       return matchesDepartment && matchesStatus && matchesType && matchesSearch;
     });
-  }, [selectedDepartment, selectedStatus, selectedApplicationType, searchQuery, selectedView]);
+  }, [applications, currentUser.id, selectedDepartment, selectedStatus, selectedApplicationType, searchQuery, selectedView]);
 
   // Filter receiving applications - Subject removed from search
   const filteredReceivingApplications = useMemo(() => {
-    let filtered = receivingApplications;
+    let filtered = applications.filter(app => app.employee_id !== currentUser.id);
     
     if (selectedView === 'today') {
       const today = new Date().toISOString().split('T')[0];
-      filtered = filtered.filter(app => app.receivedDate === today);
+      filtered = filtered.filter(app => app.submission_date?.split('T')[0] === today);
     } else if (selectedView === 'pending') {
-      filtered = filtered.filter(app => app.status === 'received' || app.status === 'processing');
+      filtered = filtered.filter(app => app.status === 'pending' || app.status === 'received' || app.status === 'processing');
     } else if (selectedView === 'overdue') {
-      filtered = filtered.filter(app => {
-        const dueDate = new Date(app.dueDate);
-        const today = new Date();
-        return dueDate < today && (app.status === 'received' || app.status === 'processing');
-      });
+      // For now, no due date logic
+      filtered = [];
     }
     
     return filtered.filter(app => {
       const matchesDepartment = selectedDepartment === 'all' || app.department === selectedDepartment;
       const matchesStatus = selectedStatus === 'all' || app.status === selectedStatus;
-      const matchesType = selectedApplicationType === 'all' || app.applicationType === selectedApplicationType;
+      const matchesType = selectedApplicationType === 'all' || app.application_type === selectedApplicationType;
       const matchesSearch = searchQuery === '' || 
         app.applicationNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
         app.applicantName.toLowerCase().includes(searchQuery.toLowerCase());
       
       return matchesDepartment && matchesStatus && matchesType && matchesSearch;
     });
-  }, [selectedDepartment, selectedStatus, selectedApplicationType, searchQuery, selectedView]);
+  }, [applications, currentUser.id, selectedDepartment, selectedStatus, selectedApplicationType, searchQuery, selectedView]);
+
+  // Filter applications assigned to current user
+  const filteredAssignedToMeApplications = useMemo(() => {
+    if (!currentEmployeeId) return [];
+    
+    let filtered = applications.filter(app => 
+      app.assignees?.some(a => String(a.employee_id) === String(currentEmployeeId)) ||
+      String(app.assigned_to_employee_id) === String(currentEmployeeId)
+    );
+
+    // Attach multi-assign meta to each app
+    filtered = filtered.map(app => {
+      const myAssignee = app.assignees?.find(a => String(a.employee_id) === String(currentEmployeeId));
+      return {
+        ...app,
+        isMyTurn: myAssignee ? app.current_step === myAssignee.step_order : false,
+        myStepOrder: myAssignee?.step_order || null,
+        myStepStatus: myAssignee?.status || null,
+      };
+    });
+
+    // Apply search filter
+    return filtered.filter(app => {
+      const matchesSearch = searchQuery === '' || 
+        app.application_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        app.applicant_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        app.subject?.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      return matchesSearch;
+    });
+  }, [applications, currentEmployeeId, searchQuery]);
 
   // Filter active memos
   const filteredMemos = useMemo(() => {
@@ -1929,7 +2026,7 @@ export default function OfficeApplicationsSystem() {
                 >
                   Pending
                 </button>
-                {(activeTab === 'all-applications' || activeTab === 'applied') ? (
+                {(activeTab === 'all-applications' || activeTab === 'my-applications') ? (
                   <button
                     onClick={() => setSelectedView('approved')}
                     className={`px-3 py-1.5 text-sm rounded-lg ${selectedView === 'approved' ? 'bg-green-100 text-green-700' : 'text-slate-600 hover:bg-slate-100'}`}
@@ -2035,28 +2132,66 @@ export default function OfficeApplicationsSystem() {
                     <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Applicant</th>
                     <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Department</th>
                     <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Date</th>
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Assigned To</th>
                     <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Status</th>
                     <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredAllApplications.map((app, index) => (
+                  {loading ? (
+                    <tr>
+                      <td colSpan="9" className="py-12 px-6 text-center">
+                        <div className="flex flex-col items-center justify-center">
+                          <RefreshCw size={32} className="text-slate-400 animate-spin mb-3" />
+                          <p className="text-slate-500 font-medium">Loading applications...</p>
+                          <p className="text-slate-400 text-sm mt-1">Please wait while we fetch the data</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : error ? (
+                    <tr>
+                      <td colSpan="9" className="py-12 px-6 text-center">
+                        <div className="flex flex-col items-center justify-center">
+                          <AlertCircle size={32} className="text-red-400 mb-3" />
+                          <p className="text-red-600 font-medium">Error loading applications</p>
+                          <p className="text-red-500 text-sm mt-1">{error}</p>
+                          <button 
+                            onClick={() => window.location.reload()}
+                            className="mt-3 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg text-sm font-medium"
+                          >
+                            Try Again
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : filteredAllApplications.length === 0 ? (
+                    <tr>
+                      <td colSpan="9" className="py-12 px-6 text-center">
+                        <div className="flex flex-col items-center justify-center">
+                          <FileText size={48} className="text-slate-300 mb-3" />
+                          <p className="text-slate-500 font-medium">No applications found</p>
+                          <p className="text-slate-400 text-sm mt-1">Try adjusting your filters or create a new application</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredAllApplications.map((app, index) => (
                     <tr key={`${app.id}-${index}`} className="border-b border-slate-100 hover:bg-slate-50">
                       <td className="py-4 px-6">
-                        <div className="font-medium text-slate-900">{app.applicationNumber}</div>
-                        <div className="text-xs text-slate-500 mt-1">{app.applicationType}</div>
+                        <div className="font-medium text-slate-900">{app.application_number}</div>
+                        <div className="text-xs text-slate-500 mt-1">{app.application_type}</div>
                       </td>
                       <td className="py-4 px-6">
                         <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
-                          app.appliedDate ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+                          app.employee_id === currentUser.id ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
                         }`}>
-                          {app.appliedDate ? 'Applied' : 'Receiving'}
+                          {app.employee_id === currentUser.id ? 'Applied' : 'Receiving'}
                         </span>
                       </td>
                       <td className="py-4 px-6">
                         <div>
-                          <p className="font-medium text-slate-900">{app.applicantName}</p>
-                          <p className="text-xs text-slate-500">{app.applicantId || app.applicantDesignation}</p>
+                          <p className="font-medium text-slate-900">{app.applicant_name}</p>
+                          <p className="text-xs text-slate-500">{app.employee_id} • {app.applicant_designation}</p>
                         </div>
                       </td>
                       <td className="py-4 px-6">
@@ -2068,10 +2203,30 @@ export default function OfficeApplicationsSystem() {
                       <td className="py-4 px-6">
                         <div>
                           <p className="text-sm font-medium text-slate-900">
-                            {formatDate(app.appliedDate || app.receivedDate)}
+                            {formatDate(app.submission_date)}
                           </p>
-                          <p className="text-xs text-slate-500">{app.appliedTime || app.receivedTime}</p>
+                          <p className="text-xs text-slate-500">{formatTime(app.submission_date)}</p>
                         </div>
+                      </td>
+                      <td className="py-4 px-6">
+                        {app.assigned_to_name ? (
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center text-xs font-bold text-purple-800">
+                              {app.assigned_to_name.split(' ').map(n => n[0]).join('')}
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-slate-900">{app.assigned_to_name}</p>
+                              <p className="text-xs text-slate-500">{app.assigned_to_designation}</p>
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-slate-400">Dept-wide</span>
+                        )}
+                        {app.cc_department && (
+                          <span className="inline-flex items-center mt-1 px-2 py-0.5 rounded text-xs bg-amber-50 text-amber-700">
+                            CC: {app.cc_department}
+                          </span>
+                        )}
                       </td>
                       <td className="py-4 px-6">
                         <div className="flex flex-col gap-2">
@@ -2144,7 +2299,8 @@ export default function OfficeApplicationsSystem() {
                         </div>
                       </td>
                     </tr>
-                  ))}
+                  ))
+                  )}
                 </tbody>
               </table>
             </div>
@@ -2152,14 +2308,14 @@ export default function OfficeApplicationsSystem() {
         </div>
       )}
 
-      {activeTab === 'applied' && (
+      {activeTab === 'my-applications' && (
         <div className="space-y-6">
           {/* Applied Applications Table - Subject column removed */}
           <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
             <div className="p-6 border-b border-slate-200">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-slate-900">
-                  Applied Applications ({filteredAppliedApplications.length})
+                  My Applications ({filteredAppliedApplications.length})
                 </h3>
                 <div className="flex items-center gap-3">
                   <button 
@@ -2257,7 +2413,80 @@ export default function OfficeApplicationsSystem() {
                         </div>
                       </td>
                     </tr>
-                  ))}
+                  ) : filteredAppliedApplications.length === 0 ? (
+                    <tr>
+                      <td colSpan="6" className="py-8 px-6 text-center">
+                        <div className="flex flex-col items-center justify-center">
+                          <FileText size={48} className="text-slate-300 mb-3" />
+                          <p className="text-slate-500 font-medium">No applications submitted yet</p>
+                          <p className="text-slate-400 text-sm mt-1">Click "New Application" to submit your first application</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredAppliedApplications.map((app, index) => (
+                      <tr key={`${app.id}-${index}`} className="border-b border-slate-100 hover:bg-slate-50">
+                        <td className="py-4 px-6">
+                          <div className="font-medium text-slate-900">{app.application_number}</div>
+                          <div className="text-xs text-slate-500 mt-1">{app.application_type}</div>
+                        </td>
+                        <td className="py-4 px-6">
+                          <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                            Submitted
+                          </span>
+                        </td>
+                        <td className="py-4 px-6">
+                          <div className="max-w-xs">
+                            <p className="font-medium text-slate-900 truncate">{app.subject}</p>
+                            {app.attachments && app.attachments.length > 0 && (
+                              <p className="text-xs text-slate-500 mt-1">{app.attachments.length} attachment(s)</p>
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-4 px-6">
+                          <div>
+                            <p className="text-sm font-medium text-slate-900">
+                              {formatDate(app.submission_date)}
+                            </p>
+                            <p className="text-xs text-slate-500">{formatTime(app.submission_date)}</p>
+                          </div>
+                        </td>
+                        <td className="py-4 px-6">
+                          <div className="flex flex-col gap-2">
+                            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
+                              app.status === 'approved' || app.status === 'completed' ? 'bg-green-100 text-green-800' :
+                              app.status === 'in-progress' ? 'bg-blue-100 text-blue-800' :
+                              app.status === 'submitted' ? 'bg-amber-100 text-amber-800' :
+                              app.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                              'bg-slate-100 text-slate-800'
+                            }`}>
+                              {app.status === 'approved' || app.status === 'completed' ? <CheckCircle size={12} /> :
+                               app.status === 'in-progress' ? <Clock size={12} /> :
+                               app.status === 'submitted' ? <AlertCircle size={12} /> :
+                               app.status === 'rejected' ? <XCircle size={12} /> :
+                               <Inbox size={12} />}
+                              {app.status.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="py-4 px-6">
+                          <div className="flex items-center gap-2">
+                            <button 
+                              onClick={() => handleViewDetails(app)}
+                              className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-medium"
+                            >
+                              <Eye size={12} className="inline mr-1" />
+                              View
+                            </button>
+                            <button className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-medium">
+                              <Edit size={12} className="inline mr-1" />
+                              Edit
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
@@ -2265,14 +2494,14 @@ export default function OfficeApplicationsSystem() {
         </div>
       )}
 
-      {activeTab === 'receive' && (
+      {activeTab === 'assigned-to-me' && (
         <div className="space-y-6">
           {/* Receiving Applications Table - Subject column removed */}
           <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
             <div className="p-6 border-b border-slate-200">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-slate-900">
-                  Receiving Applications ({filteredReceivingApplications.length})
+                  Assigned to Me ({filteredAssignedToMeApplications.length})
                 </h3>
                 <div className="flex items-center gap-3">
                   <button className="flex items-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium">
@@ -2287,6 +2516,7 @@ export default function OfficeApplicationsSystem() {
                 <thead>
                   <tr className="bg-slate-50">
                     <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Application No.</th>
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Type</th>
                     <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Applicant</th>
                     <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Department</th>
                     <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Received On</th>
@@ -2320,27 +2550,60 @@ export default function OfficeApplicationsSystem() {
                           <p className="text-xs text-slate-500 mt-1">Due: {formatDate(app.dueDate)}</p>
                         </div>
                       </td>
-                      <td className="py-4 px-6">
-                        <div className="flex flex-col gap-2">
+                    </tr>
+                  ) : (
+                    filteredAssignedToMeApplications.map((app, index) => (
+                      <tr key={`${app.id}-${index}`} className="border-b border-slate-100 hover:bg-slate-50">
+                        <td className="py-4 px-6">
+                          <div className="font-medium text-slate-900">{app.application_number}</div>
+                          <div className="text-xs text-slate-500 mt-1">{app.application_type}</div>
+                        </td>
+                        <td className="py-4 px-6">
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                            <Building size={12} />
+                            {app.application_type}
+                          </span>
+                        </td>
+                        <td className="py-4 px-6">
+                          <div>
+                            <p className="font-medium text-slate-900">{app.applicant_name}</p>
+                            <p className="text-xs text-slate-500">{app.employee_id}</p>
+                          </div>
+                        </td>
+                        <td className="py-4 px-6">
+                          <p className="text-sm font-medium text-slate-900">{app.subject}</p>
+                        </td>
+                        <td className="py-4 px-6">
+                          <p className="text-sm font-medium text-slate-900">{formatDate(app.submission_date)}</p>
+                          <p className="text-xs text-slate-500">{formatTime(app.submission_date)}</p>
+                        </td>
+                        <td className="py-4 px-6">
                           <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
                             app.status === 'approved' ? 'bg-green-100 text-green-800' :
-                            app.status === 'processing' ? 'bg-blue-100 text-blue-800' :
-                            app.status === 'pending-approval' ? 'bg-amber-100 text-amber-800' :
+                            app.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                             app.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                            app.status === 'in-progress' ? 'bg-blue-100 text-blue-800' :
+                            app.status === 'withdrawn' ? 'bg-orange-100 text-orange-800' :
                             'bg-slate-100 text-slate-800'
                           }`}>
                             {app.status === 'approved' ? <CheckCircle size={12} /> :
-                             app.status === 'processing' ? <Clock size={12} /> :
-                             app.status === 'pending-approval' ? <AlertCircle size={12} /> :
+                             app.status === 'pending' ? <Clock size={12} /> :
                              app.status === 'rejected' ? <XCircle size={12} /> :
-                             <Inbox size={12} />}
-                            {app.status.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                             <AlertCircle size={12} />}
+                            {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
                           </span>
-                          <span className="text-xs text-slate-600">Assigned to: {app.assignedTo}</span>
-                        </div>
-                      </td>
-                      <td className="py-4 px-6">
-                        <div className="flex items-center gap-2">
+                          {app.isMyTurn && (
+                            <span className="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
+                              Your Turn
+                            </span>
+                          )}
+                          {app.current_step > app.total_steps && app.status !== 'approved' && app.status !== 'rejected' && (
+                            <span className="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
+                              HR Final
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-4 px-6">
                           <button 
                             onClick={() => handleViewDetails(app)}
                             className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
@@ -2369,16 +2632,19 @@ export default function OfficeApplicationsSystem() {
                           >
                             <XCircle size={16} />
                           </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
           </div>
         </div>
       )}
+
+
+
 
       {activeTab === 'memos' && (
         <div className="space-y-6">
