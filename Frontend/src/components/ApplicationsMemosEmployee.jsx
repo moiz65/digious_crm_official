@@ -1,17 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Calendar,
+  Calendar, MapPin, Briefcase,
   FileCheck, ClipboardList, Plus, Search,
-  Clock, AlertCircle, CheckCircle, X, Download,
-  Printer, Share2, Paperclip, Eye,
-  Check,Package,Home, Users,
-   Globe, 
-  CloudUpload, FileText, Send, Edit,
-  FilePlus, 
-  MessageSquare, Mail as MailIcon,
-   Target, Eye as EyeIcon,Pause
+  Clock, AlertCircle, CheckCircle, XCircle, X, Download,
+  Printer, Share2, Paperclip, Upload, Eye,
+  Check, UserPlus, Award, TrendingUp, DollarSign,
+  Package, ShoppingCart, CreditCard, PieChart, Grid,
+  Bell, Settings, LogOut, Home, BarChart, Users,
+  Shield, Building, Globe, Bookmark, Star,
+  CloudUpload, FileText, Send, Edit, Trash2,
+  FilePlus, FolderPlus, FolderOpen, Folder,
+  MessageSquare, Mail as MailIcon, BellRing, 
+  CalendarDays, Target, Timer, Zap, Rocket,
+  Trophy, Medal, Crown, Heart, ThumbsUp,
+  TrendingDown, RefreshCw, ExternalLink, Link,
+  Copy, QrCode, Smartphone, Tablet, Monitor,
+  Headphones, Camera, Video, Mic, Music,
+  Wifi, Battery, Power, Database, Server,
+  Cpu, HardDrive, Network, Lock, Key,
+  EyeOff, Eye as EyeIcon, Fingerprint,
+  ShieldCheck, ShieldAlert, ShieldOff,
+  Truck, Wrench, Loader,
+  ChevronUp, ChevronDown, ArrowRight
 } from 'lucide-react';
-import { DashboardHeader } from './DashboardComponents';
+import { endpoints, apiRequest, getAuthHeaders } from '../config/api';
 
 const ApplicationsMemosEmployee = () => {
   const [employee, setEmployee] = useState(null);
@@ -35,40 +47,7 @@ const ApplicationsMemosEmployee = () => {
     unreadMemos: 0
   });
 
-  // Attendance-like local state for header cards
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const [attendanceSummary, setAttendanceSummary] = useState({
-    check_in_time: null,
-    check_out_time: null,
-    status: 'Not Checked In',
-    total_breaks_taken: 0,
-    total_break_duration_minutes: 0,
-    late_by_minutes: 0
-  });
-
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const formatTimeDisplay = (minutes) => {
-    if (!minutes || minutes === 0) return '0m';
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    if (hours === 0) return `${mins}m`;
-    if (mins === 0) return `${hours}h`;
-    return `${hours}h ${mins}m`;
-  };
-
-  const getWorkingHours = () => {
-    if (!attendanceSummary.check_in_time) return '0h 0m';
-    if (attendanceSummary.check_out_time) return attendanceSummary.working_hours || '0h 0m';
-    // approximate using currentTime if no checkout
-    // fallback to 0h 0m for simplicity
-    return attendanceSummary.working_hours || '0h 0m';
-  };
-
-  // Sample data - employee's own applications and memos
+  // Fetch employee data and applications on mount
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -340,81 +319,109 @@ const ApplicationsMemosEmployee = () => {
         <div className="absolute top-1/3 right-1/4 w-80 h-80 bg-cyan-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse"></div>
         <div className="absolute bottom-1/4 left-1/3 w-72 h-72 bg-sky-100 rounded-full mix-blend-multiply filter blur-3xl opacity-25 animate-pulse"></div>
       </div>
-      {/* Header (attendance-style) */}
-        <div className="mb-8">
-          <DashboardHeader
-            title={`Applications & Memos`}
-            
-          />
-        </div>
       <div className="relative z-10 p-6">
         
-        
-
-        {/* Attendance-style Status Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-2xl p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center">
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${attendanceSummary.check_in_time && !attendanceSummary.check_out_time ? 'bg-green-100' : attendanceSummary.check_out_time ? 'bg-blue-100' : 'bg-white'}`}>
-                  <CheckCircle className={`w-6 h-6 ${attendanceSummary.check_in_time ? 'text-green-600' : 'text-gray-400'}`} />
-                </div>
-                <div className="ml-4">
-                  <h3 className="text-sm font-medium text-green-800">Status</h3>
-                  <p className={`text-xl font-bold ${attendanceSummary.check_in_time ? 'text-green-600' : 'text-gray-700'}`}>{attendanceSummary.status}</p>
-                </div>
-              </div>
-            </div>
-            {attendanceSummary.check_in_time && (
-              <p className="text-sm text-green">Checked in at: {attendanceSummary.check_in_time}</p>
-            )}
-          </div>
-
-          <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-2xl p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center">
-                <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center">
-                  <Clock className="w-6 h-6 text-blue-600" />
-                </div>
-                <div className="ml-4">
-                  <h3 className="text-sm font-medium text-blue-800">Working Hours</h3>
-                  <p className="text-xl font-bold text-blue-600">{getWorkingHours()}</p>
-                </div>
-              </div>
-            </div>
-            <p className="text-sm text-gray-500">Current time: {currentTime.toLocaleTimeString('en-US', { hour12: false, timeZone: 'Asia/Karachi' })}</p>
-          </div>
-
-          <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-2xl p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center">
-                <div className="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center">
-                  <Pause className="w-6 h-6 text-purple-600" />
-                </div>
-                <div className="ml-4">
-                  <h3 className="text-sm font-medium text-purple-800">Total Breaks</h3>
-                  <p className="text-xl font-bold text-purple-600">{attendanceSummary.total_breaks_taken || 0}</p>
-                </div>
-              </div>
-            </div>
-            <p className="text-sm text-gray-500">Time: {formatTimeDisplay(attendanceSummary.total_break_duration_minutes || 0)}</p>
-          </div>
-
-          <div className="bg-gradient-to-br from-amber-50 to-amber-100 border border-amber-200 rounded-2xl p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center">
-                <div className="w-12 h-12 bg-orange-100 rounded-2xl flex items-center justify-center">
-                  <AlertCircle className="w-6 h-6 text-orange-600" />
-                </div>
-                <div className="ml-4">
-                  <h3 className="text-sm font-medium text-orange-800">Late By</h3>
-                  <p className="text-xl font-bold text-orange-600">{attendanceSummary.late_by_minutes || 0}m</p>
-                </div>
-              </div>
-            </div>
-            <p className="text-sm text-gray-500">Minutes late today</p>
+        {/* Header */}
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-8">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Applications & Memos</h1>
+            <p className="text-gray-600 mt-2">Manage your applications and view memos â€” submit requests, track status, and stay informed.</p>
           </div>
         </div>
+
+        {/* Loading State */}
+        {loading && (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <Loader className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
+              <p className="text-gray-600">Loading your applications...</p>
+            </div>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <p className="text-red-700">{error}</p>
+          </div>
+        )}
+
+        {/* Content */}
+        {!loading && employee && (
+          <>
+            {/* <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+          <div className="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <FileCheck className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">My Applications</p>
+                <p className="text-xl font-bold">{stats.myApplications}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-yellow-100 rounded-lg">
+                <Clock className="h-5 w-5 text-yellow-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Pending</p>
+                <p className="text-xl font-bold">{stats.pendingApps}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-green-100 rounded-lg">
+                <CheckCircle className="h-5 w-5 text-green-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Approved</p>
+                <p className="text-xl font-bold">{stats.approvedApps}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-purple-100 rounded-lg">
+                <ClipboardList className="h-5 w-5 text-purple-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">My Memos</p>
+                <p className="text-xl font-bold">{stats.myMemos}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <Bell className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Unread</p>
+                <p className="text-xl font-bold">{stats.unreadMemos}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-gray-100 rounded-lg">
+                <FileText className="h-5 w-5 text-gray-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Drafts</p>
+                <p className="text-xl font-bold">0</p>
+              </div>
+            </div>
+          </div>
+        </div> */}
 
 
 
@@ -784,7 +791,7 @@ const AssignedToMeTab = ({ applications, onSelect }) => {
                 </div>
                 <div>
                   <p className="font-medium text-sm">{app.applicantName || 'Unknown'}</p>
-                  <p className="text-xs text-gray-500">{app.applicantDesignation || ''} {app.applicantDepartment ? `• ${app.applicantDepartment}` : ''}</p>
+                  <p className="text-xs text-gray-500">{app.applicantDesignation || ''} {app.applicantDepartment ? `â€¢ ${app.applicantDepartment}` : ''}</p>
                 </div>
               </div>
             </div>
@@ -1030,7 +1037,7 @@ const NewApplicationModal = ({ onClose, onSave, employee, initialData = null, is
     }));
 
     if (initialData.documents && Array.isArray(initialData.documents)) {
-      setUploadedFiles(initialData.documents.map(d => ({ name: d.name, size: d.size || '—', type: d.type || 'pdf' })));
+      setUploadedFiles(initialData.documents.map(d => ({ name: d.name, size: d.size || 'â€”', type: d.type || 'pdf' })));
     }
 
     // Prefill multi-assign employees
@@ -1439,7 +1446,7 @@ const NewApplicationModal = ({ onClose, onSave, employee, initialData = null, is
                   <div className="bg-purple-50 border border-purple-200 p-3 rounded-xl">
                     <p className="text-xs text-purple-700">
                       <Users className="h-3 w-3 inline mr-1" />
-                      Add multiple people in priority order. Approval flows sequentially: Person 1 approves → Person 2 → ... → Final approval.
+                      Add multiple people in priority order. Approval flows sequentially: Person 1 approves â†’ Person 2 â†’ ... â†’ Final approval.
                       {!isHRDepartment && <span className="font-medium"> HR gives the final sign-off.</span>}
                     </p>
                   </div>
@@ -1474,7 +1481,7 @@ const NewApplicationModal = ({ onClose, onSave, employee, initialData = null, is
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-gray-900 truncate">{emp.name}</p>
-                            <p className="text-xs text-gray-500">{emp.designation} • {emp.department}</p>
+                            <p className="text-xs text-gray-500">{emp.designation} â€¢ {emp.department}</p>
                           </div>
                           <span className="text-xs text-purple-600 font-medium">+ Add</span>
                         </button>
@@ -1511,7 +1518,7 @@ const NewApplicationModal = ({ onClose, onSave, employee, initialData = null, is
                               <div className="min-w-0">
                                 <p className="font-semibold text-gray-900 text-sm truncate">{emp.name}</p>
                                 <p className="text-xs text-gray-500 truncate">
-                                  {emp.designation ? `${emp.designation} • ` : ''}{emp.department || ''}{emp.employee_id ? ` • ID: ${emp.employee_id}` : ''}
+                                  {emp.designation ? `${emp.designation} â€¢ ` : ''}{emp.department || ''}{emp.employee_id ? ` â€¢ ID: ${emp.employee_id}` : ''}
                                 </p>
                               </div>
                             </div>
@@ -1541,7 +1548,7 @@ const NewApplicationModal = ({ onClose, onSave, employee, initialData = null, is
                           <div className="w-7 h-7 rounded-full bg-amber-500 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
                             {selectedEmployees.length + 1}
                           </div>
-                          <p className="text-xs text-amber-700 font-medium">HR Department — Final Approval (auto-added)</p>
+                          <p className="text-xs text-amber-700 font-medium">HR Department â€” Final Approval (auto-added)</p>
                         </div>
                       )}
                     </div>
@@ -1556,7 +1563,7 @@ const NewApplicationModal = ({ onClose, onSave, employee, initialData = null, is
             <div className={`p-3 rounded-xl border ${isHRDepartment ? 'bg-gray-50 border-gray-200' : 'bg-amber-50 border-amber-200'}`}>
               <p className="text-sm font-medium text-gray-700 mb-1">CC (Carbon Copy)</p>
               {isHRDepartment ? (
-                <p className="text-xs text-gray-500">No CC needed — this application is directed to HR department.</p>
+                <p className="text-xs text-gray-500">No CC needed â€” this application is directed to HR department.</p>
               ) : (
                 <p className="text-xs text-amber-700">
                   <Shield className="h-3 w-3 inline mr-1" />
@@ -1590,7 +1597,7 @@ const NewApplicationModal = ({ onClose, onSave, employee, initialData = null, is
               <div className="flex items-start gap-2">
                 <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
                 <div className="text-xs text-amber-800">
-                  <p className="font-medium mb-1">📄 Single PDF Only</p>
+                  <p className="font-medium mb-1">ðŸ“„ Single PDF Only</p>
                   <p>Only <strong>ONE PDF file</strong> is allowed per application (max 10MB).</p>
                   <p className="mt-1">If you have multiple documents, please merge them into a single PDF file using:</p>
                   <ul className="list-disc list-inside mt-1 ml-2">
@@ -1647,7 +1654,7 @@ const NewApplicationModal = ({ onClose, onSave, employee, initialData = null, is
                     </div>
                     <div>
                       <p className="text-sm font-medium text-gray-900">{uploadedFiles[0].name}</p>
-                      <p className="text-xs text-gray-500">{uploadedFiles[0].size} • PDF Document</p>
+                      <p className="text-xs text-gray-500">{uploadedFiles[0].size} â€¢ PDF Document</p>
                     </div>
                   </div>
                   <button
@@ -1977,9 +1984,9 @@ const ApplicationDetailModal = ({ application, onClose, employee, onEdit }) => {
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium text-gray-900 truncate">{assignee.employee_name}</p>
                               <p className="text-xs text-gray-500">
-                                {assignee.designation ? `${assignee.designation} • ` : ''}
+                                {assignee.designation ? `${assignee.designation} â€¢ ` : ''}
                                 {isApproved ? 'Approved' : isRejected ? 'Rejected' : isCurrent ? 'Awaiting action' : 'Pending'}
-                                {assignee.action_date ? ` • ${new Date(assignee.action_date).toLocaleDateString()}` : ''}
+                                {assignee.action_date ? ` â€¢ ${new Date(assignee.action_date).toLocaleDateString()}` : ''}
                               </p>
                             </div>
                             {isCurrent && (
@@ -2032,7 +2039,7 @@ const ApplicationDetailModal = ({ application, onClose, employee, onEdit }) => {
                       <div>
                         <p className="font-medium text-gray-900">{application.assignedTo}</p>
                         {application.assignedToDepartment && (
-                          <p className="text-xs text-gray-600">{application.assignedToDesignation} • {application.assignedToDepartment}</p>
+                          <p className="text-xs text-gray-600">{application.assignedToDesignation} â€¢ {application.assignedToDepartment}</p>
                         )}
                       </div>
                     </div>
@@ -2090,7 +2097,7 @@ const ApplicationDetailModal = ({ application, onClose, employee, onEdit }) => {
                           <FileText className="h-5 w-5 text-gray-500" />
                           <div>
                             <p className="text-sm font-medium">{doc.name}</p>
-                            <p className="text-xs text-gray-500">{doc.size} • Uploaded {doc.uploaded}</p>
+                            <p className="text-xs text-gray-500">{doc.size} â€¢ Uploaded {doc.uploaded}</p>
                           </div>
                         </div>
                         <button className="p-1 hover:bg-gray-200 rounded">
@@ -2114,7 +2121,7 @@ const ApplicationDetailModal = ({ application, onClose, employee, onEdit }) => {
                 {/* Approval status indicator */}
                 {canApproveReject && (
                   <div className="mb-3 p-2 bg-purple-50 border border-purple-200 rounded-lg">
-                    <p className="text-xs text-purple-700 font-medium">🟣 It's your turn to review this application</p>
+                    <p className="text-xs text-purple-700 font-medium">ðŸŸ£ It's your turn to review this application</p>
                   </div>
                 )}
 
@@ -2274,7 +2281,7 @@ const ApplicationDetailModal = ({ application, onClose, employee, onEdit }) => {
                         </p>
                         <p className="text-xs text-gray-600">
                           Step {assignee.step_order}
-                          {assignee.action_date ? ` • ${new Date(assignee.action_date).toLocaleDateString()}` : ''}
+                          {assignee.action_date ? ` â€¢ ${new Date(assignee.action_date).toLocaleDateString()}` : ''}
                         </p>
                         {assignee.notes && (
                           <p className="text-xs text-gray-500 italic">"{assignee.notes}"</p>
@@ -2449,7 +2456,7 @@ const MemoDetailModal = ({ memo, onClose, onMarkAsRead }) => {
                       View related documents
                     </button>
                     <button className="w-full text-left text-sm text-blue-600 hover:text-blue-800">
-                      View similiar memos
+                      View similar memos
                     </button>
                   </div>
                 </div>
