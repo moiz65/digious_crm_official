@@ -5,31 +5,10 @@ import { endpoints } from '../../config/api';
 import { getPakistanDate } from '../../utils/timezone';
 import HrSidebar from '../../components/HrSidebar';
 import {
-  CheckCircle,
-  Clock,
-  LogIn,
-  LogOut,
-  User,
-  Activity,
-  AlertCircle,
-  Timer,
-  PauseCircle,
-  Utensils,
-  Cigarette,
-  Table,
-  Shield
+  CheckCircle,Clock,LogIn,LogOut,User,Activity,AlertCircle,Timer,PauseCircle,Utensils,Cigarette,Table,Shield
 } from 'lucide-react';
 import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,PieChart,Pie,Cell
 } from 'recharts';
 
 // Helper function to parse YYYY-MM-DD string correctly without timezone shift
@@ -1777,4 +1756,6 @@ const HRMyAttendance = () => {
 
 export default HRMyAttendance;
 export const EmployeeAttendancePage = HRMyAttendance;
+
+
 
