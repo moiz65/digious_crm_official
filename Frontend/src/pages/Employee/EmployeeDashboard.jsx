@@ -30,7 +30,7 @@ const EmployeeDashboard = () => {
       <div className="flex-1 flex flex-col overflow-hidden">
         <DashboardHeader 
           title="My Dashboard" 
-          subtitle="View your profile and attendance information"
+          
         />
         <RoleBasedNav role={role} />
 
@@ -47,7 +47,7 @@ const EmployeeDashboard = () => {
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-3">{stat.label}</p>
-                    <p className="text-3xl font-semibold bg-gradient-to-r ${stat.color} bg-clip-text text-black/90">{stat.value}</p>
+                    <p className={`text-3xl font-semibold bg-gradient-to-r ${stat.color} bg-clip-text text-black/90`}>{stat.value}</p>
                   </div>
                   <div className={`p-3 rounded-xl bg-gradient-to-br ${stat.iconBg} shadow-md group-hover:scale-110 transition-transform`}>
                     <Icon className="w-6 h-6 text-white" />
@@ -75,9 +75,7 @@ const EmployeeDashboard = () => {
                 </p>
               </div>
             </div>
-            <p className="text-gray-600 mb-6 leading-relaxed">
-              This is your personal dashboard where you can view your attendance records, manage your profile, and track your applications.
-            </p>
+            
             <div className="grid grid-cols-2 gap-4">
               <div className="p-5 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-xl border-2 border-blue-200 hover:shadow-md transition-all group">
                 <div className="flex items-center gap-2 mb-2">
@@ -86,7 +84,7 @@ const EmployeeDashboard = () => {
                   </div>
                   <h3 className="font-bold text-blue-900">My Profile</h3>
                 </div>
-                <p className="text-sm text-blue-700">View and update your information</p>
+                
               </div>
               <div className="p-5 bg-gradient-to-br from-green-100 to-emerald-100 rounded-xl border-2 border-green-200 hover:shadow-md transition-all group">
                 <div className="flex items-center gap-2 mb-2">
@@ -95,7 +93,7 @@ const EmployeeDashboard = () => {
                   </div>
                   <h3 className="font-bold text-green-900">Attendance</h3>
                 </div>
-                <p className="text-sm text-green-700">Check your attendance history</p>
+               
               </div>
             </div>
           </div>

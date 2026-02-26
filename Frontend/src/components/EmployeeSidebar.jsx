@@ -25,7 +25,8 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveIte
     { id: 'dashboard', icon: LayoutDashboard, label: 'My Dashboard', path: '/employee/dashboard' },
     { id: 'attendance', icon: Calendar, label: 'Attendance', path: '/employee/attendance' },
     { id: 'profile', icon: User, label: 'My Profile', path: '/employee/profile' },
-    { id: 'applications', icon: FileText, label: 'Applications', path: '/employee/applications' }
+    { id: 'applications', icon: FileText, label: 'Applications', path: '/employee/applications' },
+    { id: 'settings', icon: FileText, label: 'Settings', path: '/employee/settings' }
   ];
 
   // Detect mobile screen
