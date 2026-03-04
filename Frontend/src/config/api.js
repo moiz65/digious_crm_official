@@ -144,7 +144,18 @@ export const endpoints = {
     closeTicket: (applicationId) => `${config.FULL_API_URL}/adjustments/close-ticket/${applicationId}`,
     ignoreTicket: (applicationId) => `${config.FULL_API_URL}/adjustments/ignore-ticket/${applicationId}`,
     log: (applicationId) => `${config.FULL_API_URL}/adjustments/log/${applicationId}`,
-  }
+  },
+
+  // Payroll endpoints
+  payroll: {
+    getMonthly: (year, month) => `${config.FULL_API_URL}/payroll/${year}/${month}`,
+    generate: `${config.FULL_API_URL}/payroll/generate`,
+    updateStatus: (id) => `${config.FULL_API_URL}/payroll/${id}/status`,
+    bulkStatus: `${config.FULL_API_URL}/payroll/bulk-status`,
+    getPayslip: (id) => `${config.FULL_API_URL}/payroll/${id}/payslip`,
+    myPayroll: `${config.FULL_API_URL}/payroll/my-payroll`,
+    myPayslip: (id) => `${config.FULL_API_URL}/payroll/my-payslip/${id}`,
+  },
 };
 
 // Helper function to build URL with query parameters

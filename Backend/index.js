@@ -82,6 +82,7 @@ const leavesRoutes = require('./routes/leavesRoutes');
 const applicationsRoutes = require('./routes/applicationsRoutes');
 const checkoutMissingRoutes = require('./routes/checkoutMissing');
 const adjustmentRoutes = require('./routes/adjustmentRoutes');
+const payrollRoutes = require('./routes/payrollRoutes');
 
 app.use(`/api/${process.env.API_VERSION}`, onboardingRoutes);
 app.use(`/api/${process.env.API_VERSION}/auth`, authRoutes);
@@ -94,6 +95,7 @@ app.use(`/api/${process.env.API_VERSION}/leaves`, leavesRoutes);
 app.use(`/api/${process.env.API_VERSION}/applications`, applicationsRoutes);
 app.use(`/api/${process.env.API_VERSION}/checkout-missing`, checkoutMissingRoutes);
 app.use(`/api/${process.env.API_VERSION}/adjustments`, adjustmentRoutes);
+app.use(`/api/${process.env.API_VERSION}/payroll`, payrollRoutes);
 
 // 404 handler
 app.use((req, res) => {

@@ -6,6 +6,7 @@ import {
   Calendar, 
   User,
   FileText,
+  Wallet,
   Bell,
   LogOut,
   Menu,
@@ -26,6 +27,7 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveIte
     { id: 'attendance', icon: Calendar, label: 'Attendance', path: '/employee/attendance' },
     { id: 'profile', icon: User, label: 'My Profile', path: '/employee/profile' },
     { id: 'applications', icon: FileText, label: 'Applications', path: '/employee/applications' },
+    { id: 'payroll', icon: Wallet, label: 'My Payroll', path: '/employee/payroll' },
     { id: 'settings', icon: FileText, label: 'Settings', path: '/employee/settings' }
   ];
 
