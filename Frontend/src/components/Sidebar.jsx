@@ -109,9 +109,15 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) => 
     return activeItem === item.id;
   };
 
-  // Click outside to close sidebar on mobile
+  // Click outside to close sidebar on mobile only
   useEffect(() => {
     const handleClickOutside = (event) => {
+      // Only collapse on mobile viewport
+      if (window.innerWidth >= 1024) return;
+      // Ignore clicks on interactive elements (selects, inputs, buttons) to prevent forced close
+      const tag = event.target.tagName?.toLowerCase();
+      if (['select', 'option', 'input', 'button', 'textarea'].includes(tag)) return;
+      if (event.target.closest('select, input, button, textarea, [role="listbox"], [role="menu"]')) return;
       if (!isCollapsed && sidebarRef.current && !sidebarRef.current.contains(event.target)) {
         setIsCollapsed(true);
       }
