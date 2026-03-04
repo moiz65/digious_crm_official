@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS `payroll_records` (
   `leave_days` int(11) DEFAULT 0,
   `half_days` int(11) DEFAULT 0,
   `paid_leave_days` int(11) DEFAULT 0,
-  `late_deduction_days` int(11) DEFAULT 0 COMMENT 'floor(late_days / 2) — every 2 lates = 1 day deduction',
+  `late_deduction_days` int(11) DEFAULT 0 COMMENT 'floor(late_days / 3) — every 3 lates = 1 day deduction',
   `absent_deduction` decimal(12,2) DEFAULT 0.00,
   `late_deduction` decimal(12,2) DEFAULT 0.00,
   `leave_deduction` decimal(12,2) DEFAULT 0.00,
