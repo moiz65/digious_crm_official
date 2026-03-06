@@ -263,10 +263,10 @@ const PaySlipModal = ({ payroll, onClose }) => {
             <div>
               <p className="text-sm font-semibold text-amber-800">Late Deduction Rule</p>
               <p className="text-xs text-amber-700 mt-1">
-                Every 2 late arrivals = 1 day salary deduction (Daily Rate = Base Salary ÷ 30).
+                Every 3 late arrivals = 1 day salary deduction (Daily Rate = Base Salary ÷ 30).
                 {payroll.late_days > 0 && (
                   <span className="block mt-1 font-medium">
-                    This month: {payroll.late_days} late → {payroll.late_deduction_days || Math.floor(payroll.late_days / 2)} day(s) deducted = PKR {formatNum(payroll.late_deduction)}
+                    This month: {payroll.late_days} late → {payroll.late_deduction_days || Math.floor(payroll.late_days / 3)} day(s) deducted = PKR {formatNum(payroll.late_deduction)}
                   </span>
                 )}
               </p>
@@ -652,7 +652,7 @@ const EmployeePayrollPage = () => {
             <ul className="text-xs text-amber-700 mt-2 space-y-1.5 list-disc list-inside">
               <li><strong>Daily Rate</strong> = Base Salary ÷ 30 (always divided by 30, regardless of month having 28, 29, or 31 days)</li>
               <li><strong>Absent Deduction</strong> = Unpaid absent days × Daily Rate (approved leaves are NOT deducted)</li>
-              <li><strong>Late Deduction</strong> = Every 2 late arrivals = 1 day deducted</li>
+              <li><strong>Late Deduction</strong> = Every 3 late arrivals = 1 day deducted</li>
               <li><strong>Salary Issuance</strong> = Around the 5th of the next month (e.g., Feb salary issued ~5th March)</li>
               <li><strong>Net Salary</strong> = Base Salary + Allowances − Deductions</li>
             </ul>
