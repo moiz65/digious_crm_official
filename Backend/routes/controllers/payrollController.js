@@ -13,7 +13,7 @@
  * 
  * Payroll Logic:
  * - Daily rate = base_salary / 30 (always divide by 30, even for 31-day months)
- * - Late deduction: every 2 lates = 1 day salary deducted
+ * - Late deduction: every 3 lates = 1 day salary deducted
  * - Absent deduction: absent_days * daily_rate
  * - Status: pending | processing | success | failed
  */
@@ -384,9 +384,12 @@ const generatePayroll = async (req, res) => {
         const approvedLeave = approvedLeaveMap[emp.id] || {};
         const leaveBalance = leaveBalanceMap[emp.id] || {};
 
-        const presentDays = parseInt(attendance.present_days) || 0;
-        const totalAbsentDays = parseInt(totalAbsentMap[emp.id]) || 0;
+        // Late arrivals ARE present (they showed up, just late)
+        // So present = view's present_days + late_days
+        const viewPresentDays = parseInt(attendance.present_days) || 0;
         const lateDays = parseInt(attendance.late_days) || 0;
+        const presentDays = viewPresentDays + lateDays;
+        const totalAbsentDays = parseInt(totalAbsentMap[emp.id]) || 0;
         const leaveDays = parseInt(attendance.leave_days) || 0;
         const halfDays = parseInt(detailed.half_days) || 0;
         const paidLeaveDaysFromAttendance = parseInt(detailed.paid_leave_days) || 0;
@@ -416,8 +419,8 @@ const generatePayroll = async (req, res) => {
         const sickLeaveDays = sickFromAbsent;
         const annualLeaveDays = annualFromAbsent;
 
-        // Late deduction: every 2 lates = 1 day deduction
-        const lateDeductionDays = Math.floor(lateDays / 2);
+        // Late deduction: every 3 lates = 1 day deduction
+        const lateDeductionDays = Math.floor(lateDays / 3);
 
         // Calculate deductions — ONLY unpaid absences are deducted
         const absentDeduction = unpaidAbsentDays * dailyRate;

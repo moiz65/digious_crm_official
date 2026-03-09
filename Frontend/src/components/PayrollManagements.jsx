@@ -775,10 +775,10 @@ const PaySlipModal = ({ payroll, onClose, onUpdateStatus }) => {
               <div>
                 <p className="text-sm font-semibold text-amber-800">Late Deduction Rule</p>
                 <p className="text-xs text-amber-700 mt-1">
-                  Every 2 late arrivals result in 1 day salary deduction. Daily rate = Base Salary / 30.
+                  Every 3 late arrivals result in 1 day salary deduction. Daily rate = Base Salary / 30.
                   {payroll.late_days > 0 && (
                     <span className="block mt-1">
-                      This month: {payroll.late_days} late(s) → {payroll.late_deduction_days || Math.floor(payroll.late_days / 2)} day(s) deducted = {formatCurrency(payroll.late_deduction)}
+                      This month: {payroll.late_days} late(s) → {payroll.late_deduction_days || Math.floor(payroll.late_days / 3)} day(s) deducted = {formatCurrency(payroll.late_deduction)}
                     </span>
                   )}
                 </p>

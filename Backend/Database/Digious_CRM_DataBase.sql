@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Feb 28, 2026 at 07:10 PM
+-- Generation Time: Mar 09, 2026 at 07:50 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -1001,7 +1001,152 @@ INSERT INTO `Employee_Absent` (`id`, `employee_id`, `email`, `name`, `absent_dat
 (309, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-02-28', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-02-28 14:55:20', '2026-02-28 14:55:20', NULL, NULL),
 (310, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-02-28', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-02-28 14:55:20', '2026-02-28 14:55:20', NULL, NULL),
 (311, 55, 'JFAD@digioussolutions.com', 'JFAD', '2026-02-28', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-02-28 14:55:20', '2026-02-28 14:55:20', NULL, NULL),
-(312, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-02-28', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-02-28 14:55:20', '2026-02-28 14:55:20', NULL, NULL);
+(312, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-02-28', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-02-28 14:55:20', '2026-02-28 14:55:20', NULL, NULL),
+(313, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-01', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-02-28 19:08:51', '2026-02-28 19:08:51', NULL, NULL),
+(314, 28, 'Shahmeerabbas@digioussolutions.com', 'Syed Shahmeer Abbas', '2026-03-01', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-02-28 19:08:51', '2026-02-28 19:08:51', NULL, NULL),
+(315, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-03-01', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-02-28 19:08:51', '2026-02-28 19:08:51', NULL, NULL),
+(316, 30, 'wajih@digioussolutions.com', 'Wajih ul Hasan', '2026-03-01', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-02-28 19:08:51', '2026-02-28 19:08:51', NULL, NULL),
+(317, 31, 'Wahajabbas@digioussolutions.com', 'Syed Wahaj Abbas ', '2026-03-01', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-02-28 19:08:51', '2026-02-28 19:08:51', NULL, NULL),
+(318, 32, 'Humaiz@digioussolutions.com', 'Muhammad Humaiz', '2026-03-01', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-02-28 19:08:51', '2026-02-28 19:08:51', NULL, NULL),
+(319, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-03-01', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-02-28 19:08:51', '2026-02-28 19:08:51', NULL, NULL),
+(320, 34, 'Khisal@digioussolutions.com', 'Khisal Zafar', '2026-03-01', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-02-28 19:08:51', '2026-02-28 19:08:51', NULL, NULL),
+(321, 35, 'Taha@digioussolutions.com', 'Muhammad Taha', '2026-03-01', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-02-28 19:08:51', '2026-02-28 19:08:51', NULL, NULL),
+(322, 36, 'Faiq@digioussolutions.com', 'Faiq Shahzad', '2026-03-01', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-02-28 19:08:52', '2026-02-28 19:08:52', NULL, NULL),
+(323, 37, 'Taimoor@digioussolutions.com', 'Taimoor Shah', '2026-03-01', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-02-28 19:08:52', '2026-02-28 19:08:52', NULL, NULL),
+(324, 38, 'Ebad@digioussolutions.com', 'Muhammad Ebad', '2026-03-01', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-02-28 19:08:52', '2026-02-28 19:08:52', NULL, NULL),
+(325, 39, 'muhammadHamza@digioussolutions.com', 'Muhammad Hamza', '2026-03-01', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-02-28 19:08:52', '2026-02-28 19:08:52', NULL, NULL),
+(326, 40, 'Yanish@digioussolutions.com', 'Yanish Hyder', '2026-03-01', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-02-28 19:08:52', '2026-02-28 19:08:52', NULL, NULL),
+(327, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-03-01', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-02-28 19:08:52', '2026-02-28 19:08:52', NULL, NULL),
+(328, 42, 'Tahir@digioussolutions.com', 'Tahir ', '2026-03-01', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-02-28 19:08:52', '2026-02-28 19:08:52', NULL, NULL),
+(329, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-03-01', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-02-28 19:08:52', '2026-02-28 19:08:52', NULL, NULL),
+(330, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-03-01', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-02-28 19:08:52', '2026-02-28 19:08:52', NULL, NULL),
+(331, 45, 'SyedAwais@digioussolutions.com', 'Syed Awais Ahmed', '2026-03-01', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-02-28 19:08:52', '2026-02-28 19:08:52', NULL, NULL),
+(332, 46, 'Shahrukh@digioussolutions.com', 'Shahrukh Hussain Siddiqui', '2026-03-01', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-02-28 19:08:52', '2026-02-28 19:08:52', NULL, NULL),
+(333, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-03-01', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-02-28 19:08:52', '2026-02-28 19:08:52', NULL, NULL),
+(334, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-03-01', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-02-28 19:08:52', '2026-02-28 19:08:52', NULL, NULL),
+(335, 55, 'JFAD@digioussolutions.com', 'JFAD', '2026-03-01', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-02-28 19:08:52', '2026-02-28 19:08:52', NULL, NULL),
+(336, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-01', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-02-28 19:08:52', '2026-02-28 19:08:52', NULL, NULL),
+(337, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-02', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-02 18:28:48', '2026-03-02 18:28:48', NULL, NULL),
+(338, 28, 'Shahmeerabbas@digioussolutions.com', 'Syed Shahmeer Abbas', '2026-03-02', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-02 18:28:48', '2026-03-02 18:28:48', NULL, NULL),
+(339, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-03-02', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-02 18:28:48', '2026-03-02 18:28:48', NULL, NULL),
+(340, 30, 'wajih@digioussolutions.com', 'Wajih ul Hasan', '2026-03-02', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-02 18:28:48', '2026-03-02 18:28:48', NULL, NULL),
+(341, 31, 'Wahajabbas@digioussolutions.com', 'Syed Wahaj Abbas ', '2026-03-02', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-02 18:28:48', '2026-03-02 18:28:48', NULL, NULL),
+(342, 32, 'Humaiz@digioussolutions.com', 'Muhammad Humaiz', '2026-03-02', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-02 18:28:48', '2026-03-02 18:28:48', NULL, NULL),
+(343, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-03-02', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-02 18:28:48', '2026-03-02 18:28:48', NULL, NULL),
+(344, 34, 'Khisal@digioussolutions.com', 'Khisal Zafar', '2026-03-02', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-02 18:28:48', '2026-03-02 18:28:48', NULL, NULL),
+(345, 35, 'Taha@digioussolutions.com', 'Muhammad Taha', '2026-03-02', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-02 18:28:48', '2026-03-02 18:28:48', NULL, NULL),
+(346, 36, 'Faiq@digioussolutions.com', 'Faiq Shahzad', '2026-03-02', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-02 18:28:48', '2026-03-02 18:28:48', NULL, NULL),
+(347, 37, 'Taimoor@digioussolutions.com', 'Taimoor Shah', '2026-03-02', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-02 18:28:48', '2026-03-02 18:28:48', NULL, NULL),
+(348, 38, 'Ebad@digioussolutions.com', 'Muhammad Ebad', '2026-03-02', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-02 18:28:48', '2026-03-02 18:28:48', NULL, NULL),
+(349, 39, 'muhammadHamza@digioussolutions.com', 'Muhammad Hamza', '2026-03-02', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-02 18:28:48', '2026-03-02 18:28:48', NULL, NULL),
+(350, 40, 'Yanish@digioussolutions.com', 'Yanish Hyder', '2026-03-02', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-02 18:28:48', '2026-03-02 18:28:48', NULL, NULL),
+(351, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-03-02', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-02 18:28:48', '2026-03-02 18:28:48', NULL, NULL),
+(352, 42, 'Tahir@digioussolutions.com', 'Tahir ', '2026-03-02', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-02 18:28:48', '2026-03-02 18:28:48', NULL, NULL),
+(353, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-03-02', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-02 18:28:48', '2026-03-02 18:28:48', NULL, NULL),
+(354, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-03-02', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-02 18:28:48', '2026-03-02 18:28:48', NULL, NULL),
+(355, 45, 'SyedAwais@digioussolutions.com', 'Syed Awais Ahmed', '2026-03-02', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-02 18:28:48', '2026-03-02 18:28:48', NULL, NULL),
+(356, 46, 'Shahrukh@digioussolutions.com', 'Shahrukh Hussain Siddiqui', '2026-03-02', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-02 18:28:48', '2026-03-02 18:28:48', NULL, NULL),
+(357, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-03-02', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-02 18:28:48', '2026-03-02 18:28:48', NULL, NULL),
+(358, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-03-02', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-02 18:28:48', '2026-03-02 18:28:48', NULL, NULL),
+(359, 55, 'JFAD@digioussolutions.com', 'JFAD', '2026-03-02', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-02 18:28:48', '2026-03-02 18:28:48', NULL, NULL),
+(360, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-02', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-02 18:28:48', '2026-03-02 18:28:48', NULL, NULL),
+(361, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-03', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-03 16:57:49', '2026-03-03 16:57:49', NULL, NULL),
+(362, 28, 'Shahmeerabbas@digioussolutions.com', 'Syed Shahmeer Abbas', '2026-03-03', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-03 16:57:49', '2026-03-03 16:57:49', NULL, NULL),
+(363, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-03-03', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-03 16:57:49', '2026-03-03 16:57:49', NULL, NULL),
+(364, 30, 'wajih@digioussolutions.com', 'Wajih ul Hasan', '2026-03-03', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-03 16:57:49', '2026-03-03 16:57:49', NULL, NULL),
+(365, 31, 'Wahajabbas@digioussolutions.com', 'Syed Wahaj Abbas ', '2026-03-03', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-03 16:57:49', '2026-03-03 16:57:49', NULL, NULL),
+(366, 32, 'Humaiz@digioussolutions.com', 'Muhammad Humaiz', '2026-03-03', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-03 16:57:49', '2026-03-03 16:57:49', NULL, NULL),
+(367, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-03-03', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-03 16:57:49', '2026-03-03 16:57:49', NULL, NULL),
+(368, 34, 'Khisal@digioussolutions.com', 'Khisal Zafar', '2026-03-03', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-03 16:57:49', '2026-03-03 16:57:49', NULL, NULL),
+(369, 35, 'Taha@digioussolutions.com', 'Muhammad Taha', '2026-03-03', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-03 16:57:49', '2026-03-03 16:57:49', NULL, NULL),
+(370, 36, 'Faiq@digioussolutions.com', 'Faiq Shahzad', '2026-03-03', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-03 16:57:49', '2026-03-03 16:57:49', NULL, NULL),
+(371, 37, 'Taimoor@digioussolutions.com', 'Taimoor Shah', '2026-03-03', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-03 16:57:49', '2026-03-03 16:57:49', NULL, NULL),
+(372, 38, 'Ebad@digioussolutions.com', 'Muhammad Ebad', '2026-03-03', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-03 16:57:49', '2026-03-03 16:57:49', NULL, NULL),
+(373, 39, 'muhammadHamza@digioussolutions.com', 'Muhammad Hamza', '2026-03-03', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-03 16:57:49', '2026-03-03 16:57:49', NULL, NULL),
+(374, 40, 'Yanish@digioussolutions.com', 'Yanish Hyder', '2026-03-03', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-03 16:57:49', '2026-03-03 16:57:49', NULL, NULL),
+(375, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-03-03', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-03 16:57:49', '2026-03-03 16:57:49', NULL, NULL),
+(376, 42, 'Tahir@digioussolutions.com', 'Tahir ', '2026-03-03', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-03 16:57:49', '2026-03-03 16:57:49', NULL, NULL),
+(377, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-03-03', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-03 16:57:49', '2026-03-03 16:57:49', NULL, NULL),
+(378, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-03-03', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-03 16:57:49', '2026-03-03 16:57:49', NULL, NULL),
+(379, 45, 'SyedAwais@digioussolutions.com', 'Syed Awais Ahmed', '2026-03-03', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-03 16:57:49', '2026-03-03 16:57:49', NULL, NULL),
+(380, 46, 'Shahrukh@digioussolutions.com', 'Shahrukh Hussain Siddiqui', '2026-03-03', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-03 16:57:49', '2026-03-03 16:57:49', NULL, NULL),
+(381, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-03-03', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-03 16:57:50', '2026-03-03 16:57:50', NULL, NULL),
+(382, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-03-03', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-03 16:57:50', '2026-03-03 16:57:50', NULL, NULL),
+(383, 55, 'JFAD@digioussolutions.com', 'JFAD', '2026-03-03', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-03 16:57:50', '2026-03-03 16:57:50', NULL, NULL),
+(384, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-03', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-03 16:57:50', '2026-03-03 16:57:50', NULL, NULL),
+(385, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-04', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-04 17:39:21', '2026-03-04 17:39:21', NULL, NULL),
+(386, 28, 'Shahmeerabbas@digioussolutions.com', 'Syed Shahmeer Abbas', '2026-03-04', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-04 17:39:21', '2026-03-04 17:39:21', NULL, NULL),
+(387, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-03-04', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-04 17:39:21', '2026-03-04 17:39:21', NULL, NULL),
+(388, 30, 'wajih@digioussolutions.com', 'Wajih ul Hasan', '2026-03-04', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-04 17:39:21', '2026-03-04 17:39:21', NULL, NULL),
+(389, 31, 'Wahajabbas@digioussolutions.com', 'Syed Wahaj Abbas ', '2026-03-04', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-04 17:39:21', '2026-03-04 17:39:21', NULL, NULL),
+(390, 32, 'Humaiz@digioussolutions.com', 'Muhammad Humaiz', '2026-03-04', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-04 17:39:21', '2026-03-04 17:39:21', NULL, NULL),
+(391, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-03-04', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-04 17:39:21', '2026-03-04 17:39:21', NULL, NULL),
+(392, 34, 'Khisal@digioussolutions.com', 'Khisal Zafar', '2026-03-04', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-04 17:39:21', '2026-03-04 17:39:21', NULL, NULL),
+(393, 35, 'Taha@digioussolutions.com', 'Muhammad Taha', '2026-03-04', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-04 17:39:21', '2026-03-04 17:39:21', NULL, NULL),
+(394, 36, 'Faiq@digioussolutions.com', 'Faiq Shahzad', '2026-03-04', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-04 17:39:21', '2026-03-04 17:39:21', NULL, NULL),
+(395, 37, 'Taimoor@digioussolutions.com', 'Taimoor Shah', '2026-03-04', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-04 17:39:21', '2026-03-04 17:39:21', NULL, NULL),
+(396, 38, 'Ebad@digioussolutions.com', 'Muhammad Ebad', '2026-03-04', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-04 17:39:21', '2026-03-04 17:39:21', NULL, NULL),
+(397, 39, 'muhammadHamza@digioussolutions.com', 'Muhammad Hamza', '2026-03-04', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-04 17:39:21', '2026-03-04 17:39:21', NULL, NULL),
+(398, 40, 'Yanish@digioussolutions.com', 'Yanish Hyder', '2026-03-04', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-04 17:39:21', '2026-03-04 17:39:21', NULL, NULL),
+(399, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-03-04', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-04 17:39:21', '2026-03-04 17:39:21', NULL, NULL),
+(400, 42, 'Tahir@digioussolutions.com', 'Tahir ', '2026-03-04', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-04 17:39:21', '2026-03-04 17:39:21', NULL, NULL),
+(401, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-03-04', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-04 17:39:21', '2026-03-04 17:39:21', NULL, NULL),
+(402, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-03-04', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-04 17:39:21', '2026-03-04 17:39:21', NULL, NULL),
+(403, 45, 'SyedAwais@digioussolutions.com', 'Syed Awais Ahmed', '2026-03-04', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-04 17:39:21', '2026-03-04 17:39:21', NULL, NULL),
+(404, 46, 'Shahrukh@digioussolutions.com', 'Shahrukh Hussain Siddiqui', '2026-03-04', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-04 17:39:21', '2026-03-04 17:39:21', NULL, NULL),
+(405, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-03-04', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-04 17:39:21', '2026-03-04 17:39:21', NULL, NULL),
+(406, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-03-04', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-04 17:39:21', '2026-03-04 17:39:21', NULL, NULL),
+(407, 55, 'JFAD@digioussolutions.com', 'JFAD', '2026-03-04', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-04 17:39:21', '2026-03-04 17:39:21', NULL, NULL),
+(408, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-04', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-04 17:39:21', '2026-03-04 17:39:21', NULL, NULL);
+INSERT INTO `Employee_Absent` (`id`, `employee_id`, `email`, `name`, `absent_date`, `reason_type`, `reason`, `supporting_document_url`, `is_approved`, `approved_by`, `approved_at`, `remarks`, `created_at`, `updated_at`, `leave_type_key`, `application_id`) VALUES
+(409, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-05', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL),
+(410, 28, 'Shahmeerabbas@digioussolutions.com', 'Syed Shahmeer Abbas', '2026-03-05', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL),
+(411, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-03-05', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL),
+(412, 30, 'wajih@digioussolutions.com', 'Wajih ul Hasan', '2026-03-05', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL),
+(413, 31, 'Wahajabbas@digioussolutions.com', 'Syed Wahaj Abbas ', '2026-03-05', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL),
+(414, 32, 'Humaiz@digioussolutions.com', 'Muhammad Humaiz', '2026-03-05', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL),
+(415, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-03-05', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL),
+(416, 34, 'Khisal@digioussolutions.com', 'Khisal Zafar', '2026-03-05', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL),
+(417, 35, 'Taha@digioussolutions.com', 'Muhammad Taha', '2026-03-05', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL),
+(418, 36, 'Faiq@digioussolutions.com', 'Faiq Shahzad', '2026-03-05', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL),
+(419, 37, 'Taimoor@digioussolutions.com', 'Taimoor Shah', '2026-03-05', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL),
+(420, 38, 'Ebad@digioussolutions.com', 'Muhammad Ebad', '2026-03-05', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL),
+(421, 39, 'muhammadHamza@digioussolutions.com', 'Muhammad Hamza', '2026-03-05', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL),
+(422, 40, 'Yanish@digioussolutions.com', 'Yanish Hyder', '2026-03-05', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL),
+(423, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-03-05', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL),
+(424, 42, 'Tahir@digioussolutions.com', 'Tahir ', '2026-03-05', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL),
+(425, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-03-05', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL),
+(426, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-03-05', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL),
+(427, 45, 'SyedAwais@digioussolutions.com', 'Syed Awais Ahmed', '2026-03-05', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL),
+(428, 46, 'Shahrukh@digioussolutions.com', 'Shahrukh Hussain Siddiqui', '2026-03-05', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL),
+(429, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-03-05', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL),
+(430, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-03-05', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL),
+(431, 55, 'JFAD@digioussolutions.com', 'JFAD', '2026-03-05', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL),
+(432, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-05', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL),
+(433, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-06', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL),
+(434, 28, 'Shahmeerabbas@digioussolutions.com', 'Syed Shahmeer Abbas', '2026-03-06', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL),
+(435, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-03-06', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL),
+(436, 30, 'wajih@digioussolutions.com', 'Wajih ul Hasan', '2026-03-06', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL),
+(437, 31, 'Wahajabbas@digioussolutions.com', 'Syed Wahaj Abbas ', '2026-03-06', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL),
+(438, 32, 'Humaiz@digioussolutions.com', 'Muhammad Humaiz', '2026-03-06', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL),
+(439, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-03-06', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL),
+(440, 34, 'Khisal@digioussolutions.com', 'Khisal Zafar', '2026-03-06', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL),
+(441, 35, 'Taha@digioussolutions.com', 'Muhammad Taha', '2026-03-06', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL),
+(442, 36, 'Faiq@digioussolutions.com', 'Faiq Shahzad', '2026-03-06', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL),
+(443, 37, 'Taimoor@digioussolutions.com', 'Taimoor Shah', '2026-03-06', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL),
+(444, 38, 'Ebad@digioussolutions.com', 'Muhammad Ebad', '2026-03-06', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL),
+(445, 39, 'muhammadHamza@digioussolutions.com', 'Muhammad Hamza', '2026-03-06', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL),
+(446, 40, 'Yanish@digioussolutions.com', 'Yanish Hyder', '2026-03-06', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL),
+(447, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-03-06', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL),
+(448, 42, 'Tahir@digioussolutions.com', 'Tahir ', '2026-03-06', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL),
+(449, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-03-06', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL),
+(450, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-03-06', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL),
+(451, 45, 'SyedAwais@digioussolutions.com', 'Syed Awais Ahmed', '2026-03-06', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL),
+(452, 46, 'Shahrukh@digioussolutions.com', 'Shahrukh Hussain Siddiqui', '2026-03-06', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL),
+(453, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-03-06', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL),
+(454, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-03-06', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL),
+(455, 55, 'JFAD@digioussolutions.com', 'JFAD', '2026-03-06', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL),
+(456, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-06', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -1476,7 +1621,7 @@ INSERT INTO `Employee_Attendance` (`id`, `employee_id`, `email`, `name`, `attend
 (347, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-02-11', '02:06:03', '02:17:43', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11, 11, 540, 0, 0.00, 0, 291, NULL, 'Web Browser', NULL, '2026-02-12 21:06:03', '2026-02-12 21:17:43'),
 (350, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-02-13', '18:08:36', '17:29:41', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1401, 1401, 540, 861, 14.35, 1, 0, NULL, 'Web Browser', NULL, '2026-02-13 13:08:36', '2026-02-18 12:29:41'),
 (352, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-02-16', '14:29:37', '17:29:40', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 180, 180, 540, 0, 0.00, 1, 0, NULL, 'Web Browser', NULL, '2026-02-16 09:29:37', '2026-02-18 12:29:40'),
-(354, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-02-18', '17:30:01', '06:43:00', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 450, 'present', 'Web Browser', NULL, '2026-02-18 12:30:01', '2026-02-19 18:37:14'),
+(354, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-02-18', '17:30:01', '06:43:00', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 793, 793, 540, 253, 4.22, 0, 450, 'present', 'Web Browser', NULL, '2026-02-18 12:30:01', '2026-02-28 18:51:36'),
 (355, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-02-18', '19:47:59', '18:09:03', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1342, 1342, 540, 802, 13.37, 1, 0, NULL, 'Web Browser', NULL, '2026-02-18 14:47:59', '2026-02-20 13:09:03'),
 (356, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-02-20', '18:09:12', NULL, 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Web Browser', NULL, '2026-02-20 13:09:12', '2026-02-20 13:09:12'),
 (357, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-02-19', NULL, NULL, 'Paid Leave', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 1, 0, 'Paid leave (casual) approved by HR', NULL, NULL, '2026-02-20 13:17:29', '2026-02-20 13:17:29');
@@ -2462,6 +2607,98 @@ CREATE TABLE `Overtime_Report_View` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `payroll_records`
+--
+
+CREATE TABLE `payroll_records` (
+  `id` int(11) NOT NULL,
+  `employee_id` int(11) NOT NULL COMMENT 'FK to employee_onboarding.id',
+  `month` int(2) NOT NULL COMMENT '1-12',
+  `year` int(4) NOT NULL,
+  `pay_period_start` date DEFAULT NULL,
+  `pay_period_end` date DEFAULT NULL,
+  `days_in_month` int(11) DEFAULT 30,
+  `issue_date` date DEFAULT NULL,
+  `base_salary` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `daily_rate` decimal(12,2) NOT NULL DEFAULT 0.00 COMMENT 'base_salary / 30',
+  `total_allowances` decimal(12,2) DEFAULT 0.00,
+  `working_days` int(11) DEFAULT 30,
+  `present_days` int(11) DEFAULT 0,
+  `absent_days` int(11) DEFAULT 0,
+  `late_days` int(11) DEFAULT 0,
+  `leave_days` int(11) DEFAULT 0,
+  `half_days` int(11) DEFAULT 0,
+  `paid_leave_days` int(11) DEFAULT 0,
+  `late_deduction_days` int(11) DEFAULT 0 COMMENT 'floor(late_days / 2) — every 2 lates = 1 day deduction',
+  `absent_deduction` decimal(12,2) DEFAULT 0.00,
+  `late_deduction` decimal(12,2) DEFAULT 0.00,
+  `leave_deduction` decimal(12,2) DEFAULT 0.00,
+  `total_deductions` decimal(12,2) DEFAULT 0.00,
+  `gross_salary` decimal(12,2) DEFAULT 0.00 COMMENT 'base_salary + total_allowances',
+  `net_salary` decimal(12,2) DEFAULT 0.00 COMMENT 'gross_salary - total_deductions',
+  `status` enum('pending','processing','success','failed') DEFAULT 'pending',
+  `notes` text DEFAULT NULL,
+  `generated_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `payroll_records`
+--
+
+INSERT INTO `payroll_records` (`id`, `employee_id`, `month`, `year`, `pay_period_start`, `pay_period_end`, `days_in_month`, `issue_date`, `base_salary`, `daily_rate`, `total_allowances`, `working_days`, `present_days`, `absent_days`, `late_days`, `leave_days`, `half_days`, `paid_leave_days`, `late_deduction_days`, `absent_deduction`, `late_deduction`, `leave_deduction`, `total_deductions`, `gross_salary`, `net_salary`, `status`, `notes`, `generated_at`, `updated_at`) VALUES
+(313, 44, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 29998.00, 999.93, 0.00, 28, 8, 8, 7, 2, 0, 2, 2, 7999.47, 1999.87, 0.00, 9999.33, 29998.00, 19998.67, 'pending', 'Paid leaves: 2 (2 casual [2 from leave balance]). Total absent: 10, Paid: 2, Unpaid: 8', '2026-03-04 18:59:53', '2026-03-04 18:59:53'),
+(314, 36, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 20000.00, 666.67, 0.00, 28, 6, 13, 3, 0, 0, 0, 1, 8666.67, 666.67, 0.00, 9333.33, 20000.00, 10666.67, 'pending', 'Unpaid absences: 13', '2026-03-04 18:59:53', '2026-03-04 18:59:53'),
+(315, 55, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 1234.00, 41.13, 111.00, 28, 0, 10, 0, 0, 0, 0, 0, 411.33, 0.00, 0.00, 411.33, 1345.00, 933.67, 'pending', 'Unpaid absences: 10', '2026-03-04 18:59:53', '2026-03-04 18:59:53'),
+(316, 54, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 78600.00, 2620.00, 998.00, 28, 0, 14, 0, 0, 0, 0, 0, 36680.00, 0.00, 0.00, 36680.00, 79598.00, 42918.00, 'pending', 'Unpaid absences: 14', '2026-03-04 18:59:53', '2026-03-04 18:59:53'),
+(317, 34, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 20000.00, 666.67, 0.00, 28, 7, 13, 4, 0, 0, 0, 1, 8666.67, 666.67, 0.00, 9333.33, 20000.00, 10666.67, 'pending', 'Unpaid absences: 13', '2026-03-04 18:59:53', '2026-03-04 18:59:53'),
+(318, 41, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 20000.00, 666.67, 0.00, 28, 7, 13, 5, 0, 0, 0, 1, 8666.67, 666.67, 0.00, 9333.33, 20000.00, 10666.67, 'pending', 'Unpaid absences: 13', '2026-03-04 18:59:53', '2026-03-04 18:59:53'),
+(319, 38, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 19998.00, 666.60, 0.00, 28, 6, 13, 5, 0, 0, 0, 1, 8665.80, 666.60, 0.00, 9332.40, 19998.00, 10665.60, 'pending', 'Unpaid absences: 13', '2026-03-04 18:59:53', '2026-03-04 18:59:53'),
+(320, 43, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 25000.00, 833.33, 0.00, 28, 0, 14, 0, 0, 0, 0, 0, 11666.67, 0.00, 0.00, 11666.67, 25000.00, 13333.33, 'pending', 'Unpaid absences: 14', '2026-03-04 18:59:53', '2026-03-04 18:59:53'),
+(321, 39, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 20000.00, 666.67, 0.00, 28, 5, 14, 2, 0, 0, 0, 0, 9333.33, 0.00, 0.00, 9333.33, 20000.00, 10666.67, 'pending', 'Unpaid absences: 14', '2026-03-04 18:59:53', '2026-03-04 18:59:53'),
+(322, 27, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 30000.00, 1000.00, 0.00, 28, 6, 10, 2, 0, 0, 0, 0, 10000.00, 0.00, 0.00, 10000.00, 30000.00, 20000.00, 'pending', 'Unpaid absences: 10', '2026-03-04 18:59:53', '2026-03-04 18:59:53'),
+(323, 32, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 20000.00, 666.67, 0.00, 28, 7, 13, 7, 0, 0, 0, 2, 8666.67, 1333.33, 0.00, 10000.00, 20000.00, 10000.00, 'pending', 'Unpaid absences: 13', '2026-03-04 18:59:53', '2026-03-04 18:59:53'),
+(324, 56, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 100000.00, 3333.33, 0.00, 28, 2, 4, 0, 1, 0, 2, 0, 13333.33, 0.00, 0.00, 13333.33, 100000.00, 86666.67, 'pending', 'Paid leaves: 1 (1 casual [1 from leave balance]). Total absent: 5, Paid: 1, Unpaid: 4', '2026-03-04 18:59:53', '2026-03-04 18:59:53'),
+(325, 33, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 20000.00, 666.67, 0.00, 28, 7, 13, 1, 0, 0, 0, 0, 8666.67, 0.00, 0.00, 8666.67, 20000.00, 11333.33, 'pending', 'Unpaid absences: 13', '2026-03-04 18:59:53', '2026-03-04 18:59:53'),
+(326, 35, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 20000.00, 666.67, 0.00, 28, 7, 13, 4, 0, 0, 0, 1, 8666.67, 666.67, 0.00, 9333.33, 20000.00, 10666.67, 'pending', 'Unpaid absences: 13', '2026-03-04 18:59:53', '2026-03-04 18:59:53'),
+(327, 46, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 19998.00, 666.60, 0.00, 28, 7, 13, 1, 0, 0, 0, 0, 8665.80, 0.00, 0.00, 8665.80, 19998.00, 11332.20, 'pending', 'Unpaid absences: 13', '2026-03-04 18:59:53', '2026-03-04 18:59:53'),
+(328, 45, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 20000.00, 666.67, 0.00, 28, 7, 13, 1, 0, 0, 0, 0, 8666.67, 0.00, 0.00, 8666.67, 20000.00, 11333.33, 'pending', 'Unpaid absences: 13', '2026-03-04 18:59:53', '2026-03-04 18:59:53'),
+(329, 29, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 25000.00, 833.33, 0.00, 28, 0, 14, 0, 0, 0, 0, 0, 11666.67, 0.00, 0.00, 11666.67, 25000.00, 13333.33, 'pending', 'Unpaid absences: 14', '2026-03-04 18:59:53', '2026-03-04 18:59:53'),
+(330, 28, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 25000.00, 833.33, 0.00, 28, 7, 13, 7, 0, 0, 0, 2, 10833.33, 1666.67, 0.00, 12500.00, 25000.00, 12500.00, 'pending', 'Unpaid absences: 13', '2026-03-04 18:59:53', '2026-03-04 18:59:53'),
+(331, 31, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 34999.00, 1166.63, 0.00, 28, 6, 13, 6, 0, 0, 0, 2, 15166.23, 2333.27, 0.00, 17499.50, 34999.00, 17499.50, 'pending', 'Unpaid absences: 13', '2026-03-04 18:59:53', '2026-03-04 18:59:53'),
+(332, 42, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 30000.00, 1000.00, 0.00, 28, 5, 14, 2, 0, 0, 0, 0, 14000.00, 0.00, 0.00, 14000.00, 30000.00, 16000.00, 'pending', 'Unpaid absences: 14', '2026-03-04 18:59:53', '2026-03-04 18:59:53'),
+(333, 37, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 2.00, 0.07, 0.00, 28, 7, 13, 3, 0, 0, 0, 1, 0.87, 0.07, 0.00, 0.93, 2.00, 1.07, 'pending', 'Unpaid absences: 13', '2026-03-04 18:59:53', '2026-03-04 18:59:53'),
+(334, 47, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 19998.00, 666.60, 0.00, 28, 6, 13, 4, 0, 0, 0, 1, 8665.80, 666.60, 0.00, 9332.40, 19998.00, 10665.60, 'pending', 'Unpaid absences: 13', '2026-03-04 18:59:53', '2026-03-04 18:59:53'),
+(335, 30, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 25000.00, 833.33, 0.00, 28, 0, 14, 0, 0, 0, 0, 0, 11666.67, 0.00, 0.00, 11666.67, 25000.00, 13333.33, 'pending', 'Unpaid absences: 14', '2026-03-04 18:59:53', '2026-03-04 18:59:53'),
+(336, 40, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 19997.00, 666.57, 0.00, 28, 7, 13, 5, 0, 0, 0, 1, 8665.37, 666.57, 0.00, 9331.93, 19997.00, 10665.07, 'pending', 'Unpaid absences: 13', '2026-03-04 18:59:53', '2026-03-04 18:59:53'),
+(337, 44, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 29998.00, 999.93, 0.00, 31, 10, 0, 10, 0, 0, 0, 3, 0.00, 2999.80, 0.00, 2999.80, 29998.00, 26998.20, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
+(338, 36, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 20000.00, 666.67, 0.00, 31, 12, 0, 3, 0, 0, 0, 1, 0.00, 666.67, 0.00, 666.67, 20000.00, 19333.33, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
+(339, 55, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 1234.00, 41.13, 111.00, 31, 0, 0, 0, 0, 0, 0, 0, 0.00, 0.00, 0.00, 0.00, 1345.00, 1345.00, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
+(340, 54, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 78600.00, 2620.00, 998.00, 31, 0, 0, 0, 0, 0, 0, 0, 0.00, 0.00, 0.00, 0.00, 79598.00, 79598.00, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
+(341, 34, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 20000.00, 666.67, 0.00, 31, 11, 0, 7, 0, 0, 0, 2, 0.00, 1333.33, 0.00, 1333.33, 20000.00, 18666.67, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
+(342, 41, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 20000.00, 666.67, 0.00, 31, 11, 0, 9, 0, 0, 0, 3, 0.00, 2000.00, 0.00, 2000.00, 20000.00, 18000.00, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
+(343, 38, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 19998.00, 666.60, 0.00, 31, 13, 0, 8, 0, 0, 0, 2, 0.00, 1333.20, 0.00, 1333.20, 19998.00, 18664.80, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
+(344, 43, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 25000.00, 833.33, 0.00, 31, 0, 0, 0, 0, 0, 0, 0, 0.00, 0.00, 0.00, 0.00, 25000.00, 25000.00, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
+(345, 39, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 20000.00, 666.67, 0.00, 31, 12, 0, 11, 0, 0, 0, 3, 0.00, 2000.00, 0.00, 2000.00, 20000.00, 18000.00, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
+(346, 27, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 30000.00, 1000.00, 0.00, 31, 12, 0, 8, 0, 0, 0, 2, 0.00, 2000.00, 0.00, 2000.00, 30000.00, 28000.00, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
+(347, 32, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 20000.00, 666.67, 0.00, 31, 13, 0, 5, 0, 0, 0, 1, 0.00, 666.67, 0.00, 666.67, 20000.00, 19333.33, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
+(348, 56, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 100000.00, 3333.33, 0.00, 31, 0, 0, 0, 0, 0, 0, 0, 0.00, 0.00, 0.00, 0.00, 100000.00, 100000.00, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
+(349, 33, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 20000.00, 666.67, 0.00, 31, 12, 0, 7, 0, 0, 0, 2, 0.00, 1333.33, 0.00, 1333.33, 20000.00, 18666.67, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
+(350, 35, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 20000.00, 666.67, 0.00, 31, 12, 0, 4, 0, 0, 0, 1, 0.00, 666.67, 0.00, 666.67, 20000.00, 19333.33, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
+(351, 46, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 19998.00, 666.60, 0.00, 31, 12, 0, 2, 0, 0, 0, 0, 0.00, 0.00, 0.00, 0.00, 19998.00, 19998.00, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
+(352, 45, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 20000.00, 666.67, 0.00, 31, 13, 0, 4, 0, 0, 0, 1, 0.00, 666.67, 0.00, 666.67, 20000.00, 19333.33, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
+(353, 29, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 25000.00, 833.33, 0.00, 31, 1, 0, 1, 0, 0, 0, 0, 0.00, 0.00, 0.00, 0.00, 25000.00, 25000.00, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
+(354, 28, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 25000.00, 833.33, 0.00, 31, 12, 0, 12, 0, 0, 0, 4, 0.00, 3333.33, 0.00, 3333.33, 25000.00, 21666.67, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
+(355, 31, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 34999.00, 1166.63, 0.00, 31, 12, 0, 11, 0, 0, 0, 3, 0.00, 3499.90, 0.00, 3499.90, 34999.00, 31499.10, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
+(356, 42, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 30000.00, 1000.00, 0.00, 31, 9, 0, 3, 0, 0, 0, 1, 0.00, 1000.00, 0.00, 1000.00, 30000.00, 29000.00, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
+(357, 37, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 2.00, 0.07, 0.00, 31, 13, 0, 1, 0, 0, 0, 0, 0.00, 0.00, 0.00, 0.00, 2.00, 2.00, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
+(358, 47, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 19998.00, 666.60, 0.00, 31, 12, 0, 8, 0, 0, 0, 2, 0.00, 1333.20, 0.00, 1333.20, 19998.00, 18664.80, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
+(359, 30, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 25000.00, 833.33, 0.00, 31, 9, 0, 9, 0, 0, 0, 3, 0.00, 2500.00, 0.00, 2500.00, 25000.00, 22500.00, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
+(360, 40, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 19997.00, 666.57, 0.00, 31, 12, 0, 10, 0, 0, 0, 3, 0.00, 1999.70, 0.00, 1999.70, 19997.00, 17997.30, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `system_logs`
 --
 
@@ -2564,7 +2801,7 @@ CREATE TABLE `user_concurrent_sessions` (
 --
 
 INSERT INTO `user_concurrent_sessions` (`id`, `employee_id`, `email`, `total_active_sessions`, `pc_count`, `mobile_count`, `tablet_count`, `other_count`, `updated_at`) VALUES
-(33, 27, 'hamza@digioussolutions.com', 103, 102, 1, 0, 0, '2026-02-26 17:25:34'),
+(33, 27, 'hamza@digioussolutions.com', 103, 102, 1, 0, 0, '2026-02-28 21:46:50'),
 (34, 32, 'Humaiz@digioussolutions.com', 32, 32, 0, 0, 0, '2026-02-09 16:32:25'),
 (35, 33, 'Saheem@digioussolutions.com', 46, 35, 11, 0, 0, '2026-02-10 17:38:21'),
 (36, 34, 'Khisal@digioussolutions.com', 22, 22, 0, 0, 0, '2026-02-10 16:21:55'),
@@ -2576,7 +2813,7 @@ INSERT INTO `user_concurrent_sessions` (`id`, `employee_id`, `email`, `total_act
 (42, 40, 'Yanish@digioussolutions.com', 37, 37, 0, 0, 0, '2026-02-09 16:26:08'),
 (43, 42, 'Tahir@digioussolutions.com', 34, 33, 1, 0, 0, '2026-02-07 02:09:43'),
 (44, 39, 'muhammadHamza@digioussolutions.com', 39, 39, 0, 0, 0, '2026-02-26 19:17:58'),
-(45, 44, 'Moiz@digioussolutions.com', 61, 61, 0, 0, 0, '2026-02-27 17:36:26'),
+(45, 44, 'Moiz@digioussolutions.com', 62, 62, 0, 0, 0, '2026-03-04 17:50:52'),
 (46, 30, 'wajih@digioussolutions.com', 22, 22, 0, 0, 0, '2026-01-29 16:23:47'),
 (47, 28, 'Shahmeerabbas@digioussolutions.com', 28, 28, 0, 0, 0, '2026-02-10 17:21:52'),
 (48, 41, 'baqar@digioussolutions.com', 35, 35, 0, 0, 0, '2026-02-10 16:20:02'),
@@ -2584,7 +2821,7 @@ INSERT INTO `user_concurrent_sessions` (`id`, `employee_id`, `email`, `total_act
 (50, 46, 'Shahrukh@digioussolutions.com', 37, 37, 0, 0, 0, '2026-02-10 16:39:37'),
 (51, 47, 'Uzair@digioussolutions.com', 19, 19, 0, 0, 0, '2026-02-10 16:14:52'),
 (52, 29, 'smashhar@digioussolutions.com', 1, 1, 0, 0, 0, '2026-01-17 18:08:30'),
-(55, 56, 'muhammad.hunain@digioussolutions.com', 1, 1, 0, 0, 0, '2026-02-27 17:47:05');
+(55, 56, 'muhammad.hunain@digioussolutions.com', 2, 2, 0, 0, 0, '2026-02-28 21:46:54');
 
 -- --------------------------------------------------------
 
@@ -3438,7 +3675,14 @@ INSERT INTO `user_system_info` (`id`, `employee_id`, `session_token`, `email`, `
 (788, 39, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjMyLCJlbXBsb3llZUlkIjozOSwiZW1haWwiOiJtdWhhbW1hZEhhbXphQGRpZ2lvdXNzb2x1dGlvbnMuY29tIiwibmFtZSI6Ik11aGFtbWFkIEhhbXphIiwicm9sZSI6IlByb2R1Y3Rpb24iLCJkZXNpZ25hdGlvbiI6IldlYiBEZXZlbG9wZXIiLCJpYXQiOjE3NzIxMzE3OTIsImV4cCI6MTc3MjIxODE5Mn0.6BqbEPwiJOwjiLjFyS3G12pYbbQiDbOGUQbL1X0IEVo', 'muhammadHamza@digioussolutions.com', 'Muhammad Hamza', '2026-02-26 18:49:52', NULL, 1, 'PC', 'Linux PC', 'Firefox 147', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0', '2026-02-26 18:49:52', '2026-02-26 18:49:52', '2026-02-26 18:49:52'),
 (789, 39, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjMyLCJlbXBsb3llZUlkIjozOSwiZW1haWwiOiJtdWhhbW1hZEhhbXphQGRpZ2lvdXNzb2x1dGlvbnMuY29tIiwibmFtZSI6Ik11aGFtbWFkIEhhbXphIiwicm9sZSI6IlByb2R1Y3Rpb24iLCJkZXNpZ25hdGlvbiI6IldlYiBEZXZlbG9wZXIiLCJpYXQiOjE3NzIxMzM0NjQsImV4cCI6MTc3MjIxOTg2NH0.1nELrB16kHpnkcC16jcF1xLhUQMr-YOMFgBisE-heGo', 'muhammadHamza@digioussolutions.com', 'Muhammad Hamza', '2026-02-26 19:17:44', '2026-02-26 19:17:58', 0, 'PC', 'Linux PC', 'Firefox 147', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0', '2026-02-26 19:17:58', '2026-02-26 19:17:44', '2026-02-26 19:17:58'),
 (790, 44, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjM3LCJlbXBsb3llZUlkIjo0NCwiZW1haWwiOiJNb2l6QGRpZ2lvdXNzb2x1dGlvbnMuY29tIiwibmFtZSI6IkFiZHVsIE1vaXogS2hhbiIsInJvbGUiOiJQcm9kdWN0aW9uIiwiZGVzaWduYXRpb24iOiJNYW5hZ2VyIiwiaWF0IjoxNzcyMjEzNzg2LCJleHAiOjE3NzIzMDAxODZ9.FfhboTq8-CTByZYFVQiWGvjrWIbyPuvjHIGRrDVnk3Q', 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-02-27 17:36:26', NULL, 1, 'PC', 'Linux PC', 'Firefox 147', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0', '2026-02-27 17:36:26', '2026-02-27 17:36:26', '2026-02-27 17:36:26'),
-(791, 56, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ5LCJlbXBsb3llZUlkIjo1NiwiZW1haWwiOiJtdWhhbW1hZC5odW5haW5AZGlnaW91c3NvbHV0aW9ucy5jb20iLCJuYW1lIjoiTXVoYW1tYWQgSHVuYWluIiwicm9sZSI6Ik9wZXJhdGlvbnMiLCJkZXNpZ25hdGlvbiI6IlNNIE9QRVJ0IiwiaWF0IjoxNzcyMjE0NDI1LCJleHAiOjE3NzIzMDA4MjV9.C2gusjbii98aUz-yGAheqeyvfTUjPSzBy2Ydd8rAOwc', 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-02-27 17:47:05', NULL, 1, 'PC', 'Linux PC', 'Firefox 147', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0', '2026-02-27 17:47:05', '2026-02-27 17:47:05', '2026-02-27 17:47:05');
+(791, 56, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ5LCJlbXBsb3llZUlkIjo1NiwiZW1haWwiOiJtdWhhbW1hZC5odW5haW5AZGlnaW91c3NvbHV0aW9ucy5jb20iLCJuYW1lIjoiTXVoYW1tYWQgSHVuYWluIiwicm9sZSI6Ik9wZXJhdGlvbnMiLCJkZXNpZ25hdGlvbiI6IlNNIE9QRVJ0IiwiaWF0IjoxNzcyMjE0NDI1LCJleHAiOjE3NzIzMDA4MjV9.C2gusjbii98aUz-yGAheqeyvfTUjPSzBy2Ydd8rAOwc', 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-02-27 17:47:05', NULL, 1, 'PC', 'Linux PC', 'Firefox 147', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0', '2026-02-27 17:47:05', '2026-02-27 17:47:05', '2026-02-27 17:47:05'),
+(792, 44, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjM3LCJlbXBsb3llZUlkIjo0NCwiZW1haWwiOiJNb2l6QGRpZ2lvdXNzb2x1dGlvbnMuY29tIiwibmFtZSI6IkFiZHVsIE1vaXogS2hhbiIsInJvbGUiOiJQcm9kdWN0aW9uIiwiZGVzaWduYXRpb24iOiJNYW5hZ2VyIiwiaWF0IjoxNzcyMzA0Njk0LCJleHAiOjE3NzIzOTEwOTR9.f_HOu1DeNMkmDlK1po6rVs0gYhQEiMPQEMQKKPXLyPY', 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-02-28 18:51:34', '2026-02-28 18:52:34', 0, 'PC', 'Linux PC', 'Firefox 147', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0', '2026-02-28 18:52:34', '2026-02-28 18:51:34', '2026-02-28 18:52:34'),
+(793, 44, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjM3LCJlbXBsb3llZUlkIjo0NCwiZW1haWwiOiJNb2l6QGRpZ2lvdXNzb2x1dGlvbnMuY29tIiwibmFtZSI6IkFiZHVsIE1vaXogS2hhbiIsInJvbGUiOiJQcm9kdWN0aW9uIiwiZGVzaWduYXRpb24iOiJNYW5hZ2VyIiwiaWF0IjoxNzcyMzA1ODMwLCJleHAiOjE3NzIzOTIyMzB9.zHmlnYs4239ow2HCShJGZCKoEn9TIq-JloAwhpTBmDI', 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-02-28 19:10:30', '2026-02-28 19:33:59', 0, 'PC', 'Linux PC', 'Firefox 147', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0', '2026-02-28 19:33:59', '2026-02-28 19:10:30', '2026-02-28 19:33:59'),
+(794, 44, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjM3LCJlbXBsb3llZUlkIjo0NCwiZW1haWwiOiJNb2l6QGRpZ2lvdXNzb2x1dGlvbnMuY29tIiwibmFtZSI6IkFiZHVsIE1vaXogS2hhbiIsInJvbGUiOiJQcm9kdWN0aW9uIiwiZGVzaWduYXRpb24iOiJNYW5hZ2VyIiwiaWF0IjoxNzcyMzExMjk5LCJleHAiOjE3NzIzOTc2OTl9.pl6CY3MAUdiq9DthOMN2xF00s4eP7uhG_JoJDU59x8k', 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-02-28 20:41:39', NULL, 1, 'PC', 'Linux PC', 'Firefox 147', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0', '2026-02-28 20:41:39', '2026-02-28 20:41:39', '2026-02-28 20:41:39'),
+(795, 44, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjM3LCJlbXBsb3llZUlkIjo0NCwiZW1haWwiOiJNb2l6QGRpZ2lvdXNzb2x1dGlvbnMuY29tIiwibmFtZSI6IkFiZHVsIE1vaXogS2hhbiIsInJvbGUiOiJQcm9kdWN0aW9uIiwiZGVzaWduYXRpb24iOiJNYW5hZ2VyIiwiaWF0IjoxNzcyMzEyMjE3LCJleHAiOjE3NzIzOTg2MTd9.56YL2sghPeD_ihb2-92-h0fcP39ihWUfnCGLHO5eyXo', 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-02-28 20:56:57', '2026-02-28 21:02:26', 0, 'PC', 'Linux PC', 'Firefox 147', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0', '2026-02-28 21:02:26', '2026-02-28 20:56:57', '2026-02-28 21:02:26'),
+(796, 27, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIwLCJlbXBsb3llZUlkIjoyNywiZW1haWwiOiJoYW16YUBkaWdpb3Vzc29sdXRpb25zLmNvbSIsIm5hbWUiOiJNdWhhbW1hZCBIYW16YSBIYXNzYW4iLCJyb2xlIjoiSFIiLCJkZXNpZ25hdGlvbiI6IkhSIC0gTWFuYWdlciIsImlhdCI6MTc3MjMxNTE5MSwiZXhwIjoxNzcyNDAxNTkxfQ.eEF4dMQItstEhBKdCLPZWiB9R_h_uzX5hnfPQPn89Pg', 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-02-28 21:46:31', '2026-02-28 21:46:50', 0, 'PC', 'Linux PC', 'Firefox 147', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0', '2026-02-28 21:46:50', '2026-02-28 21:46:31', '2026-02-28 21:46:50'),
+(797, 56, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ5LCJlbXBsb3llZUlkIjo1NiwiZW1haWwiOiJtdWhhbW1hZC5odW5haW5AZGlnaW91c3NvbHV0aW9ucy5jb20iLCJuYW1lIjoiTXVoYW1tYWQgSHVuYWluIiwicm9sZSI6Ik9wZXJhdGlvbnMiLCJkZXNpZ25hdGlvbiI6IlNNIE9QRVJ0IiwiaWF0IjoxNzcyMzE1MjE0LCJleHAiOjE3NzI0MDE2MTR9.NRkNsxenZzeuyq6SwW-u3JEQi5c7QNiv2CbMJck3Ew8', 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-02-28 21:46:54', NULL, 1, 'PC', 'Linux PC', 'Firefox 147', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0', '2026-02-28 21:46:54', '2026-02-28 21:46:54', '2026-02-28 21:46:54'),
+(798, 44, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjM3LCJlbXBsb3llZUlkIjo0NCwiZW1haWwiOiJNb2l6QGRpZ2lvdXNzb2x1dGlvbnMuY29tIiwibmFtZSI6IkFiZHVsIE1vaXogS2hhbiIsInJvbGUiOiJQcm9kdWN0aW9uIiwiZGVzaWduYXRpb24iOiJNYW5hZ2VyIiwiaWF0IjoxNzcyNjQ2NDU2LCJleHAiOjE3NzI3MzI4NTZ9.kTex0H_e6wg5lmd5R4FqIhyLMr9Hw1r6txvhNKze1w0', 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-03-04 17:47:36', '2026-03-04 17:50:52', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-04 17:50:52', '2026-03-04 17:47:36', '2026-03-04 17:50:52');
 
 -- --------------------------------------------------------
 
@@ -3521,7 +3765,7 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`u115615899_plustaff`@`127.0.0.1` SQL SECURIT
 --
 DROP TABLE IF EXISTS `Monthly_Attendance_Summary`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`u115615899_plustaff`@`127.0.0.1` SQL SECURITY DEFINER VIEW `Monthly_Attendance_Summary`  AS SELECT `Employee_Attendance`.`employee_id` AS `employee_id`, `Employee_Attendance`.`name` AS `name`, `Employee_Attendance`.`email` AS `email`, year(`Employee_Attendance`.`attendance_date`) AS `year`, month(`Employee_Attendance`.`attendance_date`) AS `month`, count(0) AS `total_days`, sum(case when `Employee_Attendance`.`status` = 'Present' then 1 else 0 end) AS `present_days`, sum(case when `Employee_Attendance`.`status` = 'Absent' then 1 else 0 end) AS `absent_days`, sum(case when `Employee_Attendance`.`status` = 'Late' then 1 else 0 end) AS `late_days`, sum(case when `Employee_Attendance`.`status` = 'On Leave' then 1 else 0 end) AS `leave_days`, round(sum(case when `Employee_Attendance`.`status` = 'Present' then 1 else 0 end) * 100 / count(0),2) AS `attendance_rate`, round(sum(case when `Employee_Attendance`.`on_time` = 1 then 1 else 0 end) * 100 / count(0),2) AS `on_time_rate`, sum(`Employee_Attendance`.`net_working_time_minutes`) AS `total_working_minutes`, sum(`Employee_Attendance`.`overtime_minutes`) AS `total_overtime_minutes`, sum(`Employee_Attendance`.`total_break_duration_minutes`) AS `total_break_minutes` FROM `Employee_Attendance` GROUP BY `Employee_Attendance`.`employee_id`, `Employee_Attendance`.`name`, `Employee_Attendance`.`email`, year(`Employee_Attendance`.`attendance_date`), month(`Employee_Attendance`.`attendance_date`) ;
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `Monthly_Attendance_Summary`  AS SELECT `Employee_Attendance`.`employee_id` AS `employee_id`, `Employee_Attendance`.`name` AS `name`, `Employee_Attendance`.`email` AS `email`, year(`Employee_Attendance`.`attendance_date`) AS `year`, month(`Employee_Attendance`.`attendance_date`) AS `month`, count(0) AS `total_days`, sum(case when `Employee_Attendance`.`status` = 'Present' then 1 else 0 end) AS `present_days`, sum(case when `Employee_Attendance`.`status` = 'Absent' then 1 else 0 end) AS `absent_days`, sum(case when `Employee_Attendance`.`status` = 'Late' then 1 else 0 end) AS `late_days`, sum(case when `Employee_Attendance`.`status` = 'On Leave' then 1 else 0 end) AS `leave_days`, round(sum(case when `Employee_Attendance`.`status` = 'Present' then 1 else 0 end) * 100 / count(0),2) AS `attendance_rate`, round(sum(case when `Employee_Attendance`.`on_time` = 1 then 1 else 0 end) * 100 / count(0),2) AS `on_time_rate`, sum(`Employee_Attendance`.`net_working_time_minutes`) AS `total_working_minutes`, sum(`Employee_Attendance`.`overtime_minutes`) AS `total_overtime_minutes`, sum(`Employee_Attendance`.`total_break_duration_minutes`) AS `total_break_minutes` FROM `Employee_Attendance` GROUP BY `Employee_Attendance`.`employee_id`, `Employee_Attendance`.`name`, `Employee_Attendance`.`email`, year(`Employee_Attendance`.`attendance_date`), month(`Employee_Attendance`.`attendance_date`) ;
 
 -- --------------------------------------------------------
 
@@ -3778,6 +4022,15 @@ ALTER TABLE `onboarding_progress`
   ADD KEY `idx_is_completed` (`is_completed`);
 
 --
+-- Indexes for table `payroll_records`
+--
+ALTER TABLE `payroll_records`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `unique_employee_month` (`employee_id`,`month`,`year`),
+  ADD KEY `idx_month_year` (`month`,`year`),
+  ADD KEY `idx_status` (`status`);
+
+--
 -- Indexes for table `system_logs`
 --
 ALTER TABLE `system_logs`
@@ -3853,7 +4106,7 @@ ALTER TABLE `Company_Rules`
 -- AUTO_INCREMENT for table `Employee_Absent`
 --
 ALTER TABLE `Employee_Absent`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=313;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=457;
 
 --
 -- AUTO_INCREMENT for table `employee_achievements`
@@ -3952,6 +4205,12 @@ ALTER TABLE `onboarding_progress`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=43;
 
 --
+-- AUTO_INCREMENT for table `payroll_records`
+--
+ALTER TABLE `payroll_records`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=361;
+
+--
 -- AUTO_INCREMENT for table `system_logs`
 --
 ALTER TABLE `system_logs`
@@ -3973,7 +4232,7 @@ ALTER TABLE `user_concurrent_sessions`
 -- AUTO_INCREMENT for table `user_system_info`
 --
 ALTER TABLE `user_system_info`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=792;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=799;
 
 --
 -- Constraints for dumped tables
