@@ -7,29 +7,11 @@ const API = '/api/v1/expenses';
 const getToken = () =>
   localStorage.getItem('token') || localStorage.getItem('authToken') || '';
 
-const apiFetch = async (url, opts = {}) => {
-  try {
-    const res = await fetch(url, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${getToken()}`
-      },
-      ...opts
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.message || "API Error");
-    }
-
-    return data;
-
-  } catch (err) {
-    console.error("API Error:", err);
-    return { success: false, message: err.message };
-  }
-};
+const apiFetch = (url, opts = {}) =>
+  fetch(url, {
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
+    ...opts,
+  }).then(r => r.json());
 
 // ── Searchable Category Dropdown ──────────────────────────
 const CategorySelect = ({ categories, value, onChange, onCategoryCreated, placeholder = 'Select category…' }) => {
@@ -52,39 +34,26 @@ const CategorySelect = ({ categories, value, onChange, onCategoryCreated, placeh
   }, []);
 
   const handleCreate = async e => {
-  if (e && e.preventDefault) e.preventDefault();
-  if (!newName.trim()) return;
-
-  setCreating(true);
-
-  try {
-    const res = await apiFetch(`${API}/categories`, {
-      method: "POST",
-      body: JSON.stringify({
-        name: newName.trim(),
-        is_active: 1,
-        color: "#3B82F6"
-      })
-    });
-
-    if (res.success) {
-      onCategoryCreated(res.data);
-      onChange(res.data.id);
-      setNewName("");
-      setShowNewForm(false);
-      setOpen(false);
-      setSearch("");
-    } else {
-      alert(res.message || "Category creation failed");
+    if (e && e.preventDefault) e.preventDefault();
+    if (!newName.trim()) return;
+    setCreating(true);
+    try {
+      const res = await apiFetch(`${API}/categories`, {
+        method: 'POST',
+        body: JSON.stringify({ name: newName.trim() }),
+      });
+      if (res.success) {
+        onCategoryCreated(res.data);
+        onChange(res.data.id);
+        setNewName('');
+        setShowNewForm(false);
+        setOpen(false);
+        setSearch('');
+      }
+    } finally {
+      setCreating(false);
     }
-
-  } catch (err) {
-    console.error(err);
-    alert("Something went wrong");
-  } finally {
-    setCreating(false);
-  }
-};
+  };
 
   return (
     <div ref={ref} className="relative">
