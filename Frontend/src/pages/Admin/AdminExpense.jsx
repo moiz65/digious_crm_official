@@ -7,11 +7,29 @@ const API = '/api/v1/expenses';
 const getToken = () =>
   localStorage.getItem('token') || localStorage.getItem('authToken') || '';
 
-const apiFetch = (url, opts = {}) =>
-  fetch(url, {
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
-    ...opts,
-  }).then(r => r.json());
+const apiFetch = async (url, opts = {}) => {
+  try {
+    const res = await fetch(url, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${getToken()}`
+      },
+      ...opts
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.message || "API Error");
+    }
+
+    return data;
+
+  } catch (err) {
+    console.error("API Error:", err);
+    return { success: false, message: err.message };
+  }
+};
 
 // ── Searchable Category Dropdown ──────────────────────────
 const CategorySelect = ({ categories, value, onChange, onCategoryCreated, placeholder = 'Select category…' }) => {
