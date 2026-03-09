@@ -52,26 +52,39 @@ const CategorySelect = ({ categories, value, onChange, onCategoryCreated, placeh
   }, []);
 
   const handleCreate = async e => {
-    if (e && e.preventDefault) e.preventDefault();
-    if (!newName.trim()) return;
-    setCreating(true);
-    try {
-      const res = await apiFetch(`${API}/categories`, {
-        method: 'POST',
-        body: JSON.stringify({ name: newName.trim() }),
-      });
-      if (res.success) {
-        onCategoryCreated(res.data);
-        onChange(res.data.id);
-        setNewName('');
-        setShowNewForm(false);
-        setOpen(false);
-        setSearch('');
-      }
-    } finally {
-      setCreating(false);
+  if (e && e.preventDefault) e.preventDefault();
+  if (!newName.trim()) return;
+
+  setCreating(true);
+
+  try {
+    const res = await apiFetch(`${API}/categories`, {
+      method: "POST",
+      body: JSON.stringify({
+        name: newName.trim(),
+        is_active: 1,
+        color: "#3B82F6"
+      })
+    });
+
+    if (res.success) {
+      onCategoryCreated(res.data);
+      onChange(res.data.id);
+      setNewName("");
+      setShowNewForm(false);
+      setOpen(false);
+      setSearch("");
+    } else {
+      alert(res.message || "Category creation failed");
     }
-  };
+
+  } catch (err) {
+    console.error(err);
+    alert("Something went wrong");
+  } finally {
+    setCreating(false);
+  }
+};
 
   return (
     <div ref={ref} className="relative">
