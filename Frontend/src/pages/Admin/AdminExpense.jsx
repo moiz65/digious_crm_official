@@ -16,14 +16,27 @@ const apiFetch = async (url, opts = {}) => {
     
     // Handle non-JSON responses gracefully
     const text = await r.text();
+    
+    // Check if response is empty
+    if (!text || text.trim().length === 0) {
+      return {
+        success: false,
+        message: `Server returned empty response (${r.status})`
+      };
+    }
+    
+    // Try to parse JSON
     let data;
     try {
       data = JSON.parse(text);
-    } catch {
-      // Not JSON — likely HTML error page
+    } catch (parseErr) {
+      // Not JSON — likely HTML error page or malformed response
+      console.error('[apiFetch] JSON parse failed for:', url, 'Status:', r.status, 'Body:', text.substring(0, 200));
       return {
         success: false,
-        message: `Server error (${r.status}): ${r.statusText || 'Unknown error'}`
+        message: r.ok 
+          ? `Invalid server response (no JSON)`
+          : `Server error (${r.status}): ${r.statusText || 'Unknown error'}`
       };
     }
     
@@ -33,6 +46,7 @@ const apiFetch = async (url, opts = {}) => {
     // If response OK, return data
     return data;
   } catch (err) {
+    console.error('[apiFetch] Network error:', err);
     return {
       success: false,
       message: `Network error: ${err.message}`

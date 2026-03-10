@@ -55,17 +55,6 @@ const ensureTables = async () => {
         ON DELETE SET NULL ON UPDATE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   `);
-
-  // Seed default categories (IGNORE skips if name already exists)
-  await pool.query(`
-    INSERT IGNORE INTO expense_categories (name, description, color) VALUES
-      ('Salaries',        'Employee salary payments',          '#3B82F6'),
-      ('Office Supplies', 'Stationery and office consumables', '#8B5CF6'),
-      ('Travel',          'Travel and transportation costs',   '#10B981'),
-      ('Utilities',       'Electricity, internet, phone',      '#F59E0B'),
-      ('Marketing',       'Advertising and promotions',        '#EF4444'),
-      ('Miscellaneous',   'Other uncategorised expenses',      '#6B7280')
-  `);
 };
 
 // Run once at module load
