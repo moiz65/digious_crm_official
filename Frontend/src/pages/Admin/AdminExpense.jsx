@@ -220,6 +220,13 @@ const AdminExpense = () => {
       const now = new Date();
       return expDate.getMonth() === now.getMonth() && expDate.getFullYear() === now.getFullYear();
     }).reduce((sum, exp) => sum + exp.amount, 0),
+    todayExpense: expenses.filter(exp => {
+      const expDate = new Date(exp.date);
+      const today = new Date();
+      return expDate.getDate() === today.getDate() && 
+             expDate.getMonth() === today.getMonth() && 
+             expDate.getFullYear() === today.getFullYear();
+    }).reduce((sum, exp) => sum + exp.amount, 0),
     lastMonth: expenses.filter(exp => {
       const expDate = new Date(exp.date);
       const now = new Date();
@@ -229,7 +236,19 @@ const AdminExpense = () => {
     }).reduce((sum, exp) => sum + exp.amount, 0),
     pendingExpenses: expenses.filter(exp => exp.status === "pending").length,
     completedExpenses: expenses.filter(exp => exp.status === "completed").length,
+    yesterdayExpense: expenses.filter(exp => {
+      const expDate = new Date(exp.date);
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      return expDate.getDate() === yesterday.getDate() && 
+             expDate.getMonth() === yesterday.getMonth() && 
+             expDate.getFullYear() === yesterday.getFullYear();
+    }).reduce((sum, exp) => sum + exp.amount, 0),
   };
+
+  const todayChange = stats.yesterdayExpense > 0 
+    ? ((stats.todayExpense - stats.yesterdayExpense) / stats.yesterdayExpense * 100).toFixed(1)
+    : stats.todayExpense > 0 ? 100 : 0;
 
   const monthlyChange = stats.lastMonth > 0 
     ? ((stats.thisMonth - stats.lastMonth) / stats.lastMonth * 100).toFixed(1)
@@ -346,75 +365,63 @@ const AdminExpense = () => {
             )}
 
             {/* Stats Grid - Matching Payroll Style */}
-<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-  {/* Total Expenses Card */}
-  <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-5 text-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
-    <div className="flex items-center justify-between mb-3">
-      <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
-        <Banknote className="h-6 w-6" />
-      </div>
-      <div className="text-right">
-        <div className="text-2xl font-bold">{formatCurrency(stats.totalExpenses)}</div>
-        <div className="text-blue-100 text-xs font-medium">Total Expenses</div>
-      </div>
-    </div>
-    <div className="flex items-center gap-1 text-blue-100 text-xs">
-      <span>{stats.totalCount} transactions</span>
-    </div>
-  </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+              {/* This Month Card - Changed from Total Expenses */}
+              <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-5 text-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                    <Calendar className="h-6 w-6" />
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold">{formatCurrency(stats.thisMonth)}</div>
+                    <div className="text-blue-100 text-xs font-medium">This Month</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 text-blue-100 text-xs">
+                  <div className={`flex items-center gap-1 ${monthlyChange >= 0 ? 'text-blue-100' : 'text-rose-100'}`}>
+                    {monthlyChange >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                    {Math.abs(monthlyChange)}%
+                  </div>
+                  <span>vs last month</span>
+                </div>
+              </div>
 
-  {/* Average Expense Card */}
-  <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-5 text-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
-    <div className="flex items-center justify-between mb-3">
-      <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
-        <TrendingUp className="h-6 w-6" />
-      </div>
-      <div className="text-right">
-        <div className="text-2xl font-bold">{formatCurrency(stats.averageExpense)}</div>
-        <div className="text-purple-100 text-xs font-medium">Average Expense</div>
-      </div>
-    </div>
-    <div className="text-purple-100 text-xs">
-      per transaction
-    </div>
-  </div>
+              {/* Average Expense Card */}
+              <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-5 text-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                    <TrendingUp className="h-6 w-6" />
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold">{formatCurrency(stats.averageExpense)}</div>
+                    <div className="text-purple-100 text-xs font-medium">Average Expense</div>
+                  </div>
+                </div>
+                <div className="text-purple-100 text-xs">
+                  per transaction
+                </div>
+              </div>
 
-  {/* This Month Card */}
-  <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl p-5 text-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
-    <div className="flex items-center justify-between mb-3">
-      <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
-        <Calendar className="h-6 w-6" />
-      </div>
-      <div className="text-right">
-        <div className="text-2xl font-bold">{formatCurrency(stats.thisMonth)}</div>
-        <div className="text-emerald-100 text-xs font-medium">This Month</div>
-      </div>
-    </div>
-    <div className="flex items-center gap-1 text-emerald-100 text-xs">
-      <div className={`flex items-center gap-1 ${monthlyChange >= 0 ? 'text-emerald-100' : 'text-rose-100'}`}>
-        {monthlyChange >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-        {Math.abs(monthlyChange)}%
-      </div>
-      <span>vs last month</span>
-    </div>
-  </div>
-
-  {/* Top Category Card */}
-  {/* <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-5 text-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
-    <div className="flex items-center justify-between mb-3">
-      <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
-        <PieChart className="h-6 w-6" />
-      </div>
-      <div className="text-right">
-        <div className="text-2xl font-bold">{formatCurrency(topCategory[1])}</div>
-        <div className="text-amber-100 text-xs font-medium">{topCategory[0]}</div>
-      </div>
-    </div>
-    <div className="text-amber-100 text-xs">
-      {stats.totalExpenses > 0 ? ((topCategory[1] / stats.totalExpenses) * 100).toFixed(1) : 0}% of total
-    </div>
-  </div> */}
-</div>
+              {/* Today Expense Card - Changed from This Month */}
+              <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl p-5 text-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                    <DollarSign className="h-6 w-6" />
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold">{formatCurrency(stats.todayExpense)}</div>
+                    <div className="text-emerald-100 text-xs font-medium">Today Expense</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 text-emerald-100 text-xs">
+                  <div className={`flex items-center gap-1 ${todayChange >= 0 ? 'text-emerald-100' : 'text-rose-100'}`}>
+                    {todayChange >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                    {Math.abs(todayChange)}%
+                  </div>
+                  <span>vs yesterday</span>
+                </div>
+              </div>
+            </div>
 
             {/* Filters */}
             <div className="bg-white rounded-2xl p-6 shadow-lg border border-slate-200 mb-8">
