@@ -7,11 +7,38 @@ const API = '/api/v1/expenses';
 const getToken = () =>
   localStorage.getItem('token') || localStorage.getItem('authToken') || '';
 
-const apiFetch = (url, opts = {}) =>
-  fetch(url, {
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
-    ...opts,
-  }).then(r => r.json());
+const apiFetch = async (url, opts = {}) => {
+  try {
+    const r = await fetch(url, {
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
+      ...opts,
+    });
+    
+    // Handle non-JSON responses gracefully
+    const text = await r.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      // Not JSON — likely HTML error page
+      return {
+        success: false,
+        message: `Server error (${r.status}): ${r.statusText || 'Unknown error'}`
+      };
+    }
+    
+    // If response not OK but has JSON, return it (let backend message show)
+    if (!r.ok && data) return data;
+    
+    // If response OK, return data
+    return data;
+  } catch (err) {
+    return {
+      success: false,
+      message: `Network error: ${err.message}`
+    };
+  }
+};
 
 // ── Searchable Category Dropdown ──────────────────────────
 const CategorySelect = ({ categories, value, onChange, onCategoryCreated, placeholder = 'Select category…' }) => {
@@ -34,7 +61,7 @@ const CategorySelect = ({ categories, value, onChange, onCategoryCreated, placeh
   }, []);
 
   const handleCreate = async e => {
-    if (e && e.preventDefault) e.preventDefault();
+    e.preventDefault();
     if (!newName.trim()) return;
     setCreating(true);
     try {
@@ -107,17 +134,16 @@ const CategorySelect = ({ categories, value, onChange, onCategoryCreated, placeh
           </ul>
           <div className="border-t border-gray-100 p-2">
             {showNewForm ? (
-              <div className="flex gap-2">
+              <form onSubmit={handleCreate} className="flex gap-2">
                 <input
                   autoFocus
                   type="text"
                   value={newName}
                   onChange={e => setNewName(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleCreate(e); } }}
                   placeholder="New category name"
                   className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600"
                 />
-                <button type="button" disabled={creating} onClick={handleCreate}
+                <button type="submit" disabled={creating}
                   className="px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition disabled:opacity-60">
                   {creating ? '…' : 'Add'}
                 </button>
@@ -125,7 +151,7 @@ const CategorySelect = ({ categories, value, onChange, onCategoryCreated, placeh
                   className="px-3 py-2 border border-gray-300 text-sm rounded-lg hover:bg-gray-50 transition">
                   <X size={13} />
                 </button>
-              </div>
+              </form>
             ) : (
               <button type="button" onClick={() => setShowNewForm(true)}
                 className="w-full flex items-center gap-2 px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition">
