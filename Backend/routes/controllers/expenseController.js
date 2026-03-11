@@ -2,10 +2,10 @@
  * Expense Controller
  *
  * Categories endpoints:
- *   GET    /api/v1/expenses/categories          – list all active categories
+ *   GET    /api/v1/expenses/categories          – list all ACTIVE categories only
  *   POST   /api/v1/expenses/categories          – create a category
- *   PUT    /api/v1/expenses/categories/:id      – update a category
- *   DELETE /api/v1/expenses/categories/:id      – soft-delete a category
+ *   PUT    /api/v1/expenses/categories/:id      – update a category (or toggle active/inactive)
+ *   DELETE /api/v1/expenses/categories/:id      – hard-delete a category permanently from database
  *
  * Expenses endpoints:
  *   GET    /api/v1/expenses                     – list expenses (filters: from, to, category_id, search)
@@ -64,12 +64,13 @@ ensureTables().catch(err => console.error('❌ Expense tables init error:', err.
 // CATEGORIES
 // ─────────────────────────────────────────────────────────
 
-// GET /categories
+// GET /categories – Returns ONLY ACTIVE categories
 exports.getCategories = async (req, res) => {
   try {
     const [rows] = await pool.query(
       `SELECT id, name, description, color, is_active, created_at
        FROM expense_categories
+       WHERE is_active = 1
        ORDER BY name ASC`
     );
     return res.json({ success: true, data: rows });
@@ -140,15 +141,18 @@ exports.updateCategory = async (req, res) => {
   }
 };
 
-// DELETE /categories/:id  (soft-delete)
+// DELETE /categories/:id  (hard-delete from database)
 exports.deleteCategory = async (req, res) => {
   try {
     const { id } = req.params;
-    await pool.query(`UPDATE expense_categories SET is_active = 0 WHERE id = ?`, [id]);
-    return res.json({ success: true, message: 'Category deactivated' });
+    const [result] = await pool.query(`DELETE FROM expense_categories WHERE id = ?`, [id]);
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: 'Category not found' });
+    }
+    return res.json({ success: true, message: 'Category deleted permanently' });
   } catch (err) {
     console.error('deleteCategory error:', err);
-    return res.status(500).json({ success: false, message: 'Server error' });
+    return res.status(500).json({ success: false, message: 'Failed to delete category. It may be linked to expenses.' });
   }
 };
 
