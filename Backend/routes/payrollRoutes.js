@@ -27,6 +27,9 @@ router.put('/bulk-status', authMiddleware, payrollController.bulkUpdateStatus);
 // Get detailed payslip (must be before /:year/:month to avoid conflict)
 router.get('/:id/payslip', authMiddleware, payrollController.getPayslip);
 
+// Edit payroll record (bonus, adjustment)
+router.put('/:id/edit', authMiddleware, payrollController.editPayrollRecord);
+
 // Update single record status
 router.put('/:id/status', authMiddleware, payrollController.updatePayrollStatus);
 

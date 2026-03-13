@@ -10,7 +10,8 @@ import {
   DollarSign, Calendar, TrendingDown, TrendingUp, FileText, 
   Clock, ChevronDown, ChevronUp, Eye, X, Printer,
   AlertCircle, Briefcase, CreditCard, Wallet, ArrowRight,
-  CheckCircle, XCircle, Loader2, CalendarDays, Info, BadgeDollarSign
+  CheckCircle, XCircle, Loader2, CalendarDays, Info, BadgeDollarSign,
+  Gift, PlusCircle
 } from 'lucide-react';
 import { endpoints, apiRequest } from '../config/api';
 
@@ -141,6 +142,23 @@ const PaySlipModal = ({ payroll, onClose }) => {
                   <span className="font-bold text-sm text-slate-700">Gross Salary</span>
                   <span className="font-bold text-sm text-emerald-700">{formatNum(payroll.gross_salary)}</span>
                 </div>
+                {(payroll.bonus || 0) > 0 && (
+                  <div className="flex justify-between text-sm pt-1">
+                    <span className="text-emerald-600 flex items-center gap-1"><Gift className="h-3.5 w-3.5" /> Bonus</span>
+                    <span className="font-medium text-emerald-600">+{formatNum(payroll.bonus)}</span>
+                  </div>
+                )}
+                {(payroll.adjustment || 0) !== 0 && (
+                  <div className="flex justify-between text-sm pt-1">
+                    <span className="text-blue-600 flex items-center gap-1">
+                      <PlusCircle className="h-3.5 w-3.5" /> Adjustment
+                      {payroll.adjustment_reason && <span className="text-xs text-slate-400 ml-1">({payroll.adjustment_reason})</span>}
+                    </span>
+                    <span className={`font-medium ${payroll.adjustment > 0 ? 'text-blue-600' : 'text-rose-600'}`}>
+                      {payroll.adjustment > 0 ? '+' : ''}{formatNum(payroll.adjustment)}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -192,7 +210,10 @@ const PaySlipModal = ({ payroll, onClose }) => {
                 <p className="text-blue-200 text-sm font-medium">Net Salary</p>
                 <p className="text-3xl font-bold mt-1">PKR {formatNum(payroll.net_salary)}</p>
                 <p className="text-blue-200 text-xs mt-1">
-                  {formatNum(payroll.gross_salary)} − {formatNum(payroll.total_deductions)}
+                  {formatNum(payroll.gross_salary)}
+                  {(payroll.bonus || 0) > 0 && ` + ${formatNum(payroll.bonus)} bonus`}
+                  {(payroll.adjustment || 0) !== 0 && ` + ${formatNum(payroll.adjustment)} adj`}
+                  {` − ${formatNum(payroll.total_deductions)}`}
                 </p>
               </div>
               <button 
@@ -511,6 +532,7 @@ const EmployeePayrollPage = () => {
                     <th className="text-right px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Base Salary</th>
                     <th className="text-right px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Allowances</th>
                     <th className="text-right px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Deductions</th>
+                    <th className="text-right px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Bonus/Adj</th>
                     <th className="text-right px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Net Salary</th>
                     <th className="text-center px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Attendance</th>
                     <th className="text-center px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
@@ -536,6 +558,19 @@ const EmployeePayrollPage = () => {
                       <td className="px-5 py-4 text-right text-emerald-600 font-medium">+{formatNum(r.total_allowances)}</td>
                       <td className="px-5 py-4 text-right text-rose-600 font-medium">
                         {r.total_deductions > 0 ? `−${formatNum(r.total_deductions)}` : <span className="text-slate-300">0</span>}
+                      </td>
+                      <td className="px-5 py-4 text-right">
+                        <div className="space-y-0.5">
+                          {(r.bonus || 0) > 0 && (
+                            <span className="text-xs font-medium text-emerald-600 block">+{formatNum(r.bonus)}</span>
+                          )}
+                          {(r.adjustment || 0) !== 0 && (
+                            <span className={`text-xs font-medium block ${r.adjustment > 0 ? 'text-blue-600' : 'text-rose-600'}`}>
+                              {r.adjustment > 0 ? '+' : ''}{formatNum(r.adjustment)}
+                            </span>
+                          )}
+                          {(!r.bonus && !r.adjustment) && <span className="text-slate-300">—</span>}
+                        </div>
                       </td>
                       <td className="px-5 py-4 text-right">
                         <p className="font-bold text-blue-700">{formatNum(r.net_salary)}</p>
@@ -601,6 +636,14 @@ const EmployeePayrollPage = () => {
                           <div className="text-right text-emerald-600">+{formatNum(r.total_allowances)}</div>
                           <div><span className="text-slate-500">Deductions</span></div>
                           <div className="text-right text-rose-600">−{formatNum(r.total_deductions)}</div>
+                          {(r.bonus || 0) > 0 && (<>
+                            <div><span className="text-slate-500">Bonus</span></div>
+                            <div className="text-right text-emerald-600">+{formatNum(r.bonus)}</div>
+                          </>)}
+                          {(r.adjustment || 0) !== 0 && (<>
+                            <div><span className="text-slate-500">Adjustment</span></div>
+                            <div className={`text-right ${r.adjustment > 0 ? 'text-blue-600' : 'text-rose-600'}`}>{r.adjustment > 0 ? '+' : ''}{formatNum(r.adjustment)}</div>
+                          </>)}
                           <div><span className="text-slate-500">Attendance</span></div>
                           <div className="text-right text-slate-700">P:{r.present_days} A:{r.absent_days} L:{r.late_days}</div>
                         </div>
@@ -654,7 +697,7 @@ const EmployeePayrollPage = () => {
               <li><strong>Absent Deduction</strong> = Unpaid absent days × Daily Rate (approved leaves are NOT deducted)</li>
               <li><strong>Late Deduction</strong> = Every 3 late arrivals = 1 day deducted</li>
               <li><strong>Salary Issuance</strong> = Around the 5th of the next month (e.g., Feb salary issued ~5th March)</li>
-              <li><strong>Net Salary</strong> = Base Salary + Allowances − Deductions</li>
+              <li><strong>Net Salary</strong> = Base Salary + Allowances + Bonus + Adjustment − Deductions</li>
             </ul>
           </div>
         </div>

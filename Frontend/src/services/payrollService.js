@@ -75,10 +75,26 @@ export const getPayslip = async (id) => {
   return response.data;
 };
 
+/**
+ * Edit a payroll record (bonus, adjustment, adjustment_reason)
+ * @param {number} id - Payroll record ID
+ * @param {Object} data - { bonus, adjustment, adjustment_reason }
+ * @returns {Promise<Object>}
+ */
+export const editPayrollRecord = async (id, data) => {
+  const url = endpoints.payroll.editPayroll(id);
+  const response = await apiRequest(url, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+  return response.data;
+};
+
 export default {
   getMonthlyPayroll,
   generatePayroll,
   updatePayrollStatus,
   bulkUpdatePayrollStatus,
   getPayslip,
+  editPayrollRecord,
 };

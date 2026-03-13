@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   DollarSign, TrendingUp, Clock, CheckCircle,
   AlertCircle, Calendar, CreditCard, Building,
@@ -11,54 +11,20 @@ import {
   ArrowUpRight, ArrowDownRight, Banknote, Receipt,
   Layers, Package, ShoppingBag, Tag, Shield,
   Briefcase, UserCheck, ChartBar, ChartLine,
-  Mail, Phone, Trophy, Star, Gift, Crown
+  Mail, Phone, Trophy, Star, Gift, Crown,
+  Loader2
 } from 'lucide-react';
+import {
+  getAllSales,
+  createSale,
+  deleteSale as deleteSaleApi,
+  getSalesCategories,
+} from '../services/salesService';
 
 const AdvancedSalesManagement = () => {
-  const [sales, setSales] = useState([
-    {
-      id: 'SALE-001',
-      employeeId: 'EMP-0001',
-      employeeName: 'John Smith',
-      postingDate: '2024-01-15',
-      totalSales: 8500,
-      upfrontPayment: 4250,
-      remainingBalance: 4250,
-      designDetails: 'E-commerce website with mobile app integration, responsive design',
-      deadline: '2024-02-28',
-      accountName: 'TechNova Solutions',
-      clientEmail: 'contact@technova.com',
-      clientPhone: '+1 (555) 123-4567',
-      merchantUsed: 'Stripe',
-      paymentMethod: 'Credit Card',
-      status: 'in-progress',
-      notes: 'Client requested additional features, phase 1 completed',
-      createdAt: '2024-01-15T10:30:00Z',
-      attachments: ['design.pdf', 'contract.docx'],
-      category: 'Web Development'
-    },
-    {
-      id: 'SALE-002',
-      employeeId: 'EMP-0001',
-      employeeName: 'John Smith',
-      postingDate: '2024-01-12',
-      totalSales: 15000,
-      upfrontPayment: 7500,
-      remainingBalance: 7500,
-      designDetails: 'Complete branding package including logo, stationery, social media templates',
-      deadline: '2024-03-15',
-      accountName: 'Global Marketing Inc.',
-      clientEmail: 'info@globalmarketing.com',
-      clientPhone: '+1 (555) 987-6543',
-      merchantUsed: 'PayPal',
-      paymentMethod: 'Bank Transfer',
-      status: 'completed',
-      notes: 'Project delivered ahead of schedule',
-      createdAt: '2024-01-12T09:15:00Z',
-      attachments: ['brand_guide.pdf', 'invoice.pdf'],
-      category: 'Branding'
-    }
-  ]);
+  const [sales, setSales] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   const [showSalesForm, setShowSalesForm] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -69,6 +35,44 @@ const AdvancedSalesManagement = () => {
 
   // Constants
   const MONTHLY_TARGET = 700; // $700 target for commission
+  
+  // ── Fetch all sales from API ──
+  const fetchSales = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await getAllSales();
+      const mapped = (response.data || []).map(s => ({
+        id: s.id,
+        employeeId: s.employee_id,
+        employeeName: s.employee_name || '',
+        postingDate: s.sale_date ? s.sale_date.slice(0, 10) : '',
+        totalSales: parseFloat(s.total_amount) || 0,
+        upfrontPayment: parseFloat(s.upfront_payment) || 0,
+        remainingBalance: parseFloat(s.remaining_balance) || 0,
+        designDetails: s.project_description || '',
+        deadline: s.deadline ? s.deadline.slice(0, 10) : '',
+        accountName: s.account_name || s.client_name || '',
+        clientEmail: s.client_email || '',
+        clientPhone: s.client_phone || '',
+        merchantUsed: s.merchant || '',
+        paymentMethod: s.payment_method || '',
+        status: s.status || 'pending',
+        notes: s.notes || '',
+        createdAt: s.created_at || '',
+        attachments: [],
+        category: s.category_name || s.category_slug || 'General',
+      }));
+      setSales(mapped);
+    } catch (err) {
+      console.error('Failed to fetch sales:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchSales();
+  }, [fetchSales]);
   
   // Format currency function
   const formatCurrency = (amount) => {
@@ -109,41 +113,45 @@ const AdvancedSalesManagement = () => {
     commissionRate: commissionRate
   };
 
-  // Handle add sale - NO EDIT OPTION
-  const handleAddSale = (formData) => {
-    const newSale = {
-      id: `SALE-${Date.now().toString().slice(-6)}`,
-      employeeId: 'EMP-0001',
-      employeeName: 'John Smith',
-      ...formData,
-      remainingBalance: formData.totalSales - formData.upfrontPayment,
-      status: 'pending',
-      createdAt: new Date().toISOString(),
-      attachments: [],
-      category: formData.category || 'General'
-    };
-    
-    // Add new sale
-    const updatedSales = [newSale, ...sales];
-    setSales(updatedSales);
-    
-    // Calculate new total
-    const newTotal = updatedSales.reduce((sum, sale) => sum + sale.totalSales, 0);
-    
-    // Show celebration if target just achieved
-    if (newTotal >= MONTHLY_TARGET && totalSalesAmount < MONTHLY_TARGET) {
-      setTimeout(() => {
-        alert(`🎉 Congratulations! You've reached your $${MONTHLY_TARGET} target!\nYou are now earning 5% commission on ALL your sales!`);
-      }, 100);
+  // Handle add sale - calls API
+  const handleAddSale = async (formData) => {
+    setSaving(true);
+    try {
+      await createSale({
+        client_name: formData.accountName || formData.name || '',
+        client_email: formData.clientEmail || '',
+        client_phone: formData.clientPhone || '',
+        project_description: formData.designDetails || '',
+        total_amount: parseFloat(formData.totalSales) || 0,
+        upfront_payment: parseFloat(formData.upfrontPayment) || 0,
+        merchant: formData.merchantUsed || '',
+        payment_method: formData.paymentMethod || '',
+        account_name: formData.accountName || '',
+        sale_date: formData.postingDate || new Date().toISOString().slice(0, 10),
+        deadline: formData.deadline || null,
+        status: 'pending',
+        notes: formData.notes || '',
+      });
+      await fetchSales();
+      setShowSalesForm(false);
+    } catch (err) {
+      console.error('Failed to create sale:', err);
+      alert('Failed to add sale: ' + (err.message || 'Unknown error'));
+    } finally {
+      setSaving(false);
     }
-    
-    setShowSalesForm(false);
   };
 
-  // Handle delete sale
-  const handleDeleteSale = (id) => {
+  // Handle delete sale - calls API
+  const handleDeleteSale = async (id) => {
     if (window.confirm('Are you sure you want to delete this sale? This action cannot be undone.')) {
-      setSales(sales.filter(sale => sale.id !== id));
+      try {
+        await deleteSaleApi(id);
+        await fetchSales();
+      } catch (err) {
+        console.error('Failed to delete sale:', err);
+        alert('Failed to delete sale: ' + (err.message || 'Unknown error'));
+      }
     }
   };
 

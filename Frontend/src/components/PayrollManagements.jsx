@@ -20,6 +20,10 @@ import {
   RefreshCw,
   Banknote,
   MinusCircle,
+  Edit3,
+  Gift,
+  PlusCircle,
+  Save,
 } from "lucide-react";
 import {
   getMonthlyPayroll,
@@ -27,6 +31,7 @@ import {
   updatePayrollStatus as updateStatusAPI,
   bulkUpdatePayrollStatus,
   getPayslip,
+  editPayrollRecord as editPayrollAPI,
 } from "../services/payrollService";
 
 // ─── Helpers ──────────────────────────────────
@@ -64,6 +69,8 @@ const PayrollManagements = () => {
   const [selectedRecords, setSelectedRecords] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
   const [error, setError] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingRecord, setEditingRecord] = useState(null);
 
   // ─── Fetch payroll data ─────────────────────
   const fetchPayroll = useCallback(async () => {
@@ -155,6 +162,31 @@ const PayrollManagements = () => {
     } catch {
       setSelectedEmployee(record);
       setShowPaySlipModal(true);
+    }
+  };
+
+  // ─── Edit payroll record (bonus/adjustment) ─
+  const handleEditPayroll = (record) => {
+    setEditingRecord(record);
+    setShowEditModal(true);
+  };
+
+  const handleSaveEdit = async (id, data) => {
+    try {
+      const result = await editPayrollAPI(id, data);
+      // Update local state
+      setPayrollData((prev) =>
+        prev.map((r) =>
+          r.id === id
+            ? { ...r, bonus: result.bonus, adjustment: result.adjustment, adjustment_reason: result.adjustment_reason, net_salary: result.net_salary }
+            : r
+        )
+      );
+      setShowEditModal(false);
+      setEditingRecord(null);
+    } catch (err) {
+      console.error("Failed to edit payroll:", err);
+      setError(err.message || "Failed to edit payroll record");
     }
   };
 
@@ -435,6 +467,7 @@ const PayrollManagements = () => {
           loading={loading}
           onViewPayslip={handleViewPayslip}
           onUpdateStatus={handleUpdateStatus}
+          onEditPayroll={handleEditPayroll}
           selectedRecords={selectedRecords}
           setSelectedRecords={setSelectedRecords}
           selectAll={selectAll}
@@ -447,6 +480,16 @@ const PayrollManagements = () => {
             payroll={selectedEmployee}
             onClose={() => { setShowPaySlipModal(false); setSelectedEmployee(null); }}
             onUpdateStatus={handleUpdateStatus}
+            onEditPayroll={handleEditPayroll}
+          />
+        )}
+
+        {/* Edit Modal */}
+        {showEditModal && editingRecord && (
+          <EditPayrollModal
+            record={editingRecord}
+            onClose={() => { setShowEditModal(false); setEditingRecord(null); }}
+            onSave={handleSaveEdit}
           />
         )}
 
@@ -467,7 +510,7 @@ const PayrollManagements = () => {
 // PayrollTable — Department column REMOVED
 // ──────────────────────────────────────────────
 const PayrollTable = ({
-  data, loading, onViewPayslip, onUpdateStatus,
+  data, loading, onViewPayslip, onUpdateStatus, onEditPayroll,
   selectedRecords, setSelectedRecords, selectAll, setSelectAll,
 }) => {
   if (loading) {
@@ -504,14 +547,15 @@ const PayrollTable = ({
               <th className="w-[140px] px-3 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Attendance</th>
               <th className="w-[160px] px-3 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Deductions</th>
               <th className="w-[110px] px-3 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Net Salary</th>
+              <th className="w-[110px] px-3 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Bonus/Adj</th>
               <th className="w-[110px] px-3 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Status</th>
-              <th className="w-[100px] px-3 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Actions</th>
+              <th className="w-[140px] px-3 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200">
             {data.length === 0 ? (
               <tr>
-                <td colSpan="9" className="px-6 py-12 text-center text-slate-500">
+                <td colSpan="10" className="px-6 py-12 text-center text-slate-500">
                   <div className="flex flex-col items-center gap-2">
                     <Users className="h-10 w-10 text-slate-300" />
                     <p className="text-lg font-medium">No payroll records</p>
@@ -575,6 +619,19 @@ const PayrollTable = ({
                     <span className="text-base font-bold text-blue-600 block">{formatCurrency(record.net_salary)}</span>
                   </td>
                   <td className="w-[110px] px-3 py-3">
+                    <div className="space-y-0.5">
+                      {(record.bonus || 0) > 0 && (
+                        <span className="text-xs font-medium text-emerald-600 block">+{formatCurrency(record.bonus)} <span className="text-slate-400">bonus</span></span>
+                      )}
+                      {(record.adjustment || 0) !== 0 && (
+                        <span className={`text-xs font-medium block ${record.adjustment > 0 ? 'text-blue-600' : 'text-rose-600'}`}>
+                          {record.adjustment > 0 ? '+' : ''}{formatCurrency(record.adjustment)} <span className="text-slate-400">adj</span>
+                        </span>
+                      )}
+                      {(!record.bonus && !record.adjustment) && <span className="text-xs text-slate-300">—</span>}
+                    </div>
+                  </td>
+                  <td className="w-[110px] px-3 py-3">
                     <select
                       value={record.status}
                       onChange={(e) => { e.stopPropagation(); onUpdateStatus(record.id, e.target.value); }}
@@ -588,16 +645,27 @@ const PayrollTable = ({
                       ))}
                     </select>
                   </td>
-                  <td className="w-[100px] px-3 py-3">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); onViewPayslip(record); }}
-                      onMouseDown={(e) => e.stopPropagation()}
-                      className="flex items-center justify-center gap-1 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg transition-colors duration-150 text-sm whitespace-nowrap"
-                      title="View Pay Slip"
-                    >
-                      <Eye className="h-3.5 w-3.5" />
-                      <span>Pay Slip</span>
-                    </button>
+                  <td className="w-[140px] px-3 py-3">
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onViewPayslip(record); }}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        className="flex items-center justify-center gap-1 px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg transition-colors duration-150 text-xs whitespace-nowrap"
+                        title="View Pay Slip"
+                      >
+                        <Eye className="h-3.5 w-3.5" />
+                        <span>View</span>
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onEditPayroll(record); }}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        className="flex items-center justify-center gap-1 px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-600 rounded-lg transition-colors duration-150 text-xs whitespace-nowrap"
+                        title="Edit Bonus / Adjustment"
+                      >
+                        <Edit3 className="h-3.5 w-3.5" />
+                        <span>Edit</span>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
@@ -622,7 +690,7 @@ const PayrollTable = ({
 // ──────────────────────────────────────────────
 // PaySlipModal
 // ──────────────────────────────────────────────
-const PaySlipModal = ({ payroll, onClose, onUpdateStatus }) => {
+const PaySlipModal = ({ payroll, onClose, onUpdateStatus, onEditPayroll }) => {
   return (
     <div
       className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4"
@@ -699,6 +767,23 @@ const PaySlipModal = ({ payroll, onClose, onUpdateStatus }) => {
                   <span className="font-bold text-slate-700">Gross Salary</span>
                   <span className="font-bold text-blue-700">{formatCurrency(payroll.gross_salary)}</span>
                 </div>
+                {(payroll.bonus || 0) > 0 && (
+                  <div className="flex justify-between py-2 border-b border-slate-100">
+                    <span className="text-sm text-emerald-600 flex items-center gap-1"><Gift className="h-3.5 w-3.5" /> Bonus</span>
+                    <span className="font-medium text-emerald-600">+{formatCurrency(payroll.bonus)}</span>
+                  </div>
+                )}
+                {(payroll.adjustment || 0) !== 0 && (
+                  <div className="flex justify-between py-2 border-b border-slate-100">
+                    <span className="text-sm text-blue-600 flex items-center gap-1">
+                      <PlusCircle className="h-3.5 w-3.5" /> Adjustment
+                      {payroll.adjustment_reason && <span className="text-xs text-slate-400 ml-1">({payroll.adjustment_reason})</span>}
+                    </span>
+                    <span className={`font-medium ${payroll.adjustment > 0 ? 'text-blue-600' : 'text-rose-600'}`}>
+                      {payroll.adjustment > 0 ? '+' : ''}{formatCurrency(payroll.adjustment)}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -754,10 +839,16 @@ const PaySlipModal = ({ payroll, onClose, onUpdateStatus }) => {
                 <p className="text-sm text-blue-600 font-medium">Net Salary (PKR)</p>
                 <p className="text-3xl font-bold text-blue-700">{formatCurrency(payroll.net_salary)}</p>
                 <p className="text-xs text-slate-500 mt-1">
-                  Base ({formatCurrency(payroll.base_salary)}) + Allowances ({formatCurrency(payroll.total_allowances)}) - Deductions ({formatCurrency(payroll.total_deductions)})
+                  Base ({formatCurrency(payroll.base_salary)}) + Allowances ({formatCurrency(payroll.total_allowances)})
+                  {(payroll.bonus || 0) > 0 && ` + Bonus (${formatCurrency(payroll.bonus)})`}
+                  {(payroll.adjustment || 0) !== 0 && ` + Adj (${formatCurrency(payroll.adjustment)})`}
+                  {` - Deductions (${formatCurrency(payroll.total_deductions)})`}
                 </p>
               </div>
               <div className="flex gap-3">
+                <button onClick={(e) => { e.stopPropagation(); onEditPayroll(payroll); }} className="flex items-center gap-2 px-4 py-2 bg-white border border-amber-200 text-amber-600 rounded-lg hover:bg-amber-50 transition-colors">
+                  <Edit3 className="h-4 w-4" /> Edit
+                </button>
                 <button onClick={(e) => e.stopPropagation()} className="flex items-center gap-2 px-4 py-2 bg-white border border-blue-200 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors">
                   <Printer className="h-4 w-4" /> Print
                 </button>
@@ -860,6 +951,151 @@ const BulkActionModal = ({ onClose, onUpdateStatus, selectedCount }) => {
             className="py-3 bg-rose-600 text-white rounded-xl font-semibold hover:bg-rose-700 transition-colors">Failed</button>
         </div>
         <button onClick={onClose} className="w-full py-3 border border-slate-300 rounded-xl text-slate-700 hover:bg-slate-50 transition-colors">Cancel</button>
+      </div>
+    </div>
+  );
+};
+
+// ──────────────────────────────────────────────
+// EditPayrollModal — Edit Bonus & Adjustment
+// ──────────────────────────────────────────────
+const EditPayrollModal = ({ record, onClose, onSave }) => {
+  const [bonus, setBonus] = useState(record.bonus || 0);
+  const [adjustment, setAdjustment] = useState(record.adjustment || 0);
+  const [adjustmentReason, setAdjustmentReason] = useState(record.adjustment_reason || "");
+  const [saving, setSaving] = useState(false);
+
+  const grossSalary = record.gross_salary || 0;
+  const totalDeductions = record.total_deductions || 0;
+  const previewNet = grossSalary + (parseFloat(bonus) || 0) + (parseFloat(adjustment) || 0) - totalDeductions;
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await onSave(record.id, {
+        bonus: parseFloat(bonus) || 0,
+        adjustment: parseFloat(adjustment) || 0,
+        adjustment_reason: adjustmentReason || null,
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[70] p-4"
+      onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl" onMouseDown={(e) => e.stopPropagation()}>
+        {/* Header */}
+        <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white p-5 rounded-t-2xl">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-white/20 rounded-lg"><Edit3 className="h-5 w-5" /></div>
+              <div>
+                <h2 className="text-lg font-bold">Edit Payroll</h2>
+                <p className="text-amber-100 text-sm">{record.employee_name} &bull; {new Date(record.year, (record.month || 1) - 1).toLocaleDateString("en-PK", { month: "long", year: "numeric" })}</p>
+              </div>
+            </div>
+            <button onClick={onClose} className="p-2 hover:bg-white/20 rounded-lg transition-colors"><X className="h-5 w-5" /></button>
+          </div>
+        </div>
+
+        <div className="p-6 space-y-5">
+          {/* Current Info */}
+          <div className="grid grid-cols-3 gap-3 text-center">
+            <div className="p-3 bg-slate-50 rounded-lg">
+              <p className="text-xs text-slate-500">Gross Salary</p>
+              <p className="text-lg font-bold text-slate-800">{formatCurrency(grossSalary)}</p>
+            </div>
+            <div className="p-3 bg-rose-50 rounded-lg">
+              <p className="text-xs text-rose-600">Deductions</p>
+              <p className="text-lg font-bold text-rose-700">{formatCurrency(totalDeductions)}</p>
+            </div>
+            <div className="p-3 bg-blue-50 rounded-lg">
+              <p className="text-xs text-blue-600">Net Salary</p>
+              <p className="text-lg font-bold text-blue-700">{formatCurrency(previewNet)}</p>
+            </div>
+          </div>
+
+          {/* Bonus Input */}
+          <div>
+            <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-2">
+              <Gift className="h-4 w-4 text-emerald-600" /> Bonus (PKR)
+            </label>
+            <input
+              type="number"
+              min="0"
+              step="100"
+              value={bonus}
+              onChange={(e) => setBonus(e.target.value)}
+              onClick={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
+              placeholder="0"
+              className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-lg font-medium"
+            />
+            <p className="text-xs text-slate-400 mt-1">Extra amount given as a bonus (e.g. performance bonus, Eid bonus)</p>
+          </div>
+
+          {/* Adjustment Input */}
+          <div>
+            <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-2">
+              <PlusCircle className="h-4 w-4 text-blue-600" /> Adjustment (PKR)
+            </label>
+            <input
+              type="number"
+              step="100"
+              value={adjustment}
+              onChange={(e) => setAdjustment(e.target.value)}
+              onClick={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
+              placeholder="0"
+              className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg font-medium"
+            />
+            <p className="text-xs text-slate-400 mt-1">Correction or extra amount (can be negative for deduction)</p>
+          </div>
+
+          {/* Adjustment Reason */}
+          <div>
+            <label className="text-sm font-semibold text-slate-700 mb-2 block">Adjustment Reason (optional)</label>
+            <input
+              type="text"
+              value={adjustmentReason}
+              onChange={(e) => setAdjustmentReason(e.target.value)}
+              onClick={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
+              placeholder="e.g. Overtime payment, Travel reimbursement..."
+              className="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            />
+          </div>
+
+          {/* Preview Net Salary */}
+          <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold text-blue-700">Updated Net Salary</span>
+              <span className="text-2xl font-bold text-blue-700">{formatCurrency(previewNet)}</span>
+            </div>
+            <p className="text-xs text-blue-500 mt-1">
+              {formatCurrency(grossSalary)} + {formatCurrency(parseFloat(bonus) || 0)} (bonus) + {formatCurrency(parseFloat(adjustment) || 0)} (adj) − {formatCurrency(totalDeductions)} (deductions)
+            </p>
+          </div>
+
+          {/* Actions */}
+          <div className="flex justify-end gap-3 pt-2">
+            <button onClick={onClose} className="px-5 py-2.5 border border-slate-300 rounded-xl text-slate-700 hover:bg-slate-50 transition-colors font-medium">
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50"
+            >
+              <Save className="h-4 w-4" />
+              {saving ? "Saving..." : "Save Changes"}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
