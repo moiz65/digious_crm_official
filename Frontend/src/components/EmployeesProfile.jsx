@@ -87,99 +87,56 @@ const EmployeeProfile = () => {
         console.log("API Response:", data);
 
         if (data.success) {
-          // FIX: Group employees by ID to combine resources AND allowances
-          const employeesMap = new Map();
-
-          (data.data || []).forEach((emp) => {
-            if (!emp.id) return;
-
-            if (!employeesMap.has(emp.id)) {
-              // First time seeing this employee
-              employeesMap.set(emp.id, {
-                id: emp.id,
-                name: emp.name || "Unknown",
-                username:
-                  emp.employee_id ||
-                  emp.name?.toLowerCase().replace(/\s+/g, ".") ||
-                  "unknown",
-                email: emp.email || "",
-                phone: emp.phone || "",
-                role: emp.position || "Employee",
-                address: emp.address || "Unknown",
-                // Initialize allowances as array
-                allowances: [],
-                // Initialize resources as array
-                resources: [],
-                base_salary: emp.base_salary || 0,
-                cnic: emp.cnic || "N/A",
-                profile_picture: emp.profile_picture || null,
-                designation: emp.designation || "N/A",
-                total_salary: emp.total_salary || 0,
-                status: emp.status === "Active" ? "active" : "inactive",
-                department: emp.department || "Unknown",
-                joiningDate:
-                  emp.join_date || new Date().toISOString().split("T")[0],
-                experience: "-- years",
-                location: "Unknown",
-                performance: "Good",
-                skills: [],
-                color: ["blue", "green", "purple", "orange"][
-                  Math.floor(Math.random() * 4)
-                ],
-                badgeClass: [
-                  "bg-blue-transparent",
-                  "bg-green-transparent",
-                  "bg-purple-transparent",
-                  "bg-orange-transparent",
-                ][Math.floor(Math.random() * 4)],
-                attendance: Math.floor(Math.random() * 30) + 70,
-                selected: false,
-              });
-            }
-
-            // Add allowance if it exists
-            const employee = employeesMap.get(emp.id);
-            if (emp.allowance_name && emp.allowance_name !== "N/A") {
-              // Check if allowance already exists
-              const existingAllowance = employee.allowances.find(
-                (a) => a.allowance_name === emp.allowance_name,
-              );
-
-              if (!existingAllowance) {
-                employee.allowances.push({
-                  allowance_name: emp.allowance_name,
-                  allowance_amount: emp.allowance_amount || 0,
-                });
-              }
-            }
-
-            // Add resource if it exists
-            if (emp.resource_name && emp.resource_name !== "N/A") {
-              const existingResource = employee.resources.find(
-                (r) =>
-                  r.resource_name === emp.resource_name &&
-                  r.resource_serial === emp.resource_serial,
-              );
-
-              if (!existingResource) {
-                employee.resources.push({
-                  resource_name: emp.resource_name,
-                  resource_serial: emp.resource_serial,
-                });
-              }
-            }
-          });
-
-          // Convert map to array
-          const transformedEmployees = Array.from(employeesMap.values());
+          // API now returns nested allowances and resources per employee
+          const transformedEmployees = (data.data || []).map((emp) => ({
+            id: emp.id,
+            name: emp.name || "Unknown",
+            username:
+              emp.employee_id ||
+              emp.name?.toLowerCase().replace(/\s+/g, ".") ||
+              "unknown",
+            email: emp.email || "",
+            phone: emp.phone || "",
+            role: "Employee",
+            address: emp.address || "Unknown",
+            // Nested allowances array from API
+            allowances: Array.isArray(emp.allowances) ? emp.allowances : [],
+            // Nested resources array from API
+            resources: Array.isArray(emp.resources) ? emp.resources : [],
+            base_salary: parseFloat(emp.base_salary) || 0,
+            cnic: emp.cnic || "N/A",
+            profile_picture: emp.profile_photo || emp.profile_picture || null,
+            designation: emp.designation || "N/A",
+            total_salary: parseFloat(emp.total_salary) || 0,
+            status: emp.status === "Active" ? "active" : "inactive",
+            department: emp.department || "Unknown",
+            joiningDate:
+              emp.join_date || new Date().toISOString().split("T")[0],
+            experience: "-- years",
+            location: "Unknown",
+            performance: "Good",
+            skills: [],
+            color: ["blue", "green", "purple", "orange"][
+              Math.floor(Math.random() * 4)
+            ],
+            badgeClass: [
+              "bg-blue-transparent",
+              "bg-green-transparent",
+              "bg-purple-transparent",
+              "bg-orange-transparent",
+            ][Math.floor(Math.random() * 4)],
+            attendance: Math.floor(Math.random() * 30) + 70,
+            selected: false,
+          }));
 
           console.log(
-            "Processed Employees with allowances:",
+            "Processed Employees with salary & allowances:",
             transformedEmployees.map((emp) => ({
               id: emp.id,
               name: emp.name,
+              base_salary: emp.base_salary,
+              total_salary: emp.total_salary,
               allowancesCount: emp.allowances?.length || 0,
-              allowances: emp.allowances,
               resourcesCount: emp.resources?.length || 0,
             })),
           );

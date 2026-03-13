@@ -433,29 +433,86 @@ exports.createEmployee = async (req, res) => {
 // Get all employees
 exports.getAllEmployees = async (req, res) => {
   try {
+    // Query 1: All employees with salary from employee_salary table
     const [employees] = await pool.query(`
-  SELECT 
-    eo.id,
-    eo.name,
-    eo.email,
-    eo.phone,
-    eo.department,
-    eo.sub_department,
-    eo.designation,
-    eo.employment_status,
-    eo.join_date,
-    eo.status,
-    eo.created_at
+      SELECT
+        eo.id,
+        eo.employee_id,
+        eo.name,
+        eo.email,
+        eo.phone,
+        eo.department,
+        eo.sub_department,
+        eo.designation,
+        eo.employment_status,
+        eo.join_date,
+        eo.status,
+        eo.created_at,
+        eo.cnic,
+        eo.address,
+        eo.dob,
+        eo.profile_photo,
+        es.base_salary,
+        es.total_salary
+      FROM employee_onboarding eo
+      LEFT JOIN employee_salary es ON eo.id = es.employee_id
+      ORDER BY eo.created_at DESC
+    `);
 
-  FROM employee_onboarding eo
+    if (employees.length === 0) {
+      return res.status(200).json({ success: true, data: [], total: 0 });
+    }
 
-  ORDER BY eo.created_at DESC
-`);
+    const employeeIds = employees.map((e) => e.id);
+
+    // Query 2: All allowances from employee_allowances table (single query)
+    const [allAllowances] = await pool.query(
+      `SELECT employee_id, allowance_name, allowance_amount
+       FROM employee_allowances
+       WHERE employee_id IN (?)`,
+      [employeeIds]
+    );
+
+    // Query 3: All resources from employee_dynamic_resources table (single query)
+    const [allResources] = await pool.query(
+      `SELECT employee_id, resource_name, resource_serial
+       FROM employee_dynamic_resources
+       WHERE employee_id IN (?)`,
+      [employeeIds]
+    );
+
+    // Build lookup maps for O(1) access
+    const allowancesMap = new Map();
+    for (const a of allAllowances) {
+      if (!allowancesMap.has(a.employee_id)) allowancesMap.set(a.employee_id, []);
+      allowancesMap.get(a.employee_id).push({
+        allowance_name: a.allowance_name,
+        allowance_amount: a.allowance_amount,
+      });
+    }
+
+    const resourcesMap = new Map();
+    for (const r of allResources) {
+      if (!resourcesMap.has(r.employee_id)) resourcesMap.set(r.employee_id, []);
+      resourcesMap.get(r.employee_id).push({
+        resource_name: r.resource_name,
+        resource_serial: r.resource_serial,
+      });
+    }
+
+    // Attach allowances and resources to each employee
+    const result = employees.map((emp) => ({
+      ...emp,
+      base_salary: emp.base_salary || "0.00",
+      total_salary: emp.total_salary || "0.00",
+      allowances: allowancesMap.get(emp.id) || [],
+      resources: resourcesMap.get(emp.id) || [],
+    }));
 
     res.status(200).json({
       success: true,
-      data: employees,
-      total: employees.length,
+      data: result,
+      total: result.length,
     });
   } catch (error) {
     console.error("Error fetching employees:", error);
@@ -649,8 +706,8 @@ exports.updateEmployee = async (req, res) => {
           profilePictureUrl,
         );
 
-        // ✅ Add to employeeFields for database update
-        employeeFields.profile_picture = profilePictureUrl;
+        // ✅ Add to employeeFields for database update (profile_photo is the correct DB column)
+        employeeFields.profile_photo = profilePictureUrl;
       } catch (uploadError) {
         console.error("Cloudinary upload failed:", uploadError);
         // Don't fail the entire update if image upload fails
@@ -680,7 +737,7 @@ exports.updateEmployee = async (req, res) => {
       "cnic_issue_date",
       "cnic_expiry_date",
       "dob",
-      "profile_picture",
+      "profile_photo",  // actual DB column name
     ];
 
     const updateFields = [];
@@ -728,14 +785,17 @@ exports.updateEmployee = async (req, res) => {
 
     /* 2. Update salary */
     if (salary) {
-      await connection.query(
-        `
-        UPDATE employee_salary 
-        SET base_salary = ?, total_salary = ?
-        WHERE employee_id = ?
-        `,
+      // Try UPDATE first; if no row exists, INSERT
+      const [salaryUpdateResult] = await connection.query(
+        `UPDATE employee_salary SET base_salary = ?, total_salary = ? WHERE employee_id = ?`,
         [salary.base_salary, salary.total_salary, id],
       );
+      if (salaryUpdateResult.affectedRows === 0) {
+        await connection.query(
+          `INSERT INTO employee_salary (employee_id, base_salary, total_salary) VALUES (?, ?, ?)`,
+          [id, salary.base_salary, salary.total_salary],
+        );
+      }
     }
 
     /* 3. Update allowances (UPSERT LOGIC) */
