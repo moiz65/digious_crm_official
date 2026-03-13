@@ -50,6 +50,9 @@ const ensurePayrollTable = async () => {
       leave_deduction decimal(12,2) DEFAULT 0.00,
       total_deductions decimal(12,2) DEFAULT 0.00,
       gross_salary decimal(12,2) DEFAULT 0.00,
+      bonus decimal(12,2) NOT NULL DEFAULT 0.00,
+      adjustment decimal(12,2) NOT NULL DEFAULT 0.00,
+      adjustment_reason text DEFAULT NULL,
       net_salary decimal(12,2) DEFAULT 0.00,
       status enum('pending','processing','success','failed') DEFAULT 'pending',
       notes text DEFAULT NULL,
@@ -431,8 +434,10 @@ const generatePayroll = async (req, res) => {
         // Gross salary = base + allowances
         const grossSalary = baseSalary + totalAllowances;
 
-        // Net salary
-        const netSalary = grossSalary - totalDeductions;
+        // Net salary (bonus and adjustment are added later via edit)
+        const bonus = 0;
+        const adjustment = 0;
+        const netSalary = grossSalary + bonus + adjustment - totalDeductions;
 
         payrollRecords.push({
           employee_id: emp.id,
@@ -458,6 +463,9 @@ const generatePayroll = async (req, res) => {
           leave_deduction: leaveDeduction,
           total_deductions: totalDeductions,
           gross_salary: grossSalary,
+          bonus: bonus,
+          adjustment: adjustment,
+          adjustment_reason: null,
           net_salary: netSalary,
           status: 'pending',
           notes: totalPaidLeaveDays > 0
@@ -482,8 +490,8 @@ const generatePayroll = async (req, res) => {
              working_days, present_days, absent_days, late_days, leave_days,
              half_days, paid_leave_days, late_deduction_days,
              absent_deduction, late_deduction, leave_deduction, total_deductions,
-             gross_salary, net_salary, status, notes)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             gross_salary, bonus, adjustment, adjustment_reason, net_salary, status, notes)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           ON DUPLICATE KEY UPDATE
             pay_period_start = VALUES(pay_period_start),
             pay_period_end = VALUES(pay_period_end),
@@ -505,7 +513,10 @@ const generatePayroll = async (req, res) => {
             leave_deduction = VALUES(leave_deduction),
             total_deductions = VALUES(total_deductions),
             gross_salary = VALUES(gross_salary),
-            net_salary = VALUES(net_salary),
+            bonus = COALESCE(bonus, VALUES(bonus)),
+            adjustment = COALESCE(adjustment, VALUES(adjustment)),
+            adjustment_reason = COALESCE(adjustment_reason, VALUES(adjustment_reason)),
+            net_salary = VALUES(gross_salary) + COALESCE(bonus, 0) + COALESCE(adjustment, 0) - VALUES(total_deductions),
             notes = VALUES(notes),
             updated_at = CURRENT_TIMESTAMP
         `, [
@@ -516,7 +527,9 @@ const generatePayroll = async (req, res) => {
           record.late_days, record.leave_days, record.half_days, record.paid_leave_days,
           record.late_deduction_days,
           record.absent_deduction, record.late_deduction, record.leave_deduction,
-          record.total_deductions, record.gross_salary, record.net_salary,
+          record.total_deductions, record.gross_salary,
+          record.bonus, record.adjustment, record.adjustment_reason,
+          record.net_salary,
           record.status, record.notes
         ]);
 
@@ -673,6 +686,8 @@ const getPayslip = async (req, res) => {
         leave_deduction: parseFloat(record.leave_deduction),
         total_deductions: parseFloat(record.total_deductions),
         gross_salary: parseFloat(record.gross_salary),
+        bonus: parseFloat(record.bonus || 0),
+        adjustment: parseFloat(record.adjustment || 0),
         net_salary: parseFloat(record.net_salary),
         allowances: allowances.map(a => ({
           name: a.allowance_name,
@@ -745,6 +760,8 @@ const getMyPayroll = async (req, res) => {
           leave_deduction: parseFloat(r.leave_deduction),
           total_deductions: parseFloat(r.total_deductions),
           gross_salary: parseFloat(r.gross_salary),
+          bonus: parseFloat(r.bonus || 0),
+          adjustment: parseFloat(r.adjustment || 0),
           net_salary: parseFloat(r.net_salary),
         }))
       }
@@ -817,6 +834,8 @@ const getMyPayslip = async (req, res) => {
         leave_deduction: parseFloat(record.leave_deduction),
         total_deductions: parseFloat(record.total_deductions),
         gross_salary: parseFloat(record.gross_salary),
+        bonus: parseFloat(record.bonus || 0),
+        adjustment: parseFloat(record.adjustment || 0),
         net_salary: parseFloat(record.net_salary),
         allowances: allowances.map(a => ({
           name: a.allowance_name,
@@ -832,12 +851,69 @@ const getMyPayslip = async (req, res) => {
   }
 };
 
+// ──────────────────────────────────────────────
+// PUT /payroll/:id/edit
+// Edit bonus, adjustment, and adjustment_reason for a payroll record
+// Recalculates net_salary automatically
+// ──────────────────────────────────────────────
+const editPayrollRecord = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { bonus, adjustment, adjustment_reason } = req.body;
+
+    // Validate inputs
+    const bonusVal = parseFloat(bonus) || 0;
+    const adjustmentVal = parseFloat(adjustment) || 0;
+    const reasonVal = adjustment_reason || null;
+
+    // Get current record to recalculate net salary
+    const [existing] = await pool.query(
+      'SELECT gross_salary, total_deductions FROM payroll_records WHERE id = ?',
+      [id]
+    );
+
+    if (existing.length === 0) {
+      return res.status(404).json({ success: false, message: 'Payroll record not found' });
+    }
+
+    const grossSalary = parseFloat(existing[0].gross_salary);
+    const totalDeductions = parseFloat(existing[0].total_deductions);
+    const newNetSalary = grossSalary + bonusVal + adjustmentVal - totalDeductions;
+
+    const [result] = await pool.query(`
+      UPDATE payroll_records 
+      SET bonus = ?, adjustment = ?, adjustment_reason = ?, net_salary = ?
+      WHERE id = ?
+    `, [bonusVal, adjustmentVal, reasonVal, newNetSalary, id]);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: 'Payroll record not found' });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Payroll record updated successfully',
+      data: {
+        id: parseInt(id),
+        bonus: bonusVal,
+        adjustment: adjustmentVal,
+        adjustment_reason: reasonVal,
+        net_salary: newNetSalary,
+      }
+    });
+  } catch (error) {
+    console.error('Error editing payroll record:', error);
+    return res.status(500).json({ success: false, message: 'Failed to edit payroll record', error: error.message });
+  }
+};
+
 module.exports = {
   getMonthlyPayroll,
   generatePayroll,
   updatePayrollStatus,
   bulkUpdateStatus,
   getPayslip,
+  editPayrollRecord,
   getMyPayroll,
   getMyPayslip,
 };

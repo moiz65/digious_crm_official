@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Search, 
   Filter, 
@@ -37,7 +37,10 @@ import {
   Calendar as CalendarIcon,
   ChevronLeft,
   ChevronRight,
-  Flag
+  Flag,
+  Loader2,
+  Trash2,
+  RefreshCw
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -53,6 +56,14 @@ import {
   LineChart,
   Line
 } from 'recharts';
+import {
+  getMySales,
+  getAllSales,
+  createSale,
+  updateSale,
+  deleteSale,
+  getSalesCategories,
+} from '../services/salesService';
 
 const EmployeeSalesPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -71,6 +82,13 @@ const EmployeeSalesPage = () => {
   const [customEndDate, setCustomEndDate] = useState('');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+
+  // API state
+  const [salesData, setSalesData] = useState([]);
+  const [apiTotals, setApiTotals] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
 
   // Get user info from localStorage
   const user = JSON.parse(localStorage.getItem('userInfo') || '{}');
@@ -92,8 +110,8 @@ const EmployeeSalesPage = () => {
     }
   };
 
-  // Category options with icons
-  const categories = [
+  // Category options with icons (fallback if API categories fail)
+  const [categories, setCategories] = useState([
     { id: 'all', name: 'All Categories', icon: null },
     { id: 'website-design', name: 'Website Design', icon: Globe },
     { id: 'logo-design', name: 'Logo Design', icon: Palette },
@@ -103,311 +121,96 @@ const EmployeeSalesPage = () => {
     { id: 'ecommerce', name: 'E-commerce', icon: ShoppingCart },
     { id: 'photography', name: 'Photography', icon: Camera },
     { id: 'graphic-design', name: 'Graphic Design', icon: Layout }
-  ];
-
-  // Sample sales data with categories and deadlines
-  const [salesData, setSalesData] = useState([
-    {
-      id: 1,
-      name: 'John Smith',
-      email: 'john.smith@email.com',
-      phone: '(555) 123-4567',
-      about: 'Website redesign project for small business',
-      category: 'website-design',
-      totalSales: 5000,
-      upfrontPayment: 2000,
-      remainingPayment: 3000,
-      merchant: 'PayPal',
-      status: 'completed',
-      date: '2024-01-15',
-      deadline: '2024-02-15'
-    },
-    {
-      id: 2,
-      name: 'Sarah Johnson',
-      email: 'sarah.j@email.com',
-      phone: '(555) 234-5678',
-      about: 'Mobile app development - E-commerce platform',
-      category: 'development',
-      totalSales: 12000,
-      upfrontPayment: 4800,
-      remainingPayment: 7200,
-      merchant: 'Stripe',
-      status: 'in-progress',
-      date: '2024-01-20',
-      deadline: '2024-03-20'
-    },
-    {
-      id: 3,
-      name: 'Michael Chen',
-      email: 'm.chen@email.com',
-      phone: '(555) 345-6789',
-      about: 'Digital marketing campaign setup',
-      category: 'marketing',
-      totalSales: 3500,
-      upfrontPayment: 1750,
-      remainingPayment: 1750,
-      merchant: 'Venmo',
-      status: 'pending',
-      date: '2024-01-22',
-      deadline: '2024-02-22'
-    },
-    {
-      id: 4,
-      name: 'Emily Rodriguez',
-      email: 'emily.r@email.com',
-      phone: '(555) 456-7890',
-      about: 'Complete brand identity package',
-      category: 'branding',
-      totalSales: 8500,
-      upfrontPayment: 3400,
-      remainingPayment: 5100,
-      merchant: 'CashApp',
-      status: 'completed',
-      date: '2024-01-23',
-      deadline: '2024-02-23'
-    },
-    {
-      id: 5,
-      name: 'David Kim',
-      email: 'd.kim@email.com',
-      phone: '(555) 567-8901',
-      about: 'SEO optimization and content strategy',
-      category: 'marketing',
-      totalSales: 2800,
-      upfrontPayment: 1400,
-      remainingPayment: 1400,
-      merchant: 'PayPal',
-      status: 'cancelled',
-      date: '2024-01-24',
-      deadline: '2024-02-24'
-    },
-    {
-      id: 6,
-      name: 'Lisa Thompson',
-      email: 'lisa.t@email.com',
-      phone: '(555) 678-9012',
-      about: 'E-commerce website development',
-      category: 'ecommerce',
-      totalSales: 15000,
-      upfrontPayment: 6000,
-      remainingPayment: 9000,
-      merchant: 'Stripe',
-      status: 'in-progress',
-      date: '2024-01-25',
-      deadline: '2024-04-25'
-    },
-    {
-      id: 7,
-      name: 'Robert Williams',
-      email: 'r.williams@email.com',
-      phone: '(555) 789-0123',
-      about: 'Company logo and brand guidelines',
-      category: 'logo-design',
-      totalSales: 2200,
-      upfrontPayment: 1100,
-      remainingPayment: 1100,
-      merchant: 'PayPal',
-      status: 'completed',
-      date: '2024-01-26',
-      deadline: '2024-02-26'
-    },
-    {
-      id: 8,
-      name: 'Amanda Martinez',
-      email: 'a.martinez@email.com',
-      phone: '(555) 890-1234',
-      about: 'Product photography for online store',
-      category: 'photography',
-      totalSales: 4300,
-      upfrontPayment: 2150,
-      remainingPayment: 2150,
-      merchant: 'Venmo',
-      status: 'in-progress',
-      date: '2024-01-27',
-      deadline: '2024-03-27'
-    },
-    {
-      id: 9,
-      name: 'James Wilson',
-      email: 'j.wilson@email.com',
-      phone: '(555) 901-2345',
-      about: 'Social media graphics and posts',
-      category: 'graphic-design',
-      totalSales: 1800,
-      upfrontPayment: 900,
-      remainingPayment: 900,
-      merchant: 'Stripe',
-      status: 'pending',
-      date: '2024-01-28',
-      deadline: '2024-02-28'
-    },
-    {
-      id: 10,
-      name: 'Patricia Brown',
-      email: 'p.brown@email.com',
-      phone: '(555) 012-3456',
-      about: 'Mobile app UI/UX design',
-      category: 'website-design',
-      totalSales: 6800,
-      upfrontPayment: 2700,
-      remainingPayment: 4100,
-      merchant: 'PayPal',
-      status: 'completed',
-      date: '2024-02-05',
-      deadline: '2024-03-05'
-    },
-    {
-      id: 11,
-      name: 'Thomas Anderson',
-      email: 't.anderson@email.com',
-      phone: '(555) 123-7890',
-      about: 'Full stack web development',
-      category: 'development',
-      totalSales: 9500,
-      upfrontPayment: 3800,
-      remainingPayment: 5700,
-      merchant: 'Stripe',
-      status: 'in-progress',
-      date: '2024-02-10',
-      deadline: '2024-04-10'
-    },
-    {
-      id: 12,
-      name: 'Jennifer Lee',
-      email: 'j.lee@email.com',
-      phone: '(555) 234-8901',
-      about: 'Social media marketing campaign',
-      category: 'marketing',
-      totalSales: 4200,
-      upfrontPayment: 2100,
-      remainingPayment: 2100,
-      merchant: 'Venmo',
-      status: 'completed',
-      date: '2024-02-15',
-      deadline: '2024-03-15'
-    },
-    {
-      id: 13,
-      name: 'Christopher Davis',
-      email: 'c.davis@email.com',
-      phone: '(555) 345-9012',
-      about: 'E-commerce website with payment integration',
-      category: 'ecommerce',
-      totalSales: 12500,
-      upfrontPayment: 5000,
-      remainingPayment: 7500,
-      merchant: 'Stripe',
-      status: 'pending',
-      date: '2024-03-01',
-      deadline: '2024-05-01'
-    },
-    {
-      id: 14,
-      name: 'Jessica Taylor',
-      email: 'j.taylor@email.com',
-      phone: '(555) 456-0123',
-      about: 'Brand identity and packaging design',
-      category: 'branding',
-      totalSales: 5600,
-      upfrontPayment: 2800,
-      remainingPayment: 2800,
-      merchant: 'CashApp',
-      status: 'in-progress',
-      date: '2024-03-05',
-      deadline: '2024-04-05'
-    },
-    {
-      id: 15,
-      name: 'Daniel Martinez',
-      email: 'd.martinez@email.com',
-      phone: '(555) 567-1234',
-      about: 'Product photography for catalog',
-      category: 'photography',
-      totalSales: 3200,
-      upfrontPayment: 1600,
-      remainingPayment: 1600,
-      merchant: 'PayPal',
-      status: 'completed',
-      date: '2024-03-08',
-      deadline: '2024-04-08'
-    },
-    {
-      id: 16,
-      name: 'Michelle Wong',
-      email: 'm.wong@email.com',
-      phone: '(555) 678-2345',
-      about: 'Company logo and stationery design',
-      category: 'logo-design',
-      totalSales: 1900,
-      upfrontPayment: 950,
-      remainingPayment: 950,
-      merchant: 'Venmo',
-      status: 'completed',
-      date: '2024-03-12',
-      deadline: '2024-04-12'
-    },
-    {
-      id: 17,
-      name: 'Kevin Johnson',
-      email: 'k.johnson@email.com',
-      phone: '(555) 789-3456',
-      about: 'Custom web application development',
-      category: 'development',
-      totalSales: 14800,
-      upfrontPayment: 5900,
-      remainingPayment: 8900,
-      merchant: 'Stripe',
-      status: 'in-progress',
-      date: '2024-03-15',
-      deadline: '2024-05-15'
-    },
-    {
-      id: 18,
-      name: 'Rachel Green',
-      email: 'r.green@email.com',
-      phone: '(555) 890-4567',
-      about: 'Marketing materials and brochures',
-      category: 'graphic-design',
-      totalSales: 2100,
-      upfrontPayment: 1050,
-      remainingPayment: 1050,
-      merchant: 'PayPal',
-      status: 'pending',
-      date: '2024-03-18',
-      deadline: '2024-04-18'
-    },
-    {
-      id: 19,
-      name: 'Brian Wilson',
-      email: 'b.wilson@email.com',
-      phone: '(555) 901-5678',
-      about: 'Website maintenance and SEO',
-      category: 'website-design',
-      totalSales: 2800,
-      upfrontPayment: 1400,
-      remainingPayment: 1400,
-      merchant: 'CashApp',
-      status: 'in-progress',
-      date: '2024-03-20',
-      deadline: '2024-04-20'
-    },
-    {
-      id: 20,
-      name: 'Laura Chen',
-      email: 'l.chen@email.com',
-      phone: '(555) 012-6789',
-      about: 'Digital marketing strategy',
-      category: 'marketing',
-      totalSales: 3900,
-      upfrontPayment: 1950,
-      remainingPayment: 1950,
-      merchant: 'Stripe',
-      status: 'completed',
-      date: '2024-03-22',
-      deadline: '2024-04-22'
-    }
   ]);
+
+  // Fetch categories from API
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const data = await getSalesCategories();
+        if (data && data.length > 0) {
+          const iconMap = { Globe, Palette, PenTool, Megaphone, Code, ShoppingCart, Camera, Layout };
+          const mapped = data.map(cat => ({
+            id: cat.slug,
+            dbId: cat.id,
+            name: cat.name,
+            icon: iconMap[cat.icon] || Globe,
+            color: cat.color,
+          }));
+          setCategories([{ id: 'all', name: 'All Categories', icon: null }, ...mapped]);
+        }
+      } catch (err) {
+        console.error('Failed to load sales categories:', err);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  // ── Fetch sales data from API ──────────────────────────
+  const fetchSales = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const filters = {};
+
+      // Build date filters
+      if (dateRange === 'daily') {
+        const d = selectedDate.toISOString().slice(0, 10);
+        filters.from = d;
+        filters.to = d;
+      } else if (dateRange === 'monthly') {
+        const y = selectedDate.getFullYear();
+        const m = selectedDate.getMonth();
+        filters.from = `${y}-${String(m + 1).padStart(2, '0')}-01`;
+        const lastDay = new Date(y, m + 1, 0).getDate();
+        filters.to = `${y}-${String(m + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+      } else if (dateRange === 'custom' && customStartDate && customEndDate) {
+        filters.from = customStartDate;
+        filters.to = customEndDate;
+      }
+
+      // Use role-appropriate endpoint
+      const isAdmin = role === 'admin' || role === 'hr';
+      const response = isAdmin ? await getAllSales(filters) : await getMySales(filters);
+
+      // Map API fields to component fields
+      const mapped = (response.data || []).map(s => ({
+        id: s.id,
+        name: s.client_name,
+        email: s.client_email || '',
+        phone: s.client_phone || '',
+        about: s.project_description || '',
+        category: s.category_slug || s.cat_slug || 'website-design',
+        categoryId: s.category_id,
+        totalSales: parseFloat(s.total_amount) || 0,
+        upfrontPayment: parseFloat(s.upfront_payment) || 0,
+        remainingPayment: parseFloat(s.remaining_balance) || 0,
+        merchant: s.merchant || '',
+        status: s.status || 'pending',
+        date: s.sale_date ? s.sale_date.slice(0, 10) : '',
+        deadline: s.deadline ? s.deadline.slice(0, 10) : '',
+        notes: s.notes || '',
+        employeeName: s.employee_name || '',
+        accountName: s.account_name || '',
+        paymentMethod: s.payment_method || '',
+        categoryName: s.category_name || '',
+        categoryIcon: s.category_icon || 'Globe',
+        categoryColor: s.category_color || '#3B82F6',
+      }));
+
+      setSalesData(mapped);
+      if (response.totals) setApiTotals(response.totals);
+    } catch (err) {
+      console.error('Failed to fetch sales:', err);
+      setError(err.message || 'Failed to load sales data');
+    } finally {
+      setLoading(false);
+    }
+  }, [dateRange, selectedDate, customStartDate, customEndDate, role]);
+
+  useEffect(() => {
+    fetchSales();
+  }, [fetchSales]);
 
   // Status options
   const statuses = ['completed', 'in-progress', 'pending', 'cancelled'];
@@ -556,12 +359,29 @@ const EmployeeSalesPage = () => {
   };
 
   // Handle save edit
-  const handleSaveEdit = (id) => {
-    setSalesData(salesData.map(item => 
-      item.id === id ? { ...item, ...editFormData } : item
-    ));
-    setEditingId(null);
-    setEditFormData({});
+  const handleSaveEdit = async (id) => {
+    setSaving(true);
+    try {
+      // Find the category dbId from slug
+      const catEntry = categories.find(c => c.id === editFormData.category);
+      await updateSale(id, {
+        status: editFormData.status,
+        merchant: editFormData.merchant,
+        category_id: catEntry?.dbId || null,
+        category_slug: editFormData.category,
+        total_amount: parseFloat(editFormData.totalSales) || 0,
+        upfront_payment: parseFloat(editFormData.upfrontPayment) || 0,
+        deadline: editFormData.deadline,
+      });
+      setEditingId(null);
+      setEditFormData({});
+      await fetchSales(); // Refresh from API
+    } catch (err) {
+      console.error('Failed to update sale:', err);
+      alert('Failed to update sale: ' + (err.message || 'Unknown error'));
+    } finally {
+      setSaving(false);
+    }
   };
 
   // Handle cancel edit
@@ -600,29 +420,9 @@ const EmployeeSalesPage = () => {
           `Deadline Status: ${deadlineStatus.label} (${deadlineStatus.days} days)`);
   };
 
-  // Filter by date range
+  // Filter by date range — now handled server-side, this is a pass-through
   const filterByDateRange = (data) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    return data.filter(item => {
-      const itemDate = new Date(item.date);
-      itemDate.setHours(0, 0, 0, 0);
-      
-      if (dateRange === 'daily') {
-        return itemDate.toDateString() === today.toDateString();
-      } else if (dateRange === 'monthly') {
-        return itemDate.getMonth() === today.getMonth() && 
-               itemDate.getFullYear() === today.getFullYear();
-      } else if (dateRange === 'custom' && customStartDate && customEndDate) {
-        const start = new Date(customStartDate);
-        const end = new Date(customEndDate);
-        start.setHours(0, 0, 0, 0);
-        end.setHours(23, 59, 59, 999);
-        return itemDate >= start && itemDate <= end;
-      }
-      return true;
-    });
+    return data;
   };
 
   // Filter and sort data
@@ -807,18 +607,34 @@ const EmployeeSalesPage = () => {
       deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // 30 days from now
     });
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
       e.preventDefault();
-      const remainingPayment = parseFloat(formData.totalSales) - parseFloat(formData.upfrontPayment);
-      const newSale = {
-        id: salesData.length + 1,
-        ...formData,
-        totalSales: parseFloat(formData.totalSales),
-        upfrontPayment: parseFloat(formData.upfrontPayment),
-        remainingPayment: remainingPayment
-      };
-      setSalesData([...salesData, newSale]);
-      setShowAddSaleModal(false);
+      setSaving(true);
+      try {
+        // Resolve category DB id from slug
+        const catEntry = categories.find(c => c.id === formData.category);
+        await createSale({
+          client_name: formData.name,
+          client_email: formData.email,
+          client_phone: formData.phone,
+          project_description: formData.about,
+          category_id: catEntry?.dbId || null,
+          category_slug: formData.category,
+          total_amount: parseFloat(formData.totalSales) || 0,
+          upfront_payment: parseFloat(formData.upfrontPayment) || 0,
+          merchant: formData.merchant,
+          status: formData.status,
+          sale_date: formData.date,
+          deadline: formData.deadline,
+        });
+        setShowAddSaleModal(false);
+        await fetchSales(); // Refresh from API
+      } catch (err) {
+        console.error('Failed to create sale:', err);
+        alert('Failed to create sale: ' + (err.message || 'Unknown error'));
+      } finally {
+        setSaving(false);
+      }
     };
 
     if (!showAddSaleModal) return null;
@@ -1038,9 +854,11 @@ const EmployeeSalesPage = () => {
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                disabled={saving}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
-                Add Sale
+                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                {saving ? 'Saving...' : 'Add Sale'}
               </button>
             </div>
           </form>
@@ -1450,6 +1268,19 @@ const EmployeeSalesPage = () => {
           )}
         </div>
 
+        {/* Error Banner */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-red-500" />
+              <span className="text-sm text-red-700">{error}</span>
+            </div>
+            <button onClick={fetchSales} className="flex items-center gap-1 text-sm text-red-600 hover:text-red-800 font-medium">
+              <RefreshCw className="w-4 h-4" /> Retry
+            </button>
+          </div>
+        )}
+
         {/* Sales Table */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
@@ -1740,8 +1571,16 @@ const EmployeeSalesPage = () => {
             </table>
           </div>
 
+          {/* Loading State */}
+          {loading && (
+            <div className="text-center py-12">
+              <Loader2 className="w-8 h-8 text-blue-500 mx-auto mb-3 animate-spin" />
+              <p className="text-gray-600 font-medium">Loading sales data...</p>
+            </div>
+          )}
+
           {/* Empty State */}
-          {filteredData.length === 0 && (
+          {!loading && filteredData.length === 0 && (
             <div className="text-center py-12">
               <User className="w-12 h-12 text-gray-400 mx-auto mb-3" />
               <p className="text-gray-600 font-medium">No sales data found</p>
