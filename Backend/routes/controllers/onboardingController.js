@@ -500,14 +500,72 @@ exports.getAllEmployees = async (req, res) => {
       });
     }
 
-    // Attach allowances and resources to each employee
-    const result = employees.map((emp) => ({
-      ...emp,
-      base_salary: emp.base_salary || "0.00",
-      total_salary: emp.total_salary || "0.00",
-      allowances: allowancesMap.get(emp.id) || [],
-      resources: resourcesMap.get(emp.id) || [],
-    }));
+    // Query 4: Sales targets for current month (Sales dept employees)
+    const currentMonth = new Date().getMonth() + 1;
+    const currentYear = new Date().getFullYear();
+    const salesEmployeeIds = employees.filter(e => e.department === 'Sales').map(e => e.id);
+
+    let salesTargetsMap = new Map();
+    let salesAchievedMap = new Map();
+
+    if (salesEmployeeIds.length > 0) {
+      // Get targets
+      const [salesTargets] = await pool.query(
+        `SELECT employee_id, monthly_target, achieved_override, notes
+         FROM sales_targets
+         WHERE employee_id IN (?) AND month = ? AND year = ?`,
+        [salesEmployeeIds, currentMonth, currentYear]
+      );
+      for (const st of salesTargets) {
+        salesTargetsMap.set(st.employee_id, st);
+      }
+
+      // Get achieved from actual sales (sum of upfront_payment)
+      const [salesAchieved] = await pool.query(
+        `SELECT employee_id, 
+           COALESCE(SUM(upfront_payment), 0) AS achieved_from_sales,
+           COUNT(*) AS sales_count
+         FROM sales
+         WHERE employee_id IN (?) 
+           AND MONTH(sale_date) = ? AND YEAR(sale_date) = ?
+           AND status NOT IN ('cancelled', 'refunded')
+         GROUP BY employee_id`,
+        [salesEmployeeIds, currentMonth, currentYear]
+      );
+      for (const sa of salesAchieved) {
+        salesAchievedMap.set(sa.employee_id, sa);
+      }
+    }
+
+    // Attach allowances, resources, and sales data to each employee
+    const result = employees.map((emp) => {
+      const base = {
+        ...emp,
+        base_salary: emp.base_salary || "0.00",
+        total_salary: emp.total_salary || "0.00",
+        allowances: allowancesMap.get(emp.id) || [],
+        resources: resourcesMap.get(emp.id) || [],
+      };
+
+      // Add sales target/achieved data for Sales department employees
+      if (emp.department === 'Sales') {
+        const target = salesTargetsMap.get(emp.id);
+        const salesData = salesAchievedMap.get(emp.id);
+        const achievedFromSales = parseFloat(salesData?.achieved_from_sales) || 0;
+        const monthlyTarget = parseFloat(target?.monthly_target) || 0;
+        const achieved = (target && target.achieved_override !== null)
+          ? parseFloat(target.achieved_override)
+          : achievedFromSales;
+
+        base.sales_target = monthlyTarget;
+        base.sales_achieved = achieved;
+        base.sales_achieved_from_sales = achievedFromSales;
+        base.sales_remaining = monthlyTarget - achieved;
+        base.sales_count = parseInt(salesData?.sales_count) || 0;
+      }
+
+      return base;
+    });
 
     res.status(200).json({
       success: true,

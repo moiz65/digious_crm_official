@@ -146,7 +146,7 @@ const LoginPage = () => {
 
   const handleForgotPassword = (e) => {
     e.preventDefault();
-    alert('Password reset instructions will be sent to your email.');
+    navigate('/forgot-password');
   };
 
   return (

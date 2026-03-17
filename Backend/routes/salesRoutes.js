@@ -22,23 +22,35 @@ const router = express.Router();
 const ctrl = require('./controllers/salesController');
 const authMiddleware = require('../middleware/auth');
 
+// Middleware to restrict sales access to Sales dept and Admin only
+const salesDeptGuard = (req, res, next) => {
+  const userRole = req.user?.role?.toLowerCase();
+  if (userRole === 'admin' || userRole === 'administration' || userRole === 'sales') {
+    return next();
+  }
+  return res.status(403).json({
+    success: false,
+    message: 'Access denied. Sales module is restricted to Sales department only.'
+  });
+};
+
 // ── Categories (must be before /:id to avoid param conflicts) ──
-router.get   ('/categories',      authMiddleware, ctrl.getCategories);
-router.post  ('/categories',      authMiddleware, ctrl.createCategory);
-router.put   ('/categories/:id',  authMiddleware, ctrl.updateCategory);
-router.delete('/categories/:id',  authMiddleware, ctrl.deleteCategory);
+router.get   ('/categories',      authMiddleware, salesDeptGuard, ctrl.getCategories);
+router.post  ('/categories',      authMiddleware, salesDeptGuard, ctrl.createCategory);
+router.put   ('/categories/:id',  authMiddleware, salesDeptGuard, ctrl.updateCategory);
+router.delete('/categories/:id',  authMiddleware, salesDeptGuard, ctrl.deleteCategory);
 
 // ── Aggregated summary ──
-router.get('/summary', authMiddleware, ctrl.getSalesSummary);
+router.get('/summary', authMiddleware, salesDeptGuard, ctrl.getSalesSummary);
 
 // ── Employee's own sales ──
-router.get('/my-sales', authMiddleware, ctrl.getMySales);
+router.get('/my-sales', authMiddleware, salesDeptGuard, ctrl.getMySales);
 
 // ── CRUD ──
-router.get   ('/',     authMiddleware, ctrl.getSales);
-router.post  ('/',     authMiddleware, ctrl.createSale);
-router.get   ('/:id',  authMiddleware, ctrl.getSaleById);
-router.put   ('/:id',  authMiddleware, ctrl.updateSale);
-router.delete('/:id',  authMiddleware, ctrl.deleteSale);
+router.get   ('/',     authMiddleware, salesDeptGuard, ctrl.getSales);
+router.post  ('/',     authMiddleware, salesDeptGuard, ctrl.createSale);
+router.get   ('/:id',  authMiddleware, salesDeptGuard, ctrl.getSaleById);
+router.put   ('/:id',  authMiddleware, salesDeptGuard, ctrl.updateSale);
+router.delete('/:id',  authMiddleware, salesDeptGuard, ctrl.deleteSale);
 
 module.exports = router;
