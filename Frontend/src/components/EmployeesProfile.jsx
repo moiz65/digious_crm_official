@@ -72,6 +72,14 @@ import { format } from "date-fns";
 import { Copy } from "lucide-react"; // Add this import
 import { useNavigate } from "react-router-dom";
 
+// Utility function to format sales amounts (thousands/millions)
+const formatSalesAmount = (val) => {
+  if (!val || val === 0) return '$0';
+  if (val >= 1000000) return `$${(val / 1000000).toFixed(1).replace(/\.0$/, '')}M`;
+  if (val >= 1000) return `$${(val / 1000).toFixed(1).replace(/\.0$/, '')}K`;
+  return `$${Math.round(val).toLocaleString()}`;
+};
+
 const EmployeeProfile = () => {
   const navigate = useNavigate();
   const [employees, setEmployees] = useState([]);
@@ -116,6 +124,11 @@ const EmployeeProfile = () => {
             location: "Unknown",
             performance: "Good",
             skills: [],
+            // Sales target data from API
+            target: parseFloat(emp.sales_target) || 0,
+            achieved: parseFloat(emp.sales_achieved) || 0,
+            sales_remaining: parseFloat(emp.sales_remaining) || 0,
+            sales_count: parseInt(emp.sales_count) || 0,
             color: ["blue", "green", "purple", "orange"][
               Math.floor(Math.random() * 4)
             ],
@@ -514,6 +527,16 @@ const EmployeeProfile = () => {
     );
     setShowEditModal(false);
     setEditingEmployee(null);
+  };
+
+  // Update employee in state without closing the modal (used for partial updates like target)
+  const handleUpdateEmployee = (employeeData) => {
+    setEmployees((prev) =>
+      prev.map((emp) =>
+        emp.id === employeeData.id ? { ...emp, ...employeeData } : emp,
+      ),
+    );
+    setEditingEmployee((prev) => ({ ...prev, ...employeeData }));
   };
 
   const handleDeleteEmployee = (id) => {
@@ -1208,19 +1231,21 @@ const EmployeeProfile = () => {
                     <div>
                       <p className="text-xs text-gray-500 mb-1">Target</p>
                       <h6 className="font-semibold text-lg">
-                        ${(employee.target / 1000).toFixed(0)}K
+                        {employee.target > 0 ? formatSalesAmount(employee.target) : 'Not Set'}
                       </h6>
                     </div>
                     <div>
                       <p className="text-xs text-gray-500 mb-1">Achieved</p>
                       <h6
                         className={`font-semibold text-lg ${
-                          employee.achieved >= employee.target
+                          employee.target > 0 && employee.achieved >= employee.target
                             ? "text-green-600"
-                            : "text-orange-600"
+                            : employee.achieved > 0
+                            ? "text-orange-600"
+                            : "text-gray-400"
                         }`}
                       >
-                        ${(employee.achieved / 1000).toFixed(0)}K
+                        {formatSalesAmount(employee.achieved || 0)}
                       </h6>
                     </div>
                   </div>
@@ -1354,6 +1379,7 @@ const EmployeeProfile = () => {
             setEditingEmployee(null);
           }}
           onSave={handleEditEmployee}
+          onUpdateEmployee={handleUpdateEmployee}
         />
       )}
 
@@ -1754,7 +1780,7 @@ const AddEmployeeModal = ({ onClose, onSave }) => {
   );
 };
 
-const EditEmployeeModal = ({ employee, onClose, onSave }) => {
+const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
   const [formData, setFormData] = useState({
     ...employee,
     firstName: employee.name.split(" ")[0],
@@ -1805,6 +1831,41 @@ const EditEmployeeModal = ({ employee, onClose, onSave }) => {
   const [profileImagePreview, setProfileImagePreview] = useState(
     employee.profile_picture || "",
   );
+
+  // Sales target state
+  const [salesTarget, setSalesTarget] = useState({
+    monthly_target: employee.target || 0,
+    notes: "",
+  });
+  const [salesTargetLoading, setSalesTargetLoading] = useState(false);
+  const [salesTargetSaved, setSalesTargetSaved] = useState(false);
+
+  // Sales history state
+  const [salesHistory, setSalesHistory] = useState([]);
+  const [salesHistoryLoading, setSalesHistoryLoading] = useState(false);
+  const [selectedHistoryYear, setSelectedHistoryYear] = useState(new Date().getFullYear());
+
+  const fetchSalesHistory = async (year) => {
+    setSalesHistoryLoading(true);
+    try {
+      const response = await fetch(
+        endpoints.salesTargets.history(employee.id, year),
+        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } },
+      );
+      const data = await response.json();
+      if (data.success) setSalesHistory(data.data || []);
+    } catch (err) {
+      console.error("Error fetching sales history:", err);
+    } finally {
+      setSalesHistoryLoading(false);
+    }
+  };
+
+  // Fetch history whenever user switches to salesTarget tab
+  useEffect(() => {
+    if (activeTab === "salesTarget") fetchSalesHistory(selectedHistoryYear);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, selectedHistoryYear]);
 
   // Add this function to convert file to base64
   const convertFileToBase64 = (file) => {
@@ -2601,6 +2662,279 @@ const EditEmployeeModal = ({ employee, onClose, onSave }) => {
     </>
   );
 
+  const handleSalesTargetSave = async () => {
+    setSalesTargetLoading(true);
+    try {
+      const now = new Date();
+      const response = await fetch(
+        endpoints.salesTargets.set(employee.id),
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify({
+            month: now.getMonth() + 1,
+            year: now.getFullYear(),
+            monthly_target: parseFloat(salesTarget.monthly_target) || 0,
+            notes: salesTarget.notes || "",
+          }),
+        },
+      );
+      const data = await response.json();
+      if (data.success) {
+        setSalesTargetSaved(true);
+        setTimeout(() => setSalesTargetSaved(false), 3000);
+        // Refresh history so the current month row updates
+        fetchSalesHistory(selectedHistoryYear);
+        // Update the card in the parent without closing the modal
+        if (onUpdateEmployee) {
+          onUpdateEmployee({
+            ...employee,
+            target: parseFloat(salesTarget.monthly_target) || 0,
+          });
+        }
+      } else {
+        alert("Failed to save target: " + (data.message || "Unknown error"));
+      }
+    } catch (error) {
+      console.error("Error saving sales target:", error);
+      alert("Error saving sales target");
+    } finally {
+      setSalesTargetLoading(false);
+    }
+  };
+
+  const renderSalesTargetTab = () => {
+    const achieved = parseFloat(employee.achieved) || 0;
+    const target = parseFloat(salesTarget.monthly_target) || 0;
+    const remaining = target - achieved;
+    const progressPercent = target > 0 ? Math.min((achieved / target) * 100, 100) : 0;
+
+    return (
+      <>
+        <div className="modal-body pb-0 px-6 pt-6">
+          <div className="space-y-6">
+            {/* Target Overview Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-center">
+                <p className="text-xs text-blue-600 font-medium mb-1">Monthly Target</p>
+                <p className="text-2xl font-bold text-blue-700">
+                  ${target > 0 ? target.toLocaleString() : '0'}
+                </p>
+              </div>
+              <div className={`border rounded-xl p-4 text-center ${achieved >= target && target > 0 ? 'bg-green-50 border-green-200' : 'bg-orange-50 border-orange-200'}`}>
+                <p className={`text-xs font-medium mb-1 ${achieved >= target && target > 0 ? 'text-green-600' : 'text-orange-600'}`}>Achieved</p>
+                <p className={`text-2xl font-bold ${achieved >= target && target > 0 ? 'text-green-700' : 'text-orange-700'}`}>
+                  ${achieved.toLocaleString()}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">From {employee.sales_count || 0} sales</p>
+              </div>
+              <div className={`border rounded-xl p-4 text-center ${remaining <= 0 ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'}`}>
+                <p className={`text-xs font-medium mb-1 ${remaining <= 0 ? 'text-green-600' : 'text-gray-600'}`}>Remaining</p>
+                <p className={`text-2xl font-bold ${remaining <= 0 ? 'text-green-700' : 'text-gray-700'}`}>
+                  {remaining <= 0 ? 'Target Met!' : `$${remaining.toLocaleString()}`}
+                </p>
+              </div>
+            </div>
+
+            {/* Progress Bar */}
+            {target > 0 && (
+              <div>
+                <div className="flex justify-between text-sm text-gray-600 mb-2">
+                  <span>Progress</span>
+                  <span>{progressPercent.toFixed(0)}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-3">
+                  <div
+                    className={`h-3 rounded-full transition-all duration-500 ${progressPercent >= 100 ? 'bg-green-500' : progressPercent >= 50 ? 'bg-blue-500' : 'bg-orange-500'}`}
+                    style={{ width: `${Math.min(progressPercent, 100)}%` }}
+                  ></div>
+                </div>
+              </div>
+            )}
+
+            {/* Sales History Table */}
+            <div className="border-t border-gray-200 pt-4">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5 text-purple-600" />
+                  Sales History
+                </h4>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => { const y = selectedHistoryYear - 1; setSelectedHistoryYear(y); }}
+                    className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500"
+                  >
+                    &#8249;
+                  </button>
+                  <span className="text-sm font-semibold text-gray-700 min-w-[3rem] text-center">{selectedHistoryYear}</span>
+                  <button
+                    type="button"
+                    onClick={() => { const y = selectedHistoryYear + 1; setSelectedHistoryYear(y); }}
+                    disabled={selectedHistoryYear >= new Date().getFullYear()}
+                    className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 disabled:opacity-30"
+                  >
+                    &#8250;
+                  </button>
+                </div>
+              </div>
+
+              {salesHistoryLoading ? (
+                <div className="flex items-center justify-center py-6 text-gray-400">
+                  <RefreshCw className="h-5 w-5 animate-spin mr-2" /> Loading history...
+                </div>
+              ) : (
+                <div className="overflow-x-auto rounded-xl border border-gray-200">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-gray-50 border-b border-gray-200">
+                        <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Month</th>
+                        <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Target</th>
+                        <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Achieved</th>
+                        <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Remaining</th>
+                        <th className="px-4 py-2.5 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">Sales</th>
+                        <th className="px-4 py-2.5 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {salesHistory.map((row) => (
+                        <tr
+                          key={row.month}
+                          className={`${
+                            row.is_current ? "bg-blue-50/60" : row.is_future ? "bg-gray-50/40" : "bg-white"
+                          } hover:bg-gray-50 transition-colors`}
+                        >
+                          <td className="px-4 py-2.5 font-medium text-gray-800">
+                            {row.month_name}
+                            {row.is_current && (
+                              <span className="ml-1.5 text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full font-semibold">Now</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-2.5 text-right">
+                            {row.target_set
+                              ? <span className="text-gray-800 font-medium">{formatSalesAmount(row.monthly_target)}</span>
+                              : <span className="text-gray-400 text-xs">Not Set</span>
+                            }
+                          </td>
+                          <td className="px-4 py-2.5 text-right">
+                            {row.is_future
+                              ? <span className="text-gray-300 text-xs">—</span>
+                              : <span className={row.achieved > 0 ? "font-medium text-gray-800" : "text-gray-400"}>{formatSalesAmount(row.achieved ?? 0)}</span>
+                            }
+                          </td>
+                          <td className="px-4 py-2.5 text-right">
+                            {row.is_future || !row.target_set
+                              ? <span className="text-gray-300 text-xs">—</span>
+                              : row.remaining <= 0
+                              ? <span className="text-green-600 font-medium text-xs">Met ✓</span>
+                              : <span className="text-orange-600 font-medium">{formatSalesAmount(row.remaining)}</span>
+                            }
+                          </td>
+                          <td className="px-4 py-2.5 text-center">
+                            {row.is_future
+                              ? <span className="text-gray-300">—</span>
+                              : <span className="text-gray-600">{row.sales_count ?? 0}</span>
+                            }
+                          </td>
+                          <td className="px-4 py-2.5 text-center">
+                            {row.is_future ? (
+                              <span className="text-xs text-gray-400">Upcoming</span>
+                            ) : row.hit_target ? (
+                              <span className="inline-flex items-center gap-1 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">✓ Hit</span>
+                            ) : row.target_set ? (
+                              <span className="inline-flex items-center gap-1 text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-medium">In Progress</span>
+                            ) : (
+                              <span className="text-xs text-gray-400">No Target</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {/* Set Target Form */}
+            <div className="border-t border-gray-200 pt-4">
+              <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <Target className="h-5 w-5 text-blue-600" />
+                Set Monthly Target
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Target Amount ($) <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    value={salesTarget.monthly_target}
+                    onChange={(e) =>
+                      setSalesTarget((prev) => ({
+                        ...prev,
+                        monthly_target: e.target.value,
+                      }))
+                    }
+                    min="0"
+                    step="100"
+                    placeholder="e.g., 50000"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Notes (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={salesTarget.notes}
+                    onChange={(e) =>
+                      setSalesTarget((prev) => ({
+                        ...prev,
+                        notes: e.target.value,
+                      }))
+                    }
+                    placeholder="e.g., Q1 target, special focus on enterprise"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+              <div className="mt-4 flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={handleSalesTargetSave}
+                  disabled={salesTargetLoading}
+                  className="px-6 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition duration-200 text-sm flex items-center gap-2 disabled:opacity-50"
+                >
+                  {salesTargetLoading ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4" />
+                      Save Target
+                    </>
+                  )}
+                </button>
+                {salesTargetSaved && (
+                  <span className="text-sm text-green-600 flex items-center gap-1">
+                    <CheckCircle className="h-4 w-4" />
+                    Target saved successfully!
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -2664,6 +2998,21 @@ const EditEmployeeModal = ({ employee, onClose, onSave }) => {
                   Resources
                 </button>
               </li>
+              {employee.department === "Sales" && (
+                <li className="mr-2" role="presentation">
+                  <button
+                    type="button"
+                    className={`px-4 py-3 text-sm font-medium rounded-t-lg ${
+                      activeTab === "salesTarget"
+                        ? "text-blue-600 border-b-2 border-blue-600"
+                        : "text-gray-500 hover:text-gray-700"
+                    }`}
+                    onClick={() => setActiveTab("salesTarget")}
+                  >
+                    Sales Target
+                  </button>
+                </li>
+              )}
             </ul>
           </div>
 
@@ -2671,6 +3020,7 @@ const EditEmployeeModal = ({ employee, onClose, onSave }) => {
             {activeTab === "basic" && renderBasicInfoTab()}
             {activeTab === "salary" && renderSalaryTab()}
             {activeTab === "resources" && renderResourcesTab()}
+            {activeTab === "salesTarget" && renderSalesTargetTab()}
           </div>
 
           <div className="modal-footer flex justify-center p-6 border-t border-gray-200 sticky bottom-0 bg-white">

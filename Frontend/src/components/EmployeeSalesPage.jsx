@@ -776,10 +776,10 @@ const EmployeeSalesPage = () => {
                 />
               </div>
 
-              {/* Upfront Payment - Without arrows */}
+              {/* Paid Amount - Without arrows */}
               <div className="col-span-2 sm:col-span-1">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Upfront Payment ($) *
+                  Paid Amount ($) *
                 </label>
                 <input
                   type="number"
@@ -929,7 +929,7 @@ const EmployeeSalesPage = () => {
             </p>
           </div>
 
-          {/* Upfront Payment */}
+          {/* Paid Amount */}
           <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-2xl p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center">
@@ -937,7 +937,7 @@ const EmployeeSalesPage = () => {
                   <CreditCard className="w-6 h-6 text-green-600" />
                 </div>
                 <div className="ml-4">
-                  <h3 className="text-sm font-medium text-green-800">Upfront Payment</h3>
+                  <h3 className="text-sm font-medium text-green-800">Paid Amount</h3>
                   <p className="text-xl font-bold text-green-600">
                     ${totals.upfrontPayment.toLocaleString()}
                   </p>

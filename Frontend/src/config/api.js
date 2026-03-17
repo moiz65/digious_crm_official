@@ -27,6 +27,9 @@ export const endpoints = {
     changePassword: `${config.FULL_API_URL}/auth/password`,
     verifyToken: `${config.FULL_API_URL}/auth/verify`,
     ipInfo: `${config.FULL_API_URL}/auth/ip-info`,
+    forgotPassword: `${config.FULL_API_URL}/auth/forgot-password`,
+    verifyOtp: `${config.FULL_API_URL}/auth/verify-otp`,
+    resetPassword: `${config.FULL_API_URL}/auth/reset-password`,
   },
 
   // Employee endpoints
@@ -160,6 +163,15 @@ export const endpoints = {
     createCategory: `${config.FULL_API_URL}/sales/categories`,
     updateCategory: (id) => `${config.FULL_API_URL}/sales/categories/${id}`,
     deleteCategory: (id) => `${config.FULL_API_URL}/sales/categories/${id}`,
+  },
+
+  // Sales Target endpoints
+  salesTargets: {
+    getAll: `${config.FULL_API_URL}/sales-targets/all`,
+    summary: `${config.FULL_API_URL}/sales-targets/summary`,
+    get: (employeeId) => `${config.FULL_API_URL}/sales-targets/${employeeId}`,
+    set: (employeeId) => `${config.FULL_API_URL}/sales-targets/${employeeId}`,
+    history: (employeeId, year) => `${config.FULL_API_URL}/sales-targets/${employeeId}/history?year=${year}`,
   },
 
   // Payroll endpoints
