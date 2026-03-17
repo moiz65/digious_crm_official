@@ -9,6 +9,8 @@ import ProtectedRoute from './components/ProtectedRoute';
 import LoginPage from './components/LoginPage';
 import SignUpPage from './components/SignUpPage';
 import ChangePasswordPage from './components/ChangePasswordPage';
+import ForgotPasswordPage from './components/ForgotPasswordPage';
+import VerifyOTPPage from './components/VerifyOTPPage';
 import UnauthorizedPage from './pages/UnauthorizedPage';
 
 // Admin Pages
@@ -56,6 +58,8 @@ function AppContent() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignUpPage />} />
             <Route path="/change-password" element={<ChangePasswordPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/verify-otp" element={<VerifyOTPPage />} />
             
             {/* Unauthorized page */}
             <Route path="/unauthorized" element={<UnauthorizedPage />} />

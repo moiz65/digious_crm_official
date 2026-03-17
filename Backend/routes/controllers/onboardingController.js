@@ -433,29 +433,144 @@ exports.createEmployee = async (req, res) => {
 // Get all employees
 exports.getAllEmployees = async (req, res) => {
   try {
+    // Query 1: All employees with salary from employee_salary table
     const [employees] = await pool.query(`
-  SELECT 
-    eo.id,
-    eo.name,
-    eo.email,
-    eo.phone,
-    eo.department,
-    eo.sub_department,
-    eo.designation,
-    eo.employment_status,
-    eo.join_date,
-    eo.status,
-    eo.created_at
+      SELECT
+        eo.id,
+        eo.employee_id,
+        eo.name,
+        eo.email,
+        eo.phone,
+        eo.department,
+        eo.sub_department,
+        eo.designation,
+        eo.employment_status,
+        eo.join_date,
+        eo.status,
+        eo.created_at,
+        eo.cnic,
+        eo.address,
+        eo.dob,
+        eo.profile_photo,
+        es.base_salary,
+        es.total_salary
+      FROM employee_onboarding eo
+      LEFT JOIN employee_salary es ON eo.id = es.employee_id
+      ORDER BY eo.created_at DESC
+    `);
 
-  FROM employee_onboarding eo
+    if (employees.length === 0) {
+      return res.status(200).json({ success: true, data: [], total: 0 });
+    }
 
-  ORDER BY eo.created_at DESC
-`);
+    const employeeIds = employees.map((e) => e.id);
+
+    // Query 2: All allowances from employee_allowances table (single query)
+    const [allAllowances] = await pool.query(
+      `SELECT employee_id, allowance_name, allowance_amount
+       FROM employee_allowances
+       WHERE employee_id IN (?)`,
+      [employeeIds]
+    );
+
+    // Query 3: All resources from employee_dynamic_resources table (single query)
+    const [allResources] = await pool.query(
+      `SELECT employee_id, resource_name, resource_serial
+       FROM employee_dynamic_resources
+       WHERE employee_id IN (?)`,
+      [employeeIds]
+    );
+
+    // Build lookup maps for O(1) access
+    const allowancesMap = new Map();
+    for (const a of allAllowances) {
+      if (!allowancesMap.has(a.employee_id)) allowancesMap.set(a.employee_id, []);
+      allowancesMap.get(a.employee_id).push({
+        allowance_name: a.allowance_name,
+        allowance_amount: a.allowance_amount,
+      });
+    }
+
+    const resourcesMap = new Map();
+    for (const r of allResources) {
+      if (!resourcesMap.has(r.employee_id)) resourcesMap.set(r.employee_id, []);
+      resourcesMap.get(r.employee_id).push({
+        resource_name: r.resource_name,
+        resource_serial: r.resource_serial,
+      });
+    }
+
+    // Query 4: Sales targets for current month (Sales dept employees)
+    const currentMonth = new Date().getMonth() + 1;
+    const currentYear = new Date().getFullYear();
+    const salesEmployeeIds = employees.filter(e => e.department === 'Sales').map(e => e.id);
+
+    let salesTargetsMap = new Map();
+    let salesAchievedMap = new Map();
+
+    if (salesEmployeeIds.length > 0) {
+      // Get targets
+      const [salesTargets] = await pool.query(
+        `SELECT employee_id, monthly_target, achieved_override, notes
+         FROM sales_targets
+         WHERE employee_id IN (?) AND month = ? AND year = ?`,
+        [salesEmployeeIds, currentMonth, currentYear]
+      );
+      for (const st of salesTargets) {
+        salesTargetsMap.set(st.employee_id, st);
+      }
+
+      // Get achieved from actual sales (sum of upfront_payment)
+      const [salesAchieved] = await pool.query(
+        `SELECT employee_id, 
+           COALESCE(SUM(upfront_payment), 0) AS achieved_from_sales,
+           COUNT(*) AS sales_count
+         FROM sales
+         WHERE employee_id IN (?) 
+           AND MONTH(sale_date) = ? AND YEAR(sale_date) = ?
+           AND status NOT IN ('cancelled', 'refunded')
+         GROUP BY employee_id`,
+        [salesEmployeeIds, currentMonth, currentYear]
+      );
+      for (const sa of salesAchieved) {
+        salesAchievedMap.set(sa.employee_id, sa);
+      }
+    }
+
+    // Attach allowances, resources, and sales data to each employee
+    const result = employees.map((emp) => {
+      const base = {
+        ...emp,
+        base_salary: emp.base_salary || "0.00",
+        total_salary: emp.total_salary || "0.00",
+        allowances: allowancesMap.get(emp.id) || [],
+        resources: resourcesMap.get(emp.id) || [],
+      };
+
+      // Add sales target/achieved data for Sales department employees
+      if (emp.department === 'Sales') {
+        const target = salesTargetsMap.get(emp.id);
+        const salesData = salesAchievedMap.get(emp.id);
+        const achievedFromSales = parseFloat(salesData?.achieved_from_sales) || 0;
+        const monthlyTarget = parseFloat(target?.monthly_target) || 0;
+        const achieved = (target && target.achieved_override !== null)
+          ? parseFloat(target.achieved_override)
+          : achievedFromSales;
+
+        base.sales_target = monthlyTarget;
+        base.sales_achieved = achieved;
+        base.sales_achieved_from_sales = achievedFromSales;
+        base.sales_remaining = monthlyTarget - achieved;
+        base.sales_count = parseInt(salesData?.sales_count) || 0;
+      }
+
+      return base;
+    });
 
     res.status(200).json({
       success: true,
-      data: employees,
-      total: employees.length,
+      data: result,
+      total: result.length,
     });
   } catch (error) {
     console.error("Error fetching employees:", error);
@@ -649,8 +764,8 @@ exports.updateEmployee = async (req, res) => {
           profilePictureUrl,
         );
 
-        // ✅ Add to employeeFields for database update
-        employeeFields.profile_picture = profilePictureUrl;
+        // ✅ Add to employeeFields for database update (profile_photo is the correct DB column)
+        employeeFields.profile_photo = profilePictureUrl;
       } catch (uploadError) {
         console.error("Cloudinary upload failed:", uploadError);
         // Don't fail the entire update if image upload fails
@@ -680,7 +795,7 @@ exports.updateEmployee = async (req, res) => {
       "cnic_issue_date",
       "cnic_expiry_date",
       "dob",
-      "profile_picture",
+      "profile_photo",  // actual DB column name
     ];
 
     const updateFields = [];
@@ -728,14 +843,17 @@ exports.updateEmployee = async (req, res) => {
 
     /* 2. Update salary */
     if (salary) {
-      await connection.query(
-        `
-        UPDATE employee_salary 
-        SET base_salary = ?, total_salary = ?
-        WHERE employee_id = ?
-        `,
+      // Try UPDATE first; if no row exists, INSERT
+      const [salaryUpdateResult] = await connection.query(
+        `UPDATE employee_salary SET base_salary = ?, total_salary = ? WHERE employee_id = ?`,
         [salary.base_salary, salary.total_salary, id],
       );
+      if (salaryUpdateResult.affectedRows === 0) {
+        await connection.query(
+          `INSERT INTO employee_salary (employee_id, base_salary, total_salary) VALUES (?, ?, ?)`,
+          [id, salary.base_salary, salary.total_salary],
+        );
+      }
     }
 
     /* 3. Update allowances (UPSERT LOGIC) */

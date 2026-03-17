@@ -27,7 +27,8 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveIte
     { id: 'dashboard', icon: LayoutDashboard, label: 'My Dashboard', path: '/employee/dashboard' },
     { id: 'attendance', icon: Calendar, label: 'Attendance', path: '/employee/attendance' },
     { id: 'profile', icon: User, label: 'My Profile', path: '/employee/profile' },
-    { id: 'sales', icon: DollarSign, label: 'Sales', path: '/employee/sales' },
+    // Sales menu only visible for Sales department employees
+    ...(user?.department === 'Sales' ? [{ id: 'sales', icon: DollarSign, label: 'Sales', path: '/employee/sales' }] : []),
     { id: 'applications', icon: FileText, label: 'Applications', path: '/employee/applications' },
     { id: 'payroll', icon: Wallet, label: 'My Payroll', path: '/employee/payroll' },
     { id: 'settings', icon: FileText, label: 'Settings', path: '/employee/settings' }

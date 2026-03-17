@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Mar 09, 2026 at 07:50 AM
+-- Generation Time: Mar 17, 2026 at 09:56 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -1146,7 +1146,485 @@ INSERT INTO `Employee_Absent` (`id`, `employee_id`, `email`, `name`, `absent_dat
 (453, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-03-06', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL),
 (454, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-03-06', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL),
 (455, 55, 'JFAD@digioussolutions.com', 'JFAD', '2026-03-06', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL),
-(456, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-06', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL);
+(456, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-06', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-06 18:08:36', '2026-03-06 18:08:36', NULL, NULL),
+(457, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-08', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-09 07:01:21', '2026-03-09 07:01:21', NULL, NULL),
+(458, 28, 'Shahmeerabbas@digioussolutions.com', 'Syed Shahmeer Abbas', '2026-03-08', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-09 07:01:21', '2026-03-09 07:01:21', NULL, NULL),
+(459, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-03-08', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-09 07:01:21', '2026-03-09 07:01:21', NULL, NULL),
+(460, 30, 'wajih@digioussolutions.com', 'Wajih ul Hasan', '2026-03-08', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-09 07:01:21', '2026-03-09 07:01:21', NULL, NULL),
+(461, 31, 'Wahajabbas@digioussolutions.com', 'Syed Wahaj Abbas ', '2026-03-08', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-09 07:01:21', '2026-03-09 07:01:21', NULL, NULL),
+(462, 32, 'Humaiz@digioussolutions.com', 'Muhammad Humaiz', '2026-03-08', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-09 07:01:21', '2026-03-09 07:01:21', NULL, NULL),
+(463, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-03-08', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-09 07:01:21', '2026-03-09 07:01:21', NULL, NULL),
+(464, 34, 'Khisal@digioussolutions.com', 'Khisal Zafar', '2026-03-08', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-09 07:01:21', '2026-03-09 07:01:21', NULL, NULL),
+(465, 35, 'Taha@digioussolutions.com', 'Muhammad Taha', '2026-03-08', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-09 07:01:21', '2026-03-09 07:01:21', NULL, NULL),
+(466, 36, 'Faiq@digioussolutions.com', 'Faiq Shahzad', '2026-03-08', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-09 07:01:21', '2026-03-09 07:01:21', NULL, NULL),
+(467, 37, 'Taimoor@digioussolutions.com', 'Taimoor Shah', '2026-03-08', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-09 07:01:21', '2026-03-09 07:01:21', NULL, NULL),
+(468, 38, 'Ebad@digioussolutions.com', 'Muhammad Ebad', '2026-03-08', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-09 07:01:21', '2026-03-09 07:01:21', NULL, NULL),
+(469, 39, 'muhammadHamza@digioussolutions.com', 'Muhammad Hamza', '2026-03-08', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-09 07:01:21', '2026-03-09 07:01:21', NULL, NULL),
+(470, 40, 'Yanish@digioussolutions.com', 'Yanish Hyder', '2026-03-08', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-09 07:01:21', '2026-03-09 07:01:21', NULL, NULL),
+(471, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-03-08', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-09 07:01:21', '2026-03-09 07:01:21', NULL, NULL),
+(472, 42, 'Tahir@digioussolutions.com', 'Tahir ', '2026-03-08', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-09 07:01:21', '2026-03-09 07:01:21', NULL, NULL),
+(473, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-03-08', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-09 07:01:21', '2026-03-09 07:01:21', NULL, NULL),
+(474, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-03-08', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-09 07:01:21', '2026-03-09 07:01:21', NULL, NULL),
+(475, 45, 'SyedAwais@digioussolutions.com', 'Syed Awais Ahmed', '2026-03-08', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-09 07:01:21', '2026-03-09 07:01:21', NULL, NULL),
+(476, 46, 'Shahrukh@digioussolutions.com', 'Shahrukh Hussain Siddiqui', '2026-03-08', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-09 07:01:21', '2026-03-09 07:01:21', NULL, NULL),
+(477, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-03-08', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-09 07:01:21', '2026-03-09 07:01:21', NULL, NULL),
+(478, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-03-08', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-09 07:01:21', '2026-03-09 07:01:21', NULL, NULL),
+(479, 55, 'JFAD@digioussolutions.com', 'JFAD', '2026-03-08', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-09 07:01:21', '2026-03-09 07:01:21', NULL, NULL),
+(480, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-08', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-09 07:01:21', '2026-03-09 07:01:21', NULL, NULL),
+(481, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-09', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-09 07:01:21', '2026-03-09 07:01:21', NULL, NULL),
+(482, 28, 'Shahmeerabbas@digioussolutions.com', 'Syed Shahmeer Abbas', '2026-03-09', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-09 07:01:21', '2026-03-09 07:01:21', NULL, NULL),
+(483, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-03-09', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-09 07:01:21', '2026-03-09 07:01:21', NULL, NULL),
+(484, 30, 'wajih@digioussolutions.com', 'Wajih ul Hasan', '2026-03-09', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-09 07:01:21', '2026-03-09 07:01:21', NULL, NULL),
+(485, 31, 'Wahajabbas@digioussolutions.com', 'Syed Wahaj Abbas ', '2026-03-09', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-09 07:01:21', '2026-03-09 07:01:21', NULL, NULL),
+(486, 32, 'Humaiz@digioussolutions.com', 'Muhammad Humaiz', '2026-03-09', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-09 07:01:21', '2026-03-09 07:01:21', NULL, NULL),
+(487, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-03-09', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-09 07:01:21', '2026-03-09 07:01:21', NULL, NULL),
+(488, 34, 'Khisal@digioussolutions.com', 'Khisal Zafar', '2026-03-09', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-09 07:01:21', '2026-03-09 07:01:21', NULL, NULL),
+(489, 35, 'Taha@digioussolutions.com', 'Muhammad Taha', '2026-03-09', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-09 07:01:21', '2026-03-09 07:01:21', NULL, NULL),
+(490, 36, 'Faiq@digioussolutions.com', 'Faiq Shahzad', '2026-03-09', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-09 07:01:21', '2026-03-09 07:01:21', NULL, NULL),
+(491, 37, 'Taimoor@digioussolutions.com', 'Taimoor Shah', '2026-03-09', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-09 07:01:21', '2026-03-09 07:01:21', NULL, NULL),
+(492, 38, 'Ebad@digioussolutions.com', 'Muhammad Ebad', '2026-03-09', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-09 07:01:21', '2026-03-09 07:01:21', NULL, NULL),
+(493, 39, 'muhammadHamza@digioussolutions.com', 'Muhammad Hamza', '2026-03-09', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-09 07:01:21', '2026-03-09 07:01:21', NULL, NULL),
+(494, 40, 'Yanish@digioussolutions.com', 'Yanish Hyder', '2026-03-09', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-09 07:01:21', '2026-03-09 07:01:21', NULL, NULL),
+(495, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-03-09', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-09 07:01:21', '2026-03-09 07:01:21', NULL, NULL),
+(496, 42, 'Tahir@digioussolutions.com', 'Tahir ', '2026-03-09', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-09 07:01:21', '2026-03-09 07:01:21', NULL, NULL),
+(497, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-03-09', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-09 07:01:21', '2026-03-09 07:01:21', NULL, NULL),
+(498, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-03-09', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-09 07:01:21', '2026-03-09 07:01:21', NULL, NULL),
+(499, 45, 'SyedAwais@digioussolutions.com', 'Syed Awais Ahmed', '2026-03-09', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-09 07:01:21', '2026-03-09 07:01:21', NULL, NULL),
+(500, 46, 'Shahrukh@digioussolutions.com', 'Shahrukh Hussain Siddiqui', '2026-03-09', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-09 07:01:21', '2026-03-09 07:01:21', NULL, NULL),
+(501, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-03-09', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-09 07:01:21', '2026-03-09 07:01:21', NULL, NULL),
+(502, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-03-09', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-09 07:01:21', '2026-03-09 07:01:21', NULL, NULL),
+(503, 55, 'JFAD@digioussolutions.com', 'JFAD', '2026-03-09', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-09 07:01:21', '2026-03-09 07:01:21', NULL, NULL),
+(504, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-09', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-09 07:01:21', '2026-03-09 07:01:21', NULL, NULL),
+(505, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-01-24', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(506, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-01-29', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(507, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-02-03', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(508, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-02-05', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(509, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-02-07', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(510, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-02-09', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(511, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-02-14', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(512, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-02-18', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(513, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-02-21', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(514, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-02-23', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(515, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-02-24', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(516, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-07', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(517, 28, 'Shahmeerabbas@digioussolutions.com', 'Syed Shahmeer Abbas', '2026-01-16', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(518, 28, 'Shahmeerabbas@digioussolutions.com', 'Syed Shahmeer Abbas', '2026-01-27', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(519, 28, 'Shahmeerabbas@digioussolutions.com', 'Syed Shahmeer Abbas', '2026-02-07', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(520, 28, 'Shahmeerabbas@digioussolutions.com', 'Syed Shahmeer Abbas', '2026-02-14', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(521, 28, 'Shahmeerabbas@digioussolutions.com', 'Syed Shahmeer Abbas', '2026-02-21', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(522, 28, 'Shahmeerabbas@digioussolutions.com', 'Syed Shahmeer Abbas', '2026-02-23', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(523, 28, 'Shahmeerabbas@digioussolutions.com', 'Syed Shahmeer Abbas', '2026-02-24', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(524, 28, 'Shahmeerabbas@digioussolutions.com', 'Syed Shahmeer Abbas', '2026-03-07', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(525, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-01-16', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(526, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-01-19', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(527, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-01-20', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(528, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-01-21', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(529, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-01-22', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(530, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-01-23', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(531, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-01-24', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(532, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-01-26', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(533, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-01-27', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(534, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-01-28', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(535, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-01-29', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(536, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-01-30', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(537, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-01-31', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(538, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-02-02', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(539, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-02-03', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(540, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-02-04', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(541, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-02-05', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(542, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-02-06', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(543, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-02-07', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(544, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-02-09', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(545, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-02-14', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(546, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-02-21', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(547, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-02-23', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(548, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-02-24', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(549, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-03-07', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(550, 30, 'wajih@digioussolutions.com', 'Wajih ul Hasan', '2026-01-16', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(551, 30, 'wajih@digioussolutions.com', 'Wajih ul Hasan', '2026-01-23', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(552, 30, 'wajih@digioussolutions.com', 'Wajih ul Hasan', '2026-01-24', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(553, 30, 'wajih@digioussolutions.com', 'Wajih ul Hasan', '2026-01-30', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(554, 30, 'wajih@digioussolutions.com', 'Wajih ul Hasan', '2026-01-31', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(555, 30, 'wajih@digioussolutions.com', 'Wajih ul Hasan', '2026-02-02', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(556, 30, 'wajih@digioussolutions.com', 'Wajih ul Hasan', '2026-02-03', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(557, 30, 'wajih@digioussolutions.com', 'Wajih ul Hasan', '2026-02-04', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(558, 30, 'wajih@digioussolutions.com', 'Wajih ul Hasan', '2026-02-05', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(559, 30, 'wajih@digioussolutions.com', 'Wajih ul Hasan', '2026-02-06', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(560, 30, 'wajih@digioussolutions.com', 'Wajih ul Hasan', '2026-02-07', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(561, 30, 'wajih@digioussolutions.com', 'Wajih ul Hasan', '2026-02-09', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(562, 30, 'wajih@digioussolutions.com', 'Wajih ul Hasan', '2026-02-14', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(563, 30, 'wajih@digioussolutions.com', 'Wajih ul Hasan', '2026-02-21', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(564, 30, 'wajih@digioussolutions.com', 'Wajih ul Hasan', '2026-02-23', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(565, 30, 'wajih@digioussolutions.com', 'Wajih ul Hasan', '2026-02-24', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(566, 30, 'wajih@digioussolutions.com', 'Wajih ul Hasan', '2026-03-07', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(567, 31, 'Wahajabbas@digioussolutions.com', 'Syed Wahaj Abbas ', '2026-01-16', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(568, 31, 'Wahajabbas@digioussolutions.com', 'Syed Wahaj Abbas ', '2026-01-31', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(569, 31, 'Wahajabbas@digioussolutions.com', 'Syed Wahaj Abbas ', '2026-02-05', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(570, 31, 'Wahajabbas@digioussolutions.com', 'Syed Wahaj Abbas ', '2026-02-07', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(571, 31, 'Wahajabbas@digioussolutions.com', 'Syed Wahaj Abbas ', '2026-02-14', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(572, 31, 'Wahajabbas@digioussolutions.com', 'Syed Wahaj Abbas ', '2026-02-21', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(573, 31, 'Wahajabbas@digioussolutions.com', 'Syed Wahaj Abbas ', '2026-02-23', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(574, 31, 'Wahajabbas@digioussolutions.com', 'Syed Wahaj Abbas ', '2026-02-24', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(575, 31, 'Wahajabbas@digioussolutions.com', 'Syed Wahaj Abbas ', '2026-03-07', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(576, 32, 'Humaiz@digioussolutions.com', 'Muhammad Humaiz', '2026-01-16', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(577, 32, 'Humaiz@digioussolutions.com', 'Muhammad Humaiz', '2026-02-07', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(578, 32, 'Humaiz@digioussolutions.com', 'Muhammad Humaiz', '2026-02-14', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(579, 32, 'Humaiz@digioussolutions.com', 'Muhammad Humaiz', '2026-02-21', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(580, 32, 'Humaiz@digioussolutions.com', 'Muhammad Humaiz', '2026-02-23', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(581, 32, 'Humaiz@digioussolutions.com', 'Muhammad Humaiz', '2026-02-24', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(582, 32, 'Humaiz@digioussolutions.com', 'Muhammad Humaiz', '2026-03-07', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(583, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-01-16', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(584, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-01-19', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(585, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-02-07', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(586, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-02-14', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(587, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-02-21', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(588, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-02-23', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(589, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-02-24', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(590, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-03-07', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL);
+INSERT INTO `Employee_Absent` (`id`, `employee_id`, `email`, `name`, `absent_date`, `reason_type`, `reason`, `supporting_document_url`, `is_approved`, `approved_by`, `approved_at`, `remarks`, `created_at`, `updated_at`, `leave_type_key`, `application_id`) VALUES
+(591, 34, 'Khisal@digioussolutions.com', 'Khisal Zafar', '2026-01-16', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(592, 34, 'Khisal@digioussolutions.com', 'Khisal Zafar', '2026-01-19', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(593, 34, 'Khisal@digioussolutions.com', 'Khisal Zafar', '2026-01-22', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(594, 34, 'Khisal@digioussolutions.com', 'Khisal Zafar', '2026-02-07', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(595, 34, 'Khisal@digioussolutions.com', 'Khisal Zafar', '2026-02-14', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(596, 34, 'Khisal@digioussolutions.com', 'Khisal Zafar', '2026-02-21', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(597, 34, 'Khisal@digioussolutions.com', 'Khisal Zafar', '2026-02-23', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(598, 34, 'Khisal@digioussolutions.com', 'Khisal Zafar', '2026-02-24', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(599, 34, 'Khisal@digioussolutions.com', 'Khisal Zafar', '2026-03-07', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(600, 35, 'Taha@digioussolutions.com', 'Muhammad Taha', '2026-01-16', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(601, 35, 'Taha@digioussolutions.com', 'Muhammad Taha', '2026-01-26', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(602, 35, 'Taha@digioussolutions.com', 'Muhammad Taha', '2026-02-07', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(603, 35, 'Taha@digioussolutions.com', 'Muhammad Taha', '2026-02-14', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(604, 35, 'Taha@digioussolutions.com', 'Muhammad Taha', '2026-02-21', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(605, 35, 'Taha@digioussolutions.com', 'Muhammad Taha', '2026-02-23', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(606, 35, 'Taha@digioussolutions.com', 'Muhammad Taha', '2026-02-24', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(607, 35, 'Taha@digioussolutions.com', 'Muhammad Taha', '2026-03-07', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(608, 36, 'Faiq@digioussolutions.com', 'Faiq Shahzad', '2026-01-16', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(609, 36, 'Faiq@digioussolutions.com', 'Faiq Shahzad', '2026-01-17', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(610, 36, 'Faiq@digioussolutions.com', 'Faiq Shahzad', '2026-02-05', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(611, 36, 'Faiq@digioussolutions.com', 'Faiq Shahzad', '2026-02-07', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(612, 36, 'Faiq@digioussolutions.com', 'Faiq Shahzad', '2026-02-14', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(613, 36, 'Faiq@digioussolutions.com', 'Faiq Shahzad', '2026-02-21', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(614, 36, 'Faiq@digioussolutions.com', 'Faiq Shahzad', '2026-02-23', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(615, 36, 'Faiq@digioussolutions.com', 'Faiq Shahzad', '2026-02-24', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(616, 36, 'Faiq@digioussolutions.com', 'Faiq Shahzad', '2026-03-07', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(617, 37, 'Taimoor@digioussolutions.com', 'Taimoor Shah', '2026-01-16', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(618, 37, 'Taimoor@digioussolutions.com', 'Taimoor Shah', '2026-02-07', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(619, 37, 'Taimoor@digioussolutions.com', 'Taimoor Shah', '2026-02-14', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(620, 37, 'Taimoor@digioussolutions.com', 'Taimoor Shah', '2026-02-21', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(621, 37, 'Taimoor@digioussolutions.com', 'Taimoor Shah', '2026-02-23', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(622, 37, 'Taimoor@digioussolutions.com', 'Taimoor Shah', '2026-02-24', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(623, 37, 'Taimoor@digioussolutions.com', 'Taimoor Shah', '2026-03-07', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(624, 38, 'Ebad@digioussolutions.com', 'Muhammad Ebad', '2026-01-16', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(625, 38, 'Ebad@digioussolutions.com', 'Muhammad Ebad', '2026-02-03', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(626, 38, 'Ebad@digioussolutions.com', 'Muhammad Ebad', '2026-02-07', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(627, 38, 'Ebad@digioussolutions.com', 'Muhammad Ebad', '2026-02-14', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(628, 38, 'Ebad@digioussolutions.com', 'Muhammad Ebad', '2026-02-21', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(629, 38, 'Ebad@digioussolutions.com', 'Muhammad Ebad', '2026-02-23', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(630, 38, 'Ebad@digioussolutions.com', 'Muhammad Ebad', '2026-02-24', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(631, 38, 'Ebad@digioussolutions.com', 'Muhammad Ebad', '2026-03-07', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(632, 39, 'muhammadHamza@digioussolutions.com', 'Muhammad Hamza', '2026-01-16', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(633, 39, 'muhammadHamza@digioussolutions.com', 'Muhammad Hamza', '2026-01-28', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(634, 39, 'muhammadHamza@digioussolutions.com', 'Muhammad Hamza', '2026-02-07', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(635, 39, 'muhammadHamza@digioussolutions.com', 'Muhammad Hamza', '2026-02-09', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(636, 39, 'muhammadHamza@digioussolutions.com', 'Muhammad Hamza', '2026-02-14', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(637, 39, 'muhammadHamza@digioussolutions.com', 'Muhammad Hamza', '2026-02-21', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(638, 39, 'muhammadHamza@digioussolutions.com', 'Muhammad Hamza', '2026-02-23', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(639, 39, 'muhammadHamza@digioussolutions.com', 'Muhammad Hamza', '2026-02-24', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(640, 39, 'muhammadHamza@digioussolutions.com', 'Muhammad Hamza', '2026-03-07', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(641, 40, 'Yanish@digioussolutions.com', 'Yanish Hyder', '2026-01-16', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(642, 40, 'Yanish@digioussolutions.com', 'Yanish Hyder', '2026-01-17', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(643, 40, 'Yanish@digioussolutions.com', 'Yanish Hyder', '2026-02-07', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(644, 40, 'Yanish@digioussolutions.com', 'Yanish Hyder', '2026-02-14', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(645, 40, 'Yanish@digioussolutions.com', 'Yanish Hyder', '2026-02-21', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(646, 40, 'Yanish@digioussolutions.com', 'Yanish Hyder', '2026-02-23', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(647, 40, 'Yanish@digioussolutions.com', 'Yanish Hyder', '2026-02-24', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(648, 40, 'Yanish@digioussolutions.com', 'Yanish Hyder', '2026-03-07', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(649, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-01-16', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(650, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-01-24', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(651, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-01-29', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(652, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-02-07', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(653, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-02-14', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(654, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-02-21', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(655, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-02-23', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(656, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-02-24', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(657, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-03-07', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(658, 42, 'Tahir@digioussolutions.com', 'Tahir ', '2026-01-16', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(659, 42, 'Tahir@digioussolutions.com', 'Tahir ', '2026-01-19', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(660, 42, 'Tahir@digioussolutions.com', 'Tahir ', '2026-01-26', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(661, 42, 'Tahir@digioussolutions.com', 'Tahir ', '2026-01-27', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(662, 42, 'Tahir@digioussolutions.com', 'Tahir ', '2026-01-28', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(663, 42, 'Tahir@digioussolutions.com', 'Tahir ', '2026-01-30', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(664, 42, 'Tahir@digioussolutions.com', 'Tahir ', '2026-02-07', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(665, 42, 'Tahir@digioussolutions.com', 'Tahir ', '2026-02-09', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(666, 42, 'Tahir@digioussolutions.com', 'Tahir ', '2026-02-14', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(667, 42, 'Tahir@digioussolutions.com', 'Tahir ', '2026-02-21', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(668, 42, 'Tahir@digioussolutions.com', 'Tahir ', '2026-02-23', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(669, 42, 'Tahir@digioussolutions.com', 'Tahir ', '2026-02-24', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(670, 42, 'Tahir@digioussolutions.com', 'Tahir ', '2026-03-07', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(671, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-01-16', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(672, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-01-17', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(673, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-01-19', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(674, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-01-20', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(675, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-01-21', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(676, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-01-22', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(677, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-01-23', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(678, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-01-24', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(679, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-01-26', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(680, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-01-27', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(681, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-01-28', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(682, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-01-29', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(683, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-01-30', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(684, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-01-31', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(685, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-02-02', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(686, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-02-03', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(687, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-02-04', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(688, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-02-05', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(689, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-02-06', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(690, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-02-07', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(691, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-02-09', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(692, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-02-14', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(693, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-02-21', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(694, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-02-23', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(695, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-02-24', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(696, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-03-07', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(697, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-01-17', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(698, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-01-23', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(699, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-01-24', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(700, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-01-26', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(701, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-02-07', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(702, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-02-13', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(703, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-02-14', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(704, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-02-16', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(705, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-02-21', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(706, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-02-23', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(707, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-02-24', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(708, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-03-07', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(709, 45, 'SyedAwais@digioussolutions.com', 'Syed Awais Ahmed', '2026-01-16', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(710, 45, 'SyedAwais@digioussolutions.com', 'Syed Awais Ahmed', '2026-02-07', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(711, 45, 'SyedAwais@digioussolutions.com', 'Syed Awais Ahmed', '2026-02-14', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(712, 45, 'SyedAwais@digioussolutions.com', 'Syed Awais Ahmed', '2026-02-21', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(713, 45, 'SyedAwais@digioussolutions.com', 'Syed Awais Ahmed', '2026-02-23', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(714, 45, 'SyedAwais@digioussolutions.com', 'Syed Awais Ahmed', '2026-02-24', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(715, 45, 'SyedAwais@digioussolutions.com', 'Syed Awais Ahmed', '2026-03-07', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(716, 46, 'Shahrukh@digioussolutions.com', 'Shahrukh Hussain Siddiqui', '2026-01-16', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(717, 46, 'Shahrukh@digioussolutions.com', 'Shahrukh Hussain Siddiqui', '2026-01-31', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(718, 46, 'Shahrukh@digioussolutions.com', 'Shahrukh Hussain Siddiqui', '2026-02-07', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(719, 46, 'Shahrukh@digioussolutions.com', 'Shahrukh Hussain Siddiqui', '2026-02-14', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(720, 46, 'Shahrukh@digioussolutions.com', 'Shahrukh Hussain Siddiqui', '2026-02-21', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(721, 46, 'Shahrukh@digioussolutions.com', 'Shahrukh Hussain Siddiqui', '2026-02-23', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(722, 46, 'Shahrukh@digioussolutions.com', 'Shahrukh Hussain Siddiqui', '2026-02-24', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(723, 46, 'Shahrukh@digioussolutions.com', 'Shahrukh Hussain Siddiqui', '2026-03-07', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(724, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-01-16', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(725, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-01-23', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(726, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-02-07', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(727, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-02-09', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(728, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-02-14', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(729, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-02-21', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(730, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-02-23', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(731, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-02-24', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(732, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-03-07', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(733, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-01-16', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(734, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-01-17', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(735, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-01-19', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(736, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-01-20', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(737, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-01-21', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(738, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-01-22', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(739, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-01-23', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(740, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-01-24', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(741, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-01-26', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(742, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-01-27', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(743, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-01-28', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(744, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-01-29', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(745, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-01-30', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(746, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-01-31', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(747, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-02-02', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(748, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-02-03', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(749, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-02-04', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(750, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-02-05', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(751, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-02-06', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(752, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-02-07', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(753, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-02-09', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(754, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-02-14', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(755, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-02-21', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(756, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-02-23', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(757, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-02-24', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(758, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-03-07', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(759, 55, 'JFAD@digioussolutions.com', 'JFAD', '2026-02-05', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(760, 55, 'JFAD@digioussolutions.com', 'JFAD', '2026-02-06', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL);
+INSERT INTO `Employee_Absent` (`id`, `employee_id`, `email`, `name`, `absent_date`, `reason_type`, `reason`, `supporting_document_url`, `is_approved`, `approved_by`, `approved_at`, `remarks`, `created_at`, `updated_at`, `leave_type_key`, `application_id`) VALUES
+(761, 55, 'JFAD@digioussolutions.com', 'JFAD', '2026-02-07', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(762, 55, 'JFAD@digioussolutions.com', 'JFAD', '2026-02-09', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(763, 55, 'JFAD@digioussolutions.com', 'JFAD', '2026-02-10', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(764, 55, 'JFAD@digioussolutions.com', 'JFAD', '2026-02-11', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(765, 55, 'JFAD@digioussolutions.com', 'JFAD', '2026-02-12', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(766, 55, 'JFAD@digioussolutions.com', 'JFAD', '2026-02-13', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(767, 55, 'JFAD@digioussolutions.com', 'JFAD', '2026-02-14', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(768, 55, 'JFAD@digioussolutions.com', 'JFAD', '2026-02-21', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(769, 55, 'JFAD@digioussolutions.com', 'JFAD', '2026-02-23', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(770, 55, 'JFAD@digioussolutions.com', 'JFAD', '2026-02-24', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(771, 55, 'JFAD@digioussolutions.com', 'JFAD', '2026-03-07', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(772, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-02-02', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(773, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-02-03', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(774, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-02-04', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(775, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-02-05', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(776, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-02-06', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(777, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-02-07', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(778, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-02-09', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(779, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-02-10', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(780, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-02-11', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(781, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-02-12', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(782, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-02-13', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(783, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-02-14', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(784, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-02-16', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(785, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-02-21', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(786, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-02-23', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(787, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-02-24', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(788, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-07', 'No Check-in', 'Auto-filled: no attendance or absence record found for this working day.', NULL, 0, NULL, NULL, 'Backfilled by fill_missing_absent_records.sql', '2026-03-09 08:26:31', '2026-03-09 08:26:31', NULL, NULL),
+(789, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-10', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-10 12:01:15', '2026-03-10 12:01:15', NULL, NULL),
+(790, 28, 'Shahmeerabbas@digioussolutions.com', 'Syed Shahmeer Abbas', '2026-03-10', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-10 12:01:15', '2026-03-10 12:01:15', NULL, NULL),
+(791, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-03-10', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-10 12:01:15', '2026-03-10 12:01:15', NULL, NULL),
+(792, 30, 'wajih@digioussolutions.com', 'Wajih ul Hasan', '2026-03-10', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-10 12:01:15', '2026-03-10 12:01:15', NULL, NULL),
+(793, 31, 'Wahajabbas@digioussolutions.com', 'Syed Wahaj Abbas ', '2026-03-10', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-10 12:01:15', '2026-03-10 12:01:15', NULL, NULL),
+(794, 32, 'Humaiz@digioussolutions.com', 'Muhammad Humaiz', '2026-03-10', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-10 12:01:15', '2026-03-10 12:01:15', NULL, NULL),
+(795, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-03-10', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-10 12:01:15', '2026-03-10 12:01:15', NULL, NULL),
+(796, 34, 'Khisal@digioussolutions.com', 'Khisal Zafar', '2026-03-10', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-10 12:01:15', '2026-03-10 12:01:15', NULL, NULL),
+(797, 35, 'Taha@digioussolutions.com', 'Muhammad Taha', '2026-03-10', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-10 12:01:15', '2026-03-10 12:01:15', NULL, NULL),
+(798, 36, 'Faiq@digioussolutions.com', 'Faiq Shahzad', '2026-03-10', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-10 12:01:15', '2026-03-10 12:01:15', NULL, NULL),
+(799, 37, 'Taimoor@digioussolutions.com', 'Taimoor Shah', '2026-03-10', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-10 12:01:15', '2026-03-10 12:01:15', NULL, NULL),
+(800, 38, 'Ebad@digioussolutions.com', 'Muhammad Ebad', '2026-03-10', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-10 12:01:15', '2026-03-10 12:01:15', NULL, NULL),
+(801, 39, 'muhammadHamza@digioussolutions.com', 'Muhammad Hamza', '2026-03-10', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-10 12:01:15', '2026-03-10 12:01:15', NULL, NULL),
+(802, 40, 'Yanish@digioussolutions.com', 'Yanish Hyder', '2026-03-10', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-10 12:01:15', '2026-03-10 12:01:15', NULL, NULL),
+(803, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-03-10', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-10 12:01:15', '2026-03-10 12:01:15', NULL, NULL),
+(804, 42, 'Tahir@digioussolutions.com', 'Tahir ', '2026-03-10', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-10 12:01:15', '2026-03-10 12:01:15', NULL, NULL),
+(805, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-03-10', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-10 12:01:15', '2026-03-10 12:01:15', NULL, NULL),
+(806, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-03-10', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-10 12:01:15', '2026-03-10 12:01:15', NULL, NULL),
+(807, 45, 'SyedAwais@digioussolutions.com', 'Syed Awais Ahmed', '2026-03-10', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-10 12:01:15', '2026-03-10 12:01:15', NULL, NULL),
+(808, 46, 'Shahrukh@digioussolutions.com', 'Shahrukh Hussain Siddiqui', '2026-03-10', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-10 12:01:15', '2026-03-10 12:01:15', NULL, NULL),
+(809, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-03-10', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-10 12:01:15', '2026-03-10 12:01:15', NULL, NULL),
+(810, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-03-10', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-10 12:01:16', '2026-03-10 12:01:16', NULL, NULL),
+(811, 55, 'JFAD@digioussolutions.com', 'JFAD', '2026-03-10', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-10 12:01:16', '2026-03-10 12:01:16', NULL, NULL),
+(812, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-10', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-10 12:01:16', '2026-03-10 12:01:16', NULL, NULL),
+(813, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-11', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-11 08:34:48', '2026-03-11 08:34:48', NULL, NULL),
+(814, 28, 'Shahmeerabbas@digioussolutions.com', 'Syed Shahmeer Abbas', '2026-03-11', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-11 08:34:48', '2026-03-11 08:34:48', NULL, NULL),
+(815, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-03-11', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-11 08:34:48', '2026-03-11 08:34:48', NULL, NULL),
+(816, 30, 'wajih@digioussolutions.com', 'Wajih ul Hasan', '2026-03-11', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-11 08:34:48', '2026-03-11 08:34:48', NULL, NULL),
+(817, 31, 'Wahajabbas@digioussolutions.com', 'Syed Wahaj Abbas ', '2026-03-11', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-11 08:34:48', '2026-03-11 08:34:48', NULL, NULL),
+(818, 32, 'Humaiz@digioussolutions.com', 'Muhammad Humaiz', '2026-03-11', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-11 08:34:48', '2026-03-11 08:34:48', NULL, NULL),
+(819, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-03-11', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-11 08:34:48', '2026-03-11 08:34:48', NULL, NULL),
+(820, 34, 'Khisal@digioussolutions.com', 'Khisal Zafar', '2026-03-11', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-11 08:34:48', '2026-03-11 08:34:48', NULL, NULL),
+(821, 35, 'Taha@digioussolutions.com', 'Muhammad Taha', '2026-03-11', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-11 08:34:48', '2026-03-11 08:34:48', NULL, NULL),
+(822, 36, 'Faiq@digioussolutions.com', 'Faiq Shahzad', '2026-03-11', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-11 08:34:48', '2026-03-11 08:34:48', NULL, NULL),
+(823, 37, 'Taimoor@digioussolutions.com', 'Taimoor Shah', '2026-03-11', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-11 08:34:48', '2026-03-11 08:34:48', NULL, NULL),
+(824, 38, 'Ebad@digioussolutions.com', 'Muhammad Ebad', '2026-03-11', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-11 08:34:48', '2026-03-11 08:34:48', NULL, NULL),
+(825, 39, 'muhammadHamza@digioussolutions.com', 'Muhammad Hamza', '2026-03-11', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-11 08:34:48', '2026-03-11 08:34:48', NULL, NULL),
+(826, 40, 'Yanish@digioussolutions.com', 'Yanish Hyder', '2026-03-11', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-11 08:34:48', '2026-03-11 08:34:48', NULL, NULL),
+(827, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-03-11', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-11 08:34:48', '2026-03-11 08:34:48', NULL, NULL),
+(828, 42, 'Tahir@digioussolutions.com', 'Tahir ', '2026-03-11', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-11 08:34:48', '2026-03-11 08:34:48', NULL, NULL),
+(829, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-03-11', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-11 08:34:48', '2026-03-11 08:34:48', NULL, NULL),
+(830, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-03-11', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-11 08:34:48', '2026-03-11 08:34:48', NULL, NULL),
+(831, 45, 'SyedAwais@digioussolutions.com', 'Syed Awais Ahmed', '2026-03-11', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-11 08:34:48', '2026-03-11 08:34:48', NULL, NULL),
+(832, 46, 'Shahrukh@digioussolutions.com', 'Shahrukh Hussain Siddiqui', '2026-03-11', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-11 08:34:48', '2026-03-11 08:34:48', NULL, NULL),
+(833, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-03-11', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-11 08:34:48', '2026-03-11 08:34:48', NULL, NULL),
+(834, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-03-11', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-11 08:34:48', '2026-03-11 08:34:48', NULL, NULL),
+(835, 55, 'JFAD@digioussolutions.com', 'JFAD', '2026-03-11', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-11 08:34:48', '2026-03-11 08:34:48', NULL, NULL),
+(836, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-11', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-11 08:34:48', '2026-03-11 08:34:48', NULL, NULL),
+(837, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-12', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-12 09:04:05', '2026-03-12 09:04:05', NULL, NULL),
+(838, 28, 'Shahmeerabbas@digioussolutions.com', 'Syed Shahmeer Abbas', '2026-03-12', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-12 09:04:05', '2026-03-12 09:04:05', NULL, NULL),
+(839, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-03-12', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-12 09:04:05', '2026-03-12 09:04:05', NULL, NULL),
+(840, 30, 'wajih@digioussolutions.com', 'Wajih ul Hasan', '2026-03-12', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-12 09:04:05', '2026-03-12 09:04:05', NULL, NULL),
+(841, 31, 'Wahajabbas@digioussolutions.com', 'Syed Wahaj Abbas ', '2026-03-12', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-12 09:04:05', '2026-03-12 09:04:05', NULL, NULL),
+(842, 32, 'Humaiz@digioussolutions.com', 'Muhammad Humaiz', '2026-03-12', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-12 09:04:05', '2026-03-12 09:04:05', NULL, NULL),
+(843, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-03-12', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-12 09:04:05', '2026-03-12 09:04:05', NULL, NULL),
+(844, 34, 'Khisal@digioussolutions.com', 'Khisal Zafar', '2026-03-12', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-12 09:04:05', '2026-03-12 09:04:05', NULL, NULL),
+(845, 35, 'Taha@digioussolutions.com', 'Muhammad Taha', '2026-03-12', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-12 09:04:05', '2026-03-12 09:04:05', NULL, NULL),
+(846, 36, 'Faiq@digioussolutions.com', 'Faiq Shahzad', '2026-03-12', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-12 09:04:05', '2026-03-12 09:04:05', NULL, NULL),
+(847, 37, 'Taimoor@digioussolutions.com', 'Taimoor Shah', '2026-03-12', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-12 09:04:05', '2026-03-12 09:04:05', NULL, NULL),
+(848, 38, 'Ebad@digioussolutions.com', 'Muhammad Ebad', '2026-03-12', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-12 09:04:05', '2026-03-12 09:04:05', NULL, NULL),
+(849, 39, 'muhammadHamza@digioussolutions.com', 'Muhammad Hamza', '2026-03-12', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-12 09:04:05', '2026-03-12 09:04:05', NULL, NULL),
+(850, 40, 'Yanish@digioussolutions.com', 'Yanish Hyder', '2026-03-12', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-12 09:04:05', '2026-03-12 09:04:05', NULL, NULL),
+(851, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-03-12', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-12 09:04:05', '2026-03-12 09:04:05', NULL, NULL),
+(852, 42, 'Tahir@digioussolutions.com', 'Tahir ', '2026-03-12', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-12 09:04:05', '2026-03-12 09:04:05', NULL, NULL),
+(853, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-03-12', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-12 09:04:05', '2026-03-12 09:04:05', NULL, NULL),
+(854, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-03-12', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-12 09:04:05', '2026-03-12 09:04:05', NULL, NULL),
+(855, 45, 'SyedAwais@digioussolutions.com', 'Syed Awais Ahmed', '2026-03-12', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-12 09:04:06', '2026-03-12 09:04:06', NULL, NULL),
+(856, 46, 'Shahrukh@digioussolutions.com', 'Shahrukh Hussain Siddiqui', '2026-03-12', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-12 09:04:06', '2026-03-12 09:04:06', NULL, NULL),
+(857, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-03-12', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-12 09:04:06', '2026-03-12 09:04:06', NULL, NULL),
+(858, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-03-12', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-12 09:04:06', '2026-03-12 09:04:06', NULL, NULL),
+(859, 55, 'JFAD@digioussolutions.com', 'JFAD', '2026-03-12', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-12 09:04:06', '2026-03-12 09:04:06', NULL, NULL),
+(860, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-12', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-12 09:04:06', '2026-03-12 09:04:06', NULL, NULL),
+(861, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-13', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-13 13:03:04', '2026-03-13 13:03:04', NULL, NULL),
+(862, 28, 'Shahmeerabbas@digioussolutions.com', 'Syed Shahmeer Abbas', '2026-03-13', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-13 13:03:04', '2026-03-13 13:03:04', NULL, NULL),
+(863, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-03-13', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-13 13:03:04', '2026-03-13 13:03:04', NULL, NULL),
+(864, 30, 'wajih@digioussolutions.com', 'Wajih ul Hasan', '2026-03-13', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-13 13:03:04', '2026-03-13 13:03:04', NULL, NULL),
+(865, 31, 'Wahajabbas@digioussolutions.com', 'Syed Wahaj Abbas ', '2026-03-13', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-13 13:03:04', '2026-03-13 13:03:04', NULL, NULL),
+(866, 32, 'Humaiz@digioussolutions.com', 'Muhammad Humaiz', '2026-03-13', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-13 13:03:04', '2026-03-13 13:03:04', NULL, NULL),
+(867, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-03-13', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-13 13:03:04', '2026-03-13 13:03:04', NULL, NULL),
+(868, 34, 'Khisal@digioussolutions.com', 'Khisal Zafar', '2026-03-13', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-13 13:03:04', '2026-03-13 13:03:04', NULL, NULL),
+(869, 35, 'Taha@digioussolutions.com', 'Muhammad Taha', '2026-03-13', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-13 13:03:04', '2026-03-13 13:03:04', NULL, NULL),
+(870, 36, 'Faiq@digioussolutions.com', 'Faiq Shahzad', '2026-03-13', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-13 13:03:04', '2026-03-13 13:03:04', NULL, NULL),
+(871, 37, 'Taimoor@digioussolutions.com', 'Taimoor Shah', '2026-03-13', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-13 13:03:04', '2026-03-13 13:03:04', NULL, NULL),
+(872, 38, 'Ebad@digioussolutions.com', 'Muhammad Ebad', '2026-03-13', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-13 13:03:04', '2026-03-13 13:03:04', NULL, NULL),
+(873, 39, 'muhammadHamza@digioussolutions.com', 'Muhammad Hamza', '2026-03-13', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-13 13:03:04', '2026-03-13 13:03:04', NULL, NULL),
+(874, 40, 'Yanish@digioussolutions.com', 'Yanish Hyder', '2026-03-13', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-13 13:03:04', '2026-03-13 13:03:04', NULL, NULL),
+(875, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-03-13', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-13 13:03:04', '2026-03-13 13:03:04', NULL, NULL),
+(876, 42, 'Tahir@digioussolutions.com', 'Tahir ', '2026-03-13', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-13 13:03:04', '2026-03-13 13:03:04', NULL, NULL),
+(877, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-03-13', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-13 13:03:04', '2026-03-13 13:03:04', NULL, NULL),
+(878, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-03-13', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-13 13:03:04', '2026-03-13 13:03:04', NULL, NULL),
+(879, 45, 'SyedAwais@digioussolutions.com', 'Syed Awais Ahmed', '2026-03-13', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-13 13:03:04', '2026-03-13 13:03:04', NULL, NULL),
+(880, 46, 'Shahrukh@digioussolutions.com', 'Shahrukh Hussain Siddiqui', '2026-03-13', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-13 13:03:04', '2026-03-13 13:03:04', NULL, NULL),
+(881, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-03-13', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-13 13:03:04', '2026-03-13 13:03:04', NULL, NULL),
+(882, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-03-13', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-13 13:03:04', '2026-03-13 13:03:04', NULL, NULL),
+(883, 55, 'JFAD@digioussolutions.com', 'JFAD', '2026-03-13', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-13 13:03:04', '2026-03-13 13:03:04', NULL, NULL),
+(884, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-13', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-13 13:03:04', '2026-03-13 13:03:04', NULL, NULL),
+(885, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-16', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
+(886, 28, 'Shahmeerabbas@digioussolutions.com', 'Syed Shahmeer Abbas', '2026-03-16', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
+(887, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-03-16', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
+(888, 30, 'wajih@digioussolutions.com', 'Wajih ul Hasan', '2026-03-16', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
+(889, 31, 'Wahajabbas@digioussolutions.com', 'Syed Wahaj Abbas ', '2026-03-16', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
+(890, 32, 'Humaiz@digioussolutions.com', 'Muhammad Humaiz', '2026-03-16', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
+(891, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-03-16', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
+(892, 34, 'Khisal@digioussolutions.com', 'Khisal Zafar', '2026-03-16', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
+(893, 35, 'Taha@digioussolutions.com', 'Muhammad Taha', '2026-03-16', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
+(894, 36, 'Faiq@digioussolutions.com', 'Faiq Shahzad', '2026-03-16', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
+(895, 37, 'Taimoor@digioussolutions.com', 'Taimoor Shah', '2026-03-16', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
+(896, 38, 'Ebad@digioussolutions.com', 'Muhammad Ebad', '2026-03-16', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
+(897, 39, 'muhammadHamza@digioussolutions.com', 'Muhammad Hamza', '2026-03-16', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
+(898, 40, 'Yanish@digioussolutions.com', 'Yanish Hyder', '2026-03-16', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
+(899, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-03-16', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
+(900, 42, 'Tahir@digioussolutions.com', 'Tahir ', '2026-03-16', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
+(901, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-03-16', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
+(902, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-03-16', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
+(903, 45, 'SyedAwais@digioussolutions.com', 'Syed Awais Ahmed', '2026-03-16', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
+(904, 46, 'Shahrukh@digioussolutions.com', 'Shahrukh Hussain Siddiqui', '2026-03-16', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
+(905, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-03-16', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
+(906, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-03-16', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
+(907, 55, 'JFAD@digioussolutions.com', 'JFAD', '2026-03-16', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
+(908, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-16', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
+(909, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-17', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
+(910, 28, 'Shahmeerabbas@digioussolutions.com', 'Syed Shahmeer Abbas', '2026-03-17', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
+(911, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-03-17', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
+(912, 30, 'wajih@digioussolutions.com', 'Wajih ul Hasan', '2026-03-17', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
+(913, 31, 'Wahajabbas@digioussolutions.com', 'Syed Wahaj Abbas ', '2026-03-17', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
+(914, 32, 'Humaiz@digioussolutions.com', 'Muhammad Humaiz', '2026-03-17', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
+(915, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-03-17', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
+(916, 34, 'Khisal@digioussolutions.com', 'Khisal Zafar', '2026-03-17', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
+(917, 35, 'Taha@digioussolutions.com', 'Muhammad Taha', '2026-03-17', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
+(918, 36, 'Faiq@digioussolutions.com', 'Faiq Shahzad', '2026-03-17', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
+(919, 37, 'Taimoor@digioussolutions.com', 'Taimoor Shah', '2026-03-17', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
+(920, 38, 'Ebad@digioussolutions.com', 'Muhammad Ebad', '2026-03-17', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
+(921, 39, 'muhammadHamza@digioussolutions.com', 'Muhammad Hamza', '2026-03-17', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
+(922, 40, 'Yanish@digioussolutions.com', 'Yanish Hyder', '2026-03-17', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
+(923, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-03-17', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
+(924, 42, 'Tahir@digioussolutions.com', 'Tahir ', '2026-03-17', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
+(925, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-03-17', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
+(926, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-03-17', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
+(927, 45, 'SyedAwais@digioussolutions.com', 'Syed Awais Ahmed', '2026-03-17', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
+(928, 46, 'Shahrukh@digioussolutions.com', 'Shahrukh Hussain Siddiqui', '2026-03-17', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
+(929, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-03-17', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
+(930, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-03-17', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
+(931, 55, 'JFAD@digioussolutions.com', 'JFAD', '2026-03-17', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
+(932, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-17', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -1214,7 +1692,9 @@ CREATE TABLE `employee_allowances` (
 
 INSERT INTO `employee_allowances` (`id`, `employee_id`, `allowance_name`, `allowance_amount`, `currency`, `exchange_rate`, `created_at`) VALUES
 (6, 54, 'huhnj', 998.00, 'PKR', 1.0000, '2026-02-10 19:33:32'),
-(7, 55, 'smms', 111.00, 'PKR', 1.0000, '2026-02-13 18:25:29');
+(7, 55, 'smms', 111.00, 'PKR', 1.0000, '2026-02-13 18:25:29'),
+(8, 39, 'happy', 1000.00, 'PKR', 1.0000, '2026-03-12 17:51:28'),
+(9, 57, 'Happy', 1234.00, 'PKR', 1.0000, '2026-03-17 08:53:40');
 
 -- --------------------------------------------------------
 
@@ -1623,7 +2103,6 @@ INSERT INTO `Employee_Attendance` (`id`, `employee_id`, `email`, `name`, `attend
 (352, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-02-16', '14:29:37', '17:29:40', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 180, 180, 540, 0, 0.00, 1, 0, NULL, 'Web Browser', NULL, '2026-02-16 09:29:37', '2026-02-18 12:29:40'),
 (354, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-02-18', '17:30:01', '06:43:00', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 793, 793, 540, 253, 4.22, 0, 450, 'present', 'Web Browser', NULL, '2026-02-18 12:30:01', '2026-02-28 18:51:36'),
 (355, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-02-18', '19:47:59', '18:09:03', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1342, 1342, 540, 802, 13.37, 1, 0, NULL, 'Web Browser', NULL, '2026-02-18 14:47:59', '2026-02-20 13:09:03'),
-(356, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-02-20', '18:09:12', NULL, 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Web Browser', NULL, '2026-02-20 13:09:12', '2026-02-20 13:09:12'),
 (357, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-02-19', NULL, NULL, 'Paid Leave', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 1, 0, 'Paid leave (casual) approved by HR', NULL, NULL, '2026-02-20 13:17:29', '2026-02-20 13:17:29');
 
 -- --------------------------------------------------------
@@ -1695,7 +2174,8 @@ INSERT INTO `employee_bank_accounts` (`id`, `employee_id`, `account_number`, `ac
 (21, 47, 'DG-0076-1768672881731', 'Muhammad Uzair', 'NO Bank', NULL, NULL, 'Savings', 1, '2026-01-17 18:01:21', '2026-01-17 18:01:21'),
 (24, 54, 'DG-003-1770752012512', 'IBAN 365', 'NBP', NULL, NULL, 'Savings', 1, '2026-02-10 19:33:32', '2026-02-10 19:33:32'),
 (25, 55, 'DG-004-1771007129838', 'jcjjfj', 'HBL', NULL, NULL, 'Savings', 1, '2026-02-13 18:25:29', '2026-02-13 18:25:29'),
-(26, 56, 'DG-098-1771426022582', 'IBN PKR 123', 'HBL', NULL, NULL, 'Savings', 1, '2026-02-18 14:47:02', '2026-02-18 14:47:02');
+(26, 56, 'DG-098-1771426022582', 'IBN PKR 123', 'HBL', NULL, NULL, 'Savings', 1, '2026-02-18 14:47:02', '2026-02-18 14:47:02'),
+(27, 57, 'DG-009-1773737620229', 'MHUNAIN', 'EasyPaisaa', NULL, NULL, 'Savings', 1, '2026-03-17 08:53:40', '2026-03-17 08:53:40');
 
 -- --------------------------------------------------------
 
@@ -2049,7 +2529,8 @@ CREATE TABLE `Employee_Checkout_Missing` (
 INSERT INTO `Employee_Checkout_Missing` (`id`, `original_attendance_id`, `employee_id`, `email`, `name`, `attendance_date`, `check_in_time`, `check_out_time`, `status`, `total_breaks_taken`, `smoke_break_count`, `dinner_break_count`, `washroom_break_count`, `prayer_break_count`, `smoke_break_duration_minutes`, `dinner_break_duration_minutes`, `washroom_break_duration_minutes`, `prayer_break_duration_minutes`, `total_break_duration_minutes`, `gross_working_time_minutes`, `net_working_time_minutes`, `expected_working_time_minutes`, `overtime_minutes`, `overtime_hours`, `on_time`, `late_by_minutes`, `remarks`, `device_info`, `ip_address`, `missing_reason`, `employee_explanation`, `hr_notes`, `resolved_by`, `resolved_at`, `is_resolved`, `moved_from_attendance_at`, `created_at`, `updated_at`) VALUES
 (1, 349, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-02-13', '18:03:57', NULL, 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1405, 1405, 540, 865, 14.42, 1, 0, NULL, 'Web Browser', NULL, 'Checkout Missing - Auto-detected by system', NULL, NULL, NULL, NULL, 0, '2026-02-20 16:59:01', '2026-02-20 16:59:01', '2026-02-20 16:59:01'),
 (2, 351, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-02-16', '14:29:02', NULL, 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 179, 179, 540, 0, 0.00, 1, 0, NULL, 'Web Browser', NULL, 'Checkout Missing - Auto-detected by system', NULL, NULL, NULL, NULL, 0, '2026-02-20 16:59:01', '2026-02-20 16:59:01', '2026-02-20 16:59:01'),
-(3, 353, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-02-18', '17:29:46', NULL, 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Web Browser', NULL, 'Checkout Missing - Auto-detected by system', NULL, NULL, NULL, NULL, 0, '2026-02-20 16:59:01', '2026-02-20 16:59:01', '2026-02-20 16:59:01');
+(3, 353, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-02-18', '17:29:46', NULL, 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Web Browser', NULL, 'Checkout Missing - Auto-detected by system', NULL, NULL, NULL, NULL, 0, '2026-02-20 16:59:01', '2026-02-20 16:59:01', '2026-02-20 16:59:01'),
+(4, 356, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-02-20', '18:09:12', NULL, 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Web Browser', NULL, 'Checkout Missing - Auto-detected by system', NULL, NULL, NULL, NULL, 0, '2026-03-11 08:34:48', '2026-03-11 08:34:48', '2026-03-11 08:34:48');
 
 -- --------------------------------------------------------
 
@@ -2072,7 +2553,8 @@ CREATE TABLE `employee_dynamic_resources` (
 INSERT INTO `employee_dynamic_resources` (`id`, `employee_id`, `resource_name`, `resource_serial`, `created_at`) VALUES
 (1, 54, 'hunain', 'yuu', '2026-02-10 19:33:32'),
 (2, 55, 'aaa', '1123aa', '2026-02-13 18:25:29'),
-(3, 56, 'resourse', '123', '2026-02-18 14:47:02');
+(3, 56, 'resourse', '123', '2026-02-18 14:47:02'),
+(4, 57, 'Laptop', 'DELL G6', '2026-03-17 08:53:40');
 
 -- --------------------------------------------------------
 
@@ -2152,7 +2634,8 @@ INSERT INTO `employee_leaves` (`id`, `employee_id`, `email`, `name`, `casual_lea
 (21, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', 0, 8, 0, 8, 0, 12, NULL, NULL, 'Auto-populated from employee_onboarding', '2026-02-12 14:20:17', '2026-02-12 14:20:17'),
 (22, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', 0, 8, 0, 8, 0, 12, NULL, NULL, 'Auto-populated from employee_onboarding', '2026-02-12 14:20:17', '2026-02-12 14:20:17'),
 (23, 55, 'JFAD@digioussolutions.com', 'JFAD', 0, 8, 0, 8, 0, 12, NULL, NULL, 'Auto-created on employee onboarding', '2026-02-13 18:25:29', '2026-02-13 18:25:29'),
-(24, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', 1, 8, 0, 8, 0, 12, NULL, NULL, 'Auto-created on employee onboarding', '2026-02-18 14:47:02', '2026-02-20 13:17:29');
+(24, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', 1, 8, 0, 8, 0, 12, NULL, NULL, 'Auto-created on employee onboarding', '2026-02-18 14:47:02', '2026-02-20 13:17:29'),
+(25, 57, 'mhunaindigious.com@digioussolutions.com', 'MHunain', 0, 8, 0, 8, 0, 12, NULL, NULL, 'Auto-created on employee onboarding', '2026-03-17 08:53:40', '2026-03-17 08:53:40');
 
 -- --------------------------------------------------------
 
@@ -2222,10 +2705,11 @@ INSERT INTO `employee_onboarding` (`id`, `employee_id`, `name`, `email`, `passwo
 (44, 'DG-0010', 'Abdul Moiz Khan', 'Moiz@digioussolutions.com', '$2a$10$jQvx3hc/X/k7G./4dVBP0e.fpj5LBNpb6ooCeZOtDrNcIFW9J1phK', '03181210257', 'Production', 'Production', 'Permanent', '2023-03-01', '2023-06-01', 'Flat 33/16 Block H FC Area Karachi', '03121266937', 1, '99850106508808', 'Abdul Moiz', 'Meezan', NULL, '4210172776041', '2020-12-01', '2030-12-01', 'Manager', 'Active', '2026-01-16 22:07:59', '2026-02-19 03:50:30', NULL, NULL, '{\"technical\":[\"React\"],\"soft\":[\"Communication\"]}', '[]', '[{\"id\":18,\"employee_id\":44,\"laptop\":0,\"laptop_serial\":null,\"charger\":0,\"charger_serial\":null,\"mouse\":0,\"mouse_serial\":null,\"keyboard\":0,\"keyboard_serial\":null,\"monitor\":0,\"monitor_serial\":null,\"mobile\":0,\"mobile_serial\":null,\"resources_note\":null,\"allocated_date\":\"2026-01-16T22:07:59.000Z\",\"returned_date\":null}]', NULL, NULL, NULL, NULL),
 (45, 'DG-0072', 'Syed Awais Ahmed', 'SyedAwais@digioussolutions.com', '$2a$10$a3F10KDgEKPOla9oJEeoO.cMaCUWejePT6F8RwxhYsc4CUDXhGL5K', '03372117919', 'Marketing', 'Social Media', 'MTO', '2025-07-07', '2026-01-01', 'House # 401 Sector 7D2 North Karachi', '03363707375', 1, '03363707375', 'Syed Abdal Ahmed', 'Nayapay', NULL, '4210193798979', '2026-01-01', '2026-01-01', 'Management Trainee Officer', 'Active', '2026-01-17 17:35:08', '2026-01-17 17:35:08', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
 (46, 'DG-0047', 'Shahrukh Hussain Siddiqui', 'Shahrukh@digioussolutions.com', '$2a$10$68AQ5ssgKipU4Usd5uafUOfE7A9/gPBr.3p8ZAo/oxej51u8GVmAm', '03402143935', 'Production', 'SEO', 'Part-Time', '2024-10-28', '2025-01-28', 'House # L26 Sector 11K North Karachi', '03333999602', 1, '1921295604316', 'Shahrukh Hussain Siddiqui', 'UBL', NULL, '4210127286961', '2016-05-01', '2026-05-01', 'SEO Executive', 'Active', '2026-01-17 17:44:00', '2026-01-17 17:44:00', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(47, 'DG-0076', 'Uzair Siddiqui', 'Uzair@digioussolutions.com', '$2a$10$AKIDP6Plp6udoVYk09x0jeeoS8pzr3eHokWwunjZ290NDuaFMDkJW', '03112166303', 'Sales', 'Sales', 'Probation', '2025-07-10', '2025-07-10', 'House # 62 Block 17 Sector 5G New Karachi', '03144260099', 1, NULL, 'Muhammad Uzair', 'NO Bank', NULL, '4210110848295', '2023-08-01', '2033-08-01', 'Sales Executive', 'Active', '2026-01-17 18:01:21', '2026-01-17 18:01:21', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(47, 'DG-0076', 'Uzair Siddiqui', 'Uzair@digioussolutions.com', '$2a$10$AKIDP6Plp6udoVYk09x0jeeoS8pzr3eHokWwunjZ290NDuaFMDkJW', '03112166303', 'Sales', 'Sales', 'Probation', '2025-07-10', '2025-07-10', 'Unknown', '03144260099', 1, NULL, 'Muhammad Uzair', 'NO Bank', NULL, '42101-510xxxx-x', '2023-08-01', '2033-08-01', 'Sales Executive', 'Active', '2026-01-17 18:01:21', '2026-03-10 17:57:27', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
 (54, 'DG-003', 'Khalid Khan', 'khalid.khan@digioussolutions.com', '$2a$10$2zY/NffZK9nNoO3nFkNQ5OawgzcFqvDXZDcW0khIzjXFGGvOZa2rG', '0918276355', 'Production', 'America', 'Permanent', '2025-12-01', '2026-02-11', 'hunain', '0981726354', 1, 'IBAN 365', 'IBAN 365', 'NBP', NULL, '1234567182903', '2026-02-01', '2026-02-27', 'SMA', 'Active', '2026-02-10 19:33:32', '2026-02-10 19:33:32', '2002-02-01', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
 (55, 'DG-004', 'JFAD', 'JFAD@digioussolutions.com', '$2a$10$QXdtM9ge8NSxW/bVAzvL4.GZ69aPZmc/a/o.TVhceDL3KwoUKQs66', '091827354566', 'Sales', 'sss', 'Part-Time', '2026-02-05', '2026-02-27', 'jnvjknf', '001929882', 1, 'jcjjcj', 'jcjjfj', 'HBL', NULL, '12299938847745', '2026-02-13', '2026-02-13', 'sss', 'Active', '2026-02-13 18:25:29', '2026-02-13 18:25:29', '2026-02-05', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(56, 'DG-098', 'Muhammad Hunain', 'muhammad.hunain@digioussolutions.com', '$2a$10$IYxVKElO2Y.7xWVtSciH/Oc2KMfk.Riac/T2/6eobmP4R.rgYCMkq', '0928376514', 'Operations', 'Manager', 'Permanent', '2026-02-01', '2026-02-18', 'Shan Residency Block K SB-44', '03123598003', 1, '09878990998', 'IBN PKR 123', 'HBL', NULL, '42101-5103653-5', '2024-09-02', '2028-07-28', 'SM OPERt', 'Active', '2026-02-18 14:47:02', '2026-02-18 14:47:02', '2002-09-15', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+(56, 'DG-098', 'Muhammad Hunain', 'muhammad.hunain@digioussolutions.com', '$2a$10$IYxVKElO2Y.7xWVtSciH/Oc2KMfk.Riac/T2/6eobmP4R.rgYCMkq', '0928376514', 'Operations', 'Manager', 'Permanent', '2026-02-01', '2026-02-18', 'Shan Residency Block K SB-44', '03123598003', 1, '09878990998', 'IBN PKR 123', 'HBL', NULL, '42101-5103653-5', '2024-09-02', '2028-07-28', 'SM OPERt', 'Active', '2026-02-18 14:47:02', '2026-02-18 14:47:02', '2002-09-15', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(57, 'DG-009', 'MHunain', 'mhunaindigious.com@digioussolutions.com', '$2a$10$JxqJWgk7mhEubP.p0zyrDOH0Hh4ahYjO4zafSyPXqVL.pZ3rZ2vB6', '09182766355', 'Sales', 'POS', 'Permanent', '2026-03-02', '2026-03-02', 'this is test', '01882993887', 1, '09182766355', 'MHUNAIN', 'EasyPaisaa', NULL, '1234-5678901-1', '2026-03-02', '2026-03-27', 'Mid-Level', 'Active', '2026-03-17 08:53:40', '2026-03-17 08:53:40', '2026-03-05', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
 --
 -- Triggers `employee_onboarding`
@@ -2426,7 +2910,8 @@ INSERT INTO `employee_resources` (`id`, `employee_id`, `laptop`, `laptop_serial`
 (21, 47, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0, NULL, NULL, '2026-01-17 18:01:21', NULL),
 (24, 54, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0, NULL, NULL, '2026-02-10 19:33:32', NULL),
 (25, 55, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 'aasd', '2026-02-13 18:25:29', NULL),
-(26, 56, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0, NULL, NULL, '2026-02-18 14:47:02', NULL);
+(26, 56, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0, NULL, NULL, '2026-02-18 14:47:02', NULL),
+(27, 57, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0, NULL, NULL, '2026-03-17 08:53:40', NULL);
 
 -- --------------------------------------------------------
 
@@ -2459,7 +2944,7 @@ INSERT INTO `employee_salary` (`id`, `employee_id`, `base_salary`, `total_salary
 (10, 36, 20000.00, 20000.00, '2026-01-16 21:05:29'),
 (11, 37, 2.00, 2.00, '2026-01-16 21:10:58'),
 (12, 38, 19998.00, 19998.00, '2026-01-16 21:15:23'),
-(13, 39, 20000.00, 20000.00, '2026-01-16 21:20:04'),
+(13, 39, 20000.00, 21000.00, '2026-03-12 17:51:28'),
 (14, 40, 19997.00, 19997.00, '2026-01-16 21:24:53'),
 (15, 41, 20000.00, 20000.00, '2026-01-16 21:29:38'),
 (16, 42, 30000.00, 30000.00, '2026-01-16 21:34:31'),
@@ -2467,10 +2952,11 @@ INSERT INTO `employee_salary` (`id`, `employee_id`, `base_salary`, `total_salary
 (18, 44, 29998.00, 29998.00, '2026-01-16 22:07:59'),
 (19, 45, 20000.00, 20000.00, '2026-01-17 17:35:08'),
 (20, 46, 19998.00, 19998.00, '2026-01-17 17:44:00'),
-(21, 47, 19998.00, 19998.00, '2026-01-17 18:01:21'),
+(21, 47, 0.00, 0.00, '2026-03-10 17:57:27'),
 (24, 54, 78600.00, 79598.00, '2026-02-10 19:33:32'),
 (25, 55, 1234.00, 1345.00, '2026-02-13 18:25:29'),
-(26, 56, 100000.00, 100000.00, '2026-02-18 14:47:02');
+(26, 56, 100000.00, 100000.00, '2026-02-18 14:47:02'),
+(27, 57, 100000.00, 101234.00, '2026-03-17 08:53:40');
 
 -- --------------------------------------------------------
 
@@ -2503,6 +2989,66 @@ CREATE TABLE `employee_social_links` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `expenses`
+--
+
+CREATE TABLE `expenses` (
+  `id` int(11) NOT NULL,
+  `category_id` int(11) DEFAULT NULL,
+  `category_name` varchar(100) NOT NULL COMMENT 'Denormalized snapshot at time of entry',
+  `amount` decimal(12,2) NOT NULL,
+  `note` text DEFAULT NULL,
+  `expense_date` date NOT NULL,
+  `expense_time` time NOT NULL,
+  `created_by` int(11) DEFAULT NULL COMMENT 'admin_users.id',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Company expenses — denormalized category name for audit trail';
+
+--
+-- Dumping data for table `expenses`
+--
+
+INSERT INTO `expenses` (`id`, `category_id`, `category_name`, `amount`, `note`, `expense_date`, `expense_time`, `created_by`, `created_at`, `updated_at`) VALUES
+(2, 1, 'Salaries', 500.00, 'test', '2026-03-09', '12:29:33', NULL, '2026-03-09 07:29:33', '2026-03-09 07:29:33'),
+(3, 1, 'Salaries', 500.00, 'test', '2026-03-09', '12:30:16', NULL, '2026-03-09 07:30:16', '2026-03-09 07:30:16'),
+(4, 1, 'Salaries', 500.00, 'test', '2026-03-09', '12:31:32', NULL, '2026-03-09 07:31:32', '2026-03-09 07:31:32'),
+(5, 3, 'Travel', 2500.00, 'Taxi to client meeting', '2026-03-09', '12:35:35', 1, '2026-03-09 07:35:35', '2026-03-09 07:35:35'),
+(7, 5, 'Marketing', 56700.00, 'this is test 2', '2026-03-09', '22:32:52', 1, '2026-03-09 17:32:52', '2026-03-09 17:33:00');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `expense_categories`
+--
+
+CREATE TABLE `expense_categories` (
+  `id` int(11) NOT NULL,
+  `name` varchar(100) NOT NULL,
+  `description` varchar(255) DEFAULT NULL,
+  `color` varchar(20) DEFAULT '#3B82F6',
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Admin-managed expense categories';
+
+--
+-- Dumping data for table `expense_categories`
+--
+
+INSERT INTO `expense_categories` (`id`, `name`, `description`, `color`, `is_active`, `created_at`, `updated_at`) VALUES
+(1, 'Salaries', 'Employee salary payments', '#3B82F6', 1, '2026-03-09 06:54:58', '2026-03-09 06:54:58'),
+(2, 'Office Supplies', 'Stationery and office consumables', '#8B5CF6', 1, '2026-03-09 06:54:58', '2026-03-09 06:54:58'),
+(3, 'Travel', 'Travel and transportation costs', '#10B981', 1, '2026-03-09 06:54:58', '2026-03-09 06:54:58'),
+(4, 'Utilities', 'Electricity, internet, phone', '#F59E0B', 1, '2026-03-09 06:54:58', '2026-03-09 06:54:58'),
+(5, 'Marketing', 'Advertising and promotions....', '#EF4444', 1, '2026-03-09 06:54:58', '2026-03-11 14:58:53'),
+(6, 'Miscellaneous', 'Other uncategorised expenses', '#6B7280', 1, '2026-03-09 06:54:58', '2026-03-09 06:54:58'),
+(25, 'test', 'this is test', '#3B82F6', 1, '2026-03-09 07:40:00', '2026-03-11 17:14:10'),
+(32, 'test1', '', '#3B82F6', 0, '2026-03-09 17:31:38', '2026-03-12 17:52:33');
 
 -- --------------------------------------------------------
 
@@ -2582,7 +3128,8 @@ INSERT INTO `onboarding_progress` (`id`, `employee_id`, `step_1_basic_info`, `st
 (37, 47, 1, NULL, 1, NULL, 1, NULL, 1, NULL, 1, NULL, 1, NULL, 100, 1, NULL),
 (40, 54, 1, NULL, 1, NULL, 1, NULL, 1, NULL, 1, NULL, 1, NULL, 100, 1, NULL),
 (41, 55, 1, NULL, 1, NULL, 1, NULL, 1, NULL, 1, NULL, 1, NULL, 100, 1, NULL),
-(42, 56, 1, NULL, 1, NULL, 1, NULL, 1, NULL, 1, NULL, 1, NULL, 100, 1, NULL);
+(42, 56, 1, NULL, 1, NULL, 1, NULL, 1, NULL, 1, NULL, 1, NULL, 100, 1, NULL),
+(43, 57, 1, NULL, 1, NULL, 1, NULL, 1, NULL, 1, NULL, 1, NULL, 100, 1, NULL);
 
 -- --------------------------------------------------------
 
@@ -2635,6 +3182,9 @@ CREATE TABLE `payroll_records` (
   `leave_deduction` decimal(12,2) DEFAULT 0.00,
   `total_deductions` decimal(12,2) DEFAULT 0.00,
   `gross_salary` decimal(12,2) DEFAULT 0.00 COMMENT 'base_salary + total_allowances',
+  `bonus` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `adjustment` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `adjustment_reason` text DEFAULT NULL,
   `net_salary` decimal(12,2) DEFAULT 0.00 COMMENT 'gross_salary - total_deductions',
   `status` enum('pending','processing','success','failed') DEFAULT 'pending',
   `notes` text DEFAULT NULL,
@@ -2646,55 +3196,127 @@ CREATE TABLE `payroll_records` (
 -- Dumping data for table `payroll_records`
 --
 
-INSERT INTO `payroll_records` (`id`, `employee_id`, `month`, `year`, `pay_period_start`, `pay_period_end`, `days_in_month`, `issue_date`, `base_salary`, `daily_rate`, `total_allowances`, `working_days`, `present_days`, `absent_days`, `late_days`, `leave_days`, `half_days`, `paid_leave_days`, `late_deduction_days`, `absent_deduction`, `late_deduction`, `leave_deduction`, `total_deductions`, `gross_salary`, `net_salary`, `status`, `notes`, `generated_at`, `updated_at`) VALUES
-(313, 44, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 29998.00, 999.93, 0.00, 28, 8, 8, 7, 2, 0, 2, 2, 7999.47, 1999.87, 0.00, 9999.33, 29998.00, 19998.67, 'pending', 'Paid leaves: 2 (2 casual [2 from leave balance]). Total absent: 10, Paid: 2, Unpaid: 8', '2026-03-04 18:59:53', '2026-03-04 18:59:53'),
-(314, 36, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 20000.00, 666.67, 0.00, 28, 6, 13, 3, 0, 0, 0, 1, 8666.67, 666.67, 0.00, 9333.33, 20000.00, 10666.67, 'pending', 'Unpaid absences: 13', '2026-03-04 18:59:53', '2026-03-04 18:59:53'),
-(315, 55, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 1234.00, 41.13, 111.00, 28, 0, 10, 0, 0, 0, 0, 0, 411.33, 0.00, 0.00, 411.33, 1345.00, 933.67, 'pending', 'Unpaid absences: 10', '2026-03-04 18:59:53', '2026-03-04 18:59:53'),
-(316, 54, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 78600.00, 2620.00, 998.00, 28, 0, 14, 0, 0, 0, 0, 0, 36680.00, 0.00, 0.00, 36680.00, 79598.00, 42918.00, 'pending', 'Unpaid absences: 14', '2026-03-04 18:59:53', '2026-03-04 18:59:53'),
-(317, 34, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 20000.00, 666.67, 0.00, 28, 7, 13, 4, 0, 0, 0, 1, 8666.67, 666.67, 0.00, 9333.33, 20000.00, 10666.67, 'pending', 'Unpaid absences: 13', '2026-03-04 18:59:53', '2026-03-04 18:59:53'),
-(318, 41, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 20000.00, 666.67, 0.00, 28, 7, 13, 5, 0, 0, 0, 1, 8666.67, 666.67, 0.00, 9333.33, 20000.00, 10666.67, 'pending', 'Unpaid absences: 13', '2026-03-04 18:59:53', '2026-03-04 18:59:53'),
-(319, 38, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 19998.00, 666.60, 0.00, 28, 6, 13, 5, 0, 0, 0, 1, 8665.80, 666.60, 0.00, 9332.40, 19998.00, 10665.60, 'pending', 'Unpaid absences: 13', '2026-03-04 18:59:53', '2026-03-04 18:59:53'),
-(320, 43, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 25000.00, 833.33, 0.00, 28, 0, 14, 0, 0, 0, 0, 0, 11666.67, 0.00, 0.00, 11666.67, 25000.00, 13333.33, 'pending', 'Unpaid absences: 14', '2026-03-04 18:59:53', '2026-03-04 18:59:53'),
-(321, 39, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 20000.00, 666.67, 0.00, 28, 5, 14, 2, 0, 0, 0, 0, 9333.33, 0.00, 0.00, 9333.33, 20000.00, 10666.67, 'pending', 'Unpaid absences: 14', '2026-03-04 18:59:53', '2026-03-04 18:59:53'),
-(322, 27, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 30000.00, 1000.00, 0.00, 28, 6, 10, 2, 0, 0, 0, 0, 10000.00, 0.00, 0.00, 10000.00, 30000.00, 20000.00, 'pending', 'Unpaid absences: 10', '2026-03-04 18:59:53', '2026-03-04 18:59:53'),
-(323, 32, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 20000.00, 666.67, 0.00, 28, 7, 13, 7, 0, 0, 0, 2, 8666.67, 1333.33, 0.00, 10000.00, 20000.00, 10000.00, 'pending', 'Unpaid absences: 13', '2026-03-04 18:59:53', '2026-03-04 18:59:53'),
-(324, 56, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 100000.00, 3333.33, 0.00, 28, 2, 4, 0, 1, 0, 2, 0, 13333.33, 0.00, 0.00, 13333.33, 100000.00, 86666.67, 'pending', 'Paid leaves: 1 (1 casual [1 from leave balance]). Total absent: 5, Paid: 1, Unpaid: 4', '2026-03-04 18:59:53', '2026-03-04 18:59:53'),
-(325, 33, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 20000.00, 666.67, 0.00, 28, 7, 13, 1, 0, 0, 0, 0, 8666.67, 0.00, 0.00, 8666.67, 20000.00, 11333.33, 'pending', 'Unpaid absences: 13', '2026-03-04 18:59:53', '2026-03-04 18:59:53'),
-(326, 35, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 20000.00, 666.67, 0.00, 28, 7, 13, 4, 0, 0, 0, 1, 8666.67, 666.67, 0.00, 9333.33, 20000.00, 10666.67, 'pending', 'Unpaid absences: 13', '2026-03-04 18:59:53', '2026-03-04 18:59:53'),
-(327, 46, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 19998.00, 666.60, 0.00, 28, 7, 13, 1, 0, 0, 0, 0, 8665.80, 0.00, 0.00, 8665.80, 19998.00, 11332.20, 'pending', 'Unpaid absences: 13', '2026-03-04 18:59:53', '2026-03-04 18:59:53'),
-(328, 45, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 20000.00, 666.67, 0.00, 28, 7, 13, 1, 0, 0, 0, 0, 8666.67, 0.00, 0.00, 8666.67, 20000.00, 11333.33, 'pending', 'Unpaid absences: 13', '2026-03-04 18:59:53', '2026-03-04 18:59:53'),
-(329, 29, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 25000.00, 833.33, 0.00, 28, 0, 14, 0, 0, 0, 0, 0, 11666.67, 0.00, 0.00, 11666.67, 25000.00, 13333.33, 'pending', 'Unpaid absences: 14', '2026-03-04 18:59:53', '2026-03-04 18:59:53'),
-(330, 28, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 25000.00, 833.33, 0.00, 28, 7, 13, 7, 0, 0, 0, 2, 10833.33, 1666.67, 0.00, 12500.00, 25000.00, 12500.00, 'pending', 'Unpaid absences: 13', '2026-03-04 18:59:53', '2026-03-04 18:59:53'),
-(331, 31, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 34999.00, 1166.63, 0.00, 28, 6, 13, 6, 0, 0, 0, 2, 15166.23, 2333.27, 0.00, 17499.50, 34999.00, 17499.50, 'pending', 'Unpaid absences: 13', '2026-03-04 18:59:53', '2026-03-04 18:59:53'),
-(332, 42, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 30000.00, 1000.00, 0.00, 28, 5, 14, 2, 0, 0, 0, 0, 14000.00, 0.00, 0.00, 14000.00, 30000.00, 16000.00, 'pending', 'Unpaid absences: 14', '2026-03-04 18:59:53', '2026-03-04 18:59:53'),
-(333, 37, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 2.00, 0.07, 0.00, 28, 7, 13, 3, 0, 0, 0, 1, 0.87, 0.07, 0.00, 0.93, 2.00, 1.07, 'pending', 'Unpaid absences: 13', '2026-03-04 18:59:53', '2026-03-04 18:59:53'),
-(334, 47, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 19998.00, 666.60, 0.00, 28, 6, 13, 4, 0, 0, 0, 1, 8665.80, 666.60, 0.00, 9332.40, 19998.00, 10665.60, 'pending', 'Unpaid absences: 13', '2026-03-04 18:59:53', '2026-03-04 18:59:53'),
-(335, 30, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 25000.00, 833.33, 0.00, 28, 0, 14, 0, 0, 0, 0, 0, 11666.67, 0.00, 0.00, 11666.67, 25000.00, 13333.33, 'pending', 'Unpaid absences: 14', '2026-03-04 18:59:53', '2026-03-04 18:59:53'),
-(336, 40, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 19997.00, 666.57, 0.00, 28, 7, 13, 5, 0, 0, 0, 1, 8665.37, 666.57, 0.00, 9331.93, 19997.00, 10665.07, 'pending', 'Unpaid absences: 13', '2026-03-04 18:59:53', '2026-03-04 18:59:53'),
-(337, 44, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 29998.00, 999.93, 0.00, 31, 10, 0, 10, 0, 0, 0, 3, 0.00, 2999.80, 0.00, 2999.80, 29998.00, 26998.20, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
-(338, 36, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 20000.00, 666.67, 0.00, 31, 12, 0, 3, 0, 0, 0, 1, 0.00, 666.67, 0.00, 666.67, 20000.00, 19333.33, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
-(339, 55, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 1234.00, 41.13, 111.00, 31, 0, 0, 0, 0, 0, 0, 0, 0.00, 0.00, 0.00, 0.00, 1345.00, 1345.00, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
-(340, 54, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 78600.00, 2620.00, 998.00, 31, 0, 0, 0, 0, 0, 0, 0, 0.00, 0.00, 0.00, 0.00, 79598.00, 79598.00, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
-(341, 34, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 20000.00, 666.67, 0.00, 31, 11, 0, 7, 0, 0, 0, 2, 0.00, 1333.33, 0.00, 1333.33, 20000.00, 18666.67, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
-(342, 41, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 20000.00, 666.67, 0.00, 31, 11, 0, 9, 0, 0, 0, 3, 0.00, 2000.00, 0.00, 2000.00, 20000.00, 18000.00, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
-(343, 38, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 19998.00, 666.60, 0.00, 31, 13, 0, 8, 0, 0, 0, 2, 0.00, 1333.20, 0.00, 1333.20, 19998.00, 18664.80, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
-(344, 43, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 25000.00, 833.33, 0.00, 31, 0, 0, 0, 0, 0, 0, 0, 0.00, 0.00, 0.00, 0.00, 25000.00, 25000.00, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
-(345, 39, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 20000.00, 666.67, 0.00, 31, 12, 0, 11, 0, 0, 0, 3, 0.00, 2000.00, 0.00, 2000.00, 20000.00, 18000.00, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
-(346, 27, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 30000.00, 1000.00, 0.00, 31, 12, 0, 8, 0, 0, 0, 2, 0.00, 2000.00, 0.00, 2000.00, 30000.00, 28000.00, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
-(347, 32, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 20000.00, 666.67, 0.00, 31, 13, 0, 5, 0, 0, 0, 1, 0.00, 666.67, 0.00, 666.67, 20000.00, 19333.33, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
-(348, 56, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 100000.00, 3333.33, 0.00, 31, 0, 0, 0, 0, 0, 0, 0, 0.00, 0.00, 0.00, 0.00, 100000.00, 100000.00, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
-(349, 33, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 20000.00, 666.67, 0.00, 31, 12, 0, 7, 0, 0, 0, 2, 0.00, 1333.33, 0.00, 1333.33, 20000.00, 18666.67, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
-(350, 35, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 20000.00, 666.67, 0.00, 31, 12, 0, 4, 0, 0, 0, 1, 0.00, 666.67, 0.00, 666.67, 20000.00, 19333.33, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
-(351, 46, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 19998.00, 666.60, 0.00, 31, 12, 0, 2, 0, 0, 0, 0, 0.00, 0.00, 0.00, 0.00, 19998.00, 19998.00, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
-(352, 45, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 20000.00, 666.67, 0.00, 31, 13, 0, 4, 0, 0, 0, 1, 0.00, 666.67, 0.00, 666.67, 20000.00, 19333.33, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
-(353, 29, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 25000.00, 833.33, 0.00, 31, 1, 0, 1, 0, 0, 0, 0, 0.00, 0.00, 0.00, 0.00, 25000.00, 25000.00, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
-(354, 28, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 25000.00, 833.33, 0.00, 31, 12, 0, 12, 0, 0, 0, 4, 0.00, 3333.33, 0.00, 3333.33, 25000.00, 21666.67, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
-(355, 31, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 34999.00, 1166.63, 0.00, 31, 12, 0, 11, 0, 0, 0, 3, 0.00, 3499.90, 0.00, 3499.90, 34999.00, 31499.10, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
-(356, 42, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 30000.00, 1000.00, 0.00, 31, 9, 0, 3, 0, 0, 0, 1, 0.00, 1000.00, 0.00, 1000.00, 30000.00, 29000.00, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
-(357, 37, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 2.00, 0.07, 0.00, 31, 13, 0, 1, 0, 0, 0, 0, 0.00, 0.00, 0.00, 0.00, 2.00, 2.00, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
-(358, 47, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 19998.00, 666.60, 0.00, 31, 12, 0, 8, 0, 0, 0, 2, 0.00, 1333.20, 0.00, 1333.20, 19998.00, 18664.80, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
-(359, 30, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 25000.00, 833.33, 0.00, 31, 9, 0, 9, 0, 0, 0, 3, 0.00, 2500.00, 0.00, 2500.00, 25000.00, 22500.00, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
-(360, 40, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 19997.00, 666.57, 0.00, 31, 12, 0, 10, 0, 0, 0, 3, 0.00, 1999.70, 0.00, 1999.70, 19997.00, 17997.30, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11');
+INSERT INTO `payroll_records` (`id`, `employee_id`, `month`, `year`, `pay_period_start`, `pay_period_end`, `days_in_month`, `issue_date`, `base_salary`, `daily_rate`, `total_allowances`, `working_days`, `present_days`, `absent_days`, `late_days`, `leave_days`, `half_days`, `paid_leave_days`, `late_deduction_days`, `absent_deduction`, `late_deduction`, `leave_deduction`, `total_deductions`, `gross_salary`, `bonus`, `adjustment`, `adjustment_reason`, `net_salary`, `status`, `notes`, `generated_at`, `updated_at`) VALUES
+(313, 44, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 29998.00, 999.93, 0.00, 28, 8, 15, 7, 2, 0, 2, 2, 14999.00, 1999.87, 0.00, 16998.87, 29998.00, 0.00, 0.00, NULL, 12999.13, 'pending', 'Paid leaves: 2 (2 casual [2 from leave balance]). Total absent: 17, Paid: 2, Unpaid: 15', '2026-03-04 18:59:53', '2026-03-09 08:27:38'),
+(314, 36, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 20000.00, 666.67, 0.00, 28, 6, 19, 3, 0, 0, 0, 1, 12666.67, 666.67, 0.00, 13333.33, 20000.00, 0.00, 0.00, NULL, 6666.67, 'pending', 'Unpaid absences: 19', '2026-03-04 18:59:53', '2026-03-09 08:27:38'),
+(315, 55, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 1234.00, 41.13, 111.00, 28, 0, 22, 0, 0, 0, 0, 0, 904.93, 0.00, 0.00, 904.93, 1345.00, 0.00, 0.00, NULL, 440.07, 'pending', 'Unpaid absences: 22', '2026-03-04 18:59:53', '2026-03-09 08:27:38'),
+(316, 54, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 78600.00, 2620.00, 998.00, 28, 0, 25, 0, 0, 0, 0, 0, 65500.00, 0.00, 0.00, 65500.00, 79598.00, 0.00, 0.00, NULL, 14098.00, 'pending', 'Unpaid absences: 25', '2026-03-04 18:59:53', '2026-03-09 08:27:38'),
+(317, 34, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 20000.00, 666.67, 0.00, 28, 7, 18, 4, 0, 0, 0, 1, 12000.00, 666.67, 0.00, 12666.67, 20000.00, 0.00, 0.00, NULL, 7333.33, 'pending', 'Unpaid absences: 18', '2026-03-04 18:59:53', '2026-03-09 08:27:38'),
+(318, 41, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 20000.00, 666.67, 0.00, 28, 7, 18, 5, 0, 0, 0, 1, 12000.00, 666.67, 0.00, 12666.67, 20000.00, 0.00, 0.00, NULL, 7333.33, 'pending', 'Unpaid absences: 18', '2026-03-04 18:59:53', '2026-03-09 08:27:38'),
+(319, 38, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 19998.00, 666.60, 0.00, 28, 6, 19, 5, 0, 0, 0, 1, 12665.40, 666.60, 0.00, 13332.00, 19998.00, 0.00, 0.00, NULL, 6666.00, 'pending', 'Unpaid absences: 19', '2026-03-04 18:59:53', '2026-03-09 08:27:38'),
+(320, 43, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 25000.00, 833.33, 0.00, 28, 0, 25, 0, 0, 0, 0, 0, 20833.33, 0.00, 0.00, 20833.33, 25000.00, 0.00, 0.00, NULL, 4166.67, 'pending', 'Unpaid absences: 25', '2026-03-04 18:59:53', '2026-03-09 08:27:38'),
+(321, 39, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 20000.00, 666.67, 0.00, 28, 5, 20, 2, 0, 0, 0, 0, 13333.33, 0.00, 0.00, 13333.33, 20000.00, 0.00, 0.00, NULL, 6666.67, 'pending', 'Unpaid absences: 20', '2026-03-04 18:59:53', '2026-03-09 08:27:38'),
+(322, 27, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 30000.00, 1000.00, 0.00, 28, 6, 19, 2, 0, 0, 0, 0, 19000.00, 0.00, 0.00, 19000.00, 30000.00, 0.00, 0.00, NULL, 11000.00, 'pending', 'Unpaid absences: 19', '2026-03-04 18:59:53', '2026-03-09 08:27:38'),
+(323, 32, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 20000.00, 666.67, 0.00, 28, 7, 18, 7, 0, 0, 0, 2, 12000.00, 1333.33, 0.00, 13333.33, 20000.00, 0.00, 0.00, NULL, 6666.67, 'pending', 'Unpaid absences: 18', '2026-03-04 18:59:53', '2026-03-09 08:27:38'),
+(324, 56, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 100000.00, 3333.33, 0.00, 28, 2, 20, 0, 1, 0, 2, 0, 66666.67, 0.00, 0.00, 66666.67, 100000.00, 1200.00, 1000.00, NULL, 35533.33, 'pending', 'Paid leaves: 1 (1 casual [1 from leave balance]). Total absent: 21, Paid: 1, Unpaid: 20', '2026-03-04 18:59:53', '2026-03-13 14:57:00'),
+(325, 33, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 20000.00, 666.67, 0.00, 28, 7, 18, 1, 0, 0, 0, 0, 12000.00, 0.00, 0.00, 12000.00, 20000.00, 0.00, 0.00, NULL, 8000.00, 'pending', 'Unpaid absences: 18', '2026-03-04 18:59:53', '2026-03-09 08:27:38'),
+(326, 35, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 20000.00, 666.67, 0.00, 28, 7, 18, 4, 0, 0, 0, 1, 12000.00, 666.67, 0.00, 12666.67, 20000.00, 0.00, 0.00, NULL, 7333.33, 'pending', 'Unpaid absences: 18', '2026-03-04 18:59:53', '2026-03-09 08:27:38'),
+(327, 46, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 19998.00, 666.60, 0.00, 28, 7, 18, 1, 0, 0, 0, 0, 11998.80, 0.00, 0.00, 11998.80, 19998.00, 0.00, 0.00, NULL, 7999.20, 'pending', 'Unpaid absences: 18', '2026-03-04 18:59:53', '2026-03-09 08:27:38'),
+(328, 45, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 20000.00, 666.67, 0.00, 28, 7, 18, 1, 0, 0, 0, 0, 12000.00, 0.00, 0.00, 12000.00, 20000.00, 0.00, 0.00, NULL, 8000.00, 'pending', 'Unpaid absences: 18', '2026-03-04 18:59:53', '2026-03-09 08:27:38'),
+(329, 29, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 25000.00, 833.33, 0.00, 28, 0, 25, 0, 0, 0, 0, 0, 20833.33, 0.00, 0.00, 20833.33, 25000.00, 0.00, 0.00, NULL, 4166.67, 'pending', 'Unpaid absences: 25', '2026-03-04 18:59:53', '2026-03-09 08:27:38'),
+(330, 28, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 25000.00, 833.33, 0.00, 28, 7, 18, 7, 0, 0, 0, 2, 15000.00, 1666.67, 0.00, 16666.67, 25000.00, 0.00, 0.00, NULL, 8333.33, 'pending', 'Unpaid absences: 18', '2026-03-04 18:59:53', '2026-03-09 08:27:38'),
+(331, 31, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 34999.00, 1166.63, 0.00, 28, 6, 19, 6, 0, 0, 0, 2, 22166.03, 2333.27, 0.00, 24499.30, 34999.00, 0.00, 0.00, NULL, 10499.70, 'pending', 'Unpaid absences: 19', '2026-03-04 18:59:53', '2026-03-09 08:27:38'),
+(332, 42, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 30000.00, 1000.00, 0.00, 28, 5, 20, 2, 0, 0, 0, 0, 20000.00, 0.00, 0.00, 20000.00, 30000.00, 0.00, 0.00, NULL, 10000.00, 'pending', 'Unpaid absences: 20', '2026-03-04 18:59:53', '2026-03-09 08:27:38'),
+(333, 37, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 2.00, 0.07, 0.00, 28, 7, 18, 3, 0, 0, 0, 1, 1.20, 0.07, 0.00, 1.27, 2.00, 0.00, 0.00, NULL, 0.73, 'pending', 'Unpaid absences: 18', '2026-03-04 18:59:53', '2026-03-09 08:27:38'),
+(334, 47, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 19998.00, 666.60, 0.00, 28, 6, 19, 4, 0, 0, 0, 1, 12665.40, 666.60, 0.00, 13332.00, 19998.00, 0.00, 0.00, NULL, 6666.00, 'pending', 'Unpaid absences: 19', '2026-03-04 18:59:53', '2026-03-09 08:27:38'),
+(335, 30, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 25000.00, 833.33, 0.00, 28, 0, 25, 0, 0, 0, 0, 0, 20833.33, 0.00, 0.00, 20833.33, 25000.00, 0.00, 0.00, NULL, 4166.67, 'pending', 'Unpaid absences: 25', '2026-03-04 18:59:53', '2026-03-09 08:27:38'),
+(336, 40, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 19997.00, 666.57, 0.00, 28, 7, 18, 5, 0, 0, 0, 1, 11998.20, 666.57, 0.00, 12664.77, 19997.00, 0.00, 0.00, NULL, 7332.23, 'pending', 'Unpaid absences: 18', '2026-03-04 18:59:53', '2026-03-09 08:27:38'),
+(337, 44, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 29998.00, 999.93, 0.00, 31, 10, 0, 10, 0, 0, 0, 3, 0.00, 2999.80, 0.00, 2999.80, 29998.00, 0.00, 0.00, NULL, 26998.20, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
+(338, 36, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 20000.00, 666.67, 0.00, 31, 12, 0, 3, 0, 0, 0, 1, 0.00, 666.67, 0.00, 666.67, 20000.00, 0.00, 0.00, NULL, 19333.33, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
+(339, 55, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 1234.00, 41.13, 111.00, 31, 0, 0, 0, 0, 0, 0, 0, 0.00, 0.00, 0.00, 0.00, 1345.00, 0.00, 0.00, NULL, 1345.00, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
+(340, 54, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 78600.00, 2620.00, 998.00, 31, 0, 0, 0, 0, 0, 0, 0, 0.00, 0.00, 0.00, 0.00, 79598.00, 0.00, 0.00, NULL, 79598.00, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
+(341, 34, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 20000.00, 666.67, 0.00, 31, 11, 0, 7, 0, 0, 0, 2, 0.00, 1333.33, 0.00, 1333.33, 20000.00, 0.00, 0.00, NULL, 18666.67, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
+(342, 41, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 20000.00, 666.67, 0.00, 31, 11, 0, 9, 0, 0, 0, 3, 0.00, 2000.00, 0.00, 2000.00, 20000.00, 0.00, 0.00, NULL, 18000.00, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
+(343, 38, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 19998.00, 666.60, 0.00, 31, 13, 0, 8, 0, 0, 0, 2, 0.00, 1333.20, 0.00, 1333.20, 19998.00, 0.00, 0.00, NULL, 18664.80, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
+(344, 43, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 25000.00, 833.33, 0.00, 31, 0, 0, 0, 0, 0, 0, 0, 0.00, 0.00, 0.00, 0.00, 25000.00, 0.00, 0.00, NULL, 25000.00, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
+(345, 39, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 20000.00, 666.67, 0.00, 31, 12, 0, 11, 0, 0, 0, 3, 0.00, 2000.00, 0.00, 2000.00, 20000.00, 0.00, 0.00, NULL, 18000.00, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
+(346, 27, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 30000.00, 1000.00, 0.00, 31, 12, 0, 8, 0, 0, 0, 2, 0.00, 2000.00, 0.00, 2000.00, 30000.00, 0.00, 0.00, NULL, 28000.00, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
+(347, 32, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 20000.00, 666.67, 0.00, 31, 13, 0, 5, 0, 0, 0, 1, 0.00, 666.67, 0.00, 666.67, 20000.00, 0.00, 0.00, NULL, 19333.33, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
+(348, 56, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 100000.00, 3333.33, 0.00, 31, 0, 0, 0, 0, 0, 0, 0, 0.00, 0.00, 0.00, 0.00, 100000.00, 0.00, 0.00, NULL, 100000.00, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
+(349, 33, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 20000.00, 666.67, 0.00, 31, 12, 0, 7, 0, 0, 0, 2, 0.00, 1333.33, 0.00, 1333.33, 20000.00, 0.00, 0.00, NULL, 18666.67, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
+(350, 35, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 20000.00, 666.67, 0.00, 31, 12, 0, 4, 0, 0, 0, 1, 0.00, 666.67, 0.00, 666.67, 20000.00, 0.00, 0.00, NULL, 19333.33, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
+(351, 46, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 19998.00, 666.60, 0.00, 31, 12, 0, 2, 0, 0, 0, 0, 0.00, 0.00, 0.00, 0.00, 19998.00, 0.00, 0.00, NULL, 19998.00, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
+(352, 45, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 20000.00, 666.67, 0.00, 31, 13, 0, 4, 0, 0, 0, 1, 0.00, 666.67, 0.00, 666.67, 20000.00, 0.00, 0.00, NULL, 19333.33, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
+(353, 29, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 25000.00, 833.33, 0.00, 31, 1, 0, 1, 0, 0, 0, 0, 0.00, 0.00, 0.00, 0.00, 25000.00, 0.00, 0.00, NULL, 25000.00, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
+(354, 28, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 25000.00, 833.33, 0.00, 31, 12, 0, 12, 0, 0, 0, 4, 0.00, 3333.33, 0.00, 3333.33, 25000.00, 0.00, 0.00, NULL, 21666.67, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
+(355, 31, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 34999.00, 1166.63, 0.00, 31, 12, 0, 11, 0, 0, 0, 3, 0.00, 3499.90, 0.00, 3499.90, 34999.00, 0.00, 0.00, NULL, 31499.10, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
+(356, 42, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 30000.00, 1000.00, 0.00, 31, 9, 0, 3, 0, 0, 0, 1, 0.00, 1000.00, 0.00, 1000.00, 30000.00, 0.00, 0.00, NULL, 29000.00, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
+(357, 37, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 2.00, 0.07, 0.00, 31, 13, 0, 1, 0, 0, 0, 0, 0.00, 0.00, 0.00, 0.00, 2.00, 0.00, 0.00, NULL, 2.00, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
+(358, 47, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 19998.00, 666.60, 0.00, 31, 12, 0, 8, 0, 0, 0, 2, 0.00, 1333.20, 0.00, 1333.20, 19998.00, 0.00, 0.00, NULL, 18664.80, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
+(359, 30, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 25000.00, 833.33, 0.00, 31, 9, 0, 9, 0, 0, 0, 3, 0.00, 2500.00, 0.00, 2500.00, 25000.00, 0.00, 0.00, NULL, 22500.00, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
+(360, 40, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 19997.00, 666.57, 0.00, 31, 12, 0, 10, 0, 0, 0, 3, 0.00, 1999.70, 0.00, 1999.70, 19997.00, 0.00, 0.00, NULL, 17997.30, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `sales`
+--
+
+CREATE TABLE `sales` (
+  `id` int(11) NOT NULL,
+  `employee_id` int(11) NOT NULL,
+  `employee_name` varchar(150) DEFAULT NULL,
+  `employee_email` varchar(150) DEFAULT NULL,
+  `client_name` varchar(200) NOT NULL,
+  `client_email` varchar(200) DEFAULT NULL,
+  `client_phone` varchar(50) DEFAULT NULL,
+  `category_id` int(11) DEFAULT NULL,
+  `category_slug` varchar(100) DEFAULT NULL,
+  `project_description` text DEFAULT NULL,
+  `total_amount` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `upfront_payment` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `remaining_balance` decimal(12,2) GENERATED ALWAYS AS (`total_amount` - `upfront_payment`) STORED,
+  `merchant` varchar(50) DEFAULT NULL,
+  `payment_method` varchar(50) DEFAULT NULL,
+  `account_name` varchar(200) DEFAULT NULL,
+  `sale_date` date NOT NULL,
+  `deadline` date DEFAULT NULL,
+  `status` enum('pending','in-progress','completed','cancelled','refunded') NOT NULL DEFAULT 'pending',
+  `notes` text DEFAULT NULL,
+  `created_by` int(11) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `sales`
+--
+
+INSERT INTO `sales` (`id`, `employee_id`, `employee_name`, `employee_email`, `client_name`, `client_email`, `client_phone`, `category_id`, `category_slug`, `project_description`, `total_amount`, `upfront_payment`, `merchant`, `payment_method`, `account_name`, `sale_date`, `deadline`, `status`, `notes`, `created_by`, `created_at`, `updated_at`) VALUES
+(1, 56, 'Muhammad Hunain', 'muhammad.hunain@digioussolutions.com', 'Kamaran', 'kamran@gmail.com', '0981726534', 3, 'branding', 'this is test', 123.00, 100.00, 'PayPal', NULL, NULL, '2026-03-13', '2026-04-28', 'in-progress', NULL, 49, '2026-03-13 13:05:39', '2026-03-13 15:12:35'),
+(2, 56, 'Muhammad Hunain', 'muhammad.hunain@digioussolutions.com', 'david', 'david@gmail.com', '0981726354', 1, 'website-design', 'this is david ', 1234.00, 1000.00, 'Stripe', NULL, NULL, '2026-03-02', '2026-04-28', 'completed', NULL, 49, '2026-03-13 15:00:18', '2026-03-13 15:01:01');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `sales_categories`
+--
+
+CREATE TABLE `sales_categories` (
+  `id` int(11) NOT NULL,
+  `name` varchar(100) NOT NULL,
+  `slug` varchar(100) NOT NULL,
+  `description` varchar(255) DEFAULT NULL,
+  `icon` varchar(50) DEFAULT 'Globe',
+  `color` varchar(30) DEFAULT '#3B82F6',
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `sales_categories`
+--
+
+INSERT INTO `sales_categories` (`id`, `name`, `slug`, `description`, `icon`, `color`, `is_active`, `created_at`, `updated_at`) VALUES
+(1, 'Website Design', 'website-design', NULL, 'Globe', '#3B82F6', 1, '2026-03-13 13:03:02', '2026-03-13 13:03:02'),
+(2, 'Logo Design', 'logo-design', NULL, 'Palette', '#8B5CF6', 1, '2026-03-13 13:03:02', '2026-03-13 13:03:02'),
+(3, 'Branding', 'branding', NULL, 'PenTool', '#6366F1', 1, '2026-03-13 13:03:02', '2026-03-13 13:03:02'),
+(4, 'Marketing', 'marketing', NULL, 'Megaphone', '#F97316', 1, '2026-03-13 13:03:02', '2026-03-13 13:03:02'),
+(5, 'Development', 'development', NULL, 'Code', '#10B981', 1, '2026-03-13 13:03:02', '2026-03-13 13:03:02'),
+(6, 'E-commerce', 'ecommerce', NULL, 'ShoppingCart', '#EC4899', 1, '2026-03-13 13:03:02', '2026-03-13 13:03:02'),
+(7, 'Photography', 'photography', NULL, 'Camera', '#EAB308', 1, '2026-03-13 13:03:02', '2026-03-13 13:03:02'),
+(8, 'Graphic Design', 'graphic-design', NULL, 'Layout', '#EF4444', 1, '2026-03-13 13:03:02', '2026-03-13 13:03:02');
 
 -- --------------------------------------------------------
 
@@ -2714,7 +3336,7 @@ CREATE TABLE `system_logs` (
 --
 
 INSERT INTO `system_logs` (`id`, `log_type`, `log_message`, `created_at`) VALUES
-(1, 'CHECKOUT_MISSING_PROCESS', 'Completed: Moved 3 records to checkout missing table', '2026-02-20 16:59:01');
+(1, 'CHECKOUT_MISSING_PROCESS', 'Completed: Moved 1 records to checkout missing table', '2026-02-20 16:59:01');
 
 -- --------------------------------------------------------
 
@@ -2765,7 +3387,7 @@ INSERT INTO `user_as_employees` (`id`, `employee_id`, `name`, `email`, `password
 (29, 36, 'Faiq Shahzad', 'Faiq@digioussolutions.com', '$2a$10$lYotGY4.xgqdcnZje1QsButt4FPaPPXWlm9GQUbA9KsswsrUKbrvy', 'Sales', '2025-11-10', 'Sales', 'Probation', 'Sales Executive', 'Active', 0, 0, NULL, NULL, NULL, 1, '2026-01-16 21:05:29', '2026-01-16 23:11:35', 'FAIQ SHAHZAD', 'Bank Al Habib Limited', '2018-11-01', '2028-11-01'),
 (30, 37, 'Taimoor Shah', 'Taimoor@digioussolutions.com', '$2a$10$TKSBi0sUAHeCPZGiVd8TnOedGnG/xQsi.YkHir.ST/hqosI4nsrYi', 'Production', '2025-11-01', 'Production', 'Permanent', 'Graphic Designer', 'Active', 0, 0, NULL, NULL, NULL, 1, '2026-01-16 21:10:58', '2026-01-16 21:21:49', 'Taimoor Shah', 'Meezan', '2024-09-01', '2034-09-01'),
 (31, 38, 'Muhammad Ebad', 'Ebad@digioussolutions.com', '$2a$10$Q.F08LWe4/b8oWHdiEV3Uu8D1RzmrpBmgyhf8VKqp7zCuKmi0j8HK', 'Production', '2025-08-05', 'Production', 'Permanent', 'Graphic Designer', 'Active', 0, 0, NULL, NULL, NULL, 1, '2026-01-16 21:15:23', '2026-01-16 21:27:31', 'Ebad', 'Meezan', '2021-03-01', '2031-03-01'),
-(32, 39, 'Muhammad Hamza', 'muhammadHamza@digioussolutions.com', '$2a$10$ToO5COm3fTb5t50jz8Y.Ku1HJz76AKdiCUVCztzhCKY12kRDQGj3a', 'Production', '2024-07-01', 'Production', 'Permanent', 'Web Developer', 'Active', 0, 0, NULL, NULL, NULL, 1, '2026-01-16 21:20:04', '2026-01-16 22:02:42', 'Muhammad Hamza', 'Meezan', '2016-07-01', '2026-07-01'),
+(32, 39, 'Muhammad Hamza', 'muhammadHamza@digioussolutions.com', '$2a$10$ToO5COm3fTb5t50jz8Y.Ku1HJz76AKdiCUVCztzhCKY12kRDQGj3a', 'Production', '2024-07-01', 'Production', 'Permanent', 'Web Developer', 'Active', 0, 0, NULL, NULL, NULL, 1, '2026-01-16 21:20:04', '2026-03-12 17:51:28', 'Muhammad Hamza', 'Meezan', '2016-07-01', '2026-07-01'),
 (33, 40, 'Yanish Hyder', 'Yanish@digioussolutions.com', '$2a$10$dUH.l833va7JJuYl.eXZYumA43JEdZ00/z2KkDN9Elq2u5oiaAqGS', 'Production', '2025-09-17', 'Production', 'MTO', 'Management Trainee', 'Active', 0, 0, NULL, NULL, NULL, 1, '2026-01-16 21:24:53', '2026-01-16 21:30:47', 'Yanish Hyder', 'Easy Paisa', '2025-09-01', '2035-09-01'),
 (34, 41, 'Muhammad Baqar', 'baqar@digioussolutions.com', '$2a$10$m4kqqYltW9J6TvWD5YeyzeflJplbfDIuFEjrpzEh0fJNpZZbYdOpe', 'Production', '2025-09-17', 'Production', 'Permanent', 'Web Developer', 'Active', 0, 0, NULL, NULL, NULL, 1, '2026-01-16 21:29:38', '2026-01-17 16:45:30', 'Muhammad Baqar', 'Bank Al Habib', '2017-08-01', '2027-08-01'),
 (35, 42, 'Tahir ', 'Tahir@digioussolutions.com', '$2a$10$R8kmVGKiw3cKgK/bLgwFrekCt02whokWuLP6FbNsOfrBordjl99NC', 'Operations', '2025-08-01', 'Administration', 'Permanent', 'Support Staff', 'Active', 0, 0, NULL, NULL, NULL, 1, '2026-01-16 21:34:31', '2026-01-16 21:53:40', 'Tahir Khan', 'Meezan', '2020-06-01', '2030-06-01'),
@@ -2773,10 +3395,11 @@ INSERT INTO `user_as_employees` (`id`, `employee_id`, `name`, `email`, `password
 (37, 44, 'Abdul Moiz Khan', 'Moiz@digioussolutions.com', '$2a$10$dLwCyp7rCmVoLSV43SwW7eR.neiV.0l76ryNn90jmpwEcgiBmZHlm', 'Production', '2023-06-01', 'Production', 'Permanent', 'Manager', 'Active', 0, 0, NULL, NULL, NULL, 1, '2026-01-16 22:07:59', '2026-02-19 03:50:30', 'Abdul Moiz', 'Meezan', '2020-12-01', '2030-12-01'),
 (38, 45, 'Syed Awais Ahmed', 'SyedAwais@digioussolutions.com', '$2a$10$J/271n03dt4c1fjMv6SJAuKPC1EJiU/9O5JraQwVD7IhVdSQ9RMiG', 'Marketing', '2026-01-01', 'Social Media', 'MTO', 'Management Trainee Officer', 'Active', 0, 0, NULL, NULL, NULL, 1, '2026-01-17 17:35:08', '2026-01-17 17:47:06', 'Syed Abdal Ahmed', 'Nayapay', '2026-01-01', '2026-01-01'),
 (39, 46, 'Shahrukh Hussain Siddiqui', 'Shahrukh@digioussolutions.com', '$2a$10$pOLRunO/GhWescHUmT4rXefoGA1bs.PEjScULeH598ZVKih2GiizS', 'Production', '2025-01-28', 'SEO', 'Part-Time', 'SEO Executive', 'Active', 0, 0, NULL, NULL, NULL, 1, '2026-01-17 17:44:00', '2026-01-17 17:54:20', 'Shahrukh Hussain Siddiqui', 'UBL', '2016-05-01', '2026-05-01'),
-(40, 47, 'Uzair Siddiqui', 'Uzair@digioussolutions.com', '$2a$10$N3mMXvO6.CY5QMLlqfzOY.8KnInQ6kFtHQWJkvGY4x3TTC5eExKei', 'Sales', '2025-07-10', 'Sales', 'Probation', 'Sales Executive', 'Active', 0, 0, NULL, NULL, NULL, 1, '2026-01-17 18:01:21', '2026-01-17 18:03:38', 'Muhammad Uzair', 'NO Bank', '2023-08-01', '2033-08-01'),
+(40, 47, 'Uzair Siddiqui', 'Uzair@digioussolutions.com', '$2a$10$N3mMXvO6.CY5QMLlqfzOY.8KnInQ6kFtHQWJkvGY4x3TTC5eExKei', 'Sales', '2025-07-10', 'Sales', 'Probation', 'Sales Executive', 'Active', 0, 0, NULL, NULL, NULL, 1, '2026-01-17 18:01:21', '2026-03-10 17:57:27', 'Muhammad Uzair', 'NO Bank', '2023-08-01', '2033-08-01'),
 (47, 54, 'Khalid Khan', 'khalid.khan@digioussolutions.com', '$2a$10$2zY/NffZK9nNoO3nFkNQ5OawgzcFqvDXZDcW0khIzjXFGGvOZa2rG', 'Production', '2026-02-11', 'America', 'Permanent', 'SMA', 'Active', 1, 0, NULL, NULL, NULL, 1, '2026-02-10 19:33:32', '2026-02-10 19:33:32', 'IBAN 365', 'NBP', '2026-02-01', '2026-02-27'),
 (48, 55, 'JFAD', 'JFAD@digioussolutions.com', '$2a$10$QXdtM9ge8NSxW/bVAzvL4.GZ69aPZmc/a/o.TVhceDL3KwoUKQs66', 'Sales', '2026-02-27', 'sss', 'Part-Time', 'sss', 'Active', 1, 0, NULL, NULL, NULL, 1, '2026-02-13 18:25:29', '2026-02-13 18:25:29', 'jcjjfj', 'HBL', '2026-02-13', '2026-02-13'),
-(49, 56, 'Muhammad Hunain', 'muhammad.hunain@digioussolutions.com', '$2a$10$wxumC980kvYy0wJ8BOOrU.uNiYvOYelh7jD2O87ARTwLctZ7X6E8C', 'Operations', '2026-02-18', 'Manager', 'Permanent', 'SM OPERt', 'Active', 0, 0, NULL, NULL, NULL, 1, '2026-02-18 14:47:02', '2026-02-18 14:47:46', 'IBN PKR 123', 'HBL', '2024-09-02', '2028-07-28');
+(49, 56, 'Muhammad Hunain', 'muhammad.hunain@digioussolutions.com', '$2a$10$wxumC980kvYy0wJ8BOOrU.uNiYvOYelh7jD2O87ARTwLctZ7X6E8C', 'Operations', '2026-02-18', 'Manager', 'Permanent', 'SM OPERt', 'Active', 0, 0, NULL, NULL, NULL, 1, '2026-02-18 14:47:02', '2026-02-18 14:47:46', 'IBN PKR 123', 'HBL', '2024-09-02', '2028-07-28'),
+(50, 57, 'MHunain', 'mhunaindigious.com@digioussolutions.com', '$2a$10$JxqJWgk7mhEubP.p0zyrDOH0Hh4ahYjO4zafSyPXqVL.pZ3rZ2vB6', 'Sales', '2026-03-02', 'POS', 'Permanent', 'Mid-Level', 'Active', 1, 0, NULL, NULL, NULL, 1, '2026-03-17 08:53:40', '2026-03-17 08:53:40', 'MHUNAIN', 'EasyPaisaa', '2026-03-02', '2026-03-27');
 
 -- --------------------------------------------------------
 
@@ -2801,7 +3424,7 @@ CREATE TABLE `user_concurrent_sessions` (
 --
 
 INSERT INTO `user_concurrent_sessions` (`id`, `employee_id`, `email`, `total_active_sessions`, `pc_count`, `mobile_count`, `tablet_count`, `other_count`, `updated_at`) VALUES
-(33, 27, 'hamza@digioussolutions.com', 103, 102, 1, 0, 0, '2026-02-28 21:46:50'),
+(33, 27, 'hamza@digioussolutions.com', 103, 102, 1, 0, 0, '2026-03-17 08:53:55'),
 (34, 32, 'Humaiz@digioussolutions.com', 32, 32, 0, 0, 0, '2026-02-09 16:32:25'),
 (35, 33, 'Saheem@digioussolutions.com', 46, 35, 11, 0, 0, '2026-02-10 17:38:21'),
 (36, 34, 'Khisal@digioussolutions.com', 22, 22, 0, 0, 0, '2026-02-10 16:21:55'),
@@ -2813,7 +3436,7 @@ INSERT INTO `user_concurrent_sessions` (`id`, `employee_id`, `email`, `total_act
 (42, 40, 'Yanish@digioussolutions.com', 37, 37, 0, 0, 0, '2026-02-09 16:26:08'),
 (43, 42, 'Tahir@digioussolutions.com', 34, 33, 1, 0, 0, '2026-02-07 02:09:43'),
 (44, 39, 'muhammadHamza@digioussolutions.com', 39, 39, 0, 0, 0, '2026-02-26 19:17:58'),
-(45, 44, 'Moiz@digioussolutions.com', 62, 62, 0, 0, 0, '2026-03-04 17:50:52'),
+(45, 44, 'Moiz@digioussolutions.com', 63, 63, 0, 0, 0, '2026-03-17 08:24:05'),
 (46, 30, 'wajih@digioussolutions.com', 22, 22, 0, 0, 0, '2026-01-29 16:23:47'),
 (47, 28, 'Shahmeerabbas@digioussolutions.com', 28, 28, 0, 0, 0, '2026-02-10 17:21:52'),
 (48, 41, 'baqar@digioussolutions.com', 35, 35, 0, 0, 0, '2026-02-10 16:20:02'),
@@ -2821,7 +3444,8 @@ INSERT INTO `user_concurrent_sessions` (`id`, `employee_id`, `email`, `total_act
 (50, 46, 'Shahrukh@digioussolutions.com', 37, 37, 0, 0, 0, '2026-02-10 16:39:37'),
 (51, 47, 'Uzair@digioussolutions.com', 19, 19, 0, 0, 0, '2026-02-10 16:14:52'),
 (52, 29, 'smashhar@digioussolutions.com', 1, 1, 0, 0, 0, '2026-01-17 18:08:30'),
-(55, 56, 'muhammad.hunain@digioussolutions.com', 2, 2, 0, 0, 0, '2026-02-28 21:46:54');
+(55, 56, 'muhammad.hunain@digioussolutions.com', 4, 4, 0, 0, 0, '2026-03-17 08:50:17'),
+(56, 57, 'mhunaindigious.com@digioussolutions.com', 1, 1, 0, 0, 0, '2026-03-17 08:54:02');
 
 -- --------------------------------------------------------
 
@@ -3682,7 +4306,20 @@ INSERT INTO `user_system_info` (`id`, `employee_id`, `session_token`, `email`, `
 (795, 44, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjM3LCJlbXBsb3llZUlkIjo0NCwiZW1haWwiOiJNb2l6QGRpZ2lvdXNzb2x1dGlvbnMuY29tIiwibmFtZSI6IkFiZHVsIE1vaXogS2hhbiIsInJvbGUiOiJQcm9kdWN0aW9uIiwiZGVzaWduYXRpb24iOiJNYW5hZ2VyIiwiaWF0IjoxNzcyMzEyMjE3LCJleHAiOjE3NzIzOTg2MTd9.56YL2sghPeD_ihb2-92-h0fcP39ihWUfnCGLHO5eyXo', 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-02-28 20:56:57', '2026-02-28 21:02:26', 0, 'PC', 'Linux PC', 'Firefox 147', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0', '2026-02-28 21:02:26', '2026-02-28 20:56:57', '2026-02-28 21:02:26'),
 (796, 27, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIwLCJlbXBsb3llZUlkIjoyNywiZW1haWwiOiJoYW16YUBkaWdpb3Vzc29sdXRpb25zLmNvbSIsIm5hbWUiOiJNdWhhbW1hZCBIYW16YSBIYXNzYW4iLCJyb2xlIjoiSFIiLCJkZXNpZ25hdGlvbiI6IkhSIC0gTWFuYWdlciIsImlhdCI6MTc3MjMxNTE5MSwiZXhwIjoxNzcyNDAxNTkxfQ.eEF4dMQItstEhBKdCLPZWiB9R_h_uzX5hnfPQPn89Pg', 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-02-28 21:46:31', '2026-02-28 21:46:50', 0, 'PC', 'Linux PC', 'Firefox 147', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0', '2026-02-28 21:46:50', '2026-02-28 21:46:31', '2026-02-28 21:46:50'),
 (797, 56, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ5LCJlbXBsb3llZUlkIjo1NiwiZW1haWwiOiJtdWhhbW1hZC5odW5haW5AZGlnaW91c3NvbHV0aW9ucy5jb20iLCJuYW1lIjoiTXVoYW1tYWQgSHVuYWluIiwicm9sZSI6Ik9wZXJhdGlvbnMiLCJkZXNpZ25hdGlvbiI6IlNNIE9QRVJ0IiwiaWF0IjoxNzcyMzE1MjE0LCJleHAiOjE3NzI0MDE2MTR9.NRkNsxenZzeuyq6SwW-u3JEQi5c7QNiv2CbMJck3Ew8', 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-02-28 21:46:54', NULL, 1, 'PC', 'Linux PC', 'Firefox 147', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0', '2026-02-28 21:46:54', '2026-02-28 21:46:54', '2026-02-28 21:46:54'),
-(798, 44, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjM3LCJlbXBsb3llZUlkIjo0NCwiZW1haWwiOiJNb2l6QGRpZ2lvdXNzb2x1dGlvbnMuY29tIiwibmFtZSI6IkFiZHVsIE1vaXogS2hhbiIsInJvbGUiOiJQcm9kdWN0aW9uIiwiZGVzaWduYXRpb24iOiJNYW5hZ2VyIiwiaWF0IjoxNzcyNjQ2NDU2LCJleHAiOjE3NzI3MzI4NTZ9.kTex0H_e6wg5lmd5R4FqIhyLMr9Hw1r6txvhNKze1w0', 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-03-04 17:47:36', '2026-03-04 17:50:52', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-04 17:50:52', '2026-03-04 17:47:36', '2026-03-04 17:50:52');
+(798, 44, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjM3LCJlbXBsb3llZUlkIjo0NCwiZW1haWwiOiJNb2l6QGRpZ2lvdXNzb2x1dGlvbnMuY29tIiwibmFtZSI6IkFiZHVsIE1vaXogS2hhbiIsInJvbGUiOiJQcm9kdWN0aW9uIiwiZGVzaWduYXRpb24iOiJNYW5hZ2VyIiwiaWF0IjoxNzcyNjQ2NDU2LCJleHAiOjE3NzI3MzI4NTZ9.kTex0H_e6wg5lmd5R4FqIhyLMr9Hw1r6txvhNKze1w0', 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-03-04 17:47:36', '2026-03-04 17:50:52', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-04 17:50:52', '2026-03-04 17:47:36', '2026-03-04 17:50:52'),
+(799, 44, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjM3LCJlbXBsb3llZUlkIjo0NCwiZW1haWwiOiJNb2l6QGRpZ2lvdXNzb2x1dGlvbnMuY29tIiwibmFtZSI6IkFiZHVsIE1vaXogS2hhbiIsInJvbGUiOiJQcm9kdWN0aW9uIiwiZGVzaWduYXRpb24iOiJNYW5hZ2VyIiwiaWF0IjoxNzczMDQ0ODExLCJleHAiOjE3NzMxMzEyMTF9.zEUAG7EuLB0s278cZu3arfUs5rd7VB8-qJeNyH5eolY', 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-03-09 08:26:51', NULL, 1, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-09 08:26:51', '2026-03-09 08:26:51', '2026-03-09 08:26:51'),
+(800, 56, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ5LCJlbXBsb3llZUlkIjo1NiwiZW1haWwiOiJtdWhhbW1hZC5odW5haW5AZGlnaW91c3NvbHV0aW9ucy5jb20iLCJuYW1lIjoiTXVoYW1tYWQgSHVuYWluIiwicm9sZSI6Ik9wZXJhdGlvbnMiLCJkZXNpZ25hdGlvbiI6IlNNIE9QRVJ0IiwiaWF0IjoxNzczMTY0NzAxLCJleHAiOjE3NzMyNTExMDF9.rWGf_NyVJ1W92RA94TtqlKkX1w0kopGOzBKJJGg2afU', 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-10 17:45:01', '2026-03-11 11:38:42', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-11 11:38:42', '2026-03-10 17:45:01', '2026-03-11 11:38:42'),
+(801, 56, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ5LCJlbXBsb3llZUlkIjo1NiwiZW1haWwiOiJtdWhhbW1hZC5odW5haW5AZGlnaW91c3NvbHV0aW9ucy5jb20iLCJuYW1lIjoiTXVoYW1tYWQgSHVuYWluIiwicm9sZSI6Ik9wZXJhdGlvbnMiLCJkZXNpZ25hdGlvbiI6IlNNIE9QRVJ0IiwiaWF0IjoxNzczMzA2MjUzLCJleHAiOjE3NzMzOTI2NTN9.AbuPpScD7Obd4oPiS7gjfXnVm46xTlnT59bQ1G3rzGE', 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-12 09:04:13', '2026-03-12 17:48:35', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-12 17:48:35', '2026-03-12 09:04:13', '2026-03-12 17:48:35'),
+(802, 56, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ5LCJlbXBsb3llZUlkIjo1NiwiZW1haWwiOiJtdWhhbW1hZC5odW5haW5AZGlnaW91c3NvbHV0aW9ucy5jb20iLCJuYW1lIjoiTXVoYW1tYWQgSHVuYWluIiwicm9sZSI6Ik9wZXJhdGlvbnMiLCJkZXNpZ25hdGlvbiI6IlNNIE9QRVJ0IiwiaWF0IjoxNzczNDA2OTk4LCJleHAiOjE3NzM0OTMzOTh9.bUEjPYQDd773ZHqi33UARJEomwmKd5RDmIKuP4VcJOw', 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-13 13:03:18', '2026-03-13 14:15:59', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-13 14:15:59', '2026-03-13 13:03:18', '2026-03-13 14:15:59'),
+(803, 27, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIwLCJlbXBsb3llZUlkIjoyNywiZW1haWwiOiJoYW16YUBkaWdpb3Vzc29sdXRpb25zLmNvbSIsIm5hbWUiOiJNdWhhbW1hZCBIYW16YSBIYXNzYW4iLCJyb2xlIjoiSFIiLCJkZXNpZ25hdGlvbiI6IkhSIC0gTWFuYWdlciIsImlhdCI6MTc3MzQxMTM2MywiZXhwIjoxNzczNDk3NzYzfQ.ljUbZ6oMn1EAO2pVptvC3RxbYhXfu3ffSqbCjVLpMyk', 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-13 14:16:03', '2026-03-13 14:16:12', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-13 14:16:12', '2026-03-13 14:16:03', '2026-03-13 14:16:12'),
+(804, 44, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjM3LCJlbXBsb3llZUlkIjo0NCwiZW1haWwiOiJNb2l6QGRpZ2lvdXNzb2x1dGlvbnMuY29tIiwibmFtZSI6IkFiZHVsIE1vaXogS2hhbiIsInJvbGUiOiJQcm9kdWN0aW9uIiwiZGVzaWduYXRpb24iOiJNYW5hZ2VyIiwiaWF0IjoxNzczNDExMzc3LCJleHAiOjE3NzM0OTc3Nzd9.Xrs7prMG6-yepgkw7-2WOafyYS1bDUVhRp6XBL1U2lc', 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-03-13 14:16:17', '2026-03-13 14:16:26', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-13 14:16:26', '2026-03-13 14:16:17', '2026-03-13 14:16:26'),
+(805, 44, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjM3LCJlbXBsb3llZUlkIjo0NCwiZW1haWwiOiJNb2l6QGRpZ2lvdXNzb2x1dGlvbnMuY29tIiwibmFtZSI6IkFiZHVsIE1vaXogS2hhbiIsInJvbGUiOiJQcm9kdWN0aW9uIiwiZGVzaWduYXRpb24iOiJNYW5hZ2VyIiwiaWF0IjoxNzczNDExNzQyLCJleHAiOjE3NzM0OTgxNDJ9.VLnpTJ38N-T0-fdWxN30G3i6_3yTDy0Xs_GQ6kdWM5w', 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-03-13 14:22:22', '2026-03-13 14:23:05', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-13 14:23:05', '2026-03-13 14:22:22', '2026-03-13 14:23:05'),
+(806, 56, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ5LCJlbXBsb3llZUlkIjo1NiwiZW1haWwiOiJtdWhhbW1hZC5odW5haW5AZGlnaW91c3NvbHV0aW9ucy5jb20iLCJuYW1lIjoiTXVoYW1tYWQgSHVuYWluIiwicm9sZSI6Ik9wZXJhdGlvbnMiLCJkZXNpZ25hdGlvbiI6IlNNIE9QRVJ0IiwiaWF0IjoxNzczNDEzNjMyLCJleHAiOjE3NzM1MDAwMzJ9.FyRtc3W4_oxpU_Rhwpf9i8V_vSVfMY9rVDB5DQ5Oltc', 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-13 14:53:52', NULL, 1, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-13 14:53:52', '2026-03-13 14:53:52', '2026-03-13 14:53:52'),
+(807, 56, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ5LCJlbXBsb3llZUlkIjo1NiwiZW1haWwiOiJtdWhhbW1hZC5odW5haW5AZGlnaW91c3NvbHV0aW9ucy5jb20iLCJuYW1lIjoiTXVoYW1tYWQgSHVuYWluIiwicm9sZSI6Ik9wZXJhdGlvbnMiLCJkZXNpZ25hdGlvbiI6IlNNIE9QRVJ0IiwiaWF0IjoxNzczNDE0NTE0LCJleHAiOjE3NzM1MDA5MTR9.xJFYJcsHNu6feP4fjDnzwtRq8nQEJmvLy9IkUIqDxyk', 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-13 15:08:34', NULL, 1, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-13 15:08:34', '2026-03-13 15:08:34', '2026-03-13 15:08:34'),
+(808, 44, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjM3LCJlbXBsb3llZUlkIjo0NCwiZW1haWwiOiJNb2l6QGRpZ2lvdXNzb2x1dGlvbnMuY29tIiwibmFtZSI6IkFiZHVsIE1vaXogS2hhbiIsInJvbGUiOiJQcm9kdWN0aW9uIiwiZGVzaWduYXRpb24iOiJNYW5hZ2VyIiwiaWF0IjoxNzczNzM1ODI5LCJleHAiOjE3NzM4MjIyMjl9.hu6ugP-vABe7V0B2FPPEhQNa6zMdQFAytMQvwM7iOXQ', 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-03-17 08:23:49', '2026-03-17 08:24:05', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-17 08:24:05', '2026-03-17 08:23:49', '2026-03-17 08:24:05'),
+(809, 56, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ5LCJlbXBsb3llZUlkIjo1NiwiZW1haWwiOiJtdWhhbW1hZC5odW5haW5AZGlnaW91c3NvbHV0aW9ucy5jb20iLCJuYW1lIjoiTXVoYW1tYWQgSHVuYWluIiwicm9sZSI6Ik9wZXJhdGlvbnMiLCJkZXNpZ25hdGlvbiI6IlNNIE9QRVJ0IiwiaWF0IjoxNzczNzM1OTI1LCJleHAiOjE3NzM4MjIzMjV9.BAyRYF-skUjWP7drx13Khfm450rt1PPoX34vEspUg-4', 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-17 08:25:25', '2026-03-17 08:50:17', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-17 08:50:17', '2026-03-17 08:25:25', '2026-03-17 08:50:17'),
+(810, 27, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIwLCJlbXBsb3llZUlkIjoyNywiZW1haWwiOiJoYW16YUBkaWdpb3Vzc29sdXRpb25zLmNvbSIsIm5hbWUiOiJNdWhhbW1hZCBIYW16YSBIYXNzYW4iLCJyb2xlIjoiSFIiLCJkZXNpZ25hdGlvbiI6IkhSIC0gTWFuYWdlciIsImlhdCI6MTc3MzczNzQyMywiZXhwIjoxNzczODIzODIzfQ.3w36v5S1fDZqyj3JydurSlG8nuHxxqEAcA267dKvnyI', 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-17 08:50:23', '2026-03-17 08:53:55', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-17 08:53:55', '2026-03-17 08:50:23', '2026-03-17 08:53:55'),
+(811, 57, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwLCJlbXBsb3llZUlkIjo1NywiZW1haWwiOiJtaHVuYWluZGlnaW91cy5jb21AZGlnaW91c3NvbHV0aW9ucy5jb20iLCJuYW1lIjoiTUh1bmFpbiIsInJvbGUiOiJTYWxlcyIsImRlc2lnbmF0aW9uIjoiTWlkLUxldmVsIiwiaWF0IjoxNzczNzM3NjQyLCJleHAiOjE3NzM4MjQwNDJ9.lKlvaXTRBDLGNx9JT_pCBFoBRqFh2jsQ_az6Y7gruqE', 'mhunaindigious.com@digioussolutions.com', 'MHunain', '2026-03-17 08:54:02', NULL, 1, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-17 08:54:02', '2026-03-17 08:54:02', '2026-03-17 08:54:02');
 
 -- --------------------------------------------------------
 
@@ -4013,6 +4650,22 @@ ALTER TABLE `employee_social_links`
   ADD KEY `idx_platform` (`platform`);
 
 --
+-- Indexes for table `expenses`
+--
+ALTER TABLE `expenses`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_expense_date` (`expense_date`),
+  ADD KEY `idx_category_id` (`category_id`),
+  ADD KEY `idx_created_by` (`created_by`);
+
+--
+-- Indexes for table `expense_categories`
+--
+ALTER TABLE `expense_categories`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_category_name` (`name`);
+
+--
 -- Indexes for table `onboarding_progress`
 --
 ALTER TABLE `onboarding_progress`
@@ -4029,6 +4682,23 @@ ALTER TABLE `payroll_records`
   ADD UNIQUE KEY `unique_employee_month` (`employee_id`,`month`,`year`),
   ADD KEY `idx_month_year` (`month`,`year`),
   ADD KEY `idx_status` (`status`);
+
+--
+-- Indexes for table `sales`
+--
+ALTER TABLE `sales`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_sales_employee` (`employee_id`),
+  ADD KEY `idx_sales_date` (`sale_date`),
+  ADD KEY `idx_sales_status` (`status`),
+  ADD KEY `idx_sales_category` (`category_id`);
+
+--
+-- Indexes for table `sales_categories`
+--
+ALTER TABLE `sales_categories`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_sales_cat_slug` (`slug`);
 
 --
 -- Indexes for table `system_logs`
@@ -4106,7 +4776,7 @@ ALTER TABLE `Company_Rules`
 -- AUTO_INCREMENT for table `Employee_Absent`
 --
 ALTER TABLE `Employee_Absent`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=457;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=933;
 
 --
 -- AUTO_INCREMENT for table `employee_achievements`
@@ -4124,7 +4794,7 @@ ALTER TABLE `Employee_Activities`
 -- AUTO_INCREMENT for table `employee_allowances`
 --
 ALTER TABLE `employee_allowances`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `Employee_Attendance`
@@ -4136,7 +4806,7 @@ ALTER TABLE `Employee_Attendance`
 -- AUTO_INCREMENT for table `employee_bank_accounts`
 --
 ALTER TABLE `employee_bank_accounts`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
 
 --
 -- AUTO_INCREMENT for table `Employee_Breaks`
@@ -4148,25 +4818,25 @@ ALTER TABLE `Employee_Breaks`
 -- AUTO_INCREMENT for table `Employee_Checkout_Missing`
 --
 ALTER TABLE `Employee_Checkout_Missing`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `employee_dynamic_resources`
 --
 ALTER TABLE `employee_dynamic_resources`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `employee_leaves`
 --
 ALTER TABLE `employee_leaves`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
 
 --
 -- AUTO_INCREMENT for table `employee_onboarding`
 --
 ALTER TABLE `employee_onboarding`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=57;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=58;
 
 --
 -- AUTO_INCREMENT for table `employee_required_documents`
@@ -4178,13 +4848,13 @@ ALTER TABLE `employee_required_documents`
 -- AUTO_INCREMENT for table `employee_resources`
 --
 ALTER TABLE `employee_resources`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
 
 --
 -- AUTO_INCREMENT for table `employee_salary`
 --
 ALTER TABLE `employee_salary`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
 
 --
 -- AUTO_INCREMENT for table `employee_skills`
@@ -4199,40 +4869,64 @@ ALTER TABLE `employee_social_links`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `expenses`
+--
+ALTER TABLE `expenses`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+
+--
+-- AUTO_INCREMENT for table `expense_categories`
+--
+ALTER TABLE `expense_categories`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=46;
+
+--
 -- AUTO_INCREMENT for table `onboarding_progress`
 --
 ALTER TABLE `onboarding_progress`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=43;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=44;
 
 --
 -- AUTO_INCREMENT for table `payroll_records`
 --
 ALTER TABLE `payroll_records`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=361;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=385;
+
+--
+-- AUTO_INCREMENT for table `sales`
+--
+ALTER TABLE `sales`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT for table `sales_categories`
+--
+ALTER TABLE `sales_categories`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT for table `system_logs`
 --
 ALTER TABLE `system_logs`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `user_as_employees`
 --
 ALTER TABLE `user_as_employees`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=50;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=51;
 
 --
 -- AUTO_INCREMENT for table `user_concurrent_sessions`
 --
 ALTER TABLE `user_concurrent_sessions`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=56;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=57;
 
 --
 -- AUTO_INCREMENT for table `user_system_info`
 --
 ALTER TABLE `user_system_info`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=799;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=812;
 
 --
 -- Constraints for dumped tables
@@ -4318,10 +5012,22 @@ ALTER TABLE `employee_skills`
   ADD CONSTRAINT `employee_skills_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employee_onboarding` (`id`) ON DELETE CASCADE;
 
 --
+-- Constraints for table `expenses`
+--
+ALTER TABLE `expenses`
+  ADD CONSTRAINT `fk_expense_category` FOREIGN KEY (`category_id`) REFERENCES `expense_categories` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+--
 -- Constraints for table `onboarding_progress`
 --
 ALTER TABLE `onboarding_progress`
   ADD CONSTRAINT `onboarding_progress_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employee_onboarding` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `sales`
+--
+ALTER TABLE `sales`
+  ADD CONSTRAINT `fk_sales_category` FOREIGN KEY (`category_id`) REFERENCES `sales_categories` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 --
 -- Constraints for table `user_as_employees`
