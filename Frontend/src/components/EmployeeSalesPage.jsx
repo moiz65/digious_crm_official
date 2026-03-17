@@ -1172,72 +1172,7 @@ const EmployeeSalesPage = () => {
           </div>
         </div>
 
-        {/* Charts Section */}
-        {/* <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-gray-900">
-                {dateRange === 'daily' ? 'Daily Sales' : 
-                 dateRange === 'monthly' ? 'Monthly Sales Trend' : 
-                 'Sales Trend'}
-              </h3>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setChartView(dateRange === 'daily' ? 'daily' : 'monthly')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                    chartView === (dateRange === 'daily' ? 'daily' : 'monthly')
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  {dateRange === 'daily' ? 'Last 7 Days' : 'Monthly'}
-                </button>
-              </div>
-            </div>
-            <ResponsiveContainer width="100%" height={250}>
-              {dateRange === 'daily' ? (
-                <BarChart data={getDailyChartData()}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                  <YAxis tick={{ fontSize: 12 }} />
-                  <Tooltip />
-                  <Bar dataKey="total" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              ) : (
-                <BarChart data={getMonthlyChartData()}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                  <YAxis tick={{ fontSize: 12 }} />
-                  <Tooltip />
-                  <Bar dataKey="total" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              )}
-            </ResponsiveContainer>
-          </div>
-
-          <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
-            <h3 className="font-semibold text-gray-900 mb-4">Sales by Category</h3>
-            <ResponsiveContainer width="100%" height={250}>
-              <RePieChart>
-                <Pie
-                  data={getCategoryDistribution()}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={(entry) => `${entry.name}`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {getCategoryDistribution().map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </RePieChart>
-            </ResponsiveContainer>
-          </div>
-        </div> */}
+       
 
         {/* Filters and Actions */}
         <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm mb-6">

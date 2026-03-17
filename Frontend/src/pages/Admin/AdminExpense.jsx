@@ -365,7 +365,7 @@ const AdminExpense = () => {
             )}
 
             {/* Stats Grid - Matching Payroll Style */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 mb-8">
               {/* This Month Card - Changed from Total Expenses */}
               <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-5 text-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
                 <div className="flex items-center justify-between mb-3">
@@ -387,7 +387,7 @@ const AdminExpense = () => {
               </div>
 
               {/* Average Expense Card */}
-              <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-5 text-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
+              {/* <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-5 text-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
                 <div className="flex items-center justify-between mb-3">
                   <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
                     <TrendingUp className="h-6 w-6" />
@@ -400,7 +400,7 @@ const AdminExpense = () => {
                 <div className="text-purple-100 text-xs">
                   per transaction
                 </div>
-              </div>
+              </div> */}
 
               {/* Today Expense Card - Changed from This Month */}
               <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl p-5 text-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
@@ -410,7 +410,7 @@ const AdminExpense = () => {
                   </div>
                   <div className="text-right">
                     <div className="text-2xl font-bold">{formatCurrency(stats.todayExpense)}</div>
-                    <div className="text-emerald-100 text-xs font-medium">Today Expense</div>
+                    <div className="text-emerald-100 text-xs font-medium">Previous Month</div>
                   </div>
                 </div>
                 <div className="flex items-center gap-1 text-emerald-100 text-xs">
@@ -418,7 +418,7 @@ const AdminExpense = () => {
                     {todayChange >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
                     {Math.abs(todayChange)}%
                   </div>
-                  <span>vs yesterday</span>
+                  <span>vs This Month</span>
                 </div>
               </div>
             </div>

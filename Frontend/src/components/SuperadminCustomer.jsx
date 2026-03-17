@@ -1,13 +1,11 @@
 import React, { useState } from "react";
 import { 
-  DollarSign, TrendingUp, Clock, CheckCircle, Calendar, 
-  Store, Trash2, X, PlusCircle, Users, Target as TargetIcon, 
-  ArrowUpRight, Tag, Palette, Megaphone, Code, ShoppingCart, PenTool, 
-  Layout, Filter, Search, ChevronDown, Download, Eye, Edit,
-  Mail, Phone, UserCircle, MoreVertical, AlertCircle
+  DollarSign, TrendingUp, CheckCircle, Calendar, 
+  Trash2, X, PlusCircle, Search, Eye, Edit,Users,
+  Mail, Phone, Filter
 } from "lucide-react";
 
-const SuperAdminSalesManagement = () => {
+const SuperadminCustomer = () => {
   const [sales, setSales] = useState([
     {
       id: 'SALES-001',
@@ -15,12 +13,10 @@ const SuperAdminSalesManagement = () => {
       email: 'john.smith@email.com',
       phone: '+1 (555) 123-4567',
       projectCategory: 'Website Development',
-      saleDate: '2026-06-01',
-      upfrontPayment: 2000,
+      onboardingDate: '2026-06-01',
       merchant: 'Stripe',
       agentName: 'Sarah Johnson',
-      status: 'Completed',
-      totalAmount: 5000
+      status: 'Completed'
     },
     {
       id: 'SALES-002',
@@ -28,12 +24,10 @@ const SuperAdminSalesManagement = () => {
       email: 'emma.w@company.com',
       phone: '+1 (555) 234-5678',
       projectCategory: 'E-commerce',
-      saleDate: '2026-06-05',
-      upfrontPayment: 8500,
+      onboardingDate: '2026-06-05',
       merchant: 'DigiousPayPal',
       agentName: 'Michael Chen',
-      status: 'Completed',
-      totalAmount: 8500
+      status: 'Completed'
     },
     {
       id: 'SALES-003',
@@ -41,12 +35,10 @@ const SuperAdminSalesManagement = () => {
       email: 'rbrown@creative.com',
       phone: '+1 (555) 345-6789',
       projectCategory: 'Graphic Design',
-      saleDate: '2026-06-10',
-      upfrontPayment: 500,
+      onboardingDate: '2026-06-10',
       merchant: 'Ziffs PayPal',
       agentName: 'Lisa Anderson',
-      status: 'Pending',
-      totalAmount: 3200
+      status: 'Pending'
     },
     {
       id: 'SALES-004',
@@ -54,12 +46,10 @@ const SuperAdminSalesManagement = () => {
       email: 'maria@techstart.com',
       phone: '+1 (555) 456-7890',
       projectCategory: 'Digital Marketing',
-      saleDate: '2026-06-12',
-      upfrontPayment: 1500,
+      onboardingDate: '2026-06-12',
       merchant: 'Innovative PayPal',
       agentName: 'David Wilson',
-      status: 'In Progress',
-      totalAmount: 4500
+      status: 'In Progress'
     },
     {
       id: 'SALES-005',
@@ -67,12 +57,10 @@ const SuperAdminSalesManagement = () => {
       email: 'jtaylor@consulting.com',
       phone: '+1 (555) 567-8901',
       projectCategory: 'Consulting',
-      saleDate: '2026-06-15',
-      upfrontPayment: 3000,
+      onboardingDate: '2026-06-15',
       merchant: 'Crypto',
       agentName: 'Emily Davis',
-      status: 'Completed',
-      totalAmount: 6000
+      status: 'Completed'
     }
   ]);
 
@@ -80,7 +68,6 @@ const SuperAdminSalesManagement = () => {
   const [customerSearch, setCustomerSearch] = useState('');
   const [selectedMerchant, setSelectedMerchant] = useState('All');
   const [selectedAgent, setSelectedAgent] = useState('All');
-  const [filterStatus, setFilterStatus] = useState('All');
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedSales, setSelectedSales] = useState([]);
   const [showBulkActions, setShowBulkActions] = useState(false);
@@ -91,43 +78,23 @@ const SuperAdminSalesManagement = () => {
     email: '',
     phone: '',
     projectCategory: '',
-    saleDate: '',
-    upfrontPayment: '',
+    onboardingDate: '',
     merchant: '',
     agentName: ''
   });
 
   // Constants
-  const STATUSES = ['All', 'Completed', 'In Progress', 'Pending'];
   const CATEGORIES = ['Website Development', 'Graphic Design', 'Digital Marketing', 'E-commerce', 'Consulting', 'Other'];
-  const MERCHANTS = ['All', 'Ziffs PayPal','Digious PayPal','Innovative PayPal', 'Stripe','Crypto'];
+  const MERCHANTS = ['All', 'Ziffs PayPal', 'DigiousPayPal', 'Innovative PayPal', 'Stripe', 'Crypto'];
   const AGENTS = ['All', 'Sarah Johnson', 'Michael Chen', 'Lisa Anderson', 'David Wilson', 'Emily Davis'];
 
   // Helper Functions
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', { 
-      style: 'currency', 
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(amount);
-  };
-
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric'
     });
-  };
-
-  const getStatusColor = (status) => {
-    const colors = {
-      'Completed': 'bg-green-100 text-green-800',
-      'In Progress': 'bg-blue-100 text-blue-800',
-      'Pending': 'bg-yellow-100 text-yellow-800'
-    };
-    return colors[status] || 'bg-gray-100 text-gray-800';
   };
 
   const getMerchantColor = (merchant) => {
@@ -141,11 +108,8 @@ const SuperAdminSalesManagement = () => {
     return colors[merchant] || 'bg-gray-50 text-gray-700';
   };
 
-  // Filter sales based on all criteria
+  // Filter sales based on criteria
   const filteredSales = sales.filter(sale => {
-    // Status filter
-    if (filterStatus !== 'All' && sale.status !== filterStatus) return false;
-    
     // Customer search
     if (customerSearch) {
       const query = customerSearch.toUpperCase();
@@ -158,7 +122,7 @@ const SuperAdminSalesManagement = () => {
     // Merchant filter
     if (selectedMerchant !== 'All' && sale.merchant !== selectedMerchant) return false;
     
-    // Agent filter
+    // Agent filter (keeping for filter functionality)
     if (selectedAgent !== 'All' && sale.agentName !== selectedAgent) return false;
     
     return true;
@@ -170,9 +134,7 @@ const SuperAdminSalesManagement = () => {
     const sale = {
       id: `SALES-${Date.now().toString().slice(-6)}`,
       ...newSale,
-      upfrontPayment: parseFloat(newSale.upfrontPayment),
-      status: 'Pending',
-      totalAmount: parseFloat(newSale.upfrontPayment)
+      status: 'Pending'
     };
     setSales([...sales, sale]);
     setNewSale({
@@ -180,8 +142,7 @@ const SuperAdminSalesManagement = () => {
       email: '',
       phone: '',
       projectCategory: '',
-      saleDate: '',
-      upfrontPayment: '',
+      onboardingDate: '',
       merchant: '',
       agentName: ''
     });
@@ -227,59 +188,32 @@ const SuperAdminSalesManagement = () => {
     setCustomerSearch('');
     setSelectedMerchant('All');
     setSelectedAgent('All');
-    setFilterStatus('All');
   };
 
   // Calculate totals
-  const totalUpfront = sales.reduce((sum, sale) => sum + sale.upfrontPayment, 0);
   const totalSales = sales.length;
-  const completedSales = sales.filter(s => s.status === 'Completed').length;
 
   // Check if any filter is active
-  const hasActiveFilters = customerSearch || selectedMerchant !== 'All' || selectedAgent !== 'All' || filterStatus !== 'All';
+  const hasActiveFilters = customerSearch || selectedMerchant !== 'All' || selectedAgent !== 'All';
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-      {/* Header with Summary Cards */}
+      {/* Header with Summary Card */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-4">Sales Management</h1>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <h1 className="text-2xl font-bold text-gray-900 mb-4">Sales Onboarding Management</h1>
+        {/* <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
           <div className="bg-white rounded-lg border border-gray-200 p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Total Sales</p>
+                <p className="text-sm text-gray-500">Total Onboarded Customers</p>
                 <p className="text-2xl font-bold text-gray-900">{totalSales}</p>
               </div>
               <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
-                <DollarSign className="w-5 h-5 text-blue-600" />
+                <Users className="w-5 h-5 text-blue-600" />
               </div>
             </div>
           </div>
-          
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Total Upfront</p>
-                <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalUpfront)}</p>
-              </div>
-              <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 text-green-600" />
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Completed</p>
-                <p className="text-2xl font-bold text-gray-900">{completedSales}</p>
-              </div>
-              <div className="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center">
-                <CheckCircle className="w-5 h-5 text-purple-600" />
-              </div>
-            </div>
-          </div>
-        </div>
+        </div> */}
       </div>
 
       {/* Filters Section */}
@@ -308,27 +242,7 @@ const SuperAdminSalesManagement = () => {
             ))}
           </select>
 
-          {/* Agent Filter */}
-          <select
-            value={selectedAgent}
-            onChange={(e) => setSelectedAgent(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 min-w-[150px]"
-          >
-            {AGENTS.map(agent => (
-              <option key={agent} value={agent}>{agent === 'All' ? 'All Agents' : agent}</option>
-            ))}
-          </select>
-
-          {/* Status Filter */}
-          {/* <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 min-w-[130px]"
-          >
-            {STATUSES.map(status => (
-              <option key={status} value={status}>{status === 'All' ? 'All Status' : status}</option>
-            ))}
-          </select> */}
+        
 
           {/* Action Buttons */}
           <div className="flex items-center gap-2 ml-auto">
@@ -352,13 +266,7 @@ const SuperAdminSalesManagement = () => {
               </button>
             )}
             
-            <button
-              onClick={() => setShowAddForm(true)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 flex items-center"
-            >
-              <PlusCircle className="w-4 h-4 mr-2" />
-              Add New Sale
-            </button>
+            
           </div>
         </div>
 
@@ -390,21 +298,13 @@ const SuperAdminSalesManagement = () => {
                 </button>
               </span>
             )}
-            {filterStatus !== 'All' && (
-              <span className="px-2 py-1 bg-yellow-50 text-yellow-700 rounded-full flex items-center">
-                Status: {filterStatus}
-                <button onClick={() => setFilterStatus('All')} className="ml-1 hover:text-yellow-900">
-                  <X className="w-3 h-3" />
-                </button>
-              </span>
-            )}
           </div>
         )}
       </div>
 
       {/* Results count */}
       <div className="mb-3 text-sm text-gray-500">
-        Showing {filteredSales.length} of {sales.length} sales
+        Showing {filteredSales.length} of {sales.length} onboardings
       </div>
 
       {/* Main Table */}
@@ -420,15 +320,12 @@ const SuperAdminSalesManagement = () => {
                   className="w-4 h-4 text-blue-600 rounded border-gray-300"
                 />
               </th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Onboarding Date</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer Name</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project Category</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sale Date</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Upfront ($)</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Merchant</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Agent Name</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
@@ -442,6 +339,12 @@ const SuperAdminSalesManagement = () => {
                     onChange={() => toggleSelectSale(sale.id)}
                     className="w-4 h-4 text-blue-600 rounded border-gray-300"
                   />
+                </td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center text-sm text-gray-600">
+                    <Calendar className="w-3 h-3 mr-1 text-gray-400" />
+                    {formatDate(sale.onboardingDate)}
+                  </div>
                 </td>
                 <td className="px-4 py-3">
                   <div className="text-sm font-medium text-gray-900">{sale.customerName}</div>
@@ -463,51 +366,30 @@ const SuperAdminSalesManagement = () => {
                   <span className="text-sm text-gray-900">{sale.projectCategory}</span>
                 </td>
                 <td className="px-4 py-3">
-                  <div className="flex items-center text-sm text-gray-600">
-                    <Calendar className="w-3 h-3 mr-1 text-gray-400" />
-                    {formatDate(sale.saleDate)}
-                  </div>
-                </td>
-                <td className="px-4 py-3">
-                  <span className="text-sm font-medium text-green-600">
-                    {formatCurrency(sale.upfrontPayment)}
-                  </span>
-                </td>
-                <td className="px-4 py-3">
                   <span className={`px-2 py-1 text-xs font-medium rounded-full ${getMerchantColor(sale.merchant)}`}>
                     {sale.merchant}
                   </span>
                 </td>
                 <td className="px-4 py-3">
-                  <div className="flex items-center">
-                    <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-medium text-xs mr-2">
-                      {sale.agentName.split(' ').map(n => n[0]).join('')}
-                    </div>
-                    <span className="text-sm text-gray-900">{sale.agentName}</span>
-                  </div>
-                </td>
-                <td className="px-4 py-3">
-                  <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(sale.status)}`}>
-                    {sale.status}
-                  </span>
-                </td>
-                <td className="px-4 py-3">
                   <div className="flex items-center space-x-2">
                     <button 
-                      onClick={() => alert(`View sale: ${sale.id}`)}
+                      onClick={() => alert(`View details: ${sale.id}`)}
                       className="p-1 hover:bg-gray-100 rounded-lg text-gray-500"
+                      title="View"
                     >
                       <Eye className="w-4 h-4" />
                     </button>
                     <button 
-                      onClick={() => alert(`Edit sale: ${sale.id}`)}
+                      onClick={() => alert(`Edit: ${sale.id}`)}
                       className="p-1 hover:bg-gray-100 rounded-lg text-gray-500"
+                      title="Edit"
                     >
                       <Edit className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => handleDeleteSale(sale.id)}
                       className="p-1 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-600"
+                      title="Delete"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -521,10 +403,10 @@ const SuperAdminSalesManagement = () => {
         {filteredSales.length === 0 && (
           <div className="text-center py-12">
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <DollarSign className="w-8 h-8 text-gray-400" />
+              <Users className="w-8 h-8 text-gray-400" />
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No sales found</h3>
-            <p className="text-gray-500 mb-4">Try adjusting your filters or add a new sale</p>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No onboardings found</h3>
+            <p className="text-gray-500 mb-4">Try adjusting your filters or add a new onboarding</p>
             <button
               onClick={() => {
                 clearFilters();
@@ -533,18 +415,18 @@ const SuperAdminSalesManagement = () => {
               className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 inline-flex items-center"
             >
               <PlusCircle className="w-4 h-4 mr-2" />
-              Add New Sale
+              Add New Onboarding
             </button>
           </div>
         )}
       </div>
 
-      {/* Add Sale Modal */}
+      {/* Add Onboarding Modal */}
       {showAddForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white">
-              <h2 className="text-xl font-bold text-gray-900">Add New Sale</h2>
+              <h2 className="text-xl font-bold text-gray-900">Add New Onboarding</h2>
               <button
                 onClick={() => setShowAddForm(false)}
                 className="p-2 hover:bg-gray-100 rounded-lg"
@@ -556,6 +438,20 @@ const SuperAdminSalesManagement = () => {
             <div className="p-6">
               <form onSubmit={handleAddSale}>
                 <div className="grid grid-cols-2 gap-4">
+                  {/* Onboarding Date */}
+                  <div className="col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Onboarding Date *
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={newSale.onboardingDate}
+                      onChange={(e) => setNewSale({...newSale, onboardingDate: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
                   {/* Customer Name */}
                   <div className="col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -586,10 +482,10 @@ const SuperAdminSalesManagement = () => {
                     />
                   </div>
 
-                  {/* Phone Number */}
+                  {/* Phone */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Phone Number *
+                      Phone *
                     </label>
                     <input
                       type="tel"
@@ -619,37 +515,6 @@ const SuperAdminSalesManagement = () => {
                     </select>
                   </div>
 
-                  {/* Sale Date */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Sale Date *
-                    </label>
-                    <input
-                      type="date"
-                      required
-                      value={newSale.saleDate}
-                      onChange={(e) => setNewSale({...newSale, saleDate: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  {/* Upfront Payment */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Upfront Payment ($) *
-                    </label>
-                    <input
-                      type="number"
-                      required
-                      min="0"
-                      step="100"
-                      value={newSale.upfrontPayment}
-                      onChange={(e) => setNewSale({...newSale, upfrontPayment: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
-                      placeholder="2000"
-                    />
-                  </div>
-
                   {/* Merchant */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -668,23 +533,12 @@ const SuperAdminSalesManagement = () => {
                     </select>
                   </div>
 
-                  {/* Agent Name */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Agent Name *
-                    </label>
-                    <select
-                      required
-                      value={newSale.agentName}
-                      onChange={(e) => setNewSale({...newSale, agentName: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">Select Agent</option>
-                      {AGENTS.filter(a => a !== 'All').map(agent => (
-                        <option key={agent} value={agent}>{agent}</option>
-                      ))}
-                    </select>
-                  </div>
+                  {/* Agent Name (hidden but required for filtering) */}
+                  <input
+                    type="hidden"
+                    value={newSale.agentName}
+                    onChange={(e) => setNewSale({...newSale, agentName: e.target.value})}
+                  />
                 </div>
 
                 <div className="flex justify-end space-x-3 mt-6">
@@ -699,7 +553,7 @@ const SuperAdminSalesManagement = () => {
                     type="submit"
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700"
                   >
-                    Add Sale
+                    Add Onboarding
                   </button>
                 </div>
               </form>
@@ -715,7 +569,7 @@ const SuperAdminSalesManagement = () => {
             <div className="p-6">
               <h3 className="text-lg font-medium text-gray-900 mb-2">Confirm Bulk Delete</h3>
               <p className="text-sm text-gray-500 mb-4">
-                Are you sure you want to delete {selectedSales.length} selected sales? This action cannot be undone.
+                Are you sure you want to delete {selectedSales.length} selected onboardings? This action cannot be undone.
               </p>
               <div className="flex justify-end space-x-3">
                 <button
@@ -728,7 +582,7 @@ const SuperAdminSalesManagement = () => {
                   onClick={handleBulkDelete}
                   className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700"
                 >
-                  Delete {selectedSales.length} Sales
+                  Delete {selectedSales.length}
                 </button>
               </div>
             </div>
@@ -739,4 +593,4 @@ const SuperAdminSalesManagement = () => {
   );
 };
 
-export default SuperAdminSalesManagement;
+export default SuperadminCustomer;

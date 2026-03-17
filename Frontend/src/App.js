@@ -21,6 +21,7 @@ import AdminApplicationsMemos from './pages/SuperAdmin/ApplicationsMemos';
 import AdminSalesManagement from './pages/SuperAdmin/AdminSalesManagement';
 import PayrollManagement from './pages/SuperAdmin/PayrollManagement';
 import AdminExpense from './pages/Admin/AdminExpense';
+import Customer from './pages/SuperAdmin/Customer';
 
 
 // HR Pages
@@ -89,6 +90,14 @@ function AppContent() {
           element={
             <ProtectedRoute requiredRole="admin">
               <PayrollManagement />
+            </ProtectedRoute>
+          }
+        />
+            <Route
+          path="/admin/customers"  // This is correct
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <Customer />
             </ProtectedRoute>
           }
         />

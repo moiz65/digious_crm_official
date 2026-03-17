@@ -71,9 +71,9 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) => 
       label: 'Business & Insights', 
       icon: TrendingUp,
       children: [
-        { id: 'sales', label: 'Sales', icon: TrendingUp, path: '/sales' },
-        { id: 'customers', label: 'Customers', icon: Users, path: '/customers' },
-        { id: 'leads', label: 'Leads', icon: Phone, path: '/leads' },
+        { id: 'sales', label: 'Sales', icon: TrendingUp, path: '/admin/sales' },
+        { id: 'customers', label: 'Customers', icon: Users, path: '/admin/customers' },
+        { id: 'leads', label: 'Leads', icon: Phone, path: '/admin/leads' },
       ]
     },
     
