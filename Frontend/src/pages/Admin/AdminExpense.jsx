@@ -327,8 +327,8 @@ const AdminExpense = () => {
             {activeTab === "expenses" && (
               <>
                 {/* Stats */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-                  <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-5 text-white shadow-xl hover:scale-105 transition-all">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                  <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-5 text-white shadow-xl hover:scale-104 transition-all">
                     <div className="flex items-center justify-between mb-2">
                       <div className="p-2 bg-white/20 rounded-lg"><Calendar className="h-6 w-6" /></div>
                       <div className="text-right">
@@ -341,7 +341,7 @@ const AdminExpense = () => {
                       {Math.abs(monthlyChange)}% vs last month
                     </div>
                   </div>
-                  <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-5 text-white shadow-xl hover:scale-105 transition-all">
+                  {/* <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-5 text-white shadow-xl hover:scale-105 transition-all">
                     <div className="flex items-center justify-between mb-2">
                       <div className="p-2 bg-white/20 rounded-lg"><TrendingUp className="h-6 w-6" /></div>
                       <div className="text-right">
@@ -350,18 +350,18 @@ const AdminExpense = () => {
                       </div>
                     </div>
                     <div className="text-purple-100 text-xs">per transaction</div>
-                  </div>
-                  <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl p-5 text-white shadow-xl hover:scale-105 transition-all">
+                  </div> */}
+                  <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl p-5 text-white shadow-xl hover:scale-104 transition-all">
                     <div className="flex items-center justify-between mb-2">
                       <div className="p-2 bg-white/20 rounded-lg">PKR</div>
                       <div className="text-right">
                         <div className="text-2xl font-bold">{formatCurrency(todayTotal)}</div>
-                        <div className="text-emerald-100 text-xs">Today</div>
+                        <div className="text-emerald-100 text-xs">Previous Month</div>
                       </div>
                     </div>
                     <div className="flex items-center gap-1 text-emerald-100 text-xs">
                       {todayChange >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                      {Math.abs(todayChange)}% vs yesterday
+                      
                     </div>
                   </div>
                 </div>
