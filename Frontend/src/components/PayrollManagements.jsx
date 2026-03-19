@@ -1,5 +1,5 @@
 // PayrollManagements.jsx — Real data, no demo, no department column in earnings table
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   DollarSign,
   Download,
@@ -25,6 +25,7 @@ import {
   PlusCircle,
   Save,
 } from "lucide-react";
+import PagePreloader from './PagePreloader';
 import {
   getMonthlyPayroll,
   generatePayroll as generatePayrollAPI,
@@ -190,23 +191,27 @@ const PayrollManagements = () => {
     }
   };
 
-  // ─── Stats ────────────────────────────────
-  const stats = {
-    totalEmployees: payrollData.length,
-    totalPayroll: payrollData.reduce((s, r) => s + (r.net_salary || 0), 0),
-    totalDeductions: payrollData.reduce((s, r) => s + (r.total_deductions || 0), 0),
-    successCount: payrollData.filter((r) => r.status === "success").length,
-    pendingCount: payrollData.filter((r) => r.status === "pending").length,
-    avgSalary:
-      payrollData.length > 0
-        ? payrollData.reduce((s, r) => s + (r.net_salary || 0), 0) / payrollData.length
-        : 0,
-    totalAbsentDeductions: payrollData.reduce((s, r) => s + (r.absent_deduction || 0), 0),
-    totalLateDeductions: payrollData.reduce((s, r) => s + (r.late_deduction || 0), 0),
-  };
+  // ─── Stats (single reduce pass, memoized) ────────────────────────────────
+  const stats = useMemo(() => {
+    const s = payrollData.reduce((acc, r) => {
+      acc.totalPayroll += (r.net_salary || 0);
+      acc.totalDeductions += (r.total_deductions || 0);
+      acc.totalAbsentDeductions += (r.absent_deduction || 0);
+      acc.totalLateDeductions += (r.late_deduction || 0);
+      if (r.status === "success") acc.successCount++;
+      if (r.status === "pending") {
+        acc.pendingCount++;
+        acc.pendingPayroll += (r.net_salary || 0);
+      }
+      return acc;
+    }, { totalPayroll: 0, totalDeductions: 0, totalAbsentDeductions: 0, totalLateDeductions: 0, successCount: 0, pendingCount: 0, pendingPayroll: 0 });
+    s.totalEmployees = payrollData.length;
+    s.avgSalary = payrollData.length > 0 ? s.totalPayroll / payrollData.length : 0;
+    return s;
+  }, [payrollData]);
 
-  // ─── Filter ───────────────────────────────
-  const filteredPayroll = payrollData.filter((record) => {
+  // ─── Filter (memoized) ───────────────────────────
+  const filteredPayroll = useMemo(() => payrollData.filter((record) => {
     const matchesSearch =
       !searchQuery ||
       record.employee_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -215,17 +220,16 @@ const PayrollManagements = () => {
     const matchesStatus =
       selectedStatus === "All" || record.status === selectedStatus;
     return matchesSearch && matchesStatus;
-  });
+  }), [payrollData, searchQuery, selectedStatus]);
 
-  // ─── Select all logic ─────────────────────
+  // ─── Select all logic (proper deps now that filteredPayroll is memoized) ─────────────────────
   useEffect(() => {
     if (selectAll) {
       setSelectedRecords(filteredPayroll.map((r) => r.id));
     } else {
       setSelectedRecords([]);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectAll]);
+  }, [selectAll, filteredPayroll]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
@@ -382,7 +386,7 @@ const PayrollManagements = () => {
               </div>
             </div>
             <div className="text-amber-100 text-xs">
-              {formatCurrency(payrollData.filter((r) => r.status === "pending").reduce((s, r) => s + (r.net_salary || 0), 0))}
+              {formatCurrency(stats.pendingPayroll)}
             </div>
           </div>
 
@@ -514,14 +518,7 @@ const PayrollTable = ({
   selectedRecords, setSelectedRecords, selectAll, setSelectAll,
 }) => {
   if (loading) {
-    return (
-      <div className="bg-white rounded-2xl p-12 shadow-lg border border-slate-200">
-        <div className="flex items-center justify-center gap-3">
-          <RefreshCw className="h-8 w-8 text-blue-600 animate-spin" />
-          <span className="text-slate-500 text-lg">Loading payroll data...</span>
-        </div>
-      </div>
-    );
+    return <PagePreloader loading={true} variant="table" message="Loading payroll data..." />;
   }
 
   const handleSelectAll = (e) => { e.stopPropagation(); setSelectAll(e.target.checked); };

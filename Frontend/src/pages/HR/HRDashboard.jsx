@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import HrSidebar from '../../components/HrSidebar';
 import { DashboardHeader, RoleBasedNav } from '../../components/DashboardComponents';
 import { useAuth } from '../../context/AuthContext';
 import { endpoints } from '../../config/api';
 import { Clock, TrendingUp, CheckCircle, XCircle, RefreshCw } from 'lucide-react';
 import { getPakistanDateString } from '../../utils/timezone';
+import PagePreloader from '../../components/PagePreloader';
 
 const HRDashboard = () => {
   const { role } = useAuth();
@@ -18,89 +19,38 @@ const HRDashboard = () => {
   ]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
+      setLoading(true);
       const token = localStorage.getItem('token');
-      console.log('🔐 Token:', token ? 'Present' : 'Missing');
-      
-      // Get Pakistan date (UTC+5)
-      // The backend stores attendance_date in Pakistan timezone (YYYY-MM-DD)
       const today = getPakistanDateString();
-      console.log('📅 Today date (Pakistan TZ):', today);
       
-      // Fetch today's attendance records
-      console.log('📥 Fetching attendance...');
-      const attendanceResponse = await fetch(endpoints.attendance.all, {
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-      });
+      // OPTIMIZED: Fetch ONLY today's attendance with date filter (not all records)
+      const attendanceResponse = await fetch(
+        `${endpoints.attendance.all}?date=${today}&limit=500&page=1`,
+        { headers: token ? { 'Authorization': `Bearer ${token}` } : {} }
+      );
       
       if (!attendanceResponse.ok) {
         throw new Error(`HTTP Error: ${attendanceResponse.status}`);
       }
       
       const attendanceDataRaw = await attendanceResponse.json();
-      console.log('📊 Raw Attendance response:', attendanceDataRaw);
       
       if (!attendanceDataRaw.success) {
         throw new Error('API returned success: false');
       }
       
-      console.log('🕐 Full attendance data count:', attendanceDataRaw.data ? attendanceDataRaw.data.length : 0);
-      
-      // Log all records for debugging
-      if (attendanceDataRaw.data && attendanceDataRaw.data.length > 0) {
-        console.log('📋 FIRST 5 RECORDS:', attendanceDataRaw.data.slice(0, 5).map(r => ({
-          id: r.id,
-          employee_id: r.employee_id,
-          name: r.name,
-          attendance_date: r.attendance_date,
-          status: r.status,
-          check_in_time: r.check_in_time
-        })));
-        
-        // Show all dates present in database
-        const uniqueDates = [...new Set(attendanceDataRaw.data.map(r => r.attendance_date ? r.attendance_date.split('T')[0] : 'null'))];
-        console.log('📅 Unique attendance dates in DB:', uniqueDates);
-      }
-      
-      const todayAttendance = (attendanceDataRaw.data || []).filter(r => {
-        // Compare dates as strings (YYYY-MM-DD)
-        const recordDate = r.attendance_date ? r.attendance_date.split('T')[0] : null;
-        const matches = recordDate === today;
-        
-        console.log(`  Comparing: recordDate="${recordDate}" vs today="${today}" → ${matches ? '✓ MATCH' : '✗ no match'} | ${r.name} | ${r.status}`);
-        
-        return matches;
-      });
-      
-      console.log('✅ Today attendance records (filtered):', todayAttendance.length);
-      console.log('📋 Today attendance details:', todayAttendance);
+      const todayAttendance = attendanceDataRaw.data || [];
       
       // Calculate metrics for today
       const presentOntime = todayAttendance.filter(r => r.status === 'Present').length;
       const totalAbsent = todayAttendance.filter(r => r.status === 'Absent').length;
       const totalLate = todayAttendance.filter(r => r.status === 'Late').length;
-      
-      console.log('✓ Present (Ontime):', presentOntime);
-      console.log('✗ Absent:', totalAbsent);
-      console.log('⏰ Late:', totalLate);
 
-      // Calculate average attendance (approximation - count present + late as present)
-      const allAttendance = attendanceDataRaw.data || [];
-      const presentCount = allAttendance.filter(r => r.status === 'Present' || r.status === 'Late').length;
-      const totalRecords = allAttendance.length || 1;
-      const avgAttendance = totalRecords > 0 ? Math.round((presentCount / totalRecords) * 100) : 94;
-      
-      console.log('📊 Average Attendance Calculation:', {
-        presentCount,
-        totalRecords,
-        avgAttendance,
-        allAttendanceCount: allAttendance.length
-      });
+      const presentCount = todayAttendance.filter(r => r.status === 'Present' || r.status === 'Late').length;
+      const totalRecords = todayAttendance.length || 1;
+      const avgAttendance = totalRecords > 0 ? Math.round((presentCount / totalRecords) * 100) : 0;
 
       setStats([
         { label: 'Total Present Ontime', value: presentOntime.toString(), icon: CheckCircle, color: 'from-blue-500 to-cyan-600' },
@@ -108,21 +58,16 @@ const HRDashboard = () => {
         { label: 'Total Late', value: totalLate.toString(), icon: Clock, color: 'from-orange-500 to-red-600' },
         { label: 'Avg Attendance', value: `${avgAttendance}%`, icon: TrendingUp, color: 'from-purple-500 to-pink-600' }
       ]);
-
-      console.log('🎯 Stats Updated:', {
-        presentOntime,
-        totalAbsent,
-        totalLate,
-        avgAttendance
-      });
-
-      setLoading(false);
     } catch (error) {
-      console.error('❌ Error fetching dashboard data:', error);
-      // Keep default values on error
+      console.error('Error fetching dashboard data:', error);
+    } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [fetchDashboardData]);
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -143,6 +88,7 @@ const HRDashboard = () => {
         <RoleBasedNav role={role} />
 
         <div className="flex-1 overflow-y-auto px-4 md:px-8 py-10">
+          <PagePreloader loading={loading} message="Loading dashboard data...">
           <div className="w-full">
             {/* Stats Grid */}
             <div className="mb-12 w-full">
@@ -230,6 +176,7 @@ const HRDashboard = () => {
               </div>
             </div>
           </div>
+          </PagePreloader>
         </div>
       </div>
     </div>

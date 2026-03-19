@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { endpoints } from '../config/api';
 import BreakSummary from './BreakSummary';
 import TodayBreaksSummary from './TodayBreaksSummary';
+import PagePreloader from './PagePreloader';
 import { getPakistanDate } from '../utils/timezone';
 import { 
   Calendar, Users, CheckCircle, XCircle, Clock, FileText, Download, 
@@ -3522,6 +3523,7 @@ export function HrAttendancePage() {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [employeeView, setEmployeeView] = useState('list');
   const [selectedDate, setSelectedDate] = useState(null);
+  const [pageLoading, setPageLoading] = useState(true);
   
   const [editingEmployee, setEditingEmployee] = useState(null);
   const [isAddEmployeeModalOpen, setIsAddEmployeeModalOpen] = useState(false);
@@ -3757,17 +3759,15 @@ export function HrAttendancePage() {
   };
 
   useEffect(() => {
+    setPageLoading(true);
+
     // Fetch employees from database
     const fetchEmployees = async () => {
       try {
-        console.log('🔍 Fetching employees from:', endpoints.employees.base);
         const response = await fetch(endpoints.employees.base);
         const data = await response.json();
-        console.log('📋 Raw API Response:', data);
         
-        // Handle both direct array response and object with data property
         const employeesList = Array.isArray(data) ? data : (data.data || data.employees || []);
-        console.log('✅ Extracted employees list:', employeesList);
         
         const employeesData = employeesList.map(emp => ({
           id: emp.id,
@@ -3783,11 +3783,9 @@ export function HrAttendancePage() {
           leavesTaken: 0,
           leavesRemaining: 20
         }));
-        console.log('👥 Formatted employees:', employeesData);
         setEmployees(employeesData);
       } catch (error) {
-        console.error('❌ Error fetching employees:', error);
-        // Fallback: set empty array
+        console.error('Error fetching employees:', error);
         setEmployees([]);
       }
     };
@@ -3795,26 +3793,20 @@ export function HrAttendancePage() {
     // Fetch all attendance data from database
     const fetchAttendance = async () => {
       try {
-        // Get work date (based on 6 AM threshold for night shift)
         const todayDate = getWorkDate();
         
-        console.log('📅 Fetching attendance for date:', todayDate);
+        // OPTIMIZED: Fetch only current month history (not 10,000 records)
+        // Fetch history with reasonable limit + today's data in parallel
+        const [historyResponse, todayResponse] = await Promise.all([
+          fetch(endpoints.attendance.all + '?limit=500&page=1'),
+          fetch(endpoints.attendance.all + `-with-absent?date=${todayDate}`)
+        ]);
         
-        // Fetch all historical attendance data (includes real check-ins)
-        // Request large limit to ensure we get all historical records
-        console.log('🔍 Fetching history from:', endpoints.attendance.all + '?limit=10000&page=1');
-        const historyResponse = await fetch(endpoints.attendance.all + '?limit=10000&page=1');
         const historyData = await historyResponse.json();
-        console.log('📊 History API response:', historyData);
-        const historicalList = Array.isArray(historyData) ? historyData : (historyData.data || historyData.attendance || []);
-        console.log('✅ Historical records count:', historicalList.length);
-        
-        // Fetch today's attendance data WITH absent records (so we see all employees for today)
-        const todayResponse = await fetch(endpoints.attendance.all + `-with-absent?date=${todayDate}`);
         const todayData = await todayResponse.json();
-        console.log('📋 Today API response:', todayData);
+        
+        const historicalList = Array.isArray(historyData) ? historyData : (historyData.data || historyData.attendance || []);
         const todayList = Array.isArray(todayData) ? todayData : (todayData.data || []);
-        console.log('✅ Today records count:', todayList.length);
         
         // Combine both: today's data (with absent records) + historical data (excluding today's records)
         const combinedAttendance = [
@@ -3938,16 +3930,9 @@ export function HrAttendancePage() {
           };
         });
         
-        console.log('📊 Attendance data loaded:', formattedData.length, 'records');
-        console.log('📅 Work date (6 AM threshold):', todayDate);
-        console.log('📅 Today\'s attendance:', todayList.length, 'records (', todayList.filter(r => r.status?.toLowerCase() === 'present').length, 'present,', todayList.filter(r => r.status?.toLowerCase() === 'absent').length, 'absent)');
-        console.log('📅 Sample today data:', formattedData.filter(r => r.date === todayDate).slice(0, 5).map(r => ({ name: r.name, date: r.date, status: r.status })));
-        console.log('📅 Sample historical dates:', formattedData.filter(r => r.date !== todayDate).slice(0, 3).map(r => ({ name: r.name, date: r.date, status: r.status })));
-        
         setAttendanceData(formattedData);
       } catch (error) {
         console.error('Error fetching attendance:', error);
-        // Fallback: set empty array
         setAttendanceData([]);
       }
     };
@@ -4016,12 +4001,7 @@ export function HrAttendancePage() {
       }
     };
 
-    fetchEmployees();
-    fetchAttendance();
-    fetchRules();
-    fetchBreaks();
-
-    // Fetch absent summary for current month (for EmployeeListView accurate absent counts)
+    // Fetch absent summary for current month
     const fetchMonthlyAbsentSummary = async () => {
       try {
         const year = currentDate.getFullYear();
@@ -4036,7 +4016,17 @@ export function HrAttendancePage() {
         setMonthlyAbsentSummary([]);
       }
     };
-    fetchMonthlyAbsentSummary();
+
+    // OPTIMIZED: Fetch all data in parallel instead of sequentially
+    Promise.all([
+      fetchEmployees(),
+      fetchAttendance(),
+      fetchRules(),
+      fetchBreaks(),
+      fetchMonthlyAbsentSummary(),
+    ]).finally(() => {
+      setPageLoading(false);
+    });
 
     // Set default holidays
     const sampleHolidays = [
@@ -4466,6 +4456,10 @@ export function HrAttendancePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-gray-100 relative overflow-hidden">
 
+      {pageLoading ? (
+        <PagePreloader loading={true} message="Loading attendance management data..." />
+      ) : (
+      <>
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-100 rounded-full mix-blend-multiply filter blur-3xl opacity-40 animate-pulse"></div>
         <div className="absolute top-1/3 right-1/4 w-80 h-80 bg-cyan-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse animation-delay-1000"></div>
@@ -4792,6 +4786,8 @@ export function HrAttendancePage() {
           animation-delay: 2s;
         }
       `}</style>
+      </>
+      )}
     </div>
   );
 }

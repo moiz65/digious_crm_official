@@ -2572,23 +2572,40 @@ exports.getAllAttendance = async (req, res) => {
       // Agar koi attendance record hai jo Employee_Onboarding se match nahi karta
       attendance.forEach((record) => {
         if (!record.name) {
-          // Agar name nahi hai, toh employee_id hi name ban jaye
           record.name = `Employee ${record.employee_id}`;
           record.email = `employee${record.employee_id}@company.com`;
           record.department = "Unknown";
         }
       });
 
-      // Fetch breaks for each attendance record
-      const attendanceWithBreaks = await Promise.all(
-        attendance.map(async (record) => {
-          const [breaks] = await connection.query(
-            `SELECT id, break_type, break_start_time, break_end_time, break_duration_minutes, reason 
-             FROM Employee_Breaks 
-             WHERE attendance_id = ? 
-             ORDER BY break_start_time ASC`,
-            [record.id],
-          );
+      // OPTIMIZED: Batch-fetch all breaks for this page in ONE query instead of N+1
+      const attendanceIds = attendance.map(r => r.id).filter(Boolean);
+      let breaksMap = {};
+      if (attendanceIds.length > 0) {
+        const [allBreaks] = await connection.query(
+          `SELECT id, attendance_id, break_type, break_start_time, break_end_time, break_duration_minutes, reason 
+           FROM Employee_Breaks 
+           WHERE attendance_id IN (?) 
+           ORDER BY break_start_time ASC`,
+          [attendanceIds]
+        );
+        // Group breaks by attendance_id
+        allBreaks.forEach(b => {
+          if (!breaksMap[b.attendance_id]) breaksMap[b.attendance_id] = [];
+          breaksMap[b.attendance_id].push({
+            id: b.id,
+            break_type: b.break_type,
+            break_start_time: b.break_start_time,
+            break_end_time: b.break_end_time || null,
+            break_duration_minutes: b.break_duration_minutes,
+            reason: b.reason,
+          });
+        });
+      }
+
+      // Map attendance records with their breaks (no extra queries)
+      const attendanceWithBreaks = attendance.map((record) => {
+          const breaks = breaksMap[record.id] || [];
 
           // Format attendance_date as YYYY-MM-DD string (not ISO datetime)
           let attendanceDateStr = record.attendance_date;
@@ -2719,8 +2736,15 @@ exports.getAllAttendance = async (req, res) => {
               : [],
             total_breaks_count: breaks ? breaks.length : 0,
           };
-        }),
-      );
+        });
+
+      // Get total count for proper pagination
+      let countQuery = `SELECT COUNT(*) as total FROM Employee_Attendance ea WHERE 1=1`;
+      const countParams = [];
+      if (date) { countQuery += ` AND ea.attendance_date = ?`; countParams.push(date); }
+      if (status) { countQuery += ` AND ea.status = ?`; countParams.push(status); }
+      const [countResult] = await connection.query(countQuery, countParams);
+      const totalRecords = countResult[0].total;
 
       res.status(200).json({
         success: true,
@@ -2729,7 +2753,7 @@ exports.getAllAttendance = async (req, res) => {
         pagination: {
           page: parseInt(page),
           limit: parseInt(limit),
-          total: attendanceWithBreaks.length,
+          total: totalRecords,
         },
       });
     } finally {
@@ -2778,16 +2802,33 @@ exports.getAllAttendanceWithAbsent = async (req, res) => {
         attendanceParams,
       );
 
-      // Fetch breaks for each attendance record
-      const attendanceWithBreaks = await Promise.all(
-        attendance.map(async (record) => {
-          const [breaks] = await connection.query(
-            `SELECT id, break_type, break_start_time, break_end_time, break_duration_minutes, reason 
-             FROM Employee_Breaks 
-             WHERE attendance_id = ? 
-             ORDER BY break_start_time ASC`,
-            [record.id],
-          );
+      // OPTIMIZED: Batch-fetch all breaks in ONE query instead of N+1
+      const attIds = attendance.map(r => r.id).filter(Boolean);
+      let breaksMapAbsent = {};
+      if (attIds.length > 0) {
+        const [allBreaks] = await connection.query(
+          `SELECT id, attendance_id, break_type, break_start_time, break_end_time, break_duration_minutes, reason 
+           FROM Employee_Breaks 
+           WHERE attendance_id IN (?) 
+           ORDER BY break_start_time ASC`,
+          [attIds]
+        );
+        allBreaks.forEach(b => {
+          if (!breaksMapAbsent[b.attendance_id]) breaksMapAbsent[b.attendance_id] = [];
+          breaksMapAbsent[b.attendance_id].push({
+            id: b.id,
+            break_type: b.break_type,
+            break_start_time: b.break_start_time,
+            break_end_time: b.break_end_time || null,
+            break_duration_minutes: b.break_duration_minutes,
+            reason: b.reason,
+          });
+        });
+      }
+
+      // Map attendance with pre-fetched breaks (no N+1)
+      const attendanceWithBreaks = attendance.map((record) => {
+          const breaks = breaksMapAbsent[record.id] || [];
 
           // Format attendance_date as YYYY-MM-DD string (not ISO datetime)
           let attendanceDateStr = record.attendance_date;
@@ -2863,8 +2904,7 @@ exports.getAllAttendanceWithAbsent = async (req, res) => {
               : [],
             total_breaks_count: breaks ? breaks.length : 0,
           };
-        }),
-      );
+        });
 
       // If date filter is applied, create absent records for employees who haven't checked in
       let completeAttendanceData = attendanceWithBreaks;

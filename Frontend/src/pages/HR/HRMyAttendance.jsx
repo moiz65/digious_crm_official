@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { DashboardHeader } from '../../components/DashboardComponents';
 import { useAuth } from '../../context/AuthContext';
 import { endpoints } from '../../config/api';
 import { getPakistanDate } from '../../utils/timezone';
 import HrSidebar from '../../components/HrSidebar';
+import PagePreloader from '../../components/PagePreloader';
 import {
   CheckCircle,Clock,LogIn,LogOut,User,Activity,AlertCircle,Timer,PauseCircle,Utensils,Cigarette,Table,Shield
 } from 'lucide-react';
@@ -63,14 +64,25 @@ const HRMyAttendance = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Fetch data on component mount
+  // Fetch data on component mount — OPTIMIZED: parallel fetches
   useEffect(() => {
-    console.log('[INFO] HRMyAttendance mounted with user:', user);
-    fetchTodayAttendance();
-    fetchPendingCheckout(); // Check for pending checkout from previous shift
-    fetchActiveBreaks();
-    fetchMonthlyAttendance();
-    fetchLeaveBalance();
+    const fetchAllData = async () => {
+      setLoading(true);
+      try {
+        await Promise.all([
+          fetchTodayAttendance(),
+          fetchPendingCheckout(),
+          fetchActiveBreaks(),
+          fetchMonthlyAttendance(),
+          fetchLeaveBalance(),
+        ]);
+      } catch (err) {
+        console.error('Error fetching initial data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAllData();
   }, []);
 
   // Re-fetch monthly attendance when filters change
@@ -270,12 +282,10 @@ const HRMyAttendance = () => {
 
   const fetchTodayAttendance = async () => {
     try {
-      setLoading(true);
       const token = localStorage.getItem('token');
       const employeeId = getEmployeeId();
       
       if (!employeeId) {
-        setLoading(false);
         return;
       }
 
@@ -289,21 +299,11 @@ const HRMyAttendance = () => {
       const data = await response.json();
       if (data.success && data.data) {
         const todayRecord = data.data;
-        console.log('[SUCCESS] Today attendance data:', todayRecord);
-        console.log('[INFO] Check-in status:', {
-          check_in_time: todayRecord.check_in_time,
-          check_out_time: todayRecord.check_out_time,
-          isCheckedIn: data.isCheckedIn || (todayRecord.check_in_time && !todayRecord.check_out_time)
-        });
         setAttendanceData(todayRecord);
         setIsCheckedIn(data.isCheckedIn || (todayRecord.check_in_time && !todayRecord.check_out_time));
-      } else {
-        console.warn('[WARNING] No attendance data received:', data);
       }
     } catch (error) {
       console.error('Error fetching attendance:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -949,6 +949,10 @@ const HRMyAttendance = () => {
           currentTime={currentTime}
         />
 
+        {loading ? (
+          <PagePreloader loading={true} message="Loading your attendance data..." />
+        ) : (
+        <>
         {/* Tabs */}
         <div className="bg-white border-b border-gray-200 px-6">
           <div className="flex gap-4">
@@ -1749,6 +1753,8 @@ const HRMyAttendance = () => {
             </div>
           )}
         </main>
+        </>
+        )}
       </div>
     </div>
   );

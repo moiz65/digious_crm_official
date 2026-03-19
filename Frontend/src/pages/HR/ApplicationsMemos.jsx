@@ -44,6 +44,7 @@ import {
   Loader,
 } from "lucide-react";
 import HrSidebar from '../../components/HrSidebar';
+import PagePreloader from '../../components/PagePreloader';
 import { endpoints, getAuthHeaders } from '../../config/api';
 
 // Simple date formatting
@@ -199,7 +200,7 @@ const ApplicationsMemos = () => {
       const matchesStatus = selectedStatus === 'all' || app.status === selectedStatus;
       return matchesSearch && matchesDepartment && matchesStatus;
     });
-  }, [searchQuery, selectedDepartment, selectedStatus]);
+  }, [applications, searchQuery, selectedDepartment, selectedStatus]);
 
   const filteredLeaves = useMemo(() => {
     return appliedLeaves.filter(leave => {
@@ -210,7 +211,7 @@ const ApplicationsMemos = () => {
       const matchesStatus = selectedStatus === 'all' || leave.status === selectedStatus;
       return matchesSearch && matchesDepartment && matchesStatus;
     });
-  }, [searchQuery, selectedDepartment, selectedStatus]);
+  }, [appliedLeaves, searchQuery, selectedDepartment, selectedStatus]);
 
   const filteredMemos = useMemo(() => {
     return memos.filter(memo => {
@@ -219,9 +220,7 @@ const ApplicationsMemos = () => {
         memo.content.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesSearch;
     });
-  }, [searchQuery]);
-
-  // Get status colors
+  }, [memos, searchQuery]);
   const getStatusColor = (status) => {
     switch(status) {
       case 'Approved':
@@ -529,12 +528,7 @@ const ApplicationsMemos = () => {
         <div className="flex-1 overflow-y-auto p-6">
           {/* Loading State */}
           {loading && (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-center">
-                <Loader className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
-                <p className="text-gray-600">Loading data...</p>
-              </div>
-            </div>
+            <PagePreloader loading={true} message="Loading applications & memos..." />
           )}
 
           {/* Error State */}
