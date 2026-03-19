@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import HrSidebar from '../../components/HrSidebar';
+import PagePreloader from '../../components/PagePreloader';
 import { endpoints, getAuthHeaders } from '../../config/api';
 import {
   Search, FileText, User, Calendar, Clock, CheckCircle, XCircle,
@@ -78,6 +79,7 @@ const AdjustmentContent = () => {
   const [empLoading, setEmpLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('attendance');
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   // ticket tabs: pending | resolved | ignored
   const [ticketTab, setTicketTab] = useState('pending');
   const [dateRange, setDateRange] = useState({
@@ -86,11 +88,17 @@ const AdjustmentContent = () => {
   });
   const [toast, setToast] = useState(null);
 
+  // Debounce search query (300ms)
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   // ---- Fetch tickets ----
   const fetchTickets = useCallback(async () => {
     setLoading(true);
     try {
-      const url = `${endpoints.adjustments.tickets}?tab=${ticketTab}&search=${encodeURIComponent(searchQuery)}`;
+      const url = `${endpoints.adjustments.tickets}?tab=${ticketTab}&search=${encodeURIComponent(debouncedSearch)}`;
       const res = await fetch(url, { headers: getAuthHeaders() });
       const data = await res.json();
       if (data.success) setTickets(data.data);
@@ -99,7 +107,7 @@ const AdjustmentContent = () => {
     } finally {
       setLoading(false);
     }
-  }, [ticketTab, searchQuery]);
+  }, [ticketTab, debouncedSearch]);
 
   useEffect(() => { fetchTickets(); }, [fetchTickets]);
 
@@ -313,10 +321,7 @@ const TicketListView = ({ tickets, loading, searchQuery, setSearchQuery, ticketT
 
       {/* Ticket Cards */}
       {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-          <span className="ml-3 text-slate-500">Loading tickets...</span>
-        </div>
+        <PagePreloader loading={true} message="Loading tickets..." />
       ) : tickets.length === 0 ? (
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-12 text-center">
           <FileText className="h-12 w-12 text-slate-300 mx-auto mb-3" />

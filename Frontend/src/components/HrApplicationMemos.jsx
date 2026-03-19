@@ -58,6 +58,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { getCurrentEmployeeId, endpoints, getAuthHeaders } from "../config/api";
+import PagePreloader from './PagePreloader';
 
 // Simple date formatting function
 const formatDate = (dateString) => {
@@ -551,7 +552,7 @@ export default function OfficeApplicationsSystem() {
       try {
         setLoading(true);
         const token = localStorage.getItem('token');
-        const response = await fetch('https://digious-crm-official.onrender.com/api/v1/applications/all', {
+        const response = await fetch(endpoints.applications.getAll, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -804,6 +805,10 @@ export default function OfficeApplicationsSystem() {
   const closeViewModal = () => {
     setViewDetailsModal(null);
   };
+
+  if (loading) {
+    return <PagePreloader loading={true} message="Loading applications..." />;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-6 space-y-6">
@@ -1696,7 +1701,7 @@ const NewApplicationModal = ({ onClose, onSave }) => {
     }
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`https://digious-crm-official.onrender.com/api/v1/applications/employees/search?q=${encodeURIComponent(query)}`, {
+      const response = await fetch(`${endpoints.applications.searchEmployees}?q=${encodeURIComponent(query)}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) {
@@ -2292,7 +2297,7 @@ const ApplicationDetailModal = ({ application, onClose, onMarkAsRead, isMemo, cu
   const handleChangePriority = async (newPriority) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`https://digious-crm-official.onrender.com/api/v1/applications/${application.id}/priority`, {
+      const response = await fetch(endpoints.applications.updatePriority(application.id), {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -2345,7 +2350,7 @@ const ApplicationDetailModal = ({ application, onClose, onMarkAsRead, isMemo, cu
     setActionLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`https://digious-crm-official.onrender.com/api/v1/applications/${application.id}/approve`, {
+      const response = await fetch(endpoints.applications.approve(application.id), {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -2383,7 +2388,7 @@ const ApplicationDetailModal = ({ application, onClose, onMarkAsRead, isMemo, cu
     setActionLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`https://digious-crm-official.onrender.com/api/v1/applications/${application.id}/reject`, {
+      const response = await fetch(endpoints.applications.reject(application.id), {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -2413,7 +2418,7 @@ const ApplicationDetailModal = ({ application, onClose, onMarkAsRead, isMemo, cu
   const handleMarkInProgress = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`https://digious-crm-official.onrender.com/api/v1/applications/${application.id}/status`, {
+      const response = await fetch(endpoints.applications.updateStatus(application.id), {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -2443,7 +2448,7 @@ const ApplicationDetailModal = ({ application, onClose, onMarkAsRead, isMemo, cu
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`https://digious-crm-official.onrender.com/api/v1/applications/${application.id}/withdraw-assignment`, {
+      const response = await fetch(endpoints.applications.withdrawAssignment(application.id), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

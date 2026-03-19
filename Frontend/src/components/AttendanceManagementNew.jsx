@@ -1,6 +1,7 @@
 // AttendanceManagement.jsx - Redesigned
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { endpoints } from "../config/api";
+import PagePreloader from './PagePreloader';
 import {
   CheckCircle,
   Clock,
@@ -78,32 +79,6 @@ const AttendanceManagement = () => {
         const result = await response.json();
 
         if (result.success && result.data) {
-          console.log("📡 RAW API DATA:");
-          console.log("Total records from API:", result.data.length);
-
-          if (result.data.length > 0) {
-            console.log("First raw record from API:", result.data[0]);
-
-            // Check karo kya fields available hain
-            const firstRecord = result.data[0];
-            console.log("Available fields:", Object.keys(firstRecord));
-
-            // Check specific important fields
-            const importantFields = [
-              "id",
-              "employee_id",
-              "name",
-              "department",
-              "status",
-              "attendance_date",
-              "check_in_time",
-              "check_out_time",
-            ];
-            importantFields.forEach((field) => {
-              console.log(`${field}:`, firstRecord[field]);
-            });
-          }
-
           setAttendanceData(result.data);
           setTotalRecords(result.data.length);
           setFilteredRecords(result.data.length);
@@ -210,68 +185,6 @@ const AttendanceManagement = () => {
   // Helper: format time string (HH:MM) or return '-' for missing
   // (moved to module scope)
 
-  // Update filtered records count when filters change
-  useEffect(() => {
-    const dateFilteredData = getFilteredDataByDate();
-    const filtered = dateFilteredData.filter((record) => {
-      // Search filter - check multiple fields
-      const matchesSearch =
-        !searchQuery ||
-        record.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        record.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        record.department?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (record.employee_id &&
-          String(record.employee_id)
-            .toLowerCase()
-            .includes(searchQuery.toLowerCase())) || // Convert employee_id to string
-        (record.attendance_date &&
-          record.attendance_date.includes(searchQuery));
-
-      // Department filter
-      const matchesDepartment =
-        selectedDepartment === "All Departments" ||
-        record.department === selectedDepartment;
-
-      // Status filter (handle Late status specially - records with positive late_by_minutes)
-      let matchesStatus = selectedStatus === "All";
-      if (selectedStatus !== "All") {
-        if (selectedStatus === "Late") {
-          matchesStatus = record.late_by_minutes > 0;
-        } else if (selectedStatus === "Leave") {
-          matchesStatus =
-            record.status === "Leave" || record.status === "On Leave";
-        } else {
-          matchesStatus = record.status === selectedStatus;
-        }
-      }
-
-      // Break status filter
-      let matchesBreakStatus = selectedBreakStatus === "All";
-      if (selectedBreakStatus !== "All") {
-        const hasTakenBreaks = (record.total_breaks_taken || 0) > 0;
-        matchesBreakStatus =
-          selectedBreakStatus === "On Break" ? hasTakenBreaks : !hasTakenBreaks;
-      }
-
-      return (
-        matchesSearch &&
-        matchesDepartment &&
-        matchesStatus &&
-        matchesBreakStatus
-      );
-    });
-    setFilteredRecords(filtered.length);
-  }, [
-    searchQuery,
-    selectedDepartment,
-    selectedStatus,
-    selectedBreakStatus,
-    selectedDate,
-    customStartDate,
-    customEndDate,
-    getFilteredDataByDate,
-  ]);
-
   // Update nowTime every minute when live updates are enabled so ongoing durations refresh
   useEffect(() => {
     if (!liveUpdates) return;
@@ -286,10 +199,9 @@ const AttendanceManagement = () => {
     }
   }, [customStartDate, customEndDate]);
 
-  // Filter data
-  const dateFilteredData = getFilteredDataByDate();
-  const filteredData = dateFilteredData.filter((record) => {
-    // Search filter - check multiple fields
+  // Filter data (single pass — replaces duplicate useEffect + inline filter)
+  const dateFilteredData = useMemo(() => getFilteredDataByDate(), [getFilteredDataByDate]);
+  const filteredData = useMemo(() => dateFilteredData.filter((record) => {
     const matchesSearch =
       !searchQuery ||
       record.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -298,14 +210,12 @@ const AttendanceManagement = () => {
       (record.employee_id &&
         String(record.employee_id)
           .toLowerCase()
-          .includes(searchQuery.toLowerCase())); // Convert employee_id to string
+          .includes(searchQuery.toLowerCase()));
 
-    // Department filter
     const matchesDepartment =
       selectedDepartment === "All Departments" ||
       record.department === selectedDepartment;
 
-    // Status filter (handle Late status specially - records with positive late_by_minutes)
     let matchesStatus = selectedStatus === "All";
     if (selectedStatus !== "All") {
       if (selectedStatus === "Late") {
@@ -318,7 +228,6 @@ const AttendanceManagement = () => {
       }
     }
 
-    // Break status filter
     let matchesBreakStatus = selectedBreakStatus === "All";
     if (selectedBreakStatus !== "All") {
       const hasTakenBreaks = (record.total_breaks_taken || 0) > 0;
@@ -329,36 +238,31 @@ const AttendanceManagement = () => {
     return (
       matchesSearch && matchesDepartment && matchesStatus && matchesBreakStatus
     );
-  });
+  }), [dateFilteredData, searchQuery, selectedDepartment, selectedStatus, selectedBreakStatus]);
 
-  // Calculate statistics from filtered data
-  const stats = {
-    present: dateFilteredData.filter((r) => r.status === "Present").length,
-    absent: dateFilteredData.filter((r) => r.status === "Absent").length,
-    active: dateFilteredData.filter(
-      (r) => r.check_out_time === null && r.status === "Present",
-    ).length,
-    inactive: dateFilteredData.filter(
-      (r) => r.check_out_time !== null || r.status === "Absent",
-    ).length,
-    totalBreaks: dateFilteredData.reduce(
-      (sum, r) => sum + (r.total_breaks_taken || 0),
-      0,
-    ),
-    avgWorkingHours:
-      dateFilteredData.length > 0
-        ? (
-            dateFilteredData.reduce(
-              (sum, r) => sum + (r.net_working_time_minutes || 0),
-              0,
-            ) /
-            dateFilteredData.length /
-            60
-          ).toFixed(1)
-        : "0.0",
-    late: dateFilteredData.filter((r) => r.late_by_minutes > 0).length,
-    onTime: dateFilteredData.filter((r) => r.on_time === 1).length,
-  };
+  // Keep filteredRecords count in sync
+  useEffect(() => {
+    setFilteredRecords(filteredData.length);
+  }, [filteredData]);
+
+  // Calculate statistics from filtered data (single reduce instead of 7 .filter() passes)
+  const stats = useMemo(() => {
+    const s = dateFilteredData.reduce((acc, r) => {
+      if (r.status === "Present") acc.present++;
+      if (r.status === "Absent") acc.absent++;
+      if (r.check_out_time === null && r.status === "Present") acc.active++;
+      if (r.check_out_time !== null || r.status === "Absent") acc.inactive++;
+      acc.totalBreaks += (r.total_breaks_taken || 0);
+      acc.totalWorkMinutes += (r.net_working_time_minutes || 0);
+      if (r.late_by_minutes > 0) acc.late++;
+      if (r.on_time === 1) acc.onTime++;
+      return acc;
+    }, { present: 0, absent: 0, active: 0, inactive: 0, totalBreaks: 0, totalWorkMinutes: 0, late: 0, onTime: 0 });
+    s.avgWorkingHours = dateFilteredData.length > 0
+      ? (s.totalWorkMinutes / dateFilteredData.length / 60).toFixed(1)
+      : "0.0";
+    return s;
+  }, [dateFilteredData]);
 
   // Get current date display
   const getDateDisplay = () => {
@@ -1057,13 +961,7 @@ const AttendanceTable = ({
   }, [data.length, setCurrentPage]);
 
   if (loading) {
-    return (
-      <div className="bg-white rounded-2xl p-12 shadow-lg border border-slate-200">
-        <div className="flex items-center justify-center">
-          <RefreshCw className="h-8 w-8 text-blue-600 animate-spin" />
-        </div>
-      </div>
-    );
+    return <PagePreloader loading={true} variant="table" message="Loading attendance records..." />;
   }
 
   // Calculate pagination
