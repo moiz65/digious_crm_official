@@ -1,10 +1,10 @@
 // Frontend/src/pages/HR/EmployeeOnboarding.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import HrSidebar from '../../components/HrSidebar';
 import { endpoints } from '../../config/api';
 import { 
-  ArrowLeft, Save, Plus, CheckCircle, AlertCircle, Eye, EyeOff, X
+  ArrowLeft, Save, Plus, CheckCircle, AlertCircle, Eye, EyeOff, X, RefreshCw
 } from 'lucide-react';
 
 const EmployeeOnboarding = () => {
@@ -17,7 +17,16 @@ const EmployeeOnboarding = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
-  const departments = ['Sales', 'Marketing', 'Production', 'HR', 'Operations'];
+  const [isGeneratingId, setIsGeneratingId] = useState(false);
+  
+  const departments = [
+      "Human Resources",
+      "Sales",
+      "Supporting Staff",
+      "Production",
+      "Digital Marketing",
+      "Operations",
+    ];
 
   const [formData, setFormData] = useState({
     employeeId: '',
@@ -77,16 +86,110 @@ const EmployeeOnboarding = () => {
     resourcesNote: ''
   });
 
-  const [employeeIdStatus, setEmployeeIdStatus] = useState(null); // 'available', 'exists', 'checking'
+  const [employeeIdStatus, setEmployeeIdStatus] = useState(null); // 'available', 'exists', 'checking', 'generated'
   const [suggestedNextId, setSuggestedNextId] = useState(null);
   const EMPLOYEE_ID_PREFIX = 'DG';
+  const ID_PADDING_LENGTH = 3; // Use 3 for 001, 4 for 0001, etc.
+
+  // Auto-generate employee ID on component mount
+  useEffect(() => {
+    generateNextEmployeeId();
+  }, []);
+
+  // Function to generate next available employee ID starting from 001
+  const generateNextEmployeeId = async () => {
+    setIsGeneratingId(true);
+    setEmployeeIdStatus('checking');
+    
+    try {
+      // Call backend API to get next available ID
+      const response = await fetch(endpoints.employees.getNextId);
+      const data = await response.json();
+      
+      if (data.success && data.nextId) {
+        // Format the ID to start from 001 (or 0001 based on padding length)
+        // Ensure we start from 001, not 000
+        let numericId = parseInt(data.nextId);
+        
+        // If no employees exist yet, start from 1
+        if (numericId === 0) {
+          numericId = 1;
+        }
+        
+        // Pad with zeros to reach desired length (001, 0001, etc.)
+        const formattedId = numericId.toString().padStart(ID_PADDING_LENGTH, '0');
+        
+        setFormData(prev => ({
+          ...prev,
+          employeeId: formattedId
+        }));
+        
+        setEmployeeIdStatus('generated');
+        setSuggestedNextId(null);
+        
+        console.log(`✅ Auto-generated Employee ID: ${EMPLOYEE_ID_PREFIX}-${formattedId}`);
+      } else {
+        // Fallback to local generation if API fails - start from 001
+        generateLocalNextId();
+      }
+    } catch (error) {
+      console.error('Error fetching next ID from API:', error);
+      // Fallback to local generation
+      generateLocalNextId();
+    } finally {
+      setIsGeneratingId(false);
+    }
+  };
+
+  // Local fallback function to generate next ID starting from 001
+  const generateLocalNextId = () => {
+    // This is a fallback if the API is not available
+    // Check if there are existing employees to determine the next ID
+    if (employees.length > 0) {
+      // Find the maximum existing employee ID
+      const maxId = employees.reduce((max, emp) => {
+        // Extract numeric part from employeeId (remove prefix)
+        const empIdStr = emp.employeeId || '';
+        const numericPart = empIdStr.replace(`${EMPLOYEE_ID_PREFIX}-`, '');
+        const num = parseInt(numericPart) || 0;
+        return Math.max(max, num);
+      }, 0);
+      
+      // Next ID is max + 1
+      const nextId = maxId + 1;
+      const formattedId = nextId.toString().padStart(ID_PADDING_LENGTH, '0');
+      
+      setFormData(prev => ({
+        ...prev,
+        employeeId: formattedId
+      }));
+    } else {
+      // No employees yet, start from 001
+      setFormData(prev => ({
+        ...prev,
+        employeeId: '001'.padStart(ID_PADDING_LENGTH, '0')
+      }));
+    }
+    
+    setEmployeeIdStatus('generated');
+    setSuggestedNextId(null);
+  };
+
+  // Manual refresh of employee ID
+  const handleRefreshId = () => {
+    generateNextEmployeeId();
+  };
 
   // ----- Form step helpers and validation -----
   const validateStep = (step) => {
     const newErrors = {};
     if (step === 1) {
       if (!formData.employeeId.trim()) newErrors.employeeId = 'Employee ID is required';
-      else if (employeeIdStatus === 'exists') newErrors.employeeId = 'This Employee ID already exists';
+      // Validate that ID is not 000
+      if (formData.employeeId === '000' || formData.employeeId === '0000' || formData.employeeId === '00000') {
+        newErrors.employeeId = 'Employee ID cannot be 000';
+      }
+      
       if (!formData.name.trim()) newErrors.name = 'Name is required';
       if (!formData.email.trim()) newErrors.email = 'Email is required';
       // Email must be @digioussolutions.com
@@ -165,7 +268,7 @@ const EmployeeOnboarding = () => {
     // Prepare data to send to backend
     const employeeDataForBackend = {
       // Basic info
-      employeeId: `${EMPLOYEE_ID_PREFIX}-${String(formData.employeeId).padStart(3, '0')}`,
+      employeeId: `${EMPLOYEE_ID_PREFIX}-${String(formData.employeeId).padStart(ID_PADDING_LENGTH, '0')}`,
       name: formData.name,
       email: formData.email,
       password: formData.password,
@@ -247,6 +350,7 @@ const EmployeeOnboarding = () => {
       const newEmployee = {
         id: data.data.id,
         ...formData,
+        employeeId: `${EMPLOYEE_ID_PREFIX}-${String(formData.employeeId).padStart(ID_PADDING_LENGTH, '0')}`,
         baseSalary: Number(formData.baseSalary || 0),
         totalCompensation: computeTotalSalary(),
         status: 'Active',
@@ -262,6 +366,8 @@ const EmployeeOnboarding = () => {
         resetForm();
         setOnboardingStep(1);
         setSuccessMessage('');
+        // Generate new ID for next employee
+        generateNextEmployeeId();
       }, 2500);
     } catch (error) {
       console.error('❌ Error saving employee:', error);
@@ -335,15 +441,13 @@ const EmployeeOnboarding = () => {
     const { name, value, type, checked } = e.target;
     let newValue = value;
     
-    // Handle employee ID - only numeric input
+    // Handle employee ID - now auto-generated, but allow manual override if needed
     if (name === 'employeeId') {
       newValue = value.replace(/[^0-9]/g, ''); // Remove all non-numeric characters
-      // Check ID availability when user finishes typing
-      if (newValue) {
-        checkEmployeeIdAvailability(newValue);
-      } else {
-        setEmployeeIdStatus(null);
-        setSuggestedNextId(null);
+      // Optional: You could still check availability if manually entered
+      if (newValue && newValue.length >= 3) {
+        // Optionally check ID availability for manual entries
+        // checkEmployeeIdAvailability(newValue);
       }
     }
 
@@ -568,7 +672,7 @@ const EmployeeOnboarding = () => {
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
         <div className="bg-white border-b border-gray-200 px-8 py-5 shadow-sm">
-                        <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <button
                 onClick={() => navigate(-1)}
@@ -651,35 +755,38 @@ const EmployeeOnboarding = () => {
 
                   <div className="grid grid-cols-2 gap-8">
                     <div>
-                      <label className="block text-sm font-bold text-slate-700 mb-3">Employee ID *</label>
+                      <label className="block text-sm font-bold text-slate-700 mb-3">
+                        Employee ID *
+                        {/* <span className="ml-2 text-xs font-normal text-gray-500">(Auto-generated starting from 001)</span> */}
+                      </label>
                       <div className="relative">
                         <div className="flex items-center">
-                          <span className="absolute left-4 text-slate-700 font-semibold text-base">{EMPLOYEE_ID_PREFIX}-</span>
-                          <input
-                            type="text"
-                            name="employeeId"
-                            value={formData.employeeId}
-                            onChange={handleInputChange}
-                            placeholder="001 or 0001 or 00001..."
-                            className={`w-full pl-20 pr-12 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 transition-all ${
-                              errors.employeeId ? 'border-red-400 focus:ring-red-400 focus:border-red-400' : 
-                              employeeIdStatus === 'exists' ? 'border-red-400 focus:ring-red-400 focus:border-red-400' :
-                              employeeIdStatus === 'invalid' ? 'border-orange-400 focus:ring-orange-400 focus:border-orange-400' :
-                              employeeIdStatus === 'available' ? 'border-green-400 focus:ring-green-400 focus:border-green-400' :
-                              'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
-                            }`}
-                          />
-                          {/* Status Icon */}
-                          <div className="absolute right-4">
-                            {employeeIdStatus === 'checking' && (
-                              <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                            )}
-                            {employeeIdStatus === 'exists' && (
-                              <AlertCircle className="w-5 h-5 text-red-500" />
-                            )}
-                            {employeeIdStatus === 'available' && (
-                              <CheckCircle className="w-5 h-5 text-green-500" />
-                            )}
+                          <span className="absolute left-4 text-slate-700 font-semibold text-base z-10">{EMPLOYEE_ID_PREFIX}-</span>
+                          <div className="relative w-full">
+                            <input
+                              type="text"
+                              name="employeeId"
+                              value={formData.employeeId}
+                              onChange={handleInputChange}
+                              readOnly={!isGeneratingId} // Make it read-only by default, but allow manual override if needed
+                              placeholder="Auto-generated"
+                              className={`w-full pl-20 pr-12 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 transition-all bg-gray-50 ${
+                                errors.employeeId ? 'border-red-400 focus:ring-red-400 focus:border-red-400' : 
+                                employeeIdStatus === 'generated' ? 'border-green-400 bg-green-50' :
+                                'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                              }`}
+                            />
+                            
+                            {/* Refresh button to generate new ID */}
+                            <button
+                              type="button"
+                              onClick={handleRefreshId}
+                              disabled={isGeneratingId}
+                              className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 bg-blue-50 hover:bg-blue-100 rounded-full transition-colors"
+                              title="Generate new ID"
+                            >
+                              <RefreshCw className={`w-4 h-4 text-blue-600 ${isGeneratingId ? 'animate-spin' : ''}`} />
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -687,38 +794,15 @@ const EmployeeOnboarding = () => {
                       {/* Error message */}
                       {errors.employeeId && <p className="text-red-500 text-sm mt-1">{errors.employeeId}</p>}
                       
-                      {/* Invalid status message */}
-                      {employeeIdStatus === 'invalid' && suggestedNextId && (
-                        <div className="mt-2 p-3 bg-orange-50 border border-orange-200 rounded-lg">
-                          <p className="text-sm text-orange-700 font-medium">❌ {suggestedNextId}</p>
-                          <p className="text-xs text-orange-600 mt-1">ID must be 3+ digits and cannot be 000</p>
-                        </div>
-                      )}
+                     
                       
-                      {/* Status messages */}
-                      {employeeIdStatus === 'exists' && suggestedNextId && (
-                        <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-                          <p className="text-sm text-red-700 font-medium">⚠️ This ID already exists</p>
-                          <p className="text-sm text-red-600 mt-1">
-                            💡 Try next available ID: <span className="font-semibold text-red-800">{suggestedNextId}</span>
+                      {/* Generating indicator */}
+                      {isGeneratingId && (
+                        <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-lg">
+                          <p className="text-sm text-blue-700 font-medium flex items-center gap-1">
+                            <RefreshCw className="w-4 h-4 animate-spin" />
+                            Generating next available ID...
                           </p>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const numericPart = suggestedNextId.split('-')[1];
-                              setFormData({ ...formData, employeeId: numericPart });
-                              checkEmployeeIdAvailability(numericPart);
-                            }}
-                            className="mt-2 text-sm px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition"
-                          >
-                            Use Suggested ID
-                          </button>
-                        </div>
-                      )}
-                      
-                      {employeeIdStatus === 'available' && formData.employeeId && (
-                        <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-lg">
-                          <p className="text-sm text-green-700 font-medium">✅ ID is available</p>
                         </div>
                       )}
                     </div>
@@ -1309,7 +1393,10 @@ const EmployeeOnboarding = () => {
                   <div className="grid grid-cols-2 gap-6">
                     <div className="p-4 bg-gray-50 rounded-xl">
                       <p className="text-xs text-gray-600 font-medium uppercase tracking-wide">Employee ID</p>
-                      <p className="text-lg font-bold text-gray-900 mt-2">{formData.employeeId}</p>
+                      <p className="text-lg font-bold text-gray-900 mt-2">
+                        {EMPLOYEE_ID_PREFIX}-{formData.employeeId}
+                        <span className="ml-2 text-xs font-normal text-green-600 bg-green-50 px-2 py-1 rounded-full">Auto-generated (starting from 001)</span>
+                      </p>
                     </div>
                     <div className="p-4 bg-gray-50 rounded-xl">
                       <p className="text-xs text-gray-600 font-medium uppercase tracking-wide">Full Name</p>

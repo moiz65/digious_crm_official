@@ -69,7 +69,7 @@ import {
 } from "lucide-react";
 import { endpoints } from "../config/api";
 import { format } from "date-fns";
-import { Copy } from "lucide-react"; // Add this import
+import { Copy } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 // Utility function to format sales amounts (thousands/millions)
@@ -213,27 +213,39 @@ const EmployeeProfile = () => {
     };
   }, [showExportDropdown, showMenuDropdown]);
 
+  // Stats for dashboard
   const stats = [
     {
       title: "Total Employees",
       value: employees.length.toString(),
       badgeColor: "bg-blue-100 text-blue-800 border border-blue-200",
-      trend: "+15%",
+      trend: `${employees.length > 0 ? '+' : ''}${employees.length}`,
       icon: Users,
     },
     {
       title: "Active",
       value: employees.filter((e) => e.status === "active").length.toString(),
       badgeColor: "bg-green-100 text-green-800 border border-green-200",
-      trend: "+8%",
+      trend: employees.length > 0 
+        ? `${Math.round((employees.filter((e) => e.status === "active").length / employees.length) * 100)}%` 
+        : "0%",
       icon: CheckCircle,
     },
     {
       title: "Inactive",
       value: employees.filter((e) => e.status === "inactive").length.toString(),
       badgeColor: "bg-red-100 text-red-800 border border-red-200",
-      trend: "-2%",
+      trend: employees.length > 0 
+        ? `${Math.round((employees.filter((e) => e.status === "inactive").length / employees.length) * 100)}%` 
+        : "0%",
       icon: XCircle,
+    },
+    {
+      title: "Departments",
+      value: [...new Set(employees.map(e => e.department))].length.toString(),
+      badgeColor: "bg-purple-100 text-purple-800 border border-purple-200",
+      trend: "Active",
+      icon: Building,
     },
   ];
 
@@ -408,8 +420,13 @@ const EmployeeProfile = () => {
 
   // CRUD Operations
   const handleAddEmployee = (employeeData) => {
+    // Find the maximum ID, default to 0 if no employees
+    const maxId = employees.length > 0 
+      ? Math.max(...employees.map((e) => e.id)) 
+      : 0;
+      
     const newEmployee = {
-      id: Math.max(...employees.map((e) => e.id)) + 1,
+      id: maxId + 1,
       ...employeeData,
       selected: false,
       attendance: Math.floor(Math.random() * 30) + 70,
@@ -698,6 +715,8 @@ const EmployeeProfile = () => {
     switch (sortBy) {
       case "name":
         return a.name.localeCompare(b.name);
+      case "id":
+        return a.id - b.id; // Ascending order by ID
       case "attendance":
         return b.attendance - a.attendance;
       case "projects":
@@ -793,9 +812,14 @@ const EmployeeProfile = () => {
               <h1 className="text-2xl font-bold text-gray-900">
                 Employee Profiles
               </h1>
-              <p className="text-gray-600">
-                Manage HR, Sales, Design, and Development teams
-              </p>
+              <div className="flex items-center gap-2 mt-1">
+                <p className="text-gray-600">
+                  Manage HR, Sales, Design, and Development teams
+                </p>
+                <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full border border-blue-200">
+                  Total: {employees.length} Employees
+                </span>
+              </div>
             </div>
             <div className="flex items-center gap-3">
               {/* Export Dropdown */}
@@ -855,7 +879,6 @@ const EmployeeProfile = () => {
 
               {/* Add Employee Button */}
               <button
-                // onClick={() => setShowAddModal(true)}
                 onClick={() => navigate("/add-employees")}
                 className="flex items-center gap-2 px-4 py-2 bg-[#349dff] text-white rounded-xl hover:bg-[#2980db] transition duration-200 shadow-sm"
               >
@@ -902,7 +925,7 @@ const EmployeeProfile = () => {
         </div>
 
         {/* Stats Cards */}
-        {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           {stats.map((stat, index) => (
             <div
               key={index}
@@ -943,7 +966,7 @@ const EmployeeProfile = () => {
               </div>
             </div>
           ))}
-        </div> */}
+        </div>
 
         {/* Search and Filter Section */}
         <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm mb-6">
@@ -962,21 +985,6 @@ const EmployeeProfile = () => {
             </div>
 
             <div className="flex items-center gap-3">
-              {/* Department Filter */}
-              {/* <select
-                value={filters.department}
-                onChange={(e) =>
-                  handleFilterChange("department", e.target.value)
-                }
-                className="px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#349dff]"
-              >
-                <option value="all">All Departments</option>
-                <option value="Human Resources">HR Department</option>
-                <option value="Sales">Sales Department</option>
-                <option value="Design">Design Department</option>
-                <option value="Development">Development Department</option>
-              </select> */}
-
               {/* Status Filter */}
               <select
                 value={filters.status}
@@ -995,6 +1003,7 @@ const EmployeeProfile = () => {
                 className="px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#349dff]"
               >
                 <option value="recent">Recently Added</option>
+                <option value="id">ID (Ascending)</option>
                 <option value="name">Name A-Z</option>
                 <option value="attendance">Attendance</option>
                 <option value="projects">Projects</option>
@@ -1046,7 +1055,7 @@ const EmployeeProfile = () => {
                       className="w-16 h-16 rounded-full border-2 border-blue-100 p-1 mx-auto cursor-pointer hover:border-blue-300 transition duration-200"
                       onClick={() => handleViewProfile(employee)}
                     >
-                      {/* ✅ SHOW PROFILE PICTURE FROM DATABASE */}
+                      {/* SHOW PROFILE PICTURE FROM DATABASE */}
                       {employee.profile_picture ? (
                         <img
                           src={employee.profile_picture}
@@ -1137,28 +1146,6 @@ const EmployeeProfile = () => {
                             <Edit className="h-4 w-4 text-gray-500" />
                             Edit
                           </button>
-                          {/* <button
-                            onClick={() => {
-                              handleToggleStatus(employee.id);
-                              setShowMenuDropdown((prev) => ({
-                                ...prev,
-                                [employee.id]: false,
-                              }));
-                            }}
-                            className="flex items-center gap-2 p-2 w-full text-left rounded-lg hover:bg-gray-100 transition duration-200"
-                          >
-                            {employee.status === "active" ? (
-                              <>
-                                <XCircle className="h-4 w-4 text-gray-500" />{" "}
-                                Deactivate
-                              </>
-                            ) : (
-                              <>
-                                <CheckCircle className="h-4 w-4 text-gray-500" />{" "}
-                                Activate
-                              </>
-                            )}
-                          </button> */}
 
                           <div className="border-t border-gray-200 my-2"></div>
                           <button
@@ -1182,6 +1169,10 @@ const EmployeeProfile = () => {
 
                 {/* Employee Info */}
                 <div className="text-center mb-4">
+                  {/* ADD EMPLOYEE ID ABOVE NAME */}
+                  <div className="text-sm text-gray-900 mb-1">
+                    ID: {employee.id || 'N/A'}
+                  </div>
                   <h6 className="font-semibold text-lg mb-1">
                     <button
                       onClick={() => handleViewProfile(employee)}
@@ -1190,18 +1181,19 @@ const EmployeeProfile = () => {
                       {employee.name}
                     </button>
                   </h6>
+                  {/* UPDATED DESIGNATION STYLING - Using employee.designation instead of role */}
                   <span
-                    className={`text-xs font-medium px-3 py-1 rounded-full ${getBadgeColorClass(
-                      employee.badgeClass,
-                    )} flex items-center justify-center gap-2`}
+                    className={`text-xs font-medium px-3 py-1 rounded-full flex items-center justify-center gap-2 ${
+                      employee.department === "Development" ? "bg-orange-100 text-orange-800 border border-orange-200" :
+                      employee.department === "Sales" ? "bg-green-100 text-green-800 border border-green-200" :
+                      employee.department === "Human Resources" ? "bg-blue-100 text-blue-800 border border-blue-200" :
+                      employee.department === "Design" ? "bg-purple-100 text-purple-800 border border-purple-200" :
+                      "bg-gray-100 text-gray-800 border border-gray-200"
+                    }`}
                   >
                     {getRoleIcon(employee.role, employee.department)}
-                    {employee.role}
+                    {employee.designation || employee.role || "Employee"}
                   </span>
-                  <div className="mt-2 flex items-center justify-center gap-2 text-sm text-gray-500">
-                    {getDepartmentIcon(employee.department)}
-                    {employee.department}
-                  </div>
                 </div>
 
                 {/* Role-specific Stats */}
@@ -1214,7 +1206,7 @@ const EmployeeProfile = () => {
                       </h6>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500 mb-1">projectdones</p>
+                      <p className="text-xs text-gray-500 mb-1">Projects Done</p>
                       <h6 className="font-semibold text-lg text-green-600">
                         {employee.projectdone}
                       </h6>
@@ -1313,47 +1305,43 @@ const EmployeeProfile = () => {
                     </div>
                   </div>
                 )}
-
-                {/* Skills Section */}
-                {/* <div className="mb-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-gray-700">Skills</span>
-                    <span className="text-xs text-gray-500">{employee.skills.length}</span>
-                  </div>
-                  <div className="flex flex-wrap gap-1">
-                    {employee.skills.slice(0, 3).map((skill, index) => (
-                      <span key={index} className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded-full">
-                        {getSkillIcon(skill)}
-                        {skill}
-                      </span>
-                    ))}
-                    {employee.skills.length > 3 && (
-                      <span className="inline-flex items-center px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full">
-                        +{employee.skills.length - 3} more
-                      </span>
-                    )}
-                  </div>
-                </div> */}
-
-                {/* Attendance */}
-                {/* <div className="mb-2">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm font-medium text-gray-700">Attendance</span>
-                    <span className={`font-bold ${getColorClass(employee.color).split(' ')[0]}`}>
-                      {employee.attendance}%
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className={`h-2 rounded-full ${getColorClass(employee.color).split(' ')[1]}`}
-                      style={{ width: `${employee.attendance}%` }}
-                    ></div>
-                  </div>
-                </div> */}
               </div>
             </div>
           ))}
         </div>
+
+        {/* Summary Footer */}
+        {sortedEmployees.length > 0 && (
+          <div className="mt-6 bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-blue-500" />
+                  <span className="text-sm text-gray-600">
+                    Showing <span className="font-semibold text-gray-900">{sortedEmployees.length}</span> of <span className="font-semibold text-gray-900">{employees.length}</span> employees
+                  </span>
+                </div>
+                <div className="h-4 w-px bg-gray-300"></div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-5 w-5 text-green-500" />
+                  <span className="text-sm text-gray-600">
+                    Active: <span className="font-semibold text-green-600">{employees.filter(e => e.status === "active").length}</span>
+                  </span>
+                </div>
+                <div className="h-4 w-px bg-gray-300"></div>
+                <div className="flex items-center gap-2">
+                  <XCircle className="h-5 w-5 text-red-500" />
+                  <span className="text-sm text-gray-600">
+                    Inactive: <span className="font-semibold text-red-600">{employees.filter(e => e.status === "inactive").length}</span>
+                  </span>
+                </div>
+              </div>
+              <div className="text-sm text-gray-500">
+                Last updated: {new Date().toLocaleTimeString()}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Load More */}
         <div className="text-center mt-8">
@@ -1417,7 +1405,6 @@ const AddEmployeeModal = ({ onClose, onSave }) => {
     email: "",
     phone: "",
     location: "",
-    experience: "",
     joiningDate: new Date().toISOString().split("T")[0],
     status: "active",
     skills: [],
@@ -1553,11 +1540,12 @@ const AddEmployeeModal = ({ onClose, onSave }) => {
               className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#349dff]"
             >
               <option value="">Select Role</option>
-              <option value="HR Manager">HR Manager</option>
-              <option value="HR Specialist">HR Specialist</option>
-              <option value="Sales Executive">Sales Executive</option>
-              <option value="Graphic Designer">Graphic Designer</option>
-              <option value="Developer">Developer</option>
+              <option value="Sales">Sales</option>
+              <option value="Production">Production</option>
+              <option value="Operations">Operations</option>
+              <option value="Human Resource">Human Resource</option>
+              <option value="Digital Marketing">Digital Marketing</option>
+              <option value="Supporting Staff">Supporting Staff</option>
             </select>
           </div>
 
@@ -1688,21 +1676,17 @@ const AddEmployeeModal = ({ onClose, onSave }) => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Experience
+              Status
             </label>
             <select
-              value={formData.experience}
+              value={formData.status}
               onChange={(e) =>
-                setFormData((prev) => ({ ...prev, experience: e.target.value }))
+                setFormData((prev) => ({ ...prev, status: e.target.value }))
               }
               className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#349dff]"
             >
-              <option value="">Select Experience</option>
-              <option value="0-1 years">0-1 years</option>
-              <option value="1-2 years">1-2 years</option>
-              <option value="2-5 years">2-5 years</option>
-              <option value="5-10 years">5-10 years</option>
-              <option value="10+ years">10+ years</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
             </select>
           </div>
 
@@ -1786,7 +1770,7 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
     firstName: employee.name.split(" ")[0],
     lastName: employee.name.split(" ").slice(1).join(" "),
     employeeId: `EMP-${String(employee.id).padStart(4, "0")}`,
-    about: `Experienced ${employee.role} with ${employee.experience} in the ${employee.department} department.`,
+    about: `Experienced ${employee.role} in the ${employee.department} department.`,
     // Profile image
     profile_picture: employee.profile_picture || "",
     profileImageFile: null,
@@ -1822,7 +1806,6 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
       employee.join_date ||
       new Date().toISOString().split("T")[0],
     status: employee.status || "active",
-    experience: employee.experience || "-- years",
   });
 
   const [activeTab, setActiveTab] = useState("basic");
@@ -1901,7 +1884,6 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
         department: formData.department,
         status: formData.status,
         join_date: formData.join_date,
-        experience: formData.experience,
         profile_picture: profilePictureBase64, // Use the base64 string
 
         // salary
@@ -2108,24 +2090,29 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
   const departments = [
     "Human Resources",
     "Sales",
-    "Design",
-    "Development",
-    "Finance",
-    "Marketing",
+    "Supporting Staff",
+    "Production",
+    "Digital Marketing",
     "Operations",
   ];
 
   const designations = [
-    "HR Manager",
-    "HR Specialist",
-    "Sales Executive",
-    "Developer",
-    "Graphic Designer",
-    "Project Manager",
-    "Team Lead",
-    "Analyst",
-    "Finance Manager",
-    "Marketing Executive",
+    "Internee", 
+    "Sr. Sales Executive",
+    "Jr. sales executive", 
+    "Bidder",
+    "Team Lead Sales", 
+    "Team Lead Development",
+    "Prodction Manager",
+    "Sr. Graphics Designer",
+    "Jr. Graphics Designer",
+    "Animation Artist",
+    "SEO Executive",
+    "SEO Speacialist",
+    "Social Media Marketer",
+    "Office Boy",
+    "Sr. Developer",
+    "Jr.Developer",
   ];
 
   const renderBasicInfoTab = () => (
@@ -2135,7 +2122,7 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
           <div className="col-span-12">
             <div className="flex items-center flex-wrap gap-3 bg-gray-50 w-full rounded-2xl p-4 mb-6">
               <div className="flex items-center justify-center w-24 h-24 rounded-full border-2 border-dashed border-gray-300 mr-4 flex-shrink-0">
-                {/* ✅ SHOW ACTUAL PROFILE PICTURE OR INITIALS */}
+                {/* SHOW ACTUAL PROFILE PICTURE OR INITIALS */}
                 {profileImagePreview ? (
                   <img
                     src={profileImagePreview}
@@ -2422,24 +2409,8 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
             </div>
           </div>
 
-          {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Experience
-              </label>
-              <input
-                type="text"
-                value={formData.experience}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    experience: e.target.value,
-                  }))
-                }
-                placeholder="e.g., 3 years"
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
+          {/* Status field - removed Experience */}
+          <div className="grid grid-cols-1 md:grid-cols-1 gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Status <span className="text-red-500">*</span>
@@ -2456,7 +2427,7 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
                 <option value="inactive">Inactive</option>
               </select>
             </div>
-          </div> */}
+          </div>
         </div>
       </div>
     </>
@@ -3090,30 +3061,30 @@ const ProfileDetailModal = ({
   };
 
   // Performance badge function
-  const getPerformanceBadge = (performance) => {
-    switch (performance) {
-      case "Top Performer":
-        return (
-          <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800 border border-yellow-200 flex items-center gap-1">
-            <Star className="h-3 w-3" /> Top Performer
-          </span>
-        );
-      case "Excellent":
-        return (
-          <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800 border border-green-200 flex items-center gap-1">
-            <Zap className="h-3 w-3" /> Excellent
-          </span>
-        );
-      case "Good":
-        return (
-          <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800 border border-blue-200 flex items-center gap-1">
-            <Activity className="h-3 w-3" /> Good
-          </span>
-        );
-      default:
-        return null;
-    }
-  };
+  // const getPerformanceBadge = (performance) => {
+  //   switch (performance) {
+  //     case "Top Performer":
+  //       return (
+  //         <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800 border border-yellow-200 flex items-center gap-1">
+  //           <Star className="h-3 w-3" /> Top Performer
+  //         </span>
+  //       );
+  //     case "Excellent":
+  //       return (
+  //         <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800 border border-green-200 flex items-center gap-1">
+  //           <Zap className="h-3 w-3" /> Excellent
+  //         </span>
+  //       );
+  //     case "Good":
+  //       return (
+  //         <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800 border border-blue-200 flex items-center gap-1">
+  //           <Activity className="h-3 w-3" /> Good
+  //         </span>
+  //       );
+  //     default:
+  //       return null;
+  //   }
+  // };
 
   // Skill icon function
   const getSkillIcon = (skill) => {
@@ -3335,7 +3306,7 @@ const ProfileDetailModal = ({
             <div className="flex flex-col items-center md:items-start md:flex-row md:gap-6">
               <div className="relative mb-4 md:mb-0">
                 <div className="w-24 h-24 rounded-full border-4 border-blue-100 p-1">
-                  {/* ✅ SHOW PROFILE PICTURE FROM DATABASE */}
+                  {/* SHOW PROFILE PICTURE FROM DATABASE */}
                   {employee.profile_picture ? (
                     <img
                       src={employee.profile_picture}
@@ -3375,8 +3346,8 @@ const ProfileDetailModal = ({
                   <h2 className="text-2xl font-bold text-gray-900">
                     {employee.name}
                   </h2>
-                  {/* {getStatusBadge(employee.status)}
-                  {getPerformanceBadge(employee.performance)} */}
+                  {getStatusBadge(employee.status)}
+                  {/* {getPerformanceBadge(employee.performance)} */}
                 </div>
                 <div className="flex flex-wrap gap-3 mb-3">
                   <span className="flex items-center gap-2 text-gray-600">
@@ -3400,13 +3371,13 @@ const ProfileDetailModal = ({
                     <Edit className="h-4 w-4" />
                     Edit
                   </button>
-                  {/* <button
+                  <button
                     onClick={onToggleStatus}
                     className="flex items-center gap-2 px-4 py-2 bg-yellow-50 text-yellow-600 rounded-xl hover:bg-yellow-100 transition duration-200"
                   >
                     <RefreshCw className="h-4 w-4" />
                     {employee.status === "active" ? "Deactivate" : "Activate"}
-                  </button> */}
+                  </button>
                   <button
                     onClick={onDelete}
                     className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition duration-200"
@@ -3502,16 +3473,16 @@ const ProfileDetailModal = ({
                     <div className="font-medium">{employee.department}</div>
                   </div>
                   <div>
-                    <div className="text-sm text-gray-500 mb-1">Experience</div>
-                    <div className="font-medium">{employee.experience}</div>
-                  </div>
-                  <div>
                     <div className="text-sm text-gray-500 mb-1">
                       Joining Date
                     </div>
                     <div className="font-medium">
                       {formatDate(employee.joiningDate)}
                     </div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-gray-500 mb-1">Status</div>
+                    <div className="font-medium capitalize">{employee.status}</div>
                   </div>
                 </div>
               </div>
@@ -3522,7 +3493,7 @@ const ProfileDetailModal = ({
               {/* Salary Information */}
               <div className="bg-gray-50 rounded-2xl p-5">
                 <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  {/* <DollarSign className="h-5 w-5 text-gray-500" /> */}
+                  <DollarSign className="h-5 w-5 text-gray-500" />
                   (PKR) Salary Information
                 </h4>
                 <div className="space-y-4">
@@ -3579,58 +3550,6 @@ const ProfileDetailModal = ({
                   </div>
                 </div>
               </div>
-
-              {/* Resource Information */}
-              {/* <div className="bg-gray-50 rounded-2xl p-5">
-                <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <Database className="h-5 w-5 text-gray-500" />
-                  Resource Information
-                  {employee.resources && employee.resources.length > 0 && (
-                    <span className="text-sm text-gray-500">
-                      ({employee.resources.length} resource(s))
-                    </span>
-                  )}
-                </h4>
-
-                <div className="space-y-4">
-                  {employee.resources && employee.resources.length > 0 ? (
-                    <div className="space-y-3">
-                      {employee.resources.map((resource, index) => (
-                        <div
-                          key={index}
-                          className="bg-white p-3 rounded-lg border border-gray-200 hover:border-blue-200 transition duration-200"
-                        >
-                          <div className="flex justify-between items-center mb-2">
-                            <span className="text-gray-800 font-medium">
-                              {resource.resource_name || "Unnamed Resource"}
-                            </span>
-                            <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
-                              #{index + 1}
-                            </span>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm text-gray-600">
-                              Serial Number
-                            </span>
-                            <span className="font-medium text-gray-800">
-                              {resource.resource_serial || "Not specified"}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    // Agar resources nahi hain
-                    <div className="text-center py-4">
-                      <Database className="h-10 w-10 text-gray-300 mx-auto mb-2" />
-                      <p className="text-gray-500">No resources assigned</p>
-                      <p className="text-sm text-gray-400 mt-1">
-                        Add resources from the edit section
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div> */}
 
               {/* Resource Information - Table Format */}
               <div className="bg-gray-50 rounded-2xl p-5">
