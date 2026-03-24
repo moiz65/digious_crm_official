@@ -23,6 +23,10 @@ const createTransporter = () => {
       user: process.env.SMTP_EMAIL,
       pass: process.env.SMTP_PASSWORD,
     },
+    tls: {
+      // Allow self-signed / mismatched certs (shared hosting uses *.web-hosting.com cert)
+      rejectUnauthorized: false,
+    },
   });
 };
 

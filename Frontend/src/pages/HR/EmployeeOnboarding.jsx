@@ -96,6 +96,21 @@ const EmployeeOnboarding = () => {
     generateNextEmployeeId();
   }, []);
 
+  // Function to check if an employee ID exists in the database
+  const checkIdExistsinDB = async (numericId) => {
+    try {
+      // Pad to at least 3 digits so the backend validation passes (expects 001, not 1)
+      const paddedId = numericId.toString().padStart(ID_PADDING_LENGTH, '0');
+      const response = await fetch(endpoints.employees.checkIdAvailability(paddedId));
+      const data = await response.json();
+      // If the endpoint returns 'exists: true', the ID is already taken
+      return data.exists === true;
+    } catch (error) {
+      console.error('Error checking ID availability:', error);
+      return false; // Assume available if check fails
+    }
+  };
+
   // Function to generate next available employee ID starting from 001
   const generateNextEmployeeId = async () => {
     setIsGeneratingId(true);
@@ -114,6 +129,13 @@ const EmployeeOnboarding = () => {
         // If no employees exist yet, start from 1
         if (numericId === 0) {
           numericId = 1;
+        }
+        
+        // Check if this ID exists in database, and keep incrementing until we find an available one
+        let idExists = await checkIdExistsinDB(numericId);
+        while (idExists && numericId < 999999) {
+          numericId++;
+          idExists = await checkIdExistsinDB(numericId);
         }
         
         // Pad with zeros to reach desired length (001, 0001, etc.)
@@ -142,9 +164,11 @@ const EmployeeOnboarding = () => {
   };
 
   // Local fallback function to generate next ID starting from 001
-  const generateLocalNextId = () => {
+  const generateLocalNextId = async () => {
     // This is a fallback if the API is not available
     // Check if there are existing employees to determine the next ID
+    let nextId;
+    
     if (employees.length > 0) {
       // Find the maximum existing employee ID
       const maxId = employees.reduce((max, emp) => {
@@ -156,23 +180,30 @@ const EmployeeOnboarding = () => {
       }, 0);
       
       // Next ID is max + 1
-      const nextId = maxId + 1;
-      const formattedId = nextId.toString().padStart(ID_PADDING_LENGTH, '0');
-      
-      setFormData(prev => ({
-        ...prev,
-        employeeId: formattedId
-      }));
+      nextId = maxId + 1;
     } else {
       // No employees yet, start from 001
-      setFormData(prev => ({
-        ...prev,
-        employeeId: '001'.padStart(ID_PADDING_LENGTH, '0')
-      }));
+      nextId = 1;
     }
+    
+    // Check if the generated ID exists in database, and keep incrementing until we find an available one
+    let idExists = await checkIdExistsinDB(nextId);
+    while (idExists && nextId < 999999) {
+      nextId++;
+      idExists = await checkIdExistsinDB(nextId);
+    }
+    
+    const formattedId = nextId.toString().padStart(ID_PADDING_LENGTH, '0');
+    
+    setFormData(prev => ({
+      ...prev,
+      employeeId: formattedId
+    }));
     
     setEmployeeIdStatus('generated');
     setSuggestedNextId(null);
+    
+    console.log(`✅ Generated Employee ID (local fallback): ${EMPLOYEE_ID_PREFIX}-${formattedId}`);
   };
 
   // Manual refresh of employee ID

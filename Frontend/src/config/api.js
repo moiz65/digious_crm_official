@@ -39,6 +39,7 @@ export const endpoints = {
     create: `${config.FULL_API_URL}/employees`,
     update: (id) => `${config.FULL_API_URL}/employees/${id}`,
     delete: (id) => `${config.FULL_API_URL}/employees/${id}`,
+    getNextId: `${config.FULL_API_URL}/next-employee-id`,
     checkIdAvailability: (numericId) => `${config.FULL_API_URL}/check-employee-id/${numericId}`,
   },
 
@@ -163,6 +164,17 @@ export const endpoints = {
     createCategory: `${config.FULL_API_URL}/sales/categories`,
     updateCategory: (id) => `${config.FULL_API_URL}/sales/categories/${id}`,
     deleteCategory: (id) => `${config.FULL_API_URL}/sales/categories/${id}`,
+  },
+
+  // Customer endpoints
+  customers: {
+    base: `${config.FULL_API_URL}/customers`,
+    getAll: `${config.FULL_API_URL}/customers`,
+    getById: (id) => `${config.FULL_API_URL}/customers/${id}`,
+    history: (id) => `${config.FULL_API_URL}/customers/${id}/history`,
+    update: (id) => `${config.FULL_API_URL}/customers/${id}`,
+    delete: (id) => `${config.FULL_API_URL}/customers/${id}`,
+    sync: `${config.FULL_API_URL}/customers/sync`,
   },
 
   // Sales Target endpoints

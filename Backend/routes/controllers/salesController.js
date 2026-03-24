@@ -9,6 +9,7 @@
  */
 
 const pool = require('../../config/database');
+const { upsertCustomerFromSale } = require('./customerController');
 
 // ─────────────────────────────────────────────────────────
 // Ensure tables exist (idempotent – safe to call every time)
@@ -494,6 +495,19 @@ exports.createSale = async (req, res) => {
        WHERE s.id = ?`,
       [result.insertId]
     );
+
+    // Auto-upsert customer (skip if no email)
+    try {
+      await upsertCustomerFromSale({
+        client_name:  client_name,
+        client_email: client_email,
+        client_phone: client_phone,
+        total_amount: total_amount,
+        sale_date:    sale_date,
+      });
+    } catch (custErr) {
+      console.error('⚠️ Customer upsert warning (non-blocking):', custErr.message);
+    }
 
     return res.status(201).json({ success: true, message: 'Sale created', data: rows[0] });
   } catch (err) {
