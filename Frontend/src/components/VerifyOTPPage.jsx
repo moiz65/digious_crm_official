@@ -85,7 +85,7 @@ const VerifyOTPPage = () => {
       const response = await fetch(endpoints.auth.verifyOtp, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, otp: otpCode }),
+        body: JSON.stringify({ email, otp_code: otpCode }),
       });
 
       const data = await response.json();
@@ -124,7 +124,7 @@ const VerifyOTPPage = () => {
       const response = await fetch(endpoints.auth.resetPassword, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, otp: otpCode, newPassword }),
+        body: JSON.stringify({ email, otp_code: otpCode, new_password: newPassword }),
       });
 
       const data = await response.json();

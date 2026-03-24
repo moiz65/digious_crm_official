@@ -1043,6 +1043,44 @@ exports.getOnboardingProgress = async (req, res) => {
 };
 
 // Check if employee ID is available
+// GET /next-employee-id – return the next unused numeric ID from the DB
+exports.getNextEmployeeId = async (req, res) => {
+  try {
+    const EMPLOYEE_ID_PREFIX = 'DG';
+
+    // Get all numeric parts of existing IDs, sorted ascending
+    const [rows] = await pool.query(
+      `SELECT employee_id FROM employee_onboarding
+       WHERE UPPER(employee_id) LIKE ?
+       ORDER BY CAST(SUBSTRING_INDEX(employee_id, '-', -1) AS UNSIGNED) ASC`,
+      [`${EMPLOYEE_ID_PREFIX}-%`]
+    );
+
+    if (rows.length === 0) {
+      // No employees yet – start from 1
+      return res.json({ success: true, nextId: 1 });
+    }
+
+    // Collect all used numbers
+    const usedNumbers = new Set(
+      rows
+        .map(r => parseInt(r.employee_id.split('-')[1]))
+        .filter(n => !isNaN(n) && n > 0)
+    );
+
+    // Find first gap starting from 1
+    let next = 1;
+    while (usedNumbers.has(next)) {
+      next++;
+    }
+
+    return res.json({ success: true, nextId: next });
+  } catch (error) {
+    console.error('getNextEmployeeId error:', error);
+    return res.status(500).json({ success: false, message: 'Server error', nextId: 1 });
+  }
+};
+
 exports.checkEmployeeIdAvailability = async (req, res) => {
   try {
     const { numericId } = req.params;

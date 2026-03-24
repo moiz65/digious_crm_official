@@ -435,33 +435,33 @@ exports.checkIn = async (req, res) => {
       }
 
       // ============================================================
-      // CHECK-IN TIME VALIDATION - ALLOW ANYTIME FROM 9:00 AM
+      // CHECK-IN TIME VALIDATION
       // ============================================================
-      // Business Rule: Employees can check in anytime from 09:00 AM onwards
-      // Night shift: 21:00 (9 PM) - 06:00 (6 AM)
-      // Check-in allowed: 09:00 AM onwards
-      // Status determination:
-      //   - 21:00-21:15: On Time
-      //   - 21:16-23:59 or 00:00-06:00: Late
-      //   - 09:00-20:59: Early Check-in (allowed, but marked as Late for scheduling)
+      // Business Rule:
+      //   Night shift window: 21:00 (9 PM) → 06:00 (6 AM next day)
+      //   - 00:00–06:00 (early morning) = still part of night shift → ALLOW (marked Late)
+      //   - 06:01–08:59 = gap between shifts → BLOCK
+      //   - 09:00 onwards = day/evening shift → ALLOW
       
       const sixAM = 6 * 60; // 360 minutes = 06:00
       const nineAMOffset = 21 * 60; // 1260 minutes for shift comparison
       
-      // Allow check-in anytime from 09:00 AM onwards (no upper time limit)
-      const isValidCheckInTime = checkInTotalMinutes >= nineAM;
+      // Allow: 00:00-06:00 (night shift tail) OR 09:00+ (day shift / early check-in)
+      const isNightShiftTail = checkInTotalMinutes >= 0 && checkInTotalMinutes <= sixAM;
+      const isDayShiftWindow = checkInTotalMinutes >= nineAM;
+      const isValidCheckInTime = isNightShiftTail || isDayShiftWindow;
       
       if (!isValidCheckInTime) {
         connection.release();
         console.log(
-          `❌ INVALID CHECK IN TIME: ${name} attempted check-in at ${checkInTime} (before 09:00 AM)`,
+          `❌ INVALID CHECK IN TIME: ${name} attempted check-in at ${checkInTime} (between 06:00 AM and 09:00 AM - gap between shifts)`,
         );
         return res.status(400).json({
           success: false,
-          message: `Invalid check-in time. Check-in is allowed from 09:00 AM onwards. Your check-in at ${checkInTime} is too early.`,
+          message: `Invalid check-in time. Check-in is allowed from 09:00 AM onwards or before 06:00 AM (night shift). Your check-in at ${checkInTime} falls in the gap between shifts.`,
           data: {
             checkInTime: checkInTime,
-            validCheckInTime: "09:00 AM onwards",
+            validCheckInTime: "00:00-06:00 AM (night shift) or 09:00 AM onwards",
             attemptedTime: checkInTime
           }
         });

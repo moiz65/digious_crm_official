@@ -86,6 +86,7 @@ const payrollRoutes = require('./routes/payrollRoutes');
 const expenseRoutes = require('./routes/expenseRoutes');
 const salesRoutes = require('./routes/salesRoutes');
 const salesTargetRoutes = require('./routes/salesTargetRoutes');
+const customerRoutes = require('./routes/customerRoutes');
 
 app.use(`/api/${process.env.API_VERSION}`, onboardingRoutes);
 app.use(`/api/${process.env.API_VERSION}/auth`, authRoutes);
@@ -102,6 +103,7 @@ app.use(`/api/${process.env.API_VERSION}/payroll`, payrollRoutes);
 app.use(`/api/${process.env.API_VERSION}/expenses`, expenseRoutes);
 app.use(`/api/${process.env.API_VERSION}/sales`, salesRoutes);
 app.use(`/api/${process.env.API_VERSION}/sales-targets`, salesTargetRoutes);
+app.use(`/api/${process.env.API_VERSION}/customers`, customerRoutes);
 
 // 404 handler
 app.use((req, res) => {
