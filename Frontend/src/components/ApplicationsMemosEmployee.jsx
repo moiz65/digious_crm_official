@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import {
   Calendar, MapPin, Briefcase,
   FileCheck, ClipboardList, Plus, Search,
@@ -247,10 +248,10 @@ const ApplicationsMemosEmployee = () => {
       
       setApplications(prev => [...prev, newApp]);
       setShowNewAppModal(false);
-      alert(`Application ${result.data.application_number} created successfully!`);
+      toast.success(`Application ${result.data.application_number} created successfully!`);
     } catch (error) {
       console.error('Error creating application:', error);
-      alert(`Error: ${error.message}`);
+      toast.error(`Error: ${error.message}`);
     }
   };
 
@@ -287,10 +288,10 @@ const ApplicationsMemosEmployee = () => {
       setApplications(prev => prev.map(a => a.id === editingApplication.id ? ({ ...a, ...updatedData, priority: updatedData.priority || a.priority }) : a));
       setEditingApplication(null);
       setShowNewAppModal(false);
-      alert('Application updated successfully');
+      toast.success('Application updated successfully');
     } catch (err) {
       console.error('Error updating application:', err);
-      alert(err.message || 'Failed to update application');
+      toast.error(err.message || 'Failed to update application');
     }
   };
 
@@ -1620,13 +1621,13 @@ const NewApplicationModal = ({ onClose, onSave, employee, initialData = null, is
                   if (file) {
                     // Validate PDF
                     if (file.type !== 'application/pdf') {
-                      alert('Please upload a PDF file only.');
+                      toast.error('Please upload a PDF file only.');
                       e.target.value = '';
                       return;
                     }
                     // Validate size (10MB)
                     if (file.size > 10 * 1024 * 1024) {
-                      alert('File size must be less than 10MB. Please compress your PDF.');
+                      toast.error('File size must be less than 10MB. Please compress your PDF.');
                       e.target.value = '';
                       return;
                     }
@@ -1779,17 +1780,17 @@ const ApplicationDetailModal = ({ application, onClose, employee, onEdit }) => {
       });
 
       if (response.ok) {
-        alert('Application withdrawn successfully');
+        toast.success('Application withdrawn successfully');
         onClose();
         // Refresh the page or trigger a refetch
         window.location.reload();
       } else {
         const error = await response.json();
-        alert('Failed to withdraw application: ' + (error.message || 'Unknown error'));
+        toast.error('Failed to withdraw application: ' + (error.message || 'Unknown error'));
       }
     } catch (error) {
       console.error('Error withdrawing application:', error);
-      alert('Error withdrawing application: ' + error.message);
+      toast.error('Error withdrawing application: ' + error.message);
     }
   };
 
@@ -1809,18 +1810,18 @@ const ApplicationDetailModal = ({ application, onClose, employee, onEdit }) => {
       if (response.ok) {
         const result = await response.json();
         const msg = result.message || `Application approved and forwarded.`;
-        alert(msg);
+        toast.success(msg);
         setShowApproveForm(false);
         setApproveNotes('');
         onClose();
         window.location.reload();
       } else {
         const error = await response.json();
-        alert('Failed to approve: ' + (error.message || 'Unknown error'));
+        toast.error('Failed to approve: ' + (error.message || 'Unknown error'));
       }
     } catch (error) {
       console.error('Error approving application:', error);
-      alert('Error: ' + error.message);
+      toast.error('Error: ' + error.message);
     } finally {
       setActionLoading(false);
     }
@@ -1828,7 +1829,7 @@ const ApplicationDetailModal = ({ application, onClose, employee, onEdit }) => {
 
   const handleRejectApplication = async () => {
     if (!rejectReason.trim()) {
-      alert('Rejection reason is required');
+      toast.error('Rejection reason is required');
       return;
     }
 
@@ -1845,18 +1846,18 @@ const ApplicationDetailModal = ({ application, onClose, employee, onEdit }) => {
       });
 
       if (response.ok) {
-        alert(`Application has been rejected.`);
+        toast.success(`Application has been rejected.`);
         setShowRejectForm(false);
         setRejectReason('');
         onClose();
         window.location.reload();
       } else {
         const error = await response.json();
-        alert('Failed to reject: ' + (error.message || 'Unknown error'));
+        toast.error('Failed to reject: ' + (error.message || 'Unknown error'));
       }
     } catch (error) {
       console.error('Error rejecting application:', error);
-      alert('Error: ' + error.message);
+      toast.error('Error: ' + error.message);
     } finally {
       setActionLoading(false);
     }

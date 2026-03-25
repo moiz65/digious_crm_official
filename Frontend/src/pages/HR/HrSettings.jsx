@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import toast from "react-hot-toast";
 import {
   Clock,Save,Edit,X,Check,Settings,Calendar,
   Shield,
@@ -120,7 +121,7 @@ export default function HrSettings() {
   const handleSave = (section) => {
     // Static UI only - just toggle edit mode off and show alert
     setEditMode((prev) => ({ ...prev, [section]: false }));
-    alert(`${section.charAt(0).toUpperCase() + section.slice(1)} settings saved! (Static UI - not connected to backend)`);
+    toast.success(`${section.charAt(0).toUpperCase() + section.slice(1)} settings saved! (Static UI - not connected to backend)`);
   };
 
   const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];

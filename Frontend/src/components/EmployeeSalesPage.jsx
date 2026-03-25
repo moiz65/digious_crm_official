@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import toast from 'react-hot-toast';
 import { 
   Search, 
   Filter, 
@@ -378,7 +379,7 @@ const EmployeeSalesPage = () => {
       await fetchSales(); // Refresh from API
     } catch (err) {
       console.error('Failed to update sale:', err);
-      alert('Failed to update sale: ' + (err.message || 'Unknown error'));
+      toast.error('Failed to update sale: ' + (err.message || 'Unknown error'));
     } finally {
       setSaving(false);
     }
@@ -409,15 +410,7 @@ const EmployeeSalesPage = () => {
   // Handle view details
   const handleView = (item) => {
     const deadlineStatus = getDeadlineStatus(item.deadline);
-    alert(`Viewing details for ${item.name}\n\n` +
-          `Email: ${item.email}\n` +
-          `Phone: ${item.phone}\n` +
-          `Project: ${item.about}\n` +
-          `Category: ${getCategoryDetails(item.category).name}\n` +
-          `Total: $${item.totalSales}\n` +
-          `Status: ${item.status}\n` +
-          `Deadline: ${new Date(item.deadline).toLocaleDateString()}\n` +
-          `Deadline Status: ${deadlineStatus.label} (${deadlineStatus.days} days)`);
+    toast.success(`Viewing details for ${item.name}`);
   };
 
   // Filter by date range — now handled server-side, this is a pass-through
@@ -631,7 +624,7 @@ const EmployeeSalesPage = () => {
         await fetchSales(); // Refresh from API
       } catch (err) {
         console.error('Failed to create sale:', err);
-        alert('Failed to create sale: ' + (err.message || 'Unknown error'));
+        toast.error('Failed to create sale: ' + (err.message || 'Unknown error'));
       } finally {
         setSaving(false);
       }

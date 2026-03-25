@@ -70,8 +70,11 @@ const AdminExpense = () => {
   const [showExpenseModal, setShowExpenseModal]   = useState(false);
   const [showViewModal, setShowViewModal]         = useState(false);
   const [selectedExpense, setSelectedExpense]     = useState(null);
-  const [expenseForm, setExpenseForm]             = useState({ category_id: "", amount: "", note: "" });
+  const [expenseForm, setExpenseForm]             = useState({ category_id: "", amount: "", note: "", expense_date: new Date().toISOString().slice(0,10) });
   const [saving, setSaving]                       = useState(false);
+
+  // ── Monthly summary state ──
+  const [monthlySummary, setMonthlySummary]       = useState([]);
 
   // ── Category state ──
   const [showCatModal, setShowCatModal]       = useState(false);
@@ -111,6 +114,15 @@ const AdminExpense = () => {
   useEffect(() => { fetchCategories(); }, [fetchCategories]);
   useEffect(() => { fetchExpenses();   }, [fetchExpenses]);
 
+  // ─── Fetch monthly summary ─────────────────────────────────────────────
+  const fetchMonthlySummary = useCallback(async () => {
+    try {
+      const data = await apiFetch(`${API_BASE}/expenses/summary/monthly`);
+      if (data.success) setMonthlySummary(data.data || []);
+    } catch (err) { /* silent */ }
+  }, []);
+  useEffect(() => { fetchMonthlySummary(); }, [fetchMonthlySummary]);
+
   // ─── Autocomplete suggestions ────────────────────────────────────────────
   useEffect(() => {
     if (!searchQuery.trim()) { setSuggestions([]); return; }
@@ -145,11 +157,16 @@ const AdminExpense = () => {
     if (!expenseForm.category_id || !expenseForm.amount) return;
     setSaving(true); setError(null);
     try {
-      const body = { category_id: +expenseForm.category_id, amount: +expenseForm.amount, note: expenseForm.note };
+      const body = {
+        category_id: +expenseForm.category_id,
+        amount: +expenseForm.amount,
+        note: expenseForm.note,
+        expense_date: expenseForm.expense_date || new Date().toISOString().slice(0,10),
+      };
       const data = selectedExpense
         ? await apiFetch(`${API_BASE}/expenses/${selectedExpense.id}`, { method: "PUT",  body: JSON.stringify(body) })
         : await apiFetch(`${API_BASE}/expenses`,                        { method: "POST", body: JSON.stringify(body) });
-      if (data.success) { await fetchExpenses(); closeExpenseModal(); }
+      if (data.success) { await fetchExpenses(); await fetchMonthlySummary(); closeExpenseModal(); }
       else setError(data.message || "Failed to save");
     } catch (err) { setError(err.message); }
     finally { setSaving(false); }
@@ -158,16 +175,21 @@ const AdminExpense = () => {
   const handleDeleteExpense = async (id) => {
     if (!window.confirm("Delete this expense?")) return;
     const data = await apiFetch(`${API_BASE}/expenses/${id}`, { method: "DELETE" });
-    if (data.success) setExpenses(prev => prev.filter(e => e.id !== id));
+    if (data.success) { setExpenses(prev => prev.filter(e => e.id !== id)); fetchMonthlySummary(); }
     else setError(data.message || "Failed to delete");
   };
 
   const openEditExpense = (expense) => {
     setSelectedExpense(expense);
-    setExpenseForm({ category_id: expense.category_id?.toString() || "", amount: expense.amount?.toString() || "", note: expense.note || "" });
+    setExpenseForm({
+      category_id: expense.category_id?.toString() || "",
+      amount: expense.amount?.toString() || "",
+      note: expense.note || "",
+      expense_date: expense.expense_date ? expense.expense_date.slice(0,10) : new Date().toISOString().slice(0,10),
+    });
     setShowExpenseModal(true);
   };
-  const closeExpenseModal = () => { setShowExpenseModal(false); setSelectedExpense(null); setExpenseForm({ category_id: "", amount: "", note: "" }); };
+  const closeExpenseModal = () => { setShowExpenseModal(false); setSelectedExpense(null); setExpenseForm({ category_id: "", amount: "", note: "", expense_date: new Date().toISOString().slice(0,10) }); };
 
   // ─── CATEGORY CRUD ───────────────────────────────────────────────────────
   const handleSubmitCategory = async (e) => {
@@ -282,7 +304,7 @@ const AdminExpense = () => {
                   <RefreshCw className="h-4 w-4" /> Refresh
                 </button>
                 {activeTab === "expenses" ? (
-                  <button onClick={() => { setSelectedExpense(null); setExpenseForm({ category_id: "", amount: "", note: "" }); setShowExpenseModal(true); }}
+                  <button onClick={() => { setSelectedExpense(null); setExpenseForm({ category_id: "", amount: "", note: "", expense_date: new Date().toISOString().slice(0,10) }); setShowExpenseModal(true); }}
                     className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition hover:scale-105">
                     <Plus className="h-4 w-4" /> Add Expense
                   </button>
@@ -326,43 +348,48 @@ const AdminExpense = () => {
             {/* ══════════════ EXPENSES TAB ══════════════ */}
             {activeTab === "expenses" && (
               <>
-                {/* Stats */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                  <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-5 text-white shadow-xl hover:scale-104 transition-all">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="p-2 bg-white/20 rounded-lg"><Calendar className="h-6 w-6" /></div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold">{formatCurrency(thisMonthTotal)}</div>
-                        <div className="text-blue-100 text-xs">This Month</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1 text-blue-100 text-xs">
-                      {monthlyChange >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                      {Math.abs(monthlyChange)}% vs last month
-                    </div>
+                {/* Monthly History Boxes */}
+                <div className="mb-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Calendar className="h-5 w-5 text-blue-600" />
+                    <h3 className="font-bold text-slate-800">Monthly Expense History</h3>
                   </div>
-                  {/* <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-5 text-white shadow-xl hover:scale-105 transition-all">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="p-2 bg-white/20 rounded-lg"><TrendingUp className="h-6 w-6" /></div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold">{formatCurrency(averageExpense)}</div>
-                        <div className="text-purple-100 text-xs">Average Expense</div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                    {/* Current Month Card */}
+                    <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-4 text-white shadow-lg hover:scale-105 transition-all cursor-pointer"
+                      onClick={() => { setDateRange({ from: `${thisMonthPfx}-01`, to: now.toISOString().slice(0,10) }); }}>
+                      <div className="text-xs font-medium text-blue-100 mb-1">This Month</div>
+                      <div className="text-lg font-bold">{formatCurrency(thisMonthTotal)}</div>
+                      <div className="flex items-center gap-1 text-blue-100 text-xs mt-1">
+                        {monthlyChange >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                        {Math.abs(monthlyChange)}% vs last
                       </div>
                     </div>
-                    <div className="text-purple-100 text-xs">per transaction</div>
-                  </div> */}
-                  <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl p-5 text-white shadow-xl hover:scale-104 transition-all">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="p-2 bg-white/20 rounded-lg">PKR</div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold">{formatCurrency(todayTotal)}</div>
-                        <div className="text-emerald-100 text-xs">Previous Month</div>
+                    {/* Previous Month Card */}
+                    <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl p-4 text-white shadow-lg hover:scale-105 transition-all cursor-pointer"
+                      onClick={() => {
+                        const lm = new Date(now); lm.setMonth(lm.getMonth()-1);
+                        const lmStart = `${lastMonthPfx}-01`;
+                        const lmEnd = new Date(lm.getFullYear(), lm.getMonth()+1, 0).toISOString().slice(0,10);
+                        setDateRange({ from: lmStart, to: lmEnd });
+                      }}>
+                      <div className="text-xs font-medium text-emerald-100 mb-1">Last Month</div>
+                      <div className="text-lg font-bold">{formatCurrency(lastMonthTotal)}</div>
+                      <div className="text-emerald-100 text-xs mt-1">{expenses.filter(e => e.expense_date?.startsWith(lastMonthPfx)).length} records</div>
+                    </div>
+                    {/* Dynamic monthly summary cards (skip current & last month since they're above) */}
+                    {monthlySummary.filter(m => m.month_key !== thisMonthPfx && m.month_key !== lastMonthPfx).slice(0, 4).map((m) => (
+                      <div key={m.month_key}
+                        className="bg-white border border-slate-200 rounded-2xl p-4 shadow hover:shadow-lg hover:scale-105 transition-all cursor-pointer"
+                        onClick={() => {
+                          const endDay = new Date(m.year, m.month, 0).toISOString().slice(0,10);
+                          setDateRange({ from: `${m.month_key}-01`, to: endDay });
+                        }}>
+                        <div className="text-xs font-medium text-slate-500 mb-1">{m.month_label}</div>
+                        <div className="text-lg font-bold text-slate-800">{formatCurrency(m.total)}</div>
+                        <div className="text-slate-400 text-xs mt-1">{m.count} records</div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-1 text-emerald-100 text-xs">
-                      {todayChange >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                      
-                    </div>
+                    ))}
                   </div>
                 </div>
 
@@ -737,6 +764,13 @@ const ExpenseModal = ({ expense, formData, setFormData, categories, saving, erro
               className="w-full pl-16 pr-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500"
               required step="0.01" min="0" />
           </div>
+        </div>
+        <div>
+          <label className="block text-gray-700 font-medium mb-2">Expense Date <span className="text-blue-600">*</span></label>
+          <input type="date" value={formData.expense_date || ''} onChange={e => setFormData({ ...formData, expense_date: e.target.value })}
+            className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+            required />
+          <p className="text-xs text-slate-400 mt-1">Select any date — current, previous month, or earlier</p>
         </div>
         <div>
           <label className="block text-gray-700 font-medium mb-2">Note</label>

@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ShieldCheck, ArrowLeft, Loader2, RefreshCw } from "lucide-react";
+import toast from "react-hot-toast";
 import { endpoints } from "../config/api";
 
 const VerifyOTPPage = () => {
@@ -131,7 +132,7 @@ const VerifyOTPPage = () => {
 
       if (data.success) {
         // Show success and redirect to login
-        alert("Password reset successful! Please login with your new password.");
+        toast.success("Password reset successful! Please login with your new password.");
         navigate("/login");
       } else {
         setError(data.message || "Failed to reset password. Please try again.");

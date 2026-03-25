@@ -67,6 +67,7 @@ import {
   Palette as PaletteIcon,
   Target as TargetIcon,
 } from "lucide-react";
+import toast from "react-hot-toast";
 import { endpoints } from "../config/api";
 import { format } from "date-fns";
 import { Copy } from "lucide-react";
@@ -594,12 +595,12 @@ const EmployeeProfile = () => {
 
   const handleCopyEmail = (email) => {
     navigator.clipboard.writeText(email);
-    alert("Email copied to clipboard!");
+    toast.success("Email copied to clipboard!");
   };
 
   const handleCopyPhone = (phone) => {
     navigator.clipboard.writeText(phone);
-    alert("Phone number copied to clipboard!");
+    toast.success("Phone number copied to clipboard!");
   };
 
   // Menu dropdown function
@@ -651,13 +652,13 @@ const EmployeeProfile = () => {
   // Export Functions
   const handleExportSelected = () => {
     const selected = employees.filter((emp) => selectedEmployees.has(emp.id));
-    alert(
+    toast.success(
       `Exported ${selected.length} employees to ${exportFormat.toUpperCase()}`,
     );
   };
 
   const handleExportAll = () => {
-    alert(
+    toast.success(
       `Exported all ${
         filteredEmployees.length
       } employees to ${exportFormat.toUpperCase()}`,
@@ -985,11 +986,23 @@ const EmployeeProfile = () => {
             </div>
 
             <div className="flex items-center gap-3">
+              {/* Department Filter */}
+              <select
+                value={filters.department}
+                onChange={(e) => handleFilterChange("department", e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#349dff] text-sm"
+              >
+                <option value="all">All Departments</option>
+                {[...new Set(employees.map(e => e.department))].sort().map(dept => (
+                  <option key={dept} value={dept}>{dept}</option>
+                ))}
+              </select>
+
               {/* Status Filter */}
               <select
                 value={filters.status}
                 onChange={(e) => handleFilterChange("status", e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#349dff]"
+                className="px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#349dff] text-sm"
               >
                 <option value="all">All Status</option>
                 <option value="active">Active</option>
@@ -1000,7 +1013,7 @@ const EmployeeProfile = () => {
               <select
                 value={sortBy}
                 onChange={(e) => handleSortChange(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#349dff]"
+                className="px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#349dff] text-sm"
               >
                 <option value="recent">Recently Added</option>
                 <option value="id">ID (Ascending)</option>
@@ -1029,285 +1042,210 @@ const EmployeeProfile = () => {
           </div>
         </div>
 
-        {/* Employee Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {sortedEmployees.map((employee) => (
-            <div
-              key={employee.id}
-              className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 group"
-            >
-              <div className="p-4">
-                {/* Header with checkbox, avatar, and dropdown */}
-                <div className="flex justify-between items-start mb-4">
-                  <button
-                    onClick={() => handleSelectEmployee(employee.id)}
-                    className="p-1"
-                  >
-                    {selectedEmployees.has(employee.id) ? (
-                      <CheckSquare className="h-4 w-4 text-[#349dff]" />
-                    ) : (
-                      <Square className="h-4 w-4 text-gray-400" />
-                    )}
-                  </button>
-
-                  <div className="relative">
-                    <div
-                      className="w-16 h-16 rounded-full border-2 border-blue-100 p-1 mx-auto cursor-pointer hover:border-blue-300 transition duration-200"
-                      onClick={() => handleViewProfile(employee)}
-                    >
-                      {/* SHOW PROFILE PICTURE FROM DATABASE */}
-                      {employee.profile_picture ? (
-                        <img
-                          src={employee.profile_picture}
-                          alt={employee.name}
-                          className="w-full h-full rounded-full object-cover"
-                          onError={(e) => {
-                            // If image fails to load, show initials
-                            e.target.style.display = "none";
-                            const initialsDiv = e.target.parentElement;
-                            initialsDiv.innerHTML = `
-            <div class="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center group-hover:from-blue-200 group-hover:to-blue-300 transition duration-200">
-              <span class="text-gray-700 text-lg font-bold">
-                ${employee.name
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")}
-              </span>
-            </div>
-          `;
-                          }}
-                        />
+        {/* Employee Table */}
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-200">
+                  <th className="px-4 py-3 text-left">
+                    <button onClick={handleSelectAll} className="p-1">
+                      {selectedEmployees.size === filteredEmployees.length && filteredEmployees.length > 0 ? (
+                        <CheckSquare className="h-4 w-4 text-[#349dff]" />
                       ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center group-hover:from-blue-200 group-hover:to-blue-300 transition duration-200">
-                          <span className="text-gray-700 text-lg font-bold">
-                            {employee.name
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")}
-                          </span>
-                        </div>
+                        <Square className="h-4 w-4 text-gray-400" />
                       )}
-                    </div>
-                  </div>
-                  <div
-                    className={`absolute -top-1 -right-1 w-3 h-3 rounded-full ${
-                      employee.status === "active"
-                        ? "bg-green-500"
-                        : "bg-red-500"
-                    }`}
-                  ></div>
-
-                  <div
-                    className={`absolute -top-1 -right-1 w-3 h-3 rounded-full ${
-                      employee.performance === "Top Performer"
-                        ? "bg-yellow-500"
-                        : employee.performance === "Excellent"
-                          ? "bg-green-500"
-                          : employee.performance === "Good"
-                            ? "bg-blue-500"
-                            : "bg-gray-300"
-                    }`}
-                  ></div>
-
-                  <div className="relative menu-dropdown-container">
-                    <button
-                      onClick={() => toggleMenuDropdown(employee.id)}
-                      className="p-1 hover:bg-gray-100 rounded-full transition duration-200"
-                    >
-                      <MoreVertical className="h-5 w-5 text-gray-400" />
                     </button>
-                    {showMenuDropdown[employee.id] && (
-                      <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg z-20 animate-fadeIn">
-                        <div className="p-2">
-                          <button
-                            onClick={() => {
-                              handleViewProfile(employee);
-                              setShowMenuDropdown((prev) => ({
-                                ...prev,
-                                [employee.id]: false,
-                              }));
-                            }}
-                            className="flex items-center gap-2 p-2 w-full text-left rounded-lg hover:bg-gray-100 transition duration-200"
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Employee</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">ID</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Designation</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Department</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Contact</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Joining Date</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {sortedEmployees.length === 0 ? (
+                  <tr>
+                    <td colSpan="9" className="px-4 py-12 text-center">
+                      <div className="flex flex-col items-center gap-2">
+                        <Users className="h-10 w-10 text-gray-300" />
+                        <p className="text-gray-500 font-medium">No employees found</p>
+                        <p className="text-gray-400 text-sm">Try adjusting your filters</p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  sortedEmployees.map((employee) => (
+                    <tr
+                      key={employee.id}
+                      className={`hover:bg-blue-50/40 transition-colors duration-150 ${
+                        selectedEmployees.has(employee.id) ? 'bg-blue-50/60' : ''
+                      }`}
+                    >
+                      {/* Checkbox */}
+                      <td className="px-4 py-3">
+                        <button onClick={() => handleSelectEmployee(employee.id)} className="p-1">
+                          {selectedEmployees.has(employee.id) ? (
+                            <CheckSquare className="h-4 w-4 text-[#349dff]" />
+                          ) : (
+                            <Square className="h-4 w-4 text-gray-400" />
+                          )}
+                        </button>
+                      </td>
+
+                      {/* Employee Name + Avatar */}
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className="w-10 h-10 rounded-full border-2 border-blue-100 flex-shrink-0 overflow-hidden cursor-pointer hover:border-blue-300 transition duration-200"
+                            onClick={() => handleViewProfile(employee)}
                           >
-                            <Eye className="h-4 w-4 text-gray-500" />
-                            View Profile
+                            {employee.profile_picture ? (
+                              <img
+                                src={employee.profile_picture}
+                                alt={employee.name}
+                                className="w-full h-full rounded-full object-cover"
+                                onError={(e) => {
+                                  e.target.style.display = 'none';
+                                  e.target.nextSibling && (e.target.nextSibling.style.display = 'flex');
+                                }}
+                              />
+                            ) : null}
+                            <div
+                              className={`w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 rounded-full items-center justify-center ${
+                                employee.profile_picture ? 'hidden' : 'flex'
+                              }`}
+                            >
+                              <span className="text-gray-700 text-sm font-bold">
+                                {employee.name.split(' ').map(n => n[0]).join('')}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="min-w-0">
+                            <button
+                              onClick={() => handleViewProfile(employee)}
+                              className="text-sm font-semibold text-gray-900 hover:text-[#349dff] transition duration-200 truncate block"
+                            >
+                              {employee.name}
+                            </button>
+                            <p className="text-xs text-gray-500 truncate">{employee.email}</p>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Employee ID */}
+                      <td className="px-4 py-3">
+                        <span className="text-sm text-gray-700 font-mono">{employee.username || employee.id}</span>
+                      </td>
+
+                      {/* Designation */}
+                      <td className="px-4 py-3">
+                        <span className="text-sm text-gray-700">{employee.designation || employee.role || 'N/A'}</span>
+                      </td>
+
+                      {/* Department */}
+                      <td className="px-4 py-3">
+                        <span
+                          className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${
+                            employee.department === 'Development' ? 'bg-orange-100 text-orange-800' :
+                            employee.department === 'Sales' ? 'bg-green-100 text-green-800' :
+                            employee.department === 'Human Resources' ? 'bg-blue-100 text-blue-800' :
+                            employee.department === 'Design' ? 'bg-purple-100 text-purple-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}
+                        >
+                          {getRoleIcon(employee.role, employee.department)}
+                          {employee.department}
+                        </span>
+                      </td>
+
+                      {/* Contact */}
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          {employee.phone && (
+                            <button
+                              onClick={() => handleCall(employee.phone)}
+                              className="p-1.5 rounded-lg hover:bg-green-50 text-gray-400 hover:text-green-600 transition duration-200"
+                              title={employee.phone}
+                            >
+                              <Phone className="h-4 w-4" />
+                            </button>
+                          )}
+                          {employee.email && (
+                            <button
+                              onClick={() => handleSendEmail(employee.email)}
+                              className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition duration-200"
+                              title={employee.email}
+                            >
+                              <Mail className="h-4 w-4" />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Joining Date */}
+                      <td className="px-4 py-3">
+                        <span className="text-sm text-gray-600">
+                          {employee.joiningDate ? new Date(employee.joiningDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}
+                        </span>
+                      </td>
+
+                      {/* Status */}
+                      <td className="px-4 py-3">
+                        <button
+                          onClick={() => handleToggleStatus(employee.id)}
+                          className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full cursor-pointer transition duration-200 ${
+                            employee.status === 'active'
+                              ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                              : 'bg-red-100 text-red-700 hover:bg-red-200'
+                          }`}
+                        >
+                          <span className={`w-1.5 h-1.5 rounded-full ${
+                            employee.status === 'active' ? 'bg-green-500' : 'bg-red-500'
+                          }`}></span>
+                          {employee.status === 'active' ? 'Active' : 'Inactive'}
+                        </button>
+                      </td>
+
+                      {/* Actions */}
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => handleViewProfile(employee)}
+                            className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-blue-600 transition duration-200"
+                            title="View Profile"
+                          >
+                            <Eye className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => {
                               setEditingEmployee(employee);
                               setShowEditModal(true);
-                              setShowMenuDropdown((prev) => ({
-                                ...prev,
-                                [employee.id]: false,
-                              }));
                             }}
-                            className="flex items-center gap-2 p-2 w-full text-left rounded-lg hover:bg-gray-100 transition duration-200"
+                            className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-amber-600 transition duration-200"
+                            title="Edit"
                           >
-                            <Edit className="h-4 w-4 text-gray-500" />
-                            Edit
+                            <Edit className="h-4 w-4" />
                           </button>
-
-                          <div className="border-t border-gray-200 my-2"></div>
                           <button
-                            onClick={() => {
-                              handleDeleteEmployee(employee.id);
-                              setShowMenuDropdown((prev) => ({
-                                ...prev,
-                                [employee.id]: false,
-                              }));
-                            }}
-                            className="flex items-center gap-2 p-2 w-full text-left rounded-lg hover:bg-red-50 text-red-600 transition duration-200"
+                            onClick={() => handleDeleteEmployee(employee.id)}
+                            className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600 transition duration-200"
+                            title="Delete"
                           >
                             <Trash2 className="h-4 w-4" />
-                            Delete
                           </button>
                         </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Employee Info */}
-                <div className="text-center mb-4">
-                  {/* ADD EMPLOYEE ID ABOVE NAME */}
-                  <div className="text-sm text-gray-900 mb-1">
-                    ID: {employee.id || 'N/A'}
-                  </div>
-                  <h6 className="font-semibold text-lg mb-1">
-                    <button
-                      onClick={() => handleViewProfile(employee)}
-                      className="hover:text-[#349dff] transition duration-200"
-                    >
-                      {employee.name}
-                    </button>
-                  </h6>
-                  {/* UPDATED DESIGNATION STYLING - Using employee.designation instead of role */}
-                  <span
-                    className={`text-xs font-medium px-3 py-1 rounded-full flex items-center justify-center gap-2 ${
-                      employee.department === "Development" ? "bg-orange-100 text-orange-800 border border-orange-200" :
-                      employee.department === "Sales" ? "bg-green-100 text-green-800 border border-green-200" :
-                      employee.department === "Human Resources" ? "bg-blue-100 text-blue-800 border border-blue-200" :
-                      employee.department === "Design" ? "bg-purple-100 text-purple-800 border border-purple-200" :
-                      "bg-gray-100 text-gray-800 border border-gray-200"
-                    }`}
-                  >
-                    {getRoleIcon(employee.role, employee.department)}
-                    {employee.designation || employee.role || "Employee"}
-                  </span>
-                </div>
-
-                {/* Role-specific Stats */}
-                {employee.department === "Development" ? (
-                  <div className="grid grid-cols-3 text-center mb-4 border-t border-b border-gray-100 py-3">
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">Projects</p>
-                      <h6 className="font-semibold text-lg">
-                        {employee.projects}
-                      </h6>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">Projects Done</p>
-                      <h6 className="font-semibold text-lg text-green-600">
-                        {employee.projectdone}
-                      </h6>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">On Progress</p>
-                      <h6 className="font-semibold text-lg text-blue-600">
-                        {employee.bugsFixed}
-                      </h6>
-                    </div>
-                  </div>
-                ) : employee.department === "Sales" ? (
-                  <div className="grid grid-cols-2 text-center mb-4 border-t border-b border-gray-100 py-3">
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">Target</p>
-                      <h6 className="font-semibold text-lg">
-                        {employee.target > 0 ? formatSalesAmount(employee.target) : 'Not Set'}
-                      </h6>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">Achieved</p>
-                      <h6
-                        className={`font-semibold text-lg ${
-                          employee.target > 0 && employee.achieved >= employee.target
-                            ? "text-green-600"
-                            : employee.achieved > 0
-                            ? "text-orange-600"
-                            : "text-gray-400"
-                        }`}
-                      >
-                        {formatSalesAmount(employee.achieved || 0)}
-                      </h6>
-                    </div>
-                  </div>
-                ) : employee.department === "Human Resources" ? (
-                  <div className="grid grid-cols-3 text-center mb-4 border-t border-b border-gray-100 py-3">
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">Hires</p>
-                      <h6 className="font-semibold text-lg">
-                        {employee.hires}
-                      </h6>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">Candidates</p>
-                      <h6 className="font-semibold text-lg text-green-600">
-                        {employee.candidates}
-                      </h6>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">Interviews</p>
-                      <h6 className="font-semibold text-lg text-blue-600">
-                        {employee.interviews}
-                      </h6>
-                    </div>
-                  </div>
-                ) : employee.department === "Design" ? (
-                  <div className="grid grid-cols-3 text-center mb-4 border-t border-b border-gray-100 py-3">
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">Designs</p>
-                      <h6 className="font-semibold text-lg">
-                        {employee.designs}
-                      </h6>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">Projects</p>
-                      <h6 className="font-semibold text-lg text-purple-600">
-                        {employee.projects}
-                      </h6>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">Revisions</p>
-                      <h6 className="font-semibold text-lg text-orange-600">
-                        {employee.revisions}
-                      </h6>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-3 text-center mb-4 border-t border-b border-gray-100 py-3">
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">Projects</p>
-                      <h6 className="font-semibold text-lg">
-                        {employee.projects}
-                      </h6>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">Done</p>
-                      <h6 className="font-semibold text-lg text-green-600">
-                        {employee.done}
-                      </h6>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">Progress</p>
-                      <h6 className="font-semibold text-lg text-blue-600">
-                        {employee.progress}
-                      </h6>
-                    </div>
-                  </div>
+                      </td>
+                    </tr>
+                  ))
                 )}
-              </div>
-            </div>
-          ))}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         {/* Summary Footer */}
@@ -1418,7 +1356,7 @@ const AddEmployeeModal = ({ onClose, onSave }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (formData.password !== formData.confirmPassword) {
-      alert("Passwords do not match!");
+      toast.error("Passwords do not match!");
       return;
     }
     onSave(formData);
@@ -1928,8 +1866,7 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
       const data = await response.json();
 
       if (data.success) {
-        // SUCCESS ALERT - Method 1: Sweet Alert Style
-        showSuccessAlert("Employee details updated successfully!");
+        toast.success("Employee details updated successfully!");
 
         // Update local state with new profile picture URL if returned
         if (data.profile_picture_url) {
@@ -1951,50 +1888,19 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
             profilePictureBase64,
         });
       } else {
-        alert(
+        toast.error(
           "Failed to update employee: " + (data.message || "Unknown error"),
         );
       }
     } catch (error) {
       console.error("Error updating employee:", error);
-      alert("Image should be below 100x100 1mb");
+      toast.error("Image should be below 100x100 1mb");
     } finally {
       setLoading(false);
     }
   };
 
-  const showSuccessAlert = (message) => {
-    // Create alert element
-    const alertEl = document.createElement("div");
-    alertEl.className = "fixed top-4 right-4 z-[100] animate-slideIn";
-    alertEl.innerHTML = `
-    <div class="bg-green-50 border-l-4 border-green-500 p-4 rounded-lg shadow-lg">
-      <div class="flex items-center">
-        <div class="flex-shrink-0">
-          <CheckCircle className="h-5 w-5 text-green-400" />
-        </div>
-        <div class="ml-3">
-          <p class="text-sm font-medium text-green-800">${message}</p>
-        </div>
-        <div class="ml-auto pl-3">
-          <button onclick="this.parentElement.parentElement.parentElement.remove()" class="text-green-400 hover:text-green-600">
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
-    </div>
-  `;
 
-    // Add to DOM
-    document.body.appendChild(alertEl);
-
-    // Auto remove after 5 seconds
-    setTimeout(() => {
-      if (alertEl.parentNode) {
-        alertEl.remove();
-      }
-    }, 5000);
-  };
 
   const uploadProfileImage = async (employeeId, file) => {
     const formData = new FormData();
@@ -2667,11 +2573,11 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
           });
         }
       } else {
-        alert("Failed to save target: " + (data.message || "Unknown error"));
+        toast.error("Failed to save target: " + (data.message || "Unknown error"));
       }
     } catch (error) {
       console.error("Error saving sales target:", error);
-      alert("Error saving sales target");
+      toast.error("Error saving sales target");
     } finally {
       setSalesTargetLoading(false);
     }

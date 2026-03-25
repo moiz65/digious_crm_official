@@ -18,6 +18,7 @@ import {
   MessageSquare,
   CreditCard,
   Wallet,
+  Banknote,
   Phone,
   Shield,
   Database,
@@ -62,6 +63,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) => 
       children: [
         { id: 'payroll', label: 'Payroll', icon: CreditCard, path: '/admin/payroll' },
         { id: 'expenses', label: 'Expenses', icon: Wallet, path: '/expenses' },
+        { id: 'advances', label: 'Advances & Loans', icon: Banknote, path: '/admin/advances' },
       ]
     },
     

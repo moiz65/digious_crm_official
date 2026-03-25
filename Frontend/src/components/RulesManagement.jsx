@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { endpoints } from '../config/api';
 import {
   Clock, Coffee, Cigarette, Users, AlertCircle, Plus, Edit2, Trash2,
@@ -208,7 +209,7 @@ export function RulesManagement() {
         });
 
         setShowAddForm(false);
-        alert('✅ Rule added successfully!');
+        toast.success('Rule added successfully!');
       } else {
         setError(data.message || 'Failed to add rule');
       }

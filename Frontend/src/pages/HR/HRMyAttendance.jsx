@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import toast from 'react-hot-toast';
 import { DashboardHeader } from '../../components/DashboardComponents';
 import { useAuth } from '../../context/AuthContext';
 import { endpoints } from '../../config/api';
@@ -150,7 +151,7 @@ const HRMyAttendance = () => {
     
     if (!id) {
       console.error('[ERROR] No employee ID found in user object!', user);
-      alert('Unable to determine employee ID. Please logout and login again.');
+      toast.error('Unable to determine employee ID. Please logout and login again.');
       return null;
     }
     
@@ -444,11 +445,11 @@ const HRMyAttendance = () => {
           setPendingCheckout(data.data.pendingRecord);
           setIsOverlapWindow(isInOverlapWindow());
         }
-        alert(data.message || 'Check-in failed');
+        toast.error(data.message || 'Check-in failed');
       }
     } catch (error) {
       console.error('Check-in error:', error);
-      alert('Failed to check in');
+      toast.error('Failed to check in');
     }
   };
 
@@ -475,11 +476,11 @@ const HRMyAttendance = () => {
         await fetchMonthlyAttendance();
       } else {
         console.error('[ERROR] Check-out failed:', data.message);
-        alert(data.message || 'Check-out failed');
+        toast.error(data.message || 'Check-out failed');
       }
     } catch (error) {
       console.error('Check-out error:', error);
-      alert('Failed to check out');
+      toast.error('Failed to check out');
     }
   };
 
@@ -503,11 +504,11 @@ const HRMyAttendance = () => {
       if (data.success) {
         fetchActiveBreaks();
       } else {
-        alert(data.message || 'Failed to start break');
+        toast.error(data.message || 'Failed to start break');
       }
     } catch (error) {
       console.error('Start break error:', error);
-      alert('Failed to start break');
+      toast.error('Failed to start break');
     }
   };
 
@@ -519,7 +520,7 @@ const HRMyAttendance = () => {
       // Find the break details from activeBreaks
       const breakRecord = activeBreaks.find(b => b.id === breakId);
       if (!breakRecord) {
-        alert('Break record not found');
+        toast.error('Break record not found');
         return;
       }
 
@@ -562,11 +563,11 @@ const HRMyAttendance = () => {
         fetchActiveBreaks();
         fetchTodayAttendance();
       } else {
-        alert(data.message || 'Failed to end break');
+        toast.error(data.message || 'Failed to end break');
       }
     } catch (error) {
       console.error('End break error:', error);
-      alert('Failed to end break');
+      toast.error('Failed to end break');
     }
   };
 
