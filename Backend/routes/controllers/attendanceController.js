@@ -781,10 +781,10 @@ exports.checkOut = async (req, res) => {
       // For night shift: if check-in is after 21:00 and check-out is before 06:00 NEXT DAY,
       // OR if check-in is after 21:00 and checkout is later same day
       const [checkInHour, checkInMin] = checkInTime.split(":").map(Number);
-      const [checkOutHour, checkOutMin] = checkOutTime.split(":").map(Number);
+      let [checkOutHour, checkOutMin] = checkOutTime.split(":").map(Number);
 
       const checkInTotalMinutes = checkInHour * 60 + checkInMin;
-      const checkOutTotalMinutes = checkOutHour * 60 + checkOutMin;
+      let checkOutTotalMinutes = checkOutHour * 60 + checkOutMin;
 
       // Check if check-in was at a valid shift time
       const isValidShiftCheckIn = checkInTotalMinutes >= 21 * 60 || checkInTotalMinutes <= 6 * 60;
@@ -793,23 +793,18 @@ exports.checkOut = async (req, res) => {
       // CHECKOUT DEADLINE VALIDATION (CRITICAL)
       // ============================================================
       // Night shift employees MUST checkout before 9:00 AM
-      // If checkout time is 9:00 AM or later, REJECT the checkout
-      // EXCEPTION: Allow late checkout if the check-in was INVALID (outside shift hours)
-      // This allows employees to clear out bad check-in records
+      // If checkout time is 9:00 AM or later, AUTO-SET checkout to 09:00:00
+      // instead of rejecting — the employee still gets checked out properly
+      // EXCEPTION: Allow actual time if the check-in was INVALID (outside shift hours)
       if (checkOutTotalMinutes >= 9 * 60 && isValidShiftCheckIn) { // 09:00 = 540 minutes
-        connection.release();
         console.log(
-          `❌ CHECKOUT DEADLINE EXCEEDED: Employee ${employee_id} attempted checkout at ${checkOutTime} (after 9:00 AM deadline)`,
+          `⏰ CHECKOUT PAST DEADLINE: Employee ${employee_id} attempted checkout at ${checkOutTime} — auto-setting to 09:00:00`,
         );
-        return res.status(400).json({
-          success: false,
-          message: `Checkout deadline exceeded. You must checkout before 9:00 AM. Your attempted checkout time: ${checkOutTime}`,
-          data: {
-            checkOutTime: checkOutTime,
-            deadline: "09:00 (9:00 AM)",
-            exceedsBy: `${checkOutTotalMinutes - (9 * 60)} minutes`
-          }
-        });
+        // Override checkout time to 09:00:00
+        checkOutTime = '09:00:00';
+        checkOutHour = 9;
+        checkOutMin = 0;
+        checkOutTotalMinutes = 9 * 60;
       }
 
       let grossWorkingMinutes = 0;
@@ -2194,6 +2189,64 @@ exports.getTodayAttendance = async (req, res) => {
       } else {
         record = attendance[0];
       }
+
+      // ============================================================
+      // INLINE AUTO-CHECKOUT: If record has no checkout and current
+      // Pakistan time is >= 9:00 AM, auto-complete checkout at 09:00:00
+      // This handles cases where the cron job missed (server was down)
+      // ============================================================
+      if (record && record.check_out_time === null) {
+        const pktNow = getPakistanDate();
+        const pktHour = pktNow.getUTCHours();
+        const pktMin = pktNow.getUTCMinutes();
+        const pktTotalMinutes = pktHour * 60 + pktMin;
+
+        if (pktTotalMinutes >= 9 * 60) {
+          // Check if this was a valid night shift check-in
+          const [ciH] = record.check_in_time.split(':').map(Number);
+          const ciTotalMin = ciH * 60 + parseInt(record.check_in_time.split(':')[1], 10);
+          const isNightShift = ciTotalMin >= 21 * 60 || ciTotalMin <= 6 * 60;
+
+          if (isNightShift) {
+            console.log(`\n⏰ INLINE AUTO-CHECKOUT: Employee ${finalEmployeeId} still checked in at ${pktHour}:${String(pktMin).padStart(2,'0')} PKT — auto-completing at 09:00:00`);
+            const autoTime = '09:00:00';
+            const expectedWorkingMinutes = 540;
+            const checkInTotalMinutes = ciTotalMin;
+            const checkOutTotalMinutes = 9 * 60;
+            let grossWorkingMinutes = 0;
+
+            if (checkInTotalMinutes >= 21 * 60) {
+              const toMidnight = (24 * 60) - checkInTotalMinutes;
+              grossWorkingMinutes = toMidnight + checkOutTotalMinutes;
+            } else {
+              grossWorkingMinutes = Math.max(0, checkOutTotalMinutes - checkInTotalMinutes);
+            }
+
+            const totalBreakMin = record.total_break_duration_minutes || 0;
+            const netWorkingMinutes = Math.max(0, grossWorkingMinutes - totalBreakMin);
+            const overtimeMinutes = Math.max(0, netWorkingMinutes - expectedWorkingMinutes);
+            const overtimeHours = (overtimeMinutes / 60).toFixed(2);
+
+            await connection.query(
+              `UPDATE Employee_Attendance
+               SET check_out_time = ?, gross_working_time_minutes = ?,
+                   net_working_time_minutes = ?, overtime_minutes = ?,
+                   overtime_hours = ?, updated_at = NOW()
+               WHERE id = ?`,
+              [autoTime, grossWorkingMinutes, netWorkingMinutes, overtimeMinutes, overtimeHours, record.id]
+            );
+
+            // Update the record in memory so the response reflects the checkout
+            record.check_out_time = autoTime;
+            record.gross_working_time_minutes = grossWorkingMinutes;
+            record.net_working_time_minutes = netWorkingMinutes;
+            record.overtime_minutes = overtimeMinutes;
+            record.overtime_hours = parseFloat(overtimeHours);
+            console.log(`✅ INLINE AUTO-CHECKOUT DONE: ${grossWorkingMinutes}min gross, ${netWorkingMinutes}min net`);
+          }
+        }
+      }
+
       const [breaks] = await connection.query(
         `SELECT * FROM Employee_Breaks WHERE attendance_id = ? ORDER BY break_start_time ASC`,
         [record.id],

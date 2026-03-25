@@ -270,8 +270,12 @@ const attendanceController = require('./routes/controllers/attendanceController'
 const checkoutMissingController = require('./routes/controllers/checkoutMissingController');
 
 // Schedule auto-checkout for 9:00 AM every day (Pakistan timezone)
-// Using cron expression: 0 9 * * * = 09:00 every day
-const autoCheckoutJob = schedule.scheduleJob('0 9 * * *', async () => {
+// Using RecurrenceRule with explicit timezone to ensure correct firing
+const autoCheckoutRule = new schedule.RecurrenceRule();
+autoCheckoutRule.hour = 9;
+autoCheckoutRule.minute = 0;
+autoCheckoutRule.tz = 'Asia/Karachi';
+const autoCheckoutJob = schedule.scheduleJob(autoCheckoutRule, async () => {
   console.log('\n⏰ SCHEDULED JOB: Auto-checkout triggered at 9:00 AM');
   try {
     const result = await attendanceController.autoCheckoutExpiredSessions(null, null);
@@ -285,10 +289,13 @@ const autoCheckoutJob = schedule.scheduleJob('0 9 * * *', async () => {
   }
 });
 
-// Schedule checkout missing detection for 9:01 AM every day
+// Schedule checkout missing detection for 9:01 AM every day (Pakistan timezone)
 // This runs 1 minute after auto-checkout to capture any remaining missing checkouts
-// Using cron expression: 1 9 * * * = 09:01 every day
-const checkoutMissingJob = schedule.scheduleJob('1 9 * * *', async () => {
+const checkoutMissingRule = new schedule.RecurrenceRule();
+checkoutMissingRule.hour = 9;
+checkoutMissingRule.minute = 1;
+checkoutMissingRule.tz = 'Asia/Karachi';
+const checkoutMissingJob = schedule.scheduleJob(checkoutMissingRule, async () => {
   console.log('\n⏰ SCHEDULED JOB: Checkout missing detection triggered at 9:01 AM');
   try {
     const connection = await pool.getConnection();
@@ -305,9 +312,15 @@ const checkoutMissingJob = schedule.scheduleJob('1 9 * * *', async () => {
   }
 });
 
-console.log('📅 Scheduled Jobs initialized:');
-console.log('   • Auto-checkout: 09:00 AM every day');
-console.log('   • Checkout missing detection: 09:01 AM every day');
+// Schedule daily auto-mark absent at 11:59 PM Pakistan Time
+const dailyAbsentRule = new schedule.RecurrenceRule();
+dailyAbsentRule.hour = 23;
+dailyAbsentRule.minute = 59;
+dailyAbsentRule.tz = 'Asia/Karachi';
+
+console.log('📅 Scheduled Jobs initialized (Asia/Karachi timezone):');
+console.log('   • Auto-checkout: 09:00 AM PKT every day');
+console.log('   • Checkout missing detection: 09:01 AM PKT every day');
 
 app.listen(PORT, async () => {
   console.log(`
@@ -328,9 +341,31 @@ app.listen(PORT, async () => {
     removeAbsenceWhenAttendanceExists();
   }, 5000);
 
+  // Run auto-checkout on startup if current PKT time is past 9 AM
+  // This handles the case where the server was down at 9 AM and needs to catch up
+  setTimeout(async () => {
+    try {
+      const pkNow = getPakistanDate();
+      const pkHour = pkNow.getUTCHours();
+      if (pkHour >= 9) {
+        console.log('\n⏰ STARTUP: Current PKT time is past 9 AM — running auto-checkout catch-up...');
+        const result = await attendanceController.autoCheckoutExpiredSessions(null, null);
+        if (result.success) {
+          console.log(`✅ Startup auto-checkout completed: ${result.processedCount} records processed`);
+        } else {
+          console.log(`ℹ️ Startup auto-checkout: ${result.reason || result.error || 'no records'}`);
+        }
+      } else {
+        console.log(`ℹ️ STARTUP: Current PKT hour is ${pkHour} (before 9 AM) — skipping auto-checkout`);
+      }
+    } catch (err) {
+      console.error('❌ Startup auto-checkout error:', err.message);
+    }
+  }, 3000);
+
   // Schedule daily auto-mark absent job
   // Runs every day at 11:59 PM Pakistan Time to mark employees who didn't check in during the day
-  const dailySchedule = schedule.scheduleJob('59 23 * * *', async () => {
+  const dailySchedule = schedule.scheduleJob(dailyAbsentRule, async () => {
     console.log('\n📅 SCHEDULED DAILY AUTO-MARK ABSENT JOB RUNNING...');
     try {
       const connection = await pool.getConnection();

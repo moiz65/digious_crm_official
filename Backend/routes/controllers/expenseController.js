@@ -317,7 +317,7 @@ exports.deleteExpense = async (req, res) => {
 // GET /summary/monthly — Monthly totals for last 12 months
 exports.getMonthlySummary = async (req, res) => {
   try {
-    await ensureExpenseTables();
+    await ensureTables();
 
     const [rows] = await pool.query(`
       SELECT 

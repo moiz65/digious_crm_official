@@ -470,6 +470,11 @@ const HRMyAttendance = () => {
       const data = await response.json();
       if (data.success) {
         console.log('[SUCCESS] Check-out successful:', data);
+        if (data.data?.check_out_time === '09:00:00' || data.data?.autoCheckoutApplied) {
+          toast.success('Auto checked out at 9:00 AM');
+        } else {
+          toast.success('Checked out successfully');
+        }
         setIsCheckedIn(false);
         await fetchTodayAttendance();
         await fetchPendingCheckout(); // Re-check pending after checkout
