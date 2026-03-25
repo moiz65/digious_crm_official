@@ -7,6 +7,7 @@ import {
   Linkedin, Github, ExternalLink, Users,
   ChevronRight, Plus, Trash2, GraduationCap, Star, Calendar as CalendarIcon
 } from "lucide-react";
+import toast from 'react-hot-toast';
 import EmployeeProfileService from "../services/employeeProfileService";
 import config from '../config/api';
 
@@ -1453,7 +1454,7 @@ const EmployeePersonalProfileV2 = ({ employeeId: propsEmployeeId, onBack }) => {
                         <button
                           onClick={() => {
                             if (!newSocialLink?.platform || !newSocialLink?.url) {
-                              alert('Please enter both platform name and URL');
+                              toast.error('Please enter both platform name and URL');
                               return;
                             }
                             const updated = { ...employee.socialLinks };

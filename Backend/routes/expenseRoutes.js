@@ -23,6 +23,9 @@ router.post  ('/categories',      authMiddleware, ctrl.createCategory);
 router.put   ('/categories/:id',  authMiddleware, ctrl.updateCategory);
 router.delete('/categories/:id',  authMiddleware, ctrl.deleteCategory);
 
+// ── Monthly summary (must be before /:id) ─────────────────────
+router.get   ('/summary/monthly', authMiddleware, ctrl.getMonthlySummary);
+
 // ── Expenses ──────────────────────────────────────────────────
 router.get   ('/',     authMiddleware, ctrl.getExpenses);
 router.post  ('/',     authMiddleware, ctrl.createExpense);

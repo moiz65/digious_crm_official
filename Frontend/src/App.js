@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -23,6 +24,7 @@ import AdminApplicationsMemos from './pages/SuperAdmin/ApplicationsMemos';
 import AdminSalesManagement from './pages/SuperAdmin/AdminSalesManagement';
 import PayrollManagement from './pages/SuperAdmin/PayrollManagement';
 import AdminExpense from './pages/Admin/AdminExpense';
+import AdminAdvances from './pages/Admin/AdminAdvances';
 import Customer from './pages/SuperAdmin/Customer';
 
 
@@ -94,6 +96,14 @@ function AppContent() {
           element={
             <ProtectedRoute requiredRole="admin">
               <PayrollManagement />
+            </ProtectedRoute>
+          }
+        />
+            <Route
+          path="/admin/advances"
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <AdminAdvances />
             </ProtectedRoute>
           }
         />
@@ -335,6 +345,15 @@ function App() {
     <Router>
       <AuthProvider>
         <AppContent />
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            duration: 3000,
+            style: { background: '#333', color: '#fff', borderRadius: '8px', fontSize: '14px' },
+            success: { style: { background: '#16a34a' }, iconTheme: { primary: '#fff', secondary: '#16a34a' } },
+            error: { style: { background: '#dc2626' }, iconTheme: { primary: '#fff', secondary: '#dc2626' } },
+          }}
+        />
       </AuthProvider>
     </Router>
   );

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { endpoints } from '../config/api';
 import { getPakistanTimeString } from '../utils/timezone';
 import {
@@ -114,14 +115,14 @@ export function EmployeeAttendancePage() {
 
       const data = await response.json();
       if (data.success) {
-        alert('✅ Check In Successful');
+        toast.success('Check In Successful');
         setCheckedIn(true);
         fetchTodayAttendance();
       } else {
-        alert('❌ ' + data.message);
+        toast.error(data.message);
       }
     } catch (err) {
-      alert('❌ Check in failed');
+      toast.error('Check in failed');
       console.error(err);
     }
   };
@@ -146,14 +147,14 @@ export function EmployeeAttendancePage() {
 
       const data = await response.json();
       if (data.success) {
-        alert('✅ Check Out Successful');
+        toast.success('Check Out Successful');
         setCheckedOut(true);
         fetchTodayAttendance();
       } else {
-        alert('❌ ' + data.message);
+        toast.error(data.message);
       }
     } catch (err) {
-      alert('❌ Check out failed');
+      toast.error('Check out failed');
       console.error(err);
     }
   };
@@ -194,13 +195,13 @@ export function EmployeeAttendancePage() {
 
       const data = await response.json();
       if (data.success) {
-        alert(`✅ ${breakType} break recorded (${breakDurationMinutes} min)`);
+        toast.success(`${breakType} break recorded (${breakDurationMinutes} min)`);
         fetchTodayAttendance();
       } else {
-        alert('❌ ' + data.message);
+        toast.error(data.message);
       }
     } catch (err) {
-      alert('❌ Failed to record break');
+      toast.error('Failed to record break');
       console.error(err);
     }
   };

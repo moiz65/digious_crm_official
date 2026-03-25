@@ -1,5 +1,6 @@
 // RoleTemplatesManagement.jsx
 import React, { useState } from 'react';
+import toast from 'react-hot-toast';
 
 const RoleTemplatesManagement = () => {
   // Default role templates
@@ -237,7 +238,7 @@ const RoleTemplatesManagement = () => {
   // Add new role
   const handleAddRole = () => {
     if (!newRoleName.trim()) {
-      alert('Please enter a role name');
+      toast.error('Please enter a role name');
       return;
     }
 
@@ -245,7 +246,7 @@ const RoleTemplatesManagement = () => {
     
     // Check if role already exists
     if (roleTemplates.some(role => role.id === roleId)) {
-      alert('A role with this name already exists');
+      toast.error('A role with this name already exists');
       return;
     }
 
@@ -263,7 +264,7 @@ const RoleTemplatesManagement = () => {
     setNewRoleDescription('');
     setRolePermissions({});
     setShowAddRoleModal(false);
-    alert(`Role "${newRoleName}" added successfully!`);
+    toast.success(`Role "${newRoleName}" added successfully!`);
   };
 
   // Edit existing role
@@ -281,7 +282,7 @@ const RoleTemplatesManagement = () => {
   // Update existing role
   const handleUpdateRole = () => {
     if (!newRoleName.trim()) {
-      alert('Please enter a role name');
+      toast.error('Please enter a role name');
       return;
     }
 
@@ -302,7 +303,7 @@ const RoleTemplatesManagement = () => {
     setRolePermissions({});
     setShowAddRoleModal(false);
     setEditingRoleId(null);
-    alert(`Role "${newRoleName}" updated successfully!`);
+    toast.success(`Role "${newRoleName}" updated successfully!`);
   };
 
   // Delete role
@@ -310,19 +311,19 @@ const RoleTemplatesManagement = () => {
     const role = roleTemplates.find(t => t.id === roleId);
     
     if (role.type === 'Default') {
-      alert('Default roles cannot be deleted.');
+      toast.error('Default roles cannot be deleted.');
       return;
     }
 
     // Check if any user is using this role
     if (role.users > 0) {
-      alert(`Cannot delete this role. ${role.users} user(s) are currently using it. Please reassign them first.`);
+      toast.error(`Cannot delete this role. ${role.users} user(s) are currently using it. Please reassign them first.`);
       return;
     }
 
     if (window.confirm('Are you sure you want to delete this role? This action cannot be undone.')) {
       setRoleTemplates(roleTemplates.filter(role => role.id !== roleId));
-      alert('Role deleted successfully!');
+      toast.success('Role deleted successfully!');
     }
   };
 

@@ -70,8 +70,11 @@ const AdminExpense = () => {
   const [showExpenseModal, setShowExpenseModal]   = useState(false);
   const [showViewModal, setShowViewModal]         = useState(false);
   const [selectedExpense, setSelectedExpense]     = useState(null);
-  const [expenseForm, setExpenseForm]             = useState({ category_id: "", amount: "", note: "" });
+  const [expenseForm, setExpenseForm]             = useState({ category_id: "", amount: "", note: "", expense_date: new Date().toISOString().slice(0,10) });
   const [saving, setSaving]                       = useState(false);
+
+  // ── Monthly summary state ──
+  const [monthlySummary, setMonthlySummary]       = useState([]);
 
   // ── Category state ──
   const [showCatModal, setShowCatModal]       = useState(false);
@@ -95,7 +98,6 @@ const AdminExpense = () => {
       const params = new URLSearchParams();
       if (dateRange.from) params.append("from", dateRange.from);
       if (dateRange.to)   params.append("to",   dateRange.to);
-      if (searchQuery)    params.append("search", searchQuery);
       if (selectedCategory !== "All") {
         const cat = categories.find(c => c.name === selectedCategory);
         if (cat) params.append("category_id", cat.id);
@@ -106,28 +108,40 @@ const AdminExpense = () => {
     } catch (err) {
       setError(err.message || "Network error"); setExpenses([]);
     } finally { setLoading(false); }
-  }, [dateRange, searchQuery, selectedCategory, categories]);
+  }, [dateRange, selectedCategory, categories]);
 
   useEffect(() => { fetchCategories(); }, [fetchCategories]);
   useEffect(() => { fetchExpenses();   }, [fetchExpenses]);
 
+  // ─── Fetch monthly summary ─────────────────────────────────────────────
+  const fetchMonthlySummary = useCallback(async () => {
+    try {
+      const data = await apiFetch(`${API_BASE}/expenses/summary/monthly`);
+      if (data.success) setMonthlySummary(data.data || []);
+    } catch (err) { /* silent */ }
+  }, []);
+  useEffect(() => { fetchMonthlySummary(); }, [fetchMonthlySummary]);
+
   // ─── Autocomplete suggestions ────────────────────────────────────────────
   useEffect(() => {
     if (!searchQuery.trim()) { setSuggestions([]); return; }
-    const q = searchQuery.toLowerCase();
+    const q = searchQuery.toLowerCase().replace(/^#?exp-?/i, "").trim();
     const catSuggestions = categories
       .filter(c => c.name.toLowerCase().includes(q))
       .map(c => ({ type: "category", label: c.name, value: c.name, color: c.color }));
     const expSuggestions = expenses
-      .filter(e =>
-        fmtExpenseId(e.id).toLowerCase().includes(q) ||
-        (e.note && e.note.toLowerCase().includes(q))
-      )
+      .filter(e => {
+        const rawId = String(e.id).padStart(3, "0");
+        return fmtExpenseId(e.id).toLowerCase().includes(q) ||
+          rawId.includes(q) ||
+          String(e.id).includes(q) ||
+          (e.note && e.note.toLowerCase().includes(q));
+      })
       .slice(0, 4)
       .map(e => ({
         type: "expense",
         label: e.note ? `${fmtExpenseId(e.id)} – ${e.note.slice(0, 30)}` : fmtExpenseId(e.id),
-        value: fmtExpenseId(e.id).toLowerCase(),
+        value: String(e.id).padStart(3, "0"),
       }));
     setSuggestions([...catSuggestions, ...expSuggestions].slice(0, 8));
   }, [searchQuery, categories, expenses]);
@@ -145,11 +159,16 @@ const AdminExpense = () => {
     if (!expenseForm.category_id || !expenseForm.amount) return;
     setSaving(true); setError(null);
     try {
-      const body = { category_id: +expenseForm.category_id, amount: +expenseForm.amount, note: expenseForm.note };
+      const body = {
+        category_id: +expenseForm.category_id,
+        amount: +expenseForm.amount,
+        note: expenseForm.note,
+        expense_date: expenseForm.expense_date || new Date().toISOString().slice(0,10),
+      };
       const data = selectedExpense
         ? await apiFetch(`${API_BASE}/expenses/${selectedExpense.id}`, { method: "PUT",  body: JSON.stringify(body) })
         : await apiFetch(`${API_BASE}/expenses`,                        { method: "POST", body: JSON.stringify(body) });
-      if (data.success) { await fetchExpenses(); closeExpenseModal(); }
+      if (data.success) { await fetchExpenses(); await fetchMonthlySummary(); closeExpenseModal(); }
       else setError(data.message || "Failed to save");
     } catch (err) { setError(err.message); }
     finally { setSaving(false); }
@@ -158,16 +177,21 @@ const AdminExpense = () => {
   const handleDeleteExpense = async (id) => {
     if (!window.confirm("Delete this expense?")) return;
     const data = await apiFetch(`${API_BASE}/expenses/${id}`, { method: "DELETE" });
-    if (data.success) setExpenses(prev => prev.filter(e => e.id !== id));
+    if (data.success) { setExpenses(prev => prev.filter(e => e.id !== id)); fetchMonthlySummary(); }
     else setError(data.message || "Failed to delete");
   };
 
   const openEditExpense = (expense) => {
     setSelectedExpense(expense);
-    setExpenseForm({ category_id: expense.category_id?.toString() || "", amount: expense.amount?.toString() || "", note: expense.note || "" });
+    setExpenseForm({
+      category_id: expense.category_id?.toString() || "",
+      amount: expense.amount?.toString() || "",
+      note: expense.note || "",
+      expense_date: expense.expense_date ? expense.expense_date.slice(0,10) : new Date().toISOString().slice(0,10),
+    });
     setShowExpenseModal(true);
   };
-  const closeExpenseModal = () => { setShowExpenseModal(false); setSelectedExpense(null); setExpenseForm({ category_id: "", amount: "", note: "" }); };
+  const closeExpenseModal = () => { setShowExpenseModal(false); setSelectedExpense(null); setExpenseForm({ category_id: "", amount: "", note: "", expense_date: new Date().toISOString().slice(0,10) }); };
 
   // ─── CATEGORY CRUD ───────────────────────────────────────────────────────
   const handleSubmitCategory = async (e) => {
@@ -232,15 +256,23 @@ const AdminExpense = () => {
   const monthlyChange   = lastMonthTotal > 0 ? ((thisMonthTotal - lastMonthTotal) / lastMonthTotal * 100).toFixed(1) : thisMonthTotal > 0 ? 100 : 0;
   const todayChange     = yesterdayTotal > 0 ? ((todayTotal    - yesterdayTotal)  / yesterdayTotal  * 100).toFixed(1) : todayTotal > 0 ? 100 : 0;
 
+  // ─── Whether a custom date range is active ──────────────────────────────
+  const isRangeSet = !!(dateRange.from || dateRange.to);
+
   // ─── Client-side filter ──────────────────────────────────────────────────
   const filteredExpenses = expenses.filter((expense) => {
-    const q = searchQuery.toLowerCase();
+    const q = searchQuery.toLowerCase().replace(/^#?exp-?/i, "").trim();
+    const rawId = String(expense.id).padStart(3, "0");
     const matchSearch = !q ||
       fmtExpenseId(expense.id).toLowerCase().includes(q) ||
+      rawId.includes(q) ||
+      String(expense.id).includes(q) ||
       expense.category_name?.toLowerCase().includes(q) ||
       expense.note?.toLowerCase().includes(q);
     const matchCat = selectedCategory === "All" || expense.category_name === selectedCategory;
-    return matchSearch && matchCat;
+    // Default to current month when no date range is set; skip date filter when searching
+    const matchDate = (q || isRangeSet) ? true : expense.expense_date?.startsWith(thisMonthPfx);
+    return matchSearch && matchCat && matchDate;
   });
   const filteredTotal  = filteredExpenses.reduce((s, e) => s + parseFloat(e.amount || 0), 0);
   const filteredCats   = categories.filter(c => !catSearch || c.name.toLowerCase().includes(catSearch.toLowerCase()) || (c.description || "").toLowerCase().includes(catSearch.toLowerCase()));
@@ -282,7 +314,7 @@ const AdminExpense = () => {
                   <RefreshCw className="h-4 w-4" /> Refresh
                 </button>
                 {activeTab === "expenses" ? (
-                  <button onClick={() => { setSelectedExpense(null); setExpenseForm({ category_id: "", amount: "", note: "" }); setShowExpenseModal(true); }}
+                  <button onClick={() => { setSelectedExpense(null); setExpenseForm({ category_id: "", amount: "", note: "", expense_date: new Date().toISOString().slice(0,10) }); setShowExpenseModal(true); }}
                     className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition hover:scale-105">
                     <Plus className="h-4 w-4" /> Add Expense
                   </button>
@@ -326,42 +358,62 @@ const AdminExpense = () => {
             {/* ══════════════ EXPENSES TAB ══════════════ */}
             {activeTab === "expenses" && (
               <>
-                {/* Stats */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                  <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-5 text-white shadow-xl hover:scale-104 transition-all">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="p-2 bg-white/20 rounded-lg"><Calendar className="h-6 w-6" /></div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold">{formatCurrency(thisMonthTotal)}</div>
-                        <div className="text-blue-100 text-xs">This Month</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1 text-blue-100 text-xs">
-                      {monthlyChange >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                      {Math.abs(monthlyChange)}% vs last month
-                    </div>
+                {/* Summary Boxes – always 2 at 50/50 width */}
+                <div className="mb-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Calendar className="h-5 w-5 text-blue-600" />
+                    <h3 className="font-bold text-slate-800">
+                      {isRangeSet ? "Selected Range Summary" : "Monthly Expense Summary"}
+                    </h3>
+                    {isRangeSet && (
+                      <button
+                        onClick={() => setDateRange({ from: "", to: "" })}
+                        className="ml-auto flex items-center gap-1 text-xs font-semibold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-3 py-1.5 rounded-lg transition"
+                      >
+                        <X className="h-3 w-3" /> Clear Range
+                      </button>
+                    )}
                   </div>
-                  {/* <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-5 text-white shadow-xl hover:scale-105 transition-all">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="p-2 bg-white/20 rounded-lg"><TrendingUp className="h-6 w-6" /></div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold">{formatCurrency(averageExpense)}</div>
-                        <div className="text-purple-100 text-xs">Average Expense</div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Box 1 */}
+                    <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-5 text-white shadow-lg hover:scale-[1.02] transition-all cursor-pointer"
+                      onClick={() => { if (isRangeSet) setDateRange({ from: "", to: "" }); }}>
+                      <div className="text-xs font-medium text-blue-100 mb-1">
+                        {isRangeSet ? "Selected Range Total" : "This Month"}
+                      </div>
+                      <div className="text-2xl font-bold">
+                        {isRangeSet ? formatCurrency(filteredTotal) : formatCurrency(thisMonthTotal)}
+                      </div>
+                      <div className="flex items-center gap-1 text-blue-100 text-xs mt-2">
+                        {isRangeSet ? (
+                          <><Receipt className="h-3 w-3" /> {filteredExpenses.length} records</>
+                        ) : (
+                          <>{monthlyChange >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />} {Math.abs(monthlyChange)}% vs last month</>
+                        )}
                       </div>
                     </div>
-                    <div className="text-purple-100 text-xs">per transaction</div>
-                  </div> */}
-                  <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl p-5 text-white shadow-xl hover:scale-104 transition-all">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="p-2 bg-white/20 rounded-lg">PKR</div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold">{formatCurrency(todayTotal)}</div>
-                        <div className="text-emerald-100 text-xs">Previous Month</div>
+                    {/* Box 2 */}
+                    <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl p-5 text-white shadow-lg hover:scale-[1.02] transition-all cursor-pointer"
+                      onClick={() => {
+                        if (!isRangeSet) {
+                          const lm = new Date(now); lm.setMonth(lm.getMonth()-1);
+                          const lmStart = `${lastMonthPfx}-01`;
+                          const lmEnd = new Date(lm.getFullYear(), lm.getMonth()+1, 0).toISOString().slice(0,10);
+                          setDateRange({ from: lmStart, to: lmEnd });
+                        }
+                      }}>
+                      <div className="text-xs font-medium text-emerald-100 mb-1">
+                        {isRangeSet ? "Records Found" : "Last Month"}
                       </div>
-                    </div>
-                    <div className="flex items-center gap-1 text-emerald-100 text-xs">
-                      {todayChange >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                      
+                      <div className="text-2xl font-bold">
+                        {isRangeSet ? filteredExpenses.length : formatCurrency(lastMonthTotal)}
+                      </div>
+                      <div className="text-emerald-100 text-xs mt-2">
+                        {isRangeSet
+                          ? `${dateRange.from || "Start"} → ${dateRange.to || "End"}`
+                          : `${expenses.filter(e => e.expense_date?.startsWith(lastMonthPfx)).length} records`
+                        }
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -424,8 +476,17 @@ const AdminExpense = () => {
                     </select>
                     <input type="date" value={dateRange.from} onChange={(e) => setDateRange({ ...dateRange, from: e.target.value })}
                       className="w-full px-3 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 bg-white text-sm" />
-                    <input type="date" value={dateRange.to} onChange={(e) => setDateRange({ ...dateRange, to: e.target.value })}
-                      className="w-full px-3 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 bg-white text-sm" />
+                    <div className="flex gap-2">
+                      <input type="date" value={dateRange.to} onChange={(e) => setDateRange({ ...dateRange, to: e.target.value })}
+                        className="w-full px-3 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 bg-white text-sm" />
+                      {isRangeSet && (
+                        <button onClick={() => setDateRange({ from: "", to: "" })}
+                          className="flex-shrink-0 px-3 py-2 bg-rose-50 text-rose-600 border border-rose-200 rounded-xl hover:bg-rose-100 transition text-sm font-medium"
+                          title="Clear date range">
+                          <X className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -737,6 +798,13 @@ const ExpenseModal = ({ expense, formData, setFormData, categories, saving, erro
               className="w-full pl-16 pr-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500"
               required step="0.01" min="0" />
           </div>
+        </div>
+        <div>
+          <label className="block text-gray-700 font-medium mb-2">Expense Date <span className="text-blue-600">*</span></label>
+          <input type="date" value={formData.expense_date || ''} onChange={e => setFormData({ ...formData, expense_date: e.target.value })}
+            className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+            required />
+          <p className="text-xs text-slate-400 mt-1">Select any date — current, previous month, or earlier</p>
         </div>
         <div>
           <label className="block text-gray-700 font-medium mb-2">Note</label>

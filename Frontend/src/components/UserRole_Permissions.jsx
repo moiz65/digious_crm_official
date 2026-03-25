@@ -1,5 +1,6 @@
 // UserManagementDashboard.jsx
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 
 const UserManagementDashboard = () => {
   const [selectedUser, setSelectedUser] = useState('john-doe');
@@ -374,7 +375,7 @@ const UserManagementDashboard = () => {
   // Handle add new user
   const handleAddUser = () => {
     if (!newUserData.name.trim() || !newUserData.email.trim()) {
-      alert('Please fill in all required fields');
+      toast.error('Please fill in all required fields');
       return;
     }
 
@@ -417,7 +418,7 @@ const UserManagementDashboard = () => {
   // Handle update user
   const handleUpdateUser = () => {
     if (!newUserData.name.trim() || !newUserData.email.trim()) {
-      alert('Please fill in all required fields');
+      toast.error('Please fill in all required fields');
       return;
     }
 
@@ -477,7 +478,7 @@ const UserManagementDashboard = () => {
       }
       return user;
     }));
-    alert('User permissions saved successfully!');
+    toast.success('User permissions saved successfully!');
   };
 
   // Handle role change for selected user - Updated with new role templates

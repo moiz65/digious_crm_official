@@ -14,6 +14,7 @@ import {
   Gift, PlusCircle
 } from 'lucide-react';
 import { endpoints, apiRequest } from '../config/api';
+import toast from 'react-hot-toast';
 
 const MONTHS = ['', 'January', 'February', 'March', 'April', 'May', 'June', 
   'July', 'August', 'September', 'October', 'November', 'December'];
@@ -368,7 +369,7 @@ const EmployeePayrollPage = () => {
       }
     } catch (err) {
       console.error('Failed to fetch payslip:', err);
-      alert('Failed to load payslip: ' + (err.message || 'Unknown error'));
+      toast.error('Failed to load payslip: ' + (err.message || 'Unknown error'));
     } finally {
       setPayslipLoading(null);
     }
