@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { TrendingUp, Users, CheckCircle, XCircle, RefreshCw, Calendar, DollarSign, FileText, Target, Clock, LogIn, LogOut } from 'lucide-react';
 import { useAttendance } from '../hooks/UseAttendance';
 import TopNavMenu from './TopNavMenu';
@@ -41,7 +42,7 @@ export function SalesDashboard() {
     
     // Check if already checked in today
     if (todayStatus.checkIn !== '-') {
-      alert('You have already checked in today!');
+      toast.error('You have already checked in today!');
       return;
     }
 
@@ -56,9 +57,9 @@ export function SalesDashboard() {
         ongoingProjects: prev.ongoingProjects + 1
       }));
 
-      alert(`Checked in successfully at ${result.timeString}! ${result.isLate ? 'You are late.' : 'You are on time.'}`);
+      toast.success(`Checked in successfully at ${result.timeString}! ${result.isLate ? 'You are late.' : 'You are on time.'}`);
     } catch (error) {
-      alert('Failed to check in. Please try again.');
+      toast.error('Failed to check in. Please try again.');
     }
   };
 
@@ -67,7 +68,7 @@ export function SalesDashboard() {
     const todayStatus = getTodayStatus();
     
     if (todayStatus.checkIn === '-') {
-      alert('You are not checked in!');
+      toast.error('You are not checked in!');
       return;
     }
 
@@ -81,9 +82,9 @@ export function SalesDashboard() {
         ongoingProjects: Math.max(0, prev.ongoingProjects - 1)
       }));
 
-      alert(`Checked out successfully at ${result.timeString}! You worked for ${result.hours} hours today.`);
+      toast.success(`Checked out successfully at ${result.timeString}! You worked for ${result.hours} hours today.`);
     } catch (error) {
-      alert('Failed to check out. Please try again.');
+      toast.error('Failed to check out. Please try again.');
     }
   };
 
@@ -111,10 +112,10 @@ export function SalesDashboard() {
     switch (action) {
       case 'New Proposal':
         setSalesData(prev => ({ ...prev, ongoingProjects: prev.ongoingProjects + 1 }));
-        alert('Creating new proposal...');
+        toast('Creating new proposal...');
         break;
       case 'Add Client':
-        alert('Opening client form...');
+        toast('Opening client form...');
         break;
       case 'New Sale':
         const newSaleAmount = Math.floor(Math.random() * 5000) + 1000;
@@ -123,10 +124,10 @@ export function SalesDashboard() {
           currentSales: Math.min(prev.currentSales + newSaleAmount, prev.monthlyTarget),
           totalSales: prev.totalSales + newSaleAmount
         }));
-        alert(`New sale recorded: $${newSaleAmount}`);
+        toast.success(`New sale recorded: $${newSaleAmount}`);
         break;
       case 'Schedule':
-        alert('Opening calendar...');
+        toast('Opening calendar...');
         break;
       default:
         break;

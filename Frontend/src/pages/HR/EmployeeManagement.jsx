@@ -8,6 +8,7 @@ import {
   Mail, Phone, MapPin, Calendar, Briefcase, X, Loader
 } from 'lucide-react';
 import { generateTablePDF, exportToCSV } from '../../utils/pdfExport';
+import toast from 'react-hot-toast';
 
 const API_URL = config.FULL_API_URL;
 
@@ -28,33 +29,6 @@ const EmployeeManagement = () => {
   const itemsPerPage = 10;
 
   const [employees, setEmployees] = useState([]);
-
-  // Simple toast helper to replace alert()
-  const showToast = (message, type = 'success') => {
-    try {
-      const el = document.createElement('div');
-      const isError = type === 'error';
-      el.className = `fixed top-4 right-4 z-50 max-w-sm p-3 rounded-lg shadow-lg transform transition-opacity duration-300 ${isError ? 'bg-red-50 border-l-4 border-red-500 text-red-800' : 'bg-green-50 border-l-4 border-green-500 text-green-800'}`;
-      el.style.opacity = '0';
-      el.innerHTML = `
-        <div class="flex items-start gap-3">
-          <div class="flex-1 text-sm">${message}</div>
-          <button class="ml-3 text-sm font-medium" aria-label="close">✕</button>
-        </div>
-      `;
-      const btn = el.querySelector('button');
-      btn.addEventListener('click', () => el.remove());
-      document.body.appendChild(el);
-      // fade in
-      requestAnimationFrame(() => { el.style.opacity = '1'; });
-      // auto remove
-      setTimeout(() => { if (el.parentNode) el.remove(); }, 4500);
-    } catch (e) {
-      // fallback
-      console.error('Toast error', e);
-      alert(message);
-    }
-  }
 
   // Fetch employees from API
   useEffect(() => {
@@ -114,11 +88,11 @@ const EmployeeManagement = () => {
         if (response.ok) {
           setEmployees(employees.filter(emp => emp.id !== id));
         } else {
-          showToast('Failed to delete employee', 'error');
+          toast.error('Failed to delete employee');
         }
       } catch (err) {
         console.error('Error deleting employee:', err);
-        showToast('Failed to delete employee', 'error');
+        toast.error('Failed to delete employee');
       }
     }
   };
@@ -129,7 +103,7 @@ const EmployeeManagement = () => {
       const dataToExport = employees;
       
       if (dataToExport.length === 0) {
-        showToast('No employees to export', 'error');
+        toast.error('No employees to export');
         return;
       }
 
@@ -152,7 +126,7 @@ const EmployeeManagement = () => {
       console.log('✅ PDF exported successfully');
     } catch (error) {
       console.error('❌ Export error:', error);
-      showToast('Failed to export PDF', 'error');
+      toast.error('Failed to export PDF');
     }
   };
 
@@ -162,7 +136,7 @@ const EmployeeManagement = () => {
       const dataToExport = employees;
       
       if (dataToExport.length === 0) {
-        showToast('No employees to export', 'error');
+        toast.error('No employees to export');
         return;
       }
 
@@ -187,7 +161,7 @@ const EmployeeManagement = () => {
       console.log('✅ CSV exported successfully');
     } catch (error) {
       console.error('❌ Export error:', error);
-      showToast('Failed to export CSV', 'error');
+      toast.error('Failed to export CSV');
     }
   };
 
@@ -268,7 +242,7 @@ const EmployeeManagement = () => {
   const addAllowance = () => {
     const name = (editFormData?.newAllowanceName || '').trim();
     const amount = Number(editFormData?.newAllowanceAmount || 0);
-    if (!name || !amount) { showToast('Provide allowance name and amount', 'error'); return; }
+    if (!name || !amount) { toast.error('Provide allowance name and amount'); return; }
     const updated = [...(editFormData.allowances || []), { allowance_name: name, allowance_amount: amount }];
     handleEditFormChange('allowances', updated);
     handleEditFormChange('newAllowanceName', '');
@@ -285,7 +259,7 @@ const EmployeeManagement = () => {
   const addDynamicResource = () => {
     const name = (editFormData?.newResourceName || '').trim();
     const serial = (editFormData?.newResourceSerial || '').trim();
-    if (!name) { showToast('Provide resource name', 'error'); return; }
+    if (!name) { toast.error('Provide resource name'); return; }
     const base = (editFormData.dynamic_resources || editFormData.dynamicResources || []);
     const updated = [...base, { resource_name: name, resource_serial: serial }];
     handleEditFormChange('dynamic_resources', updated);
@@ -336,13 +310,13 @@ const EmployeeManagement = () => {
         setEmployees(employees.map(emp => emp.id === editFormData.id ? { ...emp, ...editFormData } : emp));
         setSelectedEmployee({ ...selectedEmployee, ...editFormData });
         setIsEditMode(false);
-        showToast('Employee details updated successfully!', 'success');
+        toast.success('Employee details updated successfully!');
       } else {
-        showToast('Failed to update employee', 'error');
+        toast.error('Failed to update employee');
       }
     } catch (err) {
       console.error('Error updating employee:', err);
-      showToast('Failed to update employee', 'error');
+      toast.error('Failed to update employee');
     } finally {
       setIsSaving(false);
     }

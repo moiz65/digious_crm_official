@@ -231,8 +231,9 @@ exports.createExpense = async (req, res) => {
     }
 
     const now = new Date();
-    const expense_date = now.toISOString().slice(0, 10);
-    const expense_time = now.toTimeString().slice(0, 8);
+    // Accept custom date from request body; fall back to today
+    const expense_date = req.body.expense_date || now.toISOString().slice(0, 10);
+    const expense_time = req.body.expense_time || now.toTimeString().slice(0, 8);
 
     const [result] = await pool.query(
       `INSERT INTO expenses (category_id, category_name, amount, note, expense_date, expense_time, created_by)
@@ -259,7 +260,7 @@ exports.createExpense = async (req, res) => {
 exports.updateExpense = async (req, res) => {
   try {
     const { id } = req.params;
-    const { category_id, amount, note } = req.body;
+    const { category_id, amount, note, expense_date, expense_time } = req.body;
 
     const fields = [];
     const values = [];
@@ -276,6 +277,8 @@ exports.updateExpense = async (req, res) => {
     }
     if (amount !== undefined) { fields.push('amount = ?'); values.push(parseFloat(amount)); }
     if (note   !== undefined) { fields.push('note = ?');   values.push(note.trim()); }
+    if (expense_date !== undefined) { fields.push('expense_date = ?'); values.push(expense_date); }
+    if (expense_time !== undefined) { fields.push('expense_time = ?'); values.push(expense_time); }
 
     if (!fields.length) {
       return res.status(400).json({ success: false, message: 'No fields to update' });
@@ -307,6 +310,32 @@ exports.deleteExpense = async (req, res) => {
     return res.json({ success: true, message: 'Expense deleted' });
   } catch (err) {
     console.error('deleteExpense error:', err);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+// GET /summary/monthly — Monthly totals for last 12 months
+exports.getMonthlySummary = async (req, res) => {
+  try {
+    await ensureTables();
+
+    const [rows] = await pool.query(`
+      SELECT 
+        DATE_FORMAT(expense_date, '%Y-%m') AS month_key,
+        DATE_FORMAT(expense_date, '%M %Y') AS month_label,
+        YEAR(expense_date) AS year,
+        MONTH(expense_date) AS month,
+        SUM(amount) AS total,
+        COUNT(*) AS count
+      FROM expenses
+      WHERE expense_date >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
+      GROUP BY month_key, month_label, year, month
+      ORDER BY year DESC, month DESC
+    `);
+
+    return res.json({ success: true, data: rows });
+  } catch (err) {
+    console.error('getMonthlySummary error:', err);
     return res.status(500).json({ success: false, message: 'Server error' });
   }
 };
