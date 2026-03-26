@@ -32,6 +32,8 @@ const corsOptions = {
       "http://127.0.0.1:5000",
       "http://192.168.100.14:3000",
       "http://192.168.100.14:5000",
+      "http://100.121.40.82:3000",
+      "http://100.121.40.82:5000",
     ];
 
     // Add environment-specific origins from .env
