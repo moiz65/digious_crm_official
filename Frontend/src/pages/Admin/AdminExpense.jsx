@@ -31,14 +31,24 @@ const fmtExpenseId = (id) => `#EXP-${String(id).padStart(3, "0")}`;
 const getToken = () => localStorage.getItem('token') || localStorage.getItem('authToken') || '';
 
 const apiFetch = async (url, opts = {}) => {
-  const r = await fetch(url, {
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
-    ...opts,
-  });
-  const text = await r.text();
-  if (!text.trim()) return { success: false, message: `Empty response (${r.status})` };
-  try { return JSON.parse(text); }
-  catch { return { success: false, message: `Server error (${r.status})` }; }
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000);
+  try {
+    const r = await fetch(url, {
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
+      signal: controller.signal,
+      ...opts,
+    });
+    clearTimeout(timeoutId);
+    const text = await r.text();
+    if (!text.trim()) return { success: false, message: `Empty response (${r.status})` };
+    try { return JSON.parse(text); }
+    catch { return { success: false, message: `Server error (${r.status})` }; }
+  } catch (err) {
+    clearTimeout(timeoutId);
+    if (err.name === 'AbortError') return { success: false, message: 'Request timed out - please try again' };
+    throw err;
+  }
 };
 
 const COLORS = ["#3B82F6","#8B5CF6","#10B981","#F59E0B","#EF4444","#EC4899","#06B6D4","#84CC16","#F97316","#6366F1"];

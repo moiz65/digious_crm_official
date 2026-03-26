@@ -82,14 +82,16 @@ const HRMyAttendance = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Fetch data on component mount
+  // Fetch data on component mount — run all independent fetches in parallel
   useEffect(() => {
     console.log('[INFO] HRMyAttendance mounted with user:', user);
-    fetchTodayAttendance();
-    fetchPendingCheckout(); // Check for pending checkout from previous shift
-    fetchActiveBreaks();
-    fetchMonthlyAttendance();
-    fetchLeaveBalance();
+    Promise.all([
+      fetchTodayAttendance(),
+      fetchPendingCheckout(),
+      fetchActiveBreaks(),
+      fetchMonthlyAttendance(),
+      fetchLeaveBalance(),
+    ]).catch(err => console.error('Initial fetch error:', err));
   }, []);
 
   // Re-fetch monthly attendance when filters change
@@ -258,7 +260,7 @@ const HRMyAttendance = () => {
 
       // Query attendance endpoint to check for pending checkouts
       // This asks: "Do I have any record with check_in_time but NO check_out_time?"
-      const response = await fetch(`${endpoints.base}/attendance/pending-checkout?employee_id=${employeeId}`, {
+      const response = await fetch(`${endpoints.attendance.base}/pending-checkout?employee_id=${employeeId}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -488,12 +490,7 @@ const HRMyAttendance = () => {
       const data = await response.json();
       if (data.success) {
         console.log('[SUCCESS] Check-out successful:', data);
-        // If auto-checkout was applied (past 9 AM), show informative message
-        if (data.data?.check_out_time === '09:00:00' || data.data?.autoCheckoutApplied) {
-          toast.success('Auto checked out at 9:00 AM');
-        } else {
-          toast.success('Checked out successfully');
-        }
+        toast.success('Checked out successfully');
         setIsCheckedIn(false);
         await fetchTodayAttendance();
         await fetchPendingCheckout(); // Re-check pending after checkout

@@ -487,7 +487,7 @@ const updateApplicationStatus = async (req, res) => {
     }
 
     // Fetch the application first (needed for leave processing)
-    const [apps] = await pool.query('SELECT * FROM applications WHERE id = ?', [applicationId]);
+    const [apps] = await connection.query('SELECT * FROM applications WHERE id = ?', [applicationId]);
     if (apps.length === 0) {
       return res.status(404).json({ success: false, message: 'Application not found' });
     }
@@ -589,7 +589,7 @@ const updateApplication = async (req, res) => {
     } = req.body;
 
     // First, verify the application belongs to this employee
-    const [existingApp] = await pool.query(
+    const [existingApp] = await connection.query(
       `SELECT employee_id, status FROM applications WHERE id = ?`,
       [applicationId]
     );
