@@ -1872,8 +1872,46 @@ const EmployeeDetailView = ({
       return acc;
     }, {});
 
-  const monthKeys = Object.keys(monthGroups);
+  // Always include the current month so fully-absent employees still see the calendar
+  const currentMonthKey = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  if (!monthGroups[currentMonthKey]) monthGroups[currentMonthKey] = [];
+
+  // Sort months newest-first
+  const monthKeys = Object.keys(monthGroups).sort((a, b) => new Date(b) - new Date(a));
   const [selectedHistoryMonth, setSelectedHistoryMonth] = useState(() => monthKeys[0] || null);
+
+  // Keep selectedHistoryMonth in sync when new data loads for this employee
+  useEffect(() => {
+    if (monthKeys.length > 0 && (!selectedHistoryMonth || !monthGroups[selectedHistoryMonth])) {
+      setSelectedHistoryMonth(monthKeys[0]);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [employee.id, monthKeys[0]]);
+
+  // Count working weekdays in a month up to today (for accurate count display)
+  const getMonthWorkingCount = (monthKey) => {
+    const dbRecords = monthGroups[monthKey] || [];
+    let year, monthIndex;
+    if (dbRecords.length > 0) {
+      const d = new Date(dbRecords[0].date);
+      year = d.getFullYear(); monthIndex = d.getMonth();
+    } else {
+      // "March 2026" → prepend "1 " so JS can parse it
+      const parsed = new Date('1 ' + monthKey);
+      year = parsed.getFullYear(); monthIndex = parsed.getMonth();
+    }
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const lastDayOfMonth = new Date(year, monthIndex + 1, 0);
+    const countUntil = lastDayOfMonth < today ? lastDayOfMonth.getDate() : today.getDate();
+    const isCurrentMonth = today.getFullYear() === year && today.getMonth() === monthIndex;
+    const limit = isCurrentMonth ? countUntil : lastDayOfMonth.getDate();
+    let count = 0;
+    for (let d = 1; d <= limit; d++) {
+      const dow = new Date(year, monthIndex, d).getDay();
+      if (dow !== 0 && dow !== 6) count++;
+    }
+    return count;
+  };
   const [monthStatusFilter, setMonthStatusFilter] = useState('all');
   const [showOnlyMatches, setShowOnlyMatches] = useState(false);
 
@@ -1945,10 +1983,6 @@ const EmployeeDetailView = ({
           </div>
         </div> */}
 
-        {/* Today's Breaks Summary */}
-        <div className="mb-8">
-          <TodayBreaksSummary employeeId={employee.id} refreshInterval={30000} />
-        </div>
 
         {/* Uninformed Section */}
         {unexplainedAbsences.length > 0 && (
@@ -2122,7 +2156,8 @@ const EmployeeDetailView = ({
                       const idx = monthKeys.indexOf(selectedHistoryMonth);
                       if (idx < monthKeys.length - 1) setSelectedHistoryMonth(monthKeys[idx + 1]);
                     }}
-                    className="px-3 py-1 bg-white rounded-lg border hover:bg-gray-50"
+                    disabled={monthKeys.indexOf(selectedHistoryMonth) >= monthKeys.length - 1}
+                    className="px-3 py-1 bg-white rounded-lg border hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     Prev
                   </button>
@@ -2133,7 +2168,7 @@ const EmployeeDetailView = ({
                     className="px-3 py-1 border rounded-lg"
                   >
                     {monthKeys.map(m => (
-                      <option key={m} value={m}>{m} ({monthGroups[m].length} records)</option>
+                      <option key={m} value={m}>{m} ({getMonthWorkingCount(m)} days)</option>
                     ))}
                   </select>
 
@@ -2142,7 +2177,8 @@ const EmployeeDetailView = ({
                       const idx = monthKeys.indexOf(selectedHistoryMonth);
                       if (idx > 0) setSelectedHistoryMonth(monthKeys[idx - 1]);
                     }}
-                    className="px-3 py-1 bg-white rounded-lg border hover:bg-gray-50"
+                    disabled={monthKeys.indexOf(selectedHistoryMonth) <= 0}
+                    className="px-3 py-1 bg-white rounded-lg border hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     Next
                   </button>
@@ -2236,6 +2272,12 @@ const EmployeeDetailView = ({
                             if (status === 'halfday') return { text: 'Half', color: 'bg-yellow-500 text-white' };
                             if (status === 'uninformed absent' || status === 'Uninformed Absent') return { text: 'UA', color: 'bg-red-600 text-white' };
                             if (status === 'absent') return { text: 'A', color: 'bg-red-500 text-white' };
+                            // No DB record for a past weekday — employee did not check in, so mark Absent
+                            if (!rec && !isWeekend && !isHoliday) {
+                              const cellDate = new Date(dateStr);
+                              const todayMidnight = new Date(); todayMidnight.setHours(0, 0, 0, 0);
+                              if (cellDate < todayMidnight) return { text: 'A', color: 'bg-red-500 text-white' };
+                            }
                             return { text: '-', color: 'bg-gray-200 text-gray-700' };
                           };
 
@@ -2267,134 +2309,154 @@ const EmployeeDetailView = ({
           )}
         </div>
 
-        {/* Detailed Attendance Log */}
+        {/* Detailed Attendance Table */}
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Detailed Attendance Log</h3>
+            <h3 className="text-lg font-semibold text-gray-900">Detailed Attendance</h3>
           </div>
 
-          <div className="space-y-3">
-            {sortedEmpAttendance.slice(0, 10).map((record) => {
-              const isUnexplained = record.status === 'absent' && (!record.notes || record.notes === 'No notification');
-              const breaksForDay = getEmployeeBreaksForDate(employee.id, record.date);
-              const totalBreakTime = breaksForDay.reduce((total, breakItem) => total + breakItem.duration, 0);
-              
-              return (
-                <div key={record.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200">
-                  <div className="flex items-center space-x-4">
-                    <div className={`w-3 h-3 rounded-full ${
-                      isUnexplained ? 'bg-red-500' :
-                      record.status === 'present' ? 'bg-green-500' :
-                      record.status === 'late' ? 'bg-yellow-500' :
-                      record.status === 'early-leave' ? 'bg-cyan-500' :
-                      record.status === 'leave' ? 'bg-orange-500' :
-                      record.status === 'halfday' ? 'bg-blue-500' :
-                      record.status === 'absent' ? 'bg-red-500' : 'bg-gray-400'
-                    }`}></div>
-                    <div className="flex-1">
-                      <div className="font-medium text-gray-900">
-                        {new Date(record.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-                      </div>
-                      {isEditingAttendance === record.id ? (
-                        <div className="mt-2">
-                          <textarea
-                            value={editingNotes}
-                            onChange={(e) => setEditingNotes(e.target.value)}
-                            placeholder="Enter reason for leave, half-day, or absence..."
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#349dff] focus:border-transparent"
-                            rows="2"
-                          />
-                          <div className="flex space-x-2 mt-2">
+          <div className="overflow-x-auto rounded-xl border border-gray-200">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-gradient-to-r from-blue-500 to-blue-400 text-white">
+                  <th className="text-left px-4 py-3 font-semibold">Date</th>
+                  <th className="text-left px-4 py-3 font-semibold">Check In</th>
+                  <th className="text-left px-4 py-3 font-semibold">Check Out</th>
+                  <th className="text-center px-4 py-3 font-semibold">Status</th>
+                  <th className="text-center px-4 py-3 font-semibold">Working Hours</th>
+                  <th className="text-center px-4 py-3 font-semibold">Breaks</th>
+                  <th className="text-center px-4 py-3 font-semibold">Late By</th>
+                  <th className="text-center px-4 py-3 font-semibold">Overtime</th>
+                  <th className="text-center px-4 py-3 font-semibold">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(() => {
+                  // Build complete list of weekdays for the selected month, merging DB records + absent placeholders
+                  if (!selectedHistoryMonth) return null;
+
+                  // Parse selected month
+                  const parsed = new Date('1 ' + selectedHistoryMonth);
+                  const year = parsed.getFullYear();
+                  const mIdx = parsed.getMonth();
+                  const daysInMonth = new Date(year, mIdx + 1, 0).getDate();
+                  const today = new Date(); today.setHours(0, 0, 0, 0);
+
+                  // Get DB records for this month keyed by date string
+                  const monthRecords = sortedEmpAttendance.filter(r => {
+                    const rm = new Date(r.date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                    return rm === selectedHistoryMonth;
+                  });
+                  const recordsByDate = {};
+                  monthRecords.forEach(r => { recordsByDate[r.date] = r; });
+
+                  // Build rows for all weekdays up to today (or end of month if past)
+                  const rows = [];
+                  for (let d = daysInMonth; d >= 1; d--) {
+                    const dateObj = new Date(year, mIdx, d);
+                    const dow = dateObj.getDay();
+                    if (dow === 0 || dow === 6) continue; // skip weekends
+                    if (dateObj > today) continue; // skip future dates
+
+                    const dateStr = dateObj.toLocaleDateString('en-CA'); // YYYY-MM-DD
+                    const record = recordsByDate[dateStr] || null;
+
+                    rows.push({ dateStr, dateObj, record });
+                  }
+
+                  if (rows.length === 0) {
+                    return (
+                      <tr>
+                        <td colSpan="9" className="px-4 py-8 text-center text-gray-500">No attendance data for this month yet</td>
+                      </tr>
+                    );
+                  }
+
+                  return rows.map(({ dateStr, dateObj, record }, idx) => {
+                    const status = record ? record.status : 'absent';
+                    const isAbsent = status === 'absent';
+                    const isPresent = status === 'present';
+                    const isLate = status === 'late';
+                    const isLeave = status === 'leave' || status === 'paid leave';
+                    const isUnexplained = isAbsent && (!record || !record.notes || record.notes === 'No notification');
+
+                    const breaksForDay = record ? getEmployeeBreaksForDate(employee.id, dateStr) : [];
+                    const totalBreakTime = breaksForDay.reduce((total, b) => total + b.duration, 0);
+
+                    const statusLabel = isUnexplained ? 'A' :
+                      isPresent ? 'P' :
+                      isLate ? 'L' :
+                      status === 'early-leave' ? 'EL' :
+                      isLeave ? 'PL' :
+                      status === 'halfday' ? 'HD' :
+                      isAbsent ? 'A' :
+                      status?.charAt(0)?.toUpperCase() || '-';
+
+                    const statusColor = isUnexplained ? 'bg-red-100 text-red-700' :
+                      isPresent ? 'bg-green-100 text-green-700' :
+                      isLate ? 'bg-yellow-100 text-yellow-700' :
+                      status === 'early-leave' ? 'bg-cyan-100 text-cyan-700' :
+                      isLeave ? 'bg-teal-100 text-teal-700' :
+                      status === 'halfday' ? 'bg-blue-100 text-blue-700' :
+                      isAbsent ? 'bg-red-100 text-red-700' :
+                      'bg-gray-100 text-gray-700';
+
+                    return (
+                      <tr key={dateStr} className={`border-b border-gray-100 ${idx % 2 === 0 ? 'bg-blue-50/30' : 'bg-white'} hover:bg-blue-50 transition`}>
+                        <td className="px-4 py-3 text-gray-800 font-medium whitespace-nowrap">
+                          {dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+                        </td>
+                        <td className="px-4 py-3">
+                          {record && record.checkIn && record.checkIn !== '-' ? (
+                            <span className="text-green-600 font-medium">{record.checkIn}</span>
+                          ) : (
+                            <span className="text-red-500 font-medium">No Check-in</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          {record && record.checkOut && record.checkOut !== '-' ? (
+                            <span className="text-blue-600 font-medium">{record.checkOut}</span>
+                          ) : (
+                            <span className="text-gray-400">&mdash;</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-bold ${statusColor}`}>{statusLabel}</span>
+                        </td>
+                        <td className="px-4 py-3 text-center text-gray-700">{record ? (record.hours || '—') : '—'}</td>
+                        <td className="px-4 py-3 text-center">
+                          {record && record.breaks > 0 ? (
                             <button
-                              onClick={() => handleSaveNotes(record.id, editingNotes)}
-                              className="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700"
+                              onClick={() => handleViewBreaks(dateStr)}
+                              className="text-blue-600 hover:text-blue-800 font-medium hover:underline"
                             >
-                              Save
+                              {record.breaks} ({totalBreakTime}m)
                             </button>
-                            <button 
-                              onClick={() => setIsEditingAttendance(null)}
-                              className="px-3 py-1 bg-gray-600 text-white rounded text-sm hover:bg-gray-700"
+                          ) : (
+                            <span className="text-gray-400">&mdash;</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-center text-gray-700">{record && record.late && record.late !== '-' ? record.late : '—'}</td>
+                        <td className="px-4 py-3 text-center text-gray-700">{record && record.overtime && record.overtime !== '0.0' && record.overtime !== '0' ? `${record.overtime}h` : '—'}</td>
+                        <td className="px-4 py-3 text-center">
+                          {record ? (
+                            <button
+                              onClick={() => handleEditNotes(record)}
+                              className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition duration-300"
+                              title="Edit Notes"
                             >
-                              Cancel
+                              <Edit3 className="h-4 w-4" />
                             </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="text-sm text-gray-600">
-                          {record.notes || 'No additional notes'}
-                        </div>
-                      )}
-                      {breaksForDay.length > 0 && (
-                        <div className="flex items-center space-x-2 mt-1">
-                          <Coffee className="h-3 w-3 text-gray-400" />
-                          <span className="text-xs text-gray-500">
-                            {breaksForDay.length} breaks • {totalBreakTime} min total
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    {isEditingAttendance === record.id ? (
-                      <div className="flex items-center space-x-2">
-                        <select 
-                          defaultValue={record.status}
-                          className="px-2 py-1 border border-gray-300 rounded text-sm"
-                        >
-                          <option value="present">Present (On Time)</option>
-                          <option value="late">Present (Arrived Late)</option>
-                          <option value="early-leave">Present (Left Early)</option>
-                          <option value="halfday">Half Day</option>
-                          <option value="leave">Leave</option>
-                          <option value="absent">Absent</option>
-                        </select>
-                      </div>
-                    ) : (
-                      <>
-                        <span className={`text-xs px-2 py-1 rounded-full ${
-                          isUnexplained ? 'bg-red-100 text-red-800' :
-                          record.status === 'present' ? 'bg-green-100 text-green-800' :
-                          record.status === 'late' ? 'bg-yellow-100 text-yellow-800' :
-                          record.status === 'early-leave' ? 'bg-cyan-100 text-cyan-800' :
-                          record.status === 'leave' ? 'bg-orange-100 text-orange-800' :
-                          record.status === 'halfday' ? 'bg-blue-100 text-blue-800' :
-                          record.status === 'absent' ? 'bg-red-100 text-red-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
-                          {isUnexplained ? 'Unexplained' : 
-                           record.status === 'present' ? 'Present (On Time)' :
-                           record.status === 'late' ? 'Present (Late)' :
-                           record.status === 'early-leave' ? 'Present (Left Early)' :
-                           record.status === 'leave' ? 'Leave' :
-                           record.status === 'halfday' ? 'Half Day' :
-                           record.status === 'absent' ? 'Absent' :
-                           record.status}
-                        </span>
-                        
-                        {/* View Breaks Button */}
-                        {breaksForDay.length > 0 && (
-                          <button
-                            onClick={() => handleViewBreaks(record.date)}
-                            className="flex items-center px-3 py-1 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition duration-200"
-                          >
-                            <Coffee className="h-3 w-3 mr-1" />
-                            View Breaks ({breaksForDay.length})
-                          </button>
-                        )}
-                        
-                        <button 
-                          onClick={() => handleEditNotes(record)}
-                          className="p-1 text-gray-400 hover:text-blue-600 transition duration-300"
-                          title="Edit Notes"
-                        >
-                          <Edit3 className="h-3 w-3" />
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+                          ) : (
+                            <span className="text-gray-400">&mdash;</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  });
+                })()}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -4132,6 +4194,89 @@ export function HrAttendancePage() {
     
     handleSelectedDateChange();
   }, [selectedDate]); // Remove attendanceData dependency to avoid infinite loop
+
+  // When an employee detail view opens, load their full attendance history (last 6 months)
+  // The initial load only fetches 500 total records; this ensures the specific employee has full data
+  useEffect(() => {
+    if (!selectedEmployee || employeeView !== 'detail') return;
+
+    const loadEmployeeHistory = async () => {
+      try {
+        const now = new Date();
+        // Build last 6 months to fetch
+        const months = [];
+        for (let i = 0; i < 6; i++) {
+          const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+          months.push({ year: d.getFullYear(), month: d.getMonth() + 1 });
+        }
+
+        const responses = await Promise.all(
+          months.map(({ year, month }) =>
+            fetch(endpoints.attendance.monthly(selectedEmployee.id, year, month))
+          )
+        );
+
+        const dataArrays = await Promise.all(responses.map(r => r.json()));
+
+        const formatRecord = (record) => {
+          const dateStr = typeof record.attendance_date === 'string'
+            ? record.attendance_date.split('T')[0]
+            : new Date(record.attendance_date).toLocaleDateString('en-CA');
+
+          let calculatedHours = '-';
+          if (record.gross_working_time_minutes > 0) {
+            const h = Math.floor(record.gross_working_time_minutes / 60);
+            const m = record.gross_working_time_minutes % 60;
+            calculatedHours = `${h}h ${m}m`;
+          }
+
+          return {
+            id: record.id,
+            employeeId: record.employee_id,
+            name: record.name,
+            email: record.email,
+            date: dateStr,
+            status: (record.status || 'absent').toLowerCase(),
+            checkIn: record.check_in_time || '-',
+            checkOut: record.check_out_time || '-',
+            hours: calculatedHours,
+            breaks: record.total_breaks_taken || 0,
+            breakDuration: record.total_break_duration_minutes || 0,
+            overtime: record.overtime_hours || '0.0',
+            late: record.late_by_minutes ? `${record.late_by_minutes}m` : '-',
+            smoke_break_count: record.smoke_break_count || 0,
+            dinner_break_count: record.dinner_break_count || 0,
+            washroom_break_count: record.washroom_break_count || 0,
+            prayer_break_count: record.prayer_break_count || 0,
+            smoke_break_duration_minutes: record.smoke_break_duration_minutes || 0,
+            dinner_break_duration_minutes: record.dinner_break_duration_minutes || 0,
+            washroom_break_duration_minutes: record.washroom_break_duration_minutes || 0,
+            prayer_break_duration_minutes: record.prayer_break_duration_minutes || 0,
+            remarks: record.remarks || '',
+            notes: record.remarks || ''
+          };
+        };
+
+        const allRecords = dataArrays.flatMap(d => {
+          const list = Array.isArray(d) ? d : (d.data || []);
+          return list.map(formatRecord);
+        });
+
+        if (allRecords.length > 0) {
+          setAttendanceData(prev => {
+            // Replace all existing records for this employee with fresh per-employee data
+            const withoutEmployee = prev.filter(a => a.employeeId !== selectedEmployee.id);
+            return [...withoutEmployee, ...allRecords];
+          });
+          console.log(`✅ Loaded ${allRecords.length} attendance records for employee ${selectedEmployee.id}`);
+        }
+      } catch (err) {
+        console.error('Error loading employee attendance history:', err);
+      }
+    };
+
+    loadEmployeeHistory();
+  }, [selectedEmployee?.id, employeeView]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleAddEmployee = (employeeData) => {
     const newEmployee = {

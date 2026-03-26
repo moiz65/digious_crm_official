@@ -241,16 +241,24 @@ export const getCurrentEmployeeId = () => {
   return decoded?.employeeId || null;
 };
 
-// API request helper with error handling
+// API request helper with error handling and timeout
 export const apiRequest = async (url, options = {}) => {
+  // Create AbortController for timeout (30s default, configurable)
+  const timeout = options.timeout || 30000;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+
   try {
     const response = await fetch(url, {
       ...options,
+      signal: options.signal || controller.signal,
       headers: {
         ...getAuthHeaders(),
         ...options.headers,
       },
     });
+
+    clearTimeout(timeoutId);
 
     // Handle non-JSON responses
     const contentType = response.headers.get('content-type');
@@ -266,6 +274,10 @@ export const apiRequest = async (url, options = {}) => {
 
     return data;
   } catch (error) {
+    clearTimeout(timeoutId);
+    if (error.name === 'AbortError') {
+      throw new Error('Request timed out - please try again');
+    }
     console.error('API Request Error:', error);
     throw error;
   }

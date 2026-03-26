@@ -13,10 +13,11 @@ const {
 // Using Pakistan timezone (UTC+5)
 // ============================================================
 const getLocalDateString = (date) => {
-  // Use UTC methods because getPakistanDate() returns a date with UTC offset
-  const year = date.getUTCFullYear();
-  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
-  const day = String(date.getUTCDate()).padStart(2, "0");
+  // Use LOCAL methods — getPakistanDate() returns a Date whose local hours = PKT hours,
+  // and MySQL dates are also created in local timezone. .getUTCDate() would be WRONG.
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 };
 
@@ -231,8 +232,8 @@ exports.checkIn = async (req, res) => {
       // During 09:00 - 21:00: No active shift, old pending entries should be ignored
       // New check-in will auto-complete the old entry only if attempting to start new shift
       
-      const currentHour = now.getUTCHours();
-      const currentMin = now.getUTCMinutes();
+      const currentHour = now.getHours();
+      const currentMin = now.getMinutes();
       const currentTotalMinutes = currentHour * 60 + currentMin;
       const nineAM = 9 * 60; // 540 minutes = 09:00
       const ninePM = 21 * 60; // 1260 minutes = 21:00
@@ -286,7 +287,6 @@ exports.checkIn = async (req, res) => {
         const isOverlapWindow = currentTotalMinutes >= nineAM && currentTotalMinutes < ninePM;
         if (isOverlapWindow) {
           console.log(`   ⚠️ BLOCKING: Overlap window detected (9 AM - 9 PM) - must checkout first`);
-          connection.release();
           return res.status(409).json({
             success: false,
             message: 'You have an incomplete checkout from the current shift. Please checkout first before checking in again.',
@@ -407,7 +407,6 @@ exports.checkIn = async (req, res) => {
                 `   Status: ALREADY CHECKED IN - Please checkout first before checking in again`,
               );
 
-              connection.release();
               return res.status(409).json({
                 success: false,
                 message:
@@ -426,7 +425,6 @@ exports.checkIn = async (req, res) => {
           }
         } else {
           // Record has proper checkout, prevent duplicate check-in
-          connection.release();
           return res.status(409).json({
             success: false,
             message: "Already checked in today",
@@ -452,7 +450,6 @@ exports.checkIn = async (req, res) => {
       const isValidCheckInTime = isNightShiftTail || isDayShiftWindow;
       
       if (!isValidCheckInTime) {
-        connection.release();
         console.log(
           `❌ INVALID CHECK IN TIME: ${name} attempted check-in at ${checkInTime} (between 06:00 AM and 09:00 AM - gap between shifts)`,
         );
@@ -599,7 +596,6 @@ exports.checkIn = async (req, res) => {
       errno: error.errno,
       stack: error.stack,
     });
-    if (connection) connection.release();
     res.status(500).json({
       success: false,
       message: "Check in failed",
@@ -666,7 +662,7 @@ exports.checkOut = async (req, res) => {
       // Get today's date
       const todayStr = getPakistanDateString();
       const now = getPakistanDate();
-      const currentHour = now.getUTCHours();
+      const currentHour = now.getHours();
 
       let attendanceRecord, workDateStr;
 
@@ -699,7 +695,6 @@ exports.checkOut = async (req, res) => {
             attendanceRecord = attendanceRecordToday;
             workDateStr = todayStr;
           } else {
-            connection.release();
             console.log(`❌ No active check-in found for employee ${employee_id} on ${todayStr} or ${yesterdayStr}`);
             return res.status(404).json({
               success: false,
@@ -740,7 +735,6 @@ exports.checkOut = async (req, res) => {
             workDateStr = recentPending[0].attendance_date;
             console.log(`✅ Found most recent pending record for checkout (date: ${workDateStr})`);
           } else {
-            connection.release();
             console.log(`❌ No active check-in found for employee ${employee_id}`);
             return res.status(404).json({
               success: false,
@@ -765,7 +759,6 @@ exports.checkOut = async (req, res) => {
       // VALIDATE: Prevent double checkout (already checked out)
       // If they already have a check_out_time in database, they cannot checkout again
       if (existingCheckOutTime) {
-        connection.release();
         console.log(`❌ ALREADY CHECKED OUT: Employee ${employee_id} already has checkout time: ${existingCheckOutTime}`);
         return res.status(400).json({
           success: false,
@@ -790,22 +783,11 @@ exports.checkOut = async (req, res) => {
       const isValidShiftCheckIn = checkInTotalMinutes >= 21 * 60 || checkInTotalMinutes <= 6 * 60;
 
       // ============================================================
-      // CHECKOUT DEADLINE VALIDATION (CRITICAL)
+      // NOTE: Manual checkout uses ACTUAL time — employees can check
+      // out at any time. The 09:00 AM auto-checkout only applies to
+      // the scheduled cron job / inline auto-checkout for employees
+      // who FORGOT to check out.
       // ============================================================
-      // Night shift employees MUST checkout before 9:00 AM
-      // If checkout time is 9:00 AM or later, AUTO-SET checkout to 09:00:00
-      // instead of rejecting — the employee still gets checked out properly
-      // EXCEPTION: Allow actual time if the check-in was INVALID (outside shift hours)
-      if (checkOutTotalMinutes >= 9 * 60 && isValidShiftCheckIn) { // 09:00 = 540 minutes
-        console.log(
-          `⏰ CHECKOUT PAST DEADLINE: Employee ${employee_id} attempted checkout at ${checkOutTime} — auto-setting to 09:00:00`,
-        );
-        // Override checkout time to 09:00:00
-        checkOutTime = '09:00:00';
-        checkOutHour = 9;
-        checkOutMin = 0;
-        checkOutTotalMinutes = 9 * 60;
-      }
 
       let grossWorkingMinutes = 0;
 
@@ -1006,7 +988,6 @@ exports.checkOut = async (req, res) => {
     }
   } catch (error) {
     console.error("❌ Check Out error:", error);
-    if (connection) connection.release();
     res.status(500).json({
       success: false,
       message: "Check out failed",
@@ -1031,7 +1012,6 @@ exports.generateAbsentRecords = async (req, res) => {
     );
 
     if (employees.length === 0) {
-      connection.release();
       return res.status(200).json({
         success: true,
         message: "No active employees found",
@@ -1124,8 +1104,6 @@ exports.generateAbsentRecords = async (req, res) => {
       totalProcessed++;
     }
 
-    connection.release();
-
     console.log(`🎯 Absent record generation complete:`);
     console.log(`   📊 Processed ${totalProcessed} employees`);
     console.log(`   📝 Created ${totalCreated} absent records`);
@@ -1145,12 +1123,13 @@ exports.generateAbsentRecords = async (req, res) => {
     });
   } catch (error) {
     console.error("❌ Generate Absent Records error:", error);
-    if (connection) connection.release();
     res.status(500).json({
       success: false,
       message: "Failed to generate absent records",
       error: error.message,
     });
+  } finally {
+    if (connection) connection.release();
   }
 };
 
@@ -1245,7 +1224,6 @@ exports.recordBreakStart = async (req, res) => {
 
         // If the user has already checked out, refuse to start a break
         if (a.check_out_time) {
-          if (connection) connection.release();
           return res.status(400).json({
             success: false,
             message: "Cannot start a break after check-out",
@@ -1283,7 +1261,6 @@ exports.recordBreakStart = async (req, res) => {
     }
   } catch (error) {
     console.error("❌ Record Break START error:", error);
-    if (connection) connection.release();
     res.status(500).json({
       success: false,
       message: "Failed to record break start",
@@ -1305,7 +1282,7 @@ exports.recordBreakEnd = async (req, res) => {
 
     // Calculate attendance_date using Pakistan timezone night-shift logic
     const now = getPakistanDate();
-    const checkInHour = now.getUTCHours();
+    const checkInHour = now.getHours();
     let attendanceDate;
     if (checkInHour >= 0 && checkInHour < 6) {
       // Early morning (00:00-05:59 PKT) - belongs to yesterday's shift
@@ -1358,7 +1335,6 @@ exports.recordBreakEnd = async (req, res) => {
       console.log('🔍 Attendance record query result:', attendanceRecord);
 
       if (attendanceRecord.length === 0) {
-        if (connection) connection.release();
         return res.status(404).json({
           success: false,
           message: 'No active check in found for today'
@@ -1388,7 +1364,6 @@ if (!attendanceId && attendanceRecord && attendanceRecord.length > 0) {
       console.log('🔍 Break record query result:', breakRecord);
 
       if (breakRecord.length === 0) {
-        if (connection) connection.release();
         return res.status(404).json({
           success: false,
           message: 'No active break found for this type'
@@ -1474,7 +1449,6 @@ if (!attendanceId && attendanceRecord && attendanceRecord.length > 0) {
     }
   } catch (error) {
     console.error("❌ Record Break END error:", error);
-    if (connection) connection.release();
     res.status(500).json({
       success: false,
       message: "Failed to record break end",
@@ -1496,7 +1470,7 @@ exports.recordBreakProgress = async (req, res) => {
 
     // Calculate attendance_date using Pakistan timezone night-shift logic
     const now = getPakistanDate();
-    const checkInHour = now.getUTCHours();
+    const checkInHour = now.getHours();
     let attendanceDate;
     if (checkInHour >= 0 && checkInHour < 6) {
       // Early morning (00:00-05:59 PKT) - belongs to yesterday's shift
@@ -1536,7 +1510,6 @@ exports.recordBreakProgress = async (req, res) => {
       );
 
       if (attendanceRecord.length === 0) {
-        if (connection) connection.release();
         return res.status(404).json({
           success: false,
           message: "No active check in found for today",
@@ -1554,7 +1527,6 @@ exports.recordBreakProgress = async (req, res) => {
       );
 
       if (breakRecord.length === 0) {
-        if (connection) connection.release();
         return res.status(404).json({
           success: false,
           message: "No active break found for this type",
@@ -1619,7 +1591,6 @@ exports.recordBreakProgress = async (req, res) => {
     }
   } catch (error) {
     console.error("❌ Record Break Progress error:", error);
-    if (connection) connection.release();
     res.status(500).json({
       success: false,
       message: "Failed to record break progress",
@@ -1676,7 +1647,6 @@ exports.getOngoingBreaks = async (req, res) => {
       );
 
       if (attendanceRecord.length === 0) {
-        if (connection) connection.release();
         return res.status(200).json({
           success: true,
           message: "No active check in found",
@@ -1748,7 +1718,6 @@ exports.getOngoingBreaks = async (req, res) => {
     }
   } catch (error) {
     console.error("❌ Get Ongoing Breaks error:", error);
-    if (connection) connection.release();
     res.status(500).json({
       success: false,
       message: "Failed to retrieve ongoing breaks",
@@ -1869,7 +1838,6 @@ exports.getTodayBreaks = async (req, res) => {
     }
   } catch (error) {
     console.error("❌ Get Today's Breaks error:", error);
-    if (connection) connection.release();
     res.status(500).json({
       success: false,
       message: "Failed to retrieve today's breaks",
@@ -1943,7 +1911,6 @@ exports.recordBreak = async (req, res) => {
       );
 
       if (attendanceRecord.length === 0) {
-        if (connection) connection.release();
         return res.status(404).json({
           success: false,
           message: "No active check in found for today",
@@ -2064,7 +2031,6 @@ exports.recordBreak = async (req, res) => {
     }
   } catch (error) {
     console.error("❌ Record Break error:", error);
-    if (connection) connection.release();
     res.status(500).json({
       success: false,
       message: "Failed to record break",
@@ -2078,7 +2044,7 @@ exports.getTodayAttendance = async (req, res) => {
   try {
     const { employee_id } = req.params;
     const now = getPakistanDate(); // USE PAKISTAN TIMEZONE, NOT SERVER TIMEZONE!
-    const currentHour = now.getUTCHours(); // Use UTC hours (which are PKT hours after offset)
+    const currentHour = now.getHours(); // Local hours = PKT hours (system is in PKT timezone)
 
     // For night shift: if current time is 00:00-05:59, check YESTERDAY's attendance
     // Because night shift runs from 21:00 Day1 to 06:00 Day2
@@ -2086,7 +2052,7 @@ exports.getTodayAttendance = async (req, res) => {
     if (currentHour >= 0 && currentHour < 6) {
       // Early morning - look for yesterday's shift
       const yesterday = new Date(now);
-      yesterday.setUTCDate(yesterday.getUTCDate() - 1); // Use UTC date methods
+      yesterday.setDate(yesterday.getDate() - 1); // Use local date methods
       searchDate = getLocalDateString(yesterday);
       console.log(
         `📅 getTodayAttendance [EARLY MORNING] - Searching YESTERDAY's date: ${searchDate}`,
@@ -2145,7 +2111,7 @@ exports.getTodayAttendance = async (req, res) => {
         // This handles multiple pending checkouts - finds the latest one
         // Only consider pending records from the last 2 days to avoid old unresolved checkouts
         const twoDaysAgo = new Date(now);
-        twoDaysAgo.setUTCDate(twoDaysAgo.getUTCDate() - 2);
+        twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
         const twoDaysAgoStr = getLocalDateString(twoDaysAgo);
         
         console.log(`🔎 No record on ${searchDate}, searching for most recent pending check-out from last 2 days (${twoDaysAgoStr} onwards)...`);
@@ -2197,8 +2163,8 @@ exports.getTodayAttendance = async (req, res) => {
       // ============================================================
       if (record && record.check_out_time === null) {
         const pktNow = getPakistanDate();
-        const pktHour = pktNow.getUTCHours();
-        const pktMin = pktNow.getUTCMinutes();
+        const pktHour = pktNow.getHours();
+        const pktMin = pktNow.getMinutes();
         const pktTotalMinutes = pktHour * 60 + pktMin;
 
         if (pktTotalMinutes >= 9 * 60) {
@@ -2207,8 +2173,20 @@ exports.getTodayAttendance = async (req, res) => {
           const ciTotalMin = ciH * 60 + parseInt(record.check_in_time.split(':')[1], 10);
           const isNightShift = ciTotalMin >= 21 * 60 || ciTotalMin <= 6 * 60;
 
-          if (isNightShift) {
+          // CRITICAL: Don't auto-checkout if this is TODAY's record with check-in
+          // at/after 9:00 AM (e.g., employee checked in this evening at 21:00+
+          // — they just started their shift and are actively working!)
+          // Only auto-checkout if the record is from a PREVIOUS day, or from
+          // today with an early-morning check-in (before 9 AM = night shift ending).
+          const todayStr2 = getPakistanDateString();
+          const recDateStr = record.attendance_date instanceof Date
+            ? getLocalDateString(record.attendance_date)
+            : String(record.attendance_date).substring(0, 10);
+          const isFreshTodaySession = recDateStr === todayStr2 && ciTotalMin >= 9 * 60;
+
+          if (isNightShift && !isFreshTodaySession) {
             console.log(`\n⏰ INLINE AUTO-CHECKOUT: Employee ${finalEmployeeId} still checked in at ${pktHour}:${String(pktMin).padStart(2,'0')} PKT — auto-completing at 09:00:00`);
+            console.log(`   Record date: ${recDateStr}, check-in: ${record.check_in_time}`);
             const autoTime = '09:00:00';
             const expectedWorkingMinutes = 540;
             const checkInTotalMinutes = ciTotalMin;
@@ -2243,6 +2221,8 @@ exports.getTodayAttendance = async (req, res) => {
             record.overtime_minutes = overtimeMinutes;
             record.overtime_hours = parseFloat(overtimeHours);
             console.log(`✅ INLINE AUTO-CHECKOUT DONE: ${grossWorkingMinutes}min gross, ${netWorkingMinutes}min net`);
+          } else if (isFreshTodaySession) {
+            console.log(`\nℹ️ INLINE AUTO-CHECKOUT SKIPPED: Employee ${finalEmployeeId} checked in today at ${record.check_in_time} — active session, not a forgotten checkout`);
           }
         }
       }
@@ -2347,8 +2327,8 @@ exports.getMonthlyAttendance = async (req, res) => {
     const { year, month } = req.query;
 
     const pkDate = getPakistanDate(); // USE PAKISTAN TIMEZONE
-    const currentYear = year ? parseInt(year) : pkDate.getUTCFullYear();
-    const currentMonth = month ? parseInt(month) : pkDate.getUTCMonth() + 1;
+    const currentYear = year ? parseInt(year) : pkDate.getFullYear();
+    const currentMonth = month ? parseInt(month) : pkDate.getMonth() + 1;
 
     const connection = await pool.getConnection();
 
@@ -2466,15 +2446,15 @@ exports.getMonthlyAttendance = async (req, res) => {
           const d = record.attendance_date instanceof Date 
             ? record.attendance_date 
             : new Date(record.attendance_date);
-          return d.getUTCDate();
+          return d.getDate();
         })
       );
 
       // Get today's date in Pakistan timezone to only create absent records up to today
       const todayPK = getPakistanDate();
-      const todayDate = todayPK.getUTCDate();
-      const todayMonth = todayPK.getUTCMonth() + 1;
-      const todayYear = todayPK.getUTCFullYear();
+      const todayDate = todayPK.getDate();
+      const todayMonth = todayPK.getMonth() + 1;
+      const todayYear = todayPK.getFullYear();
 
       // Create absent records for missing days (only up to today, not future days)
       for (let day = 1; day <= todayDate; day++) {
@@ -3342,8 +3322,6 @@ exports.autoFixMissingWorkingHours = async (req, res) => {
 
     const [result] = await connection.query(query);
 
-    connection.release();
-
     console.log(
       `✅ Auto-fixed ${result.affectedRows} records with missing working hours`,
     );
@@ -3361,6 +3339,8 @@ exports.autoFixMissingWorkingHours = async (req, res) => {
       message: "Failed to auto-fix working hours",
       error: error.message,
     });
+  } finally {
+    if (connection) connection.release();
   }
 };
 
@@ -3542,7 +3522,6 @@ exports.getBreakSummary = async (req, res) => {
     }
   } catch (error) {
     console.error("❌ Get Break Summary error:", error);
-    if (connection) connection.release();
     res.status(500).json({
       success: false,
       message: "Failed to retrieve break summary",
@@ -3572,8 +3551,8 @@ exports.autoCheckoutExpiredSessions = async (req, res) => {
     // CRITICAL FIX: Only allow auto-checkout if CURRENT TIME is AFTER 9 AM
     // ============================================================
     const now = getPakistanDate();
-    const currentHour = now.getUTCHours();
-    const currentMin = now.getUTCMinutes();
+    const currentHour = now.getHours();
+    const currentMin = now.getMinutes();
     const currentTotalMinutes = currentHour * 60 + currentMin;
     const nineAM = 9 * 60; // 540 minutes
     
@@ -3608,12 +3587,22 @@ exports.autoCheckoutExpiredSessions = async (req, res) => {
     
     console.log(`✅ Current time is AFTER 9:00 AM - Auto-checkout ALLOWED\n`);
     
-    // Find all active check-ins (without check-out) for today and yesterday
+    // ============================================================
+    // CRITICAL FIX: Only auto-checkout records that are genuinely
+    // "forgotten" — NOT employees who are currently working.
+    //
+    // Rules:
+    //   1. Look back 7 days (handles server-was-down-for-days)
+    //   2. EXCLUDE today's records where check_in >= 09:00:00
+    //      → those employees checked in today during the daytime
+    //        or evening and are still actively working
+    //   3. INCLUDE today's records where check_in < 09:00:00
+    //      → night shift workers who forgot to check out
+    //   4. INCLUDE all previous days' records regardless
+    //      → clearly overdue / forgotten checkouts
+    // ============================================================
     const todayStr = getPakistanDateString();
-    const yesterdayDate = getPakistanYesterday();
-    const yesterdayStr = getLocalDateString(yesterdayDate);
     
-    // Query for pending check-outs from today and yesterday
     const [pendingCheckOuts] = await connection.query(
       `SELECT 
         id, 
@@ -3626,12 +3615,20 @@ exports.autoCheckoutExpiredSessions = async (req, res) => {
         status
        FROM Employee_Attendance 
        WHERE check_out_time IS NULL 
-       AND (attendance_date = ? OR attendance_date = ?)
-       AND status IN ('Present', 'Late')`,
-      [todayStr, yesterdayStr]
+         AND attendance_date <= ?
+         AND attendance_date >= DATE_SUB(?, INTERVAL 7 DAY)
+         AND status IN ('Present', 'Late')
+         AND NOT (attendance_date = ? AND check_in_time >= '09:00:00')
+       ORDER BY attendance_date ASC`,
+      [todayStr, todayStr, todayStr]
     );
     
-    console.log(`📋 Found ${pendingCheckOuts.length} pending check-outs`);
+    console.log(`📋 Found ${pendingCheckOuts.length} pending check-outs (last 7 days, excluding today's active workers)`);
+    if (pendingCheckOuts.length > 0) {
+      pendingCheckOuts.forEach(r => {
+        console.log(`   → ${r.name} (ID:${r.employee_id}) — date: ${r.attendance_date}, check-in: ${r.check_in_time}`);
+      });
+    }
     
     if (pendingCheckOuts.length === 0) {
       console.log('✅ No pending check-outs found');
@@ -3754,8 +3751,6 @@ exports.autoCheckoutExpiredSessions = async (req, res) => {
       }
     }
     
-    connection.release();
-    
     console.log(`\n✅ AUTO-CHECKOUT PROCESS COMPLETED`);
     console.log(`📊 Processed: ${processedDetails.length} records`);
     console.log('🔄 ========== AUTO-CHECKOUT FINISHED ==========\n');
@@ -3775,7 +3770,6 @@ exports.autoCheckoutExpiredSessions = async (req, res) => {
     
   } catch (error) {
     console.error('❌ Auto-checkout process error:', error);
-    if (connection) connection.release();
     
     if (res) {
       res.status(500).json({
@@ -3786,6 +3780,8 @@ exports.autoCheckoutExpiredSessions = async (req, res) => {
     }
     
     return { success: false, error: error.message };
+  } finally {
+    if (connection) connection.release();
   }
 };
 
@@ -3811,7 +3807,6 @@ exports.fixStatusById = async (req, res) => {
     );
 
     if (rows.length === 0) {
-      connection.release();
       return res.status(404).json({ success: false, message: 'Attendance record not found' });
     }
 
@@ -3858,8 +3853,6 @@ exports.fixStatusById = async (req, res) => {
       [newStatus, newLateByMinutes, newOnTime, attendanceId]
     );
 
-    connection.release();
-
     return res.status(200).json({
       success: true,
       message: 'Attendance status fixed successfully',
@@ -3874,8 +3867,9 @@ exports.fixStatusById = async (req, res) => {
 
   } catch (error) {
     console.error('❌ Fix status error:', error);
-    if (connection) connection.release();
     res.status(500).json({ success: false, message: 'Failed to fix status', error: error.message });
+  } finally {
+    if (connection) connection.release();
   }
 };
 
@@ -3899,8 +3893,8 @@ exports.fixCheckoutById = async (req, res) => {
     // DEADLINE VALIDATION: Current time must be AFTER 9:00 AM
     // ============================================================
     const now = getPakistanDate();
-    const currentHour = now.getUTCHours();
-    const currentMin = now.getUTCMinutes();
+    const currentHour = now.getHours();
+    const currentMin = now.getMinutes();
     const currentTotalMinutes = currentHour * 60 + currentMin;
     const nineAM = 9 * 60; // 540 minutes
 
@@ -3935,14 +3929,12 @@ exports.fixCheckoutById = async (req, res) => {
     );
 
     if (rows.length === 0) {
-      connection.release();
       return res.status(404).json({ success: false, message: 'Attendance record not found' });
     }
 
     const record = rows[0];
 
     if (record.check_in_time == null) {
-      connection.release();
       return res.status(400).json({ success: false, message: 'Cannot fix record without check-in time' });
     }
 
@@ -3953,7 +3945,6 @@ exports.fixCheckoutById = async (req, res) => {
     );
 
     if (existing.length > 0 && existing[0].check_out_time) {
-      connection.release();
       return res.status(200).json({ success: true, message: 'Record already has check-out', data: { id: attendanceId, check_out_time: existing[0].check_out_time } });
     }
 
@@ -3972,7 +3963,6 @@ exports.fixCheckoutById = async (req, res) => {
 
     if (checkOutTotalMinutes >= 9 * 60 && isValidShiftCheckIn) {
       // Trying to set a checkout time at or after 9 AM for a valid shift
-      connection.release();
       console.log(`\n❌ [FIX-CHECKOUT] Attempted to set invalid checkout time (${autoCheckoutTime}) for valid shift check-in (${record.check_in_time})`);
       
       return res.status(400).json({
@@ -3995,8 +3985,6 @@ exports.fixCheckoutById = async (req, res) => {
       [autoCheckoutTime, working.gross, working.net, working.overtime, working.overtimeHours, attendanceId]
     );
 
-    connection.release();
-
     return res.status(200).json({
       success: true,
       message: 'Attendance fixed successfully',
@@ -4012,8 +4000,9 @@ exports.fixCheckoutById = async (req, res) => {
 
   } catch (error) {
     console.error('❌ Fix checkout error:', error);
-    if (connection) connection.release();
     res.status(500).json({ success: false, message: 'Failed to fix attendance', error: error.message });
+  } finally {
+    if (connection) connection.release();
   }
 };
 
@@ -4087,8 +4076,6 @@ exports.getTodayAbsentEmployees = async (req, res) => {
       [today]
     );
 
-    connection.release();
-
     return res.status(200).json({
       success: true,
       message: `Found ${absenceRecords.length} absent employee(s) for ${today}`,
@@ -4107,12 +4094,13 @@ exports.getTodayAbsentEmployees = async (req, res) => {
 
   } catch (error) {
     console.error('❌ Get Today Absent Employees error:', error);
-    if (connection) connection.release();
     res.status(500).json({
       success: false,
       message: 'Failed to fetch absent employees',
       error: error.message
     });
+  } finally {
+    if (connection) connection.release();
   }
 };
 
@@ -4182,8 +4170,6 @@ exports.getAbsentEmployeesByDate = async (req, res) => {
       }
     };
 
-    connection.release();
-
     return res.status(200).json({
       success: true,
       message: `Absent records for ${date}`,
@@ -4194,12 +4180,13 @@ exports.getAbsentEmployeesByDate = async (req, res) => {
 
   } catch (error) {
     console.error('❌ Get Absent Employees by Date error:', error);
-    if (connection) connection.release();
     res.status(500).json({
       success: false,
       message: 'Failed to fetch absent employees',
       error: error.message
     });
+  } finally {
+    if (connection) connection.release();
   }
 };
 
@@ -4268,8 +4255,6 @@ exports.getAbsentEmployeesByDateRange = async (req, res) => {
       }
     };
 
-    connection.release();
-
     return res.status(200).json({
       success: true,
       message: `Absent records from ${start_date} to ${end_date}`,
@@ -4281,12 +4266,13 @@ exports.getAbsentEmployeesByDateRange = async (req, res) => {
 
   } catch (error) {
     console.error('❌ Get Absent Employees by Date Range error:', error);
-    if (connection) connection.release();
     res.status(500).json({
       success: false,
       message: 'Failed to fetch absent employees',
       error: error.message
     });
+  } finally {
+    if (connection) connection.release();
   }
 };
 
@@ -4333,8 +4319,6 @@ exports.getAbsentSummaryByEmployee = async (req, res) => {
 
     const [summary] = await connection.query(query, params);
 
-    connection.release();
-
     return res.status(200).json({
       success: true,
       message: 'Absence summary by employee',
@@ -4345,12 +4329,13 @@ exports.getAbsentSummaryByEmployee = async (req, res) => {
 
   } catch (error) {
     console.error('❌ Get Absent Summary error:', error);
-    if (connection) connection.release();
     res.status(500).json({
       success: false,
       message: 'Failed to fetch absence summary',
       error: error.message
     });
+  } finally {
+    if (connection) connection.release();
   }
 };
 
@@ -4451,8 +4436,6 @@ exports.autoMarkAbsentByDateRange = async (req, res) => {
       }
     }
 
-    connection.release();
-
     console.log(`\n✅ AUTO-MARKING COMPLETE:`);
     console.log(`   📝 Created: ${totalCreated} new absence records`);
     console.log(`   ⏭️  Skipped: ${totalSkipped} existing records`);
@@ -4472,12 +4455,13 @@ exports.autoMarkAbsentByDateRange = async (req, res) => {
 
   } catch (error) {
     console.error('❌ Auto-mark absent by date range error:', error);
-    if (connection) connection.release();
     res.status(500).json({
       success: false,
       message: 'Failed to auto-mark absences',
       error: error.message
     });
+  } finally {
+    if (connection) connection.release();
   }
 };
 
@@ -4517,8 +4501,8 @@ exports.getPendingCheckout = async (req, res) => {
       // CURRENT SHIFT WINDOW DETECTION
       // ============================================================
       const now = getPakistanDate();
-      const currentHour = now.getUTCHours();
-      const currentMin = now.getUTCMinutes();
+      const currentHour = now.getHours();
+      const currentMin = now.getMinutes();
       const currentTotalMinutes = currentHour * 60 + currentMin;
       const todayStr = getPakistanDateString();
       const nineAM = 9 * 60;      // 540 minutes
@@ -4624,7 +4608,6 @@ exports.getPendingCheckout = async (req, res) => {
 
   } catch (error) {
     console.error('❌ Get Pending Checkout error:', error);
-    if (connection) connection.release();
     res.status(500).json({
       success: false,
       message: 'Failed to check pending checkout',
