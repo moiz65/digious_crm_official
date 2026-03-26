@@ -70,6 +70,39 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
+// ── Request Timeout Middleware ──────────────────────────────────────────
+// Prevents requests from hanging forever if a DB query or operation stalls.
+// Each request gets 30 seconds to complete; after that, the client gets a 
+// 408 timeout response and the connection is freed.
+app.use((req, res, next) => {
+  // 30s timeout for normal requests, 120s for file uploads
+  const isUpload = req.headers['content-type']?.includes('multipart') || 
+                   req.headers['content-type']?.includes('base64');
+  const timeout = isUpload ? 120000 : 30000;
+  
+  req.setTimeout(timeout, () => {
+    if (!res.headersSent) {
+      console.warn(`⏰ Request timeout (${timeout/1000}s): ${req.method} ${req.originalUrl}`);
+      res.status(408).json({
+        success: false,
+        message: 'Request timeout - please try again'
+      });
+    }
+  });
+  
+  res.setTimeout(timeout, () => {
+    if (!res.headersSent) {
+      console.warn(`⏰ Response timeout (${timeout/1000}s): ${req.method} ${req.originalUrl}`);
+      res.status(408).json({
+        success: false,
+        message: 'Response timeout - please try again'
+      });
+    }
+  });
+  
+  next();
+});
+
 // Serve static files for uploads
 app.use("/uploads", express.static("uploads"));
 console.log("✅ Static file serving enabled for /uploads directory");
@@ -161,6 +194,7 @@ const PORT = process.env.PORT || 5000;
 // Finds all employees missing from Employee_Attendance and creates absence records
 // ============================================================
 async function autoMarkAbsentOnStartup() {
+  let connection;
   try {
     console.log("\n🔍 AUTO-MARKING ABSENT EMPLOYEES ON SERVER START...");
 
@@ -246,6 +280,7 @@ async function autoMarkAbsentOnStartup() {
 // This cleans up any Employee_Absent records where the employee actually checked in
 // ============================================================
 async function removeAbsenceWhenAttendanceExists() {
+  let connection;
   try {
     console.log("\n🧹 CLEANING UP CONFLICTING ABSENCE RECORDS...");
 
@@ -334,6 +369,7 @@ checkoutMissingRule.minute = 1;
 checkoutMissingRule.tz = 'Asia/Karachi';
 const checkoutMissingJob = schedule.scheduleJob(checkoutMissingRule, async () => {
   console.log('\n⏰ SCHEDULED JOB: Checkout missing detection triggered at 9:01 AM');
+  let connection;
   try {
     const connection = await pool.getConnection();
 
@@ -399,12 +435,15 @@ app.listen(PORT, "0.0.0.0", async () => {
 
   // Run auto-checkout on startup if current PKT time is past 9 AM
   // This handles the case where the server was down at 9 AM and needs to catch up
+  // SAFE: Only checks out records from previous days + today's early-morning (before 9 AM)
+  //       check-ins. Today's active daytime/evening workers are never touched.
   setTimeout(async () => {
     try {
       const pkNow = getPakistanDate();
-      const pkHour = pkNow.getUTCHours();
+      const pkHour = pkNow.getHours();
+      const pkMin = pkNow.getMinutes();
       if (pkHour >= 9) {
-        console.log('\n⏰ STARTUP: Current PKT time is past 9 AM — running auto-checkout catch-up...');
+        console.log(`\n⏰ STARTUP: Current PKT time ${pkHour}:${String(pkMin).padStart(2, '0')} is past 9 AM — running auto-checkout catch-up (last 7 days)...`);
         const result = await attendanceController.autoCheckoutExpiredSessions(null, null);
         if (result.success) {
           console.log(`✅ Startup auto-checkout completed: ${result.processedCount} records processed`);
@@ -412,7 +451,7 @@ app.listen(PORT, "0.0.0.0", async () => {
           console.log(`ℹ️ Startup auto-checkout: ${result.reason || result.error || 'no records'}`);
         }
       } else {
-        console.log(`ℹ️ STARTUP: Current PKT hour is ${pkHour} (before 9 AM) — skipping auto-checkout`);
+        console.log(`ℹ️ STARTUP: Current PKT hour is ${pkHour}:${String(pkMin).padStart(2, '0')} (before 9 AM) — skipping auto-checkout`);
       }
     } catch (err) {
       console.error('❌ Startup auto-checkout error:', err.message);

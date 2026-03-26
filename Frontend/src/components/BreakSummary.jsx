@@ -156,14 +156,8 @@ const BreakSummary = ({ employeeId, date, autoRefresh = true, refreshInterval = 
   }
 
   if (error) {
-    return (
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <div className="flex items-center gap-3 text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-4">
-          <AlertCircle className="h-5 w-5 flex-shrink-0" />
-          <p className="text-sm">{error}</p>
-        </div>
-      </div>
-    );
+    // Silently hide on error — break summary is supplementary, not critical
+    return null;
   }
 
   if (!breakData) {

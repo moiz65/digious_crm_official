@@ -252,7 +252,7 @@ const HRMyAttendance = () => {
 
       // Query attendance endpoint to check for pending checkouts
       // This asks: "Do I have any record with check_in_time but NO check_out_time?"
-      const response = await fetch(`${endpoints.base}/attendance/pending-checkout?employee_id=${employeeId}`, {
+      const response = await fetch(`${endpoints.attendance.base}/pending-checkout?employee_id=${employeeId}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -470,11 +470,7 @@ const HRMyAttendance = () => {
       const data = await response.json();
       if (data.success) {
         console.log('[SUCCESS] Check-out successful:', data);
-        if (data.data?.check_out_time === '09:00:00' || data.data?.autoCheckoutApplied) {
-          toast.success('Auto checked out at 9:00 AM');
-        } else {
-          toast.success('Checked out successfully');
-        }
+        toast.success('Checked out successfully');
         setIsCheckedIn(false);
         await fetchTodayAttendance();
         await fetchPendingCheckout(); // Re-check pending after checkout

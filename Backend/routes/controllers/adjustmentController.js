@@ -685,7 +685,7 @@ const convertAbsentToPaidLeave = async (req, res) => {
       return res.status(400).json({ success: false, message: 'leave_type_key must be casual, sick, or annual' });
     }
 
-    const [absent] = await pool.query('SELECT * FROM Employee_Absent WHERE id = ?', [id]);
+    const [absent] = await connection.query('SELECT * FROM Employee_Absent WHERE id = ?', [id]);
     if (absent.length === 0) {
       return res.status(404).json({ success: false, message: 'Absent record not found' });
     }
@@ -693,7 +693,7 @@ const convertAbsentToPaidLeave = async (req, res) => {
     const record = absent[0];
 
     // Check employee has leave balance
-    const [leaves] = await pool.query(
+    const [leaves] = await connection.query(
       'SELECT * FROM employee_leaves WHERE employee_id = ?',
       [record.employee_id]
     );
@@ -770,8 +770,8 @@ const convertAbsentToPaidLeave = async (req, res) => {
 
     await connection.commit();
 
-    const [updatedAbsent] = await pool.query('SELECT * FROM Employee_Absent WHERE id = ?', [id]);
-    const [updatedLeaves] = await pool.query('SELECT * FROM employee_leaves WHERE employee_id = ?', [record.employee_id]);
+    const [updatedAbsent] = await connection.query('SELECT * FROM Employee_Absent WHERE id = ?', [id]);
+    const [updatedLeaves] = await connection.query('SELECT * FROM employee_leaves WHERE employee_id = ?', [record.employee_id]);
 
     res.status(200).json({
       success: true,
