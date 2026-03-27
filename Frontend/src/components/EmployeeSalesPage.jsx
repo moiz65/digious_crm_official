@@ -1488,13 +1488,13 @@ const EmployeeSalesPage = () => {
                               >
                                 <Eye className="w-3.5 h-3.5 text-gray-700" />
                               </button>
-                              <button 
+                              {/* <button 
                                 onClick={() => handleEdit(item)}
                                 className="p-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
                                 title="Edit"
                               >
                                 <Edit className="w-3.5 h-3.5 text-gray-700" />
-                              </button>
+                              </button> */}
                             </>
                           )}
                         </div>
