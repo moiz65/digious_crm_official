@@ -15,8 +15,6 @@ import {
   PauseCircle,
   Utensils,
   Cigarette,
-  Table,
-  Shield
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -31,7 +29,9 @@ import {
   Cell
 } from 'recharts';
 
-// Helper function to parse YYYY-MM-DD string correctly without timezone shift
+// Constants
+const SHIFT_START = 21 * 60; // 21:00 (9 PM)
+// Helper functions
 const parseAttendanceDate = (dateStr) => {
   // Expected format: "2026-02-09"
   if (typeof dateStr === 'string' && dateStr.includes('-')) {
