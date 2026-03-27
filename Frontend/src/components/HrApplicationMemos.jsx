@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
+import toast from 'react-hot-toast';
 import {
   Calendar,
   Download,
@@ -774,14 +775,14 @@ export default function OfficeApplicationsSystem() {
       }
 
       const result = await response.json();
-      alert(`Application ${result.data.application_number} created successfully!`);
+      toast.success(`Application ${result.data.application_number} created successfully!`);
       setShowNewAppModal(false);
       setActiveTab('my-applications');
       // Reload to refresh data
       window.location.reload();
     } catch (error) {
       console.error('Error creating application:', error);
-      alert(`Error: ${error.message}`);
+      toast.error(`Error: ${error.message}`);
     }
   };
 
@@ -1747,7 +1748,7 @@ const NewApplicationModal = ({ onClose, onSave }) => {
     const subjectValue = isOtherSelected ? formData.customSubject : formData.applicationType;
     
     if (!formData.department || !formData.applicationType || (isOtherSelected && !formData.customSubject) || !formData.description) {
-      alert('Please fill all required fields marked with *');
+      toast.error('Please fill all required fields marked with *');
       return;
     }
 
@@ -2307,18 +2308,18 @@ const ApplicationDetailModal = ({ application, onClose, onMarkAsRead, isMemo, cu
       });
 
       if (response.ok) {
-        alert('Priority updated');
+        toast.success('Priority updated');
         // local update
         application.priority = newPriority;
         onClose();
         window.location.reload();
       } else {
         const error = await response.json();
-        alert('Failed to update priority: ' + (error.message || 'Unknown error'));
+        toast.error('Failed to update priority: ' + (error.message || 'Unknown error'));
       }
     } catch (error) {
       console.error('Error updating priority:', error);
-      alert('Error: ' + error.message);
+      toast.error('Error: ' + error.message);
     }
   };
 
@@ -2362,18 +2363,18 @@ const ApplicationDetailModal = ({ application, onClose, onMarkAsRead, isMemo, cu
       if (response.ok) {
         const result = await response.json();
         const msg = result.message || `Application ${application.application_number} has been approved.`;
-        alert(msg);
+        toast.success(msg);
         setShowApproveForm(false);
         setApproveNotes('');
         onClose();
         window.location.reload();
       } else {
         const error = await response.json();
-        alert('Failed to approve: ' + (error.message || 'Unknown error'));
+        toast.error('Failed to approve: ' + (error.message || 'Unknown error'));
       }
     } catch (error) {
       console.error('Error approving application:', error);
-      alert('Error: ' + error.message);
+      toast.error('Error: ' + error.message);
     } finally {
       setActionLoading(false);
     }
@@ -2381,7 +2382,7 @@ const ApplicationDetailModal = ({ application, onClose, onMarkAsRead, isMemo, cu
 
   const handleRejectApplication = async () => {
     if (!rejectReason.trim()) {
-      alert('Rejection reason is required');
+      toast.error('Rejection reason is required');
       return;
     }
 
@@ -2398,18 +2399,18 @@ const ApplicationDetailModal = ({ application, onClose, onMarkAsRead, isMemo, cu
       });
 
       if (response.ok) {
-        alert(`Application ${application.application_number} has been rejected.`);
+        toast.success(`Application ${application.application_number} has been rejected.`);
         setShowRejectForm(false);
         setRejectReason('');
         onClose();
         window.location.reload();
       } else {
         const error = await response.json();
-        alert('Failed to reject: ' + (error.message || 'Unknown error'));
+        toast.error('Failed to reject: ' + (error.message || 'Unknown error'));
       }
     } catch (error) {
       console.error('Error rejecting application:', error);
-      alert('Error: ' + error.message);
+      toast.error('Error: ' + error.message);
     } finally {
       setActionLoading(false);
     }
@@ -2428,16 +2429,16 @@ const ApplicationDetailModal = ({ application, onClose, onMarkAsRead, isMemo, cu
       });
 
       if (response.ok) {
-        alert(`Application ${application.application_number} is now marked as In Progress.`);
+        toast.success(`Application ${application.application_number} is now marked as In Progress.`);
         onClose();
         window.location.reload();
       } else {
         const error = await response.json();
-        alert('Failed to update status: ' + (error.message || 'Unknown error'));
+        toast.error('Failed to update status: ' + (error.message || 'Unknown error'));
       }
     } catch (error) {
       console.error('Error updating status:', error);
-      alert('Error: ' + error.message);
+      toast.error('Error: ' + error.message);
     }
   };
 
@@ -2457,27 +2458,27 @@ const ApplicationDetailModal = ({ application, onClose, onMarkAsRead, isMemo, cu
       });
 
       if (response.ok) {
-        alert('Assignment withdrawn successfully.');
+        toast.success('Assignment withdrawn successfully.');
         onClose();
         window.location.reload();
       } else {
         const error = await response.json();
-        alert('Failed to withdraw: ' + (error.message || 'Unknown error'));
+        toast.error('Failed to withdraw: ' + (error.message || 'Unknown error'));
       }
     } catch (error) {
       console.error('Error withdrawing assignment:', error);
-      alert('Error: ' + error.message);
+      toast.error('Error: ' + error.message);
     }
   };
 
   const handleTransfer = () => {
     if (!transferDepartment) {
-      alert('Please select a department to transfer to.');
+      toast.error('Please select a department to transfer to.');
       return;
     }
     
     console.log(`Transferring application ${application.id} to ${transferDepartment}`, transferNotes);
-    alert(`Application ${application.application_number} has been transferred to ${transferDepartment}.`);
+    toast.success(`Application ${application.application_number} has been transferred to ${transferDepartment}.`);
     setShowTransferModal(false);
     onClose();
   };

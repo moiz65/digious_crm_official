@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import toast from 'react-hot-toast';
 import {
   DollarSign, TrendingUp, Clock, CheckCircle,
   AlertCircle, Calendar, CreditCard,
@@ -211,7 +212,7 @@ const AdvancedSalesManagement = () => {
       await deleteSaleApi(id);
       fetchSales();
     } catch (err) {
-      alert('Failed to delete: ' + (err.message || 'Unknown error'));
+      toast.error('Failed to delete: ' + (err.message || 'Unknown error'));
     }
   };
 
@@ -254,7 +255,7 @@ const AdvancedSalesManagement = () => {
       setEditingId(null);
       fetchSales();
     } catch (err) {
-      alert('Failed to save: ' + (err.message || 'Unknown error'));
+      toast.error('Failed to save: ' + (err.message || 'Unknown error'));
     } finally {
       setSaving(false);
     }
@@ -288,7 +289,7 @@ const AdvancedSalesManagement = () => {
       fetchSales();
       setShowForm(false);
     } catch (err) {
-      alert('Failed to add sale: ' + (err.message || 'Unknown error'));
+      toast.error('Failed to add sale: ' + (err.message || 'Unknown error'));
     } finally {
       setSaving(false);
     }

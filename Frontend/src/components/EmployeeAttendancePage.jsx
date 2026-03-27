@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { DashboardHeader } from './DashboardComponents';
 import { useAuth } from '../context/AuthContext';
 import { endpoints } from '../config/api';
@@ -66,39 +67,77 @@ const useCurrentTime = () => {
   return currentTime;
 };
 
-const HRMyAttendance = () => {
-  const { user, role } = useAuth();
-  const currentTime = useCurrentTime();
-  
-  // ============================================================
-  // STATE DECLARATIONS
-  // ============================================================
-  const [attendanceData, setAttendanceData] = useState(null);
-  const [monthlyAttendance, setMonthlyAttendance] = useState([]);
-  const [isCheckedIn, setIsCheckedIn] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState('All Status');
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  const [currentPage, setCurrentPage] = useState(1);
-  const [leaveSummary, setLeaveSummary] = useState({
-    casual: { used: 0, total: 8 },
-    sick: { used: 0, total: 8 },
-    annual: { used: 0, total: 12 }
-  });
-  
-  // ============================================================
-  // REFS
-  // ============================================================
-  const fetchInProgress = useRef(false);
-  
-  // ============================================================
-  // MEMOIZED VALUES
-  // ============================================================
-  const employeeId = useMemo(() => {
+  // Fetch data on component mount — run all independent fetches in parallel
+  useEffect(() => {
+    console.log('[INFO] HRMyAttendance mounted with user:', user);
+    Promise.all([
+      fetchTodayAttendance(),
+      fetchPendingCheckout(),
+      fetchActiveBreaks(),
+      fetchMonthlyAttendance(),
+      fetchLeaveBalance(),
+    ]).catch(err => console.error('Initial fetch error:', err));
+  }, []);
+
+  // Re-fetch monthly attendance when filters change
+  useEffect(() => {
+    setCurrentPage(1); // Reset to first page when filters change
+    fetchMonthlyAttendance();
+  }, [selectedMonth, selectedYear]);
+
+  // Update break timers every second
+  useEffect(() => {
+    if (activeBreaks.length === 0) return;
+
+    const timerInterval = setInterval(() => {
+      const newTimers = {};
+      activeBreaks.forEach(breakItem => {
+        if (breakItem.break_start_time) {
+          const [startHour, startMin, startSec] = breakItem.break_start_time.split(':').map(Number);
+          const now = new Date();
+          const currentHour = now.getHours();
+          const currentMin = now.getMinutes();
+          const currentSec = now.getSeconds();
+          
+          const startTotalSeconds = (startHour * 3600) + (startMin * 60) + (startSec || 0);
+          const nowTotalSeconds = (currentHour * 3600) + (currentMin * 60) + currentSec;
+          
+          let elapsedSeconds = nowTotalSeconds - startTotalSeconds;
+          if (elapsedSeconds < 0) elapsedSeconds += 24 * 3600; // Handle midnight wraparound
+          
+          newTimers[breakItem.id] = elapsedSeconds;
+        }
+      });
+      setBreakTimers(newTimers);
+    }, 1000);
+
+    return () => clearInterval(timerInterval);
+  }, [activeBreaks]);
+
+  // Format elapsed time as MM:SS or H:MM:SS
+  const formatElapsedTime = (seconds) => {
+    if (!seconds) return '0:00';
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    if (hours > 0) {
+      return `${hours}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
+    return `${minutes}:${String(secs).padStart(2, '0')}`;
+  };
+
+  // Reset pagination when status filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter]);
+
+  const getEmployeeId = () => {
+    // Try multiple possible property names and log for debugging
     const id = user?.employeeId || user?.employee_id || user?.id;
     if (!id) {
       console.error('[ERROR] No employee ID found in user object!', user);
+      toast.error('Unable to determine employee ID. Please logout and login again.');
+      return null;
     }
     return id;
   }, [user]);
@@ -116,6 +155,55 @@ const HRMyAttendance = () => {
     try {
       fetchInProgress.current = true;
       const token = localStorage.getItem('token');
+      const employeeId = getEmployeeId();
+      
+      if (!employeeId) {
+        setPendingCheckout(null);
+        return;
+      }
+
+      // Query attendance endpoint to check for pending checkouts
+      // This asks: "Do I have any record with check_in_time but NO check_out_time?"
+      const response = await fetch(`${endpoints.attendance.base}/pending-checkout?employee_id=${employeeId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data) {
+          console.log('[INFO] Pending checkout found:', data.data);
+          setPendingCheckout(data.data);
+          setIsOverlapWindow(isInOverlapWindow());
+        } else {
+          setPendingCheckout(null);
+        }
+      } else {
+        // If endpoint doesn't exist yet, fallback to checking via the checkIn error
+        // This will be triggered when user tries to check in
+        setPendingCheckout(null);
+      }
+    } catch (error) {
+      console.error('Error checking pending checkout:', error);
+      // Don't block functionality if check fails
+      setPendingCheckout(null);
+    }
+  };
+
+  const fetchTodayAttendance = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      const employeeId = getEmployeeId();
+      
+      if (!employeeId) {
+        setLoading(false);
+        return;
+      }
+
       const response = await fetch(endpoints.attendance.today(employeeId), {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -180,12 +268,167 @@ const HRMyAttendance = () => {
     } catch (error) {
       console.error('[ERROR] Error fetching leave balance:', error);
     }
-  }, [employeeId]);
-  
-  // ============================================================
-  // COMPUTED VALUES
-  // ============================================================
-  const getWorkingHours = useCallback(() => {
+  };
+
+  const handleCheckIn = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(endpoints.attendance.checkIn, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          employee_id: getEmployeeId(),
+          email: user?.email || 'hr@digious.com',
+          name: user?.name || 'HR Manager',
+          device_info: 'Web Browser'
+        })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        console.log('[SUCCESS] Check-in successful:', data);
+        setIsCheckedIn(true);
+        await fetchTodayAttendance();
+        await fetchPendingCheckout(); // Re-check pending after check-in
+        await fetchMonthlyAttendance();
+      } else {
+        console.error('[ERROR] Check-in failed:', data.message);
+        // If error is due to pending checkout, fetch it and display warning
+        if (data.data?.reason === 'PENDING_CHECKOUT_EXISTS' && data.data?.pendingRecord) {
+          setPendingCheckout(data.data.pendingRecord);
+          setIsOverlapWindow(isInOverlapWindow());
+        }
+        toast.error(data.message || 'Check-in failed');
+      }
+    } catch (error) {
+      console.error('Check-in error:', error);
+      toast.error('Failed to check in');
+    }
+  };
+
+  const handleCheckOut = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(endpoints.attendance.checkOut, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          employee_id: getEmployeeId()
+        })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        console.log('[SUCCESS] Check-out successful:', data);
+        toast.success('Checked out successfully');
+        setIsCheckedIn(false);
+        await fetchTodayAttendance();
+        await fetchPendingCheckout(); // Re-check pending after checkout
+        await fetchMonthlyAttendance();
+      } else {
+        console.error('[ERROR] Check-out failed:', data.message);
+        toast.error(data.message || 'Check-out failed');
+      }
+    } catch (error) {
+      console.error('Check-out error:', error);
+      toast.error('Failed to check out');
+    }
+  };
+
+  const handleBreakStart = async (breakType) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(endpoints.attendance.breakStart, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          employee_id: getEmployeeId(),
+          break_type: breakType,
+          reason: `${breakType.charAt(0).toUpperCase() + breakType.slice(1)} break`
+        })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        fetchActiveBreaks();
+      } else {
+        toast.error(data.message || 'Failed to start break');
+      }
+    } catch (error) {
+      console.error('Start break error:', error);
+      toast.error('Failed to start break');
+    }
+  };
+
+  const handleBreakEnd = async (breakId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const employeeId = getEmployeeId();
+      
+      // Find the break details from activeBreaks
+      const breakRecord = activeBreaks.find(b => b.id === breakId);
+      if (!breakRecord) {
+        toast.error('Break record not found');
+        return;
+      }
+
+      // Calculate duration from start time to now
+      // Parse times correctly: HH:MM:SS format
+      const [startHour, startMin, startSec] = breakRecord.break_start_time.split(':').map(Number);
+      const now = new Date();
+      const currentHour = now.getHours();
+      const currentMin = now.getMinutes();
+      const currentSec = now.getSeconds();
+      
+      // Convert both to total minutes since midnight for accurate calculation
+      const startTotalSeconds = (startHour * 3600) + (startMin * 60) + (startSec || 0);
+      const nowTotalSeconds = (currentHour * 3600) + (currentMin * 60) + currentSec;
+      
+      // Calculate duration in minutes (handle midnight crossing)
+      let durationSeconds = nowTotalSeconds - startTotalSeconds;
+      if (durationSeconds < 0) {
+        // Break started before midnight, ended after - add 24 hours
+        durationSeconds += (24 * 3600);
+      }
+      const duration = Math.max(0, Math.floor(durationSeconds / 60));
+
+      const response = await fetch(endpoints.attendance.breakEnd, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          employee_id: employeeId,
+          break_type: breakRecord.break_type,
+          break_end_time: now.toTimeString().split(' ')[0],
+          break_duration_minutes: duration
+        })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        fetchActiveBreaks();
+        fetchTodayAttendance();
+      } else {
+        toast.error(data.message || 'Failed to end break');
+      }
+    } catch (error) {
+      console.error('End break error:', error);
+      toast.error('Failed to end break');
+    }
+  };
+
+  const getWorkingHours = () => {
     if (!attendanceData?.check_in_time) return '0h 0m';
     
     const [checkInHour, checkInMin] = attendanceData.check_in_time.split(':').map(Number);

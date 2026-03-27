@@ -1,11 +1,3 @@
-/**
- * Forgot Password Controller
- * 
- * SMTP-based forgot password flow:
- * 1. POST /forgot-password        → send 6-digit OTP to email
- * 2. POST /verify-otp             → verify the 6-digit OTP code
- * 3. POST /reset-password          → reset password with new one (after OTP verified)
- */
 
 const pool = require('../../config/database');
 const bcrypt = require('bcryptjs');
@@ -18,10 +10,14 @@ const createTransporter = () => {
   return nodemailer.createTransport({
     host: process.env.SMTP_HOST || 'smtp.gmail.com',
     port: parseInt(process.env.SMTP_PORT) || 587,
-    secure: (process.env.SMTP_SECURE === 'true'), // true for 465, false for other ports
+    secure: (process.env.SMTP_SECURE === 'true'),
     auth: {
       user: process.env.SMTP_EMAIL,
       pass: process.env.SMTP_PASSWORD,
+    },
+    tls: {
+
+      rejectUnauthorized: false,
     },
   });
 };

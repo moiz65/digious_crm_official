@@ -39,6 +39,7 @@ export const endpoints = {
     create: `${config.FULL_API_URL}/employees`,
     update: (id) => `${config.FULL_API_URL}/employees/${id}`,
     delete: (id) => `${config.FULL_API_URL}/employees/${id}`,
+    getNextId: `${config.FULL_API_URL}/next-employee-id`,
     checkIdAvailability: (numericId) => `${config.FULL_API_URL}/check-employee-id/${numericId}`,
   },
 
@@ -165,6 +166,17 @@ export const endpoints = {
     deleteCategory: (id) => `${config.FULL_API_URL}/sales/categories/${id}`,
   },
 
+  // Customer endpoints
+  customers: {
+    base: `${config.FULL_API_URL}/customers`,
+    getAll: `${config.FULL_API_URL}/customers`,
+    getById: (id) => `${config.FULL_API_URL}/customers/${id}`,
+    history: (id) => `${config.FULL_API_URL}/customers/${id}/history`,
+    update: (id) => `${config.FULL_API_URL}/customers/${id}`,
+    delete: (id) => `${config.FULL_API_URL}/customers/${id}`,
+    sync: `${config.FULL_API_URL}/customers/sync`,
+  },
+
   // Sales Target endpoints
   salesTargets: {
     getAll: `${config.FULL_API_URL}/sales-targets/all`,
@@ -229,16 +241,24 @@ export const getCurrentEmployeeId = () => {
   return decoded?.employeeId || null;
 };
 
-// API request helper with error handling
+// API request helper with error handling and timeout
 export const apiRequest = async (url, options = {}) => {
+  // Create AbortController for timeout (30s default, configurable)
+  const timeout = options.timeout || 30000;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+
   try {
     const response = await fetch(url, {
       ...options,
+      signal: options.signal || controller.signal,
       headers: {
         ...getAuthHeaders(),
         ...options.headers,
       },
     });
+
+    clearTimeout(timeoutId);
 
     // Handle non-JSON responses
     const contentType = response.headers.get('content-type');
@@ -254,6 +274,10 @@ export const apiRequest = async (url, options = {}) => {
 
     return data;
   } catch (error) {
+    clearTimeout(timeoutId);
+    if (error.name === 'AbortError') {
+      throw new Error('Request timed out - please try again');
+    }
     console.error('API Request Error:', error);
     throw error;
   }

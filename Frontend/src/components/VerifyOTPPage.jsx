@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ShieldCheck, ArrowLeft, Loader2, RefreshCw } from "lucide-react";
+import toast from "react-hot-toast";
 import { endpoints } from "../config/api";
 
 const VerifyOTPPage = () => {
@@ -85,7 +86,7 @@ const VerifyOTPPage = () => {
       const response = await fetch(endpoints.auth.verifyOtp, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, otp: otpCode }),
+        body: JSON.stringify({ email, otp_code: otpCode }),
       });
 
       const data = await response.json();
@@ -124,14 +125,14 @@ const VerifyOTPPage = () => {
       const response = await fetch(endpoints.auth.resetPassword, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, otp: otpCode, newPassword }),
+        body: JSON.stringify({ email, otp_code: otpCode, new_password: newPassword }),
       });
 
       const data = await response.json();
 
       if (data.success) {
         // Show success and redirect to login
-        alert("Password reset successful! Please login with your new password.");
+        toast.success("Password reset successful! Please login with your new password.");
         navigate("/login");
       } else {
         setError(data.message || "Failed to reset password. Please try again.");

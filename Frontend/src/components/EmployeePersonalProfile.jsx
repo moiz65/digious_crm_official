@@ -7,6 +7,7 @@ import {
   Linkedin, Github, ExternalLink, Users,
   ChevronRight, Plus, Trash2, GraduationCap, Star, Calendar as CalendarIcon
 } from "lucide-react";
+import toast from 'react-hot-toast';
 import EmployeeProfileService from "../services/employeeProfileService";
 import config from '../config/api';
 
@@ -88,121 +89,97 @@ const EmployeePersonalProfileV2 = ({ employeeId: propsEmployeeId, onBack }) => {
 
       // Try fetching onboarding details (CNIC, additional resources, allowances, etc.)
       let onboardingDetails = {};
-      try {
-        const onboardingRes = await fetch(`${API_BASE_URL}/employees/${empId}`);
-        const onboardingJson = await onboardingRes.json();
-        if (onboardingRes.ok && onboardingJson.success) onboardingDetails = onboardingJson.data || {};
-      } catch (e) {
-        // Non-fatal - onboarding endpoint may be unavailable for some environments
-        console.debug('Onboarding fetch failed:', e.message || e);
-      }
-
-      // Try fetching financial summary (base salary, allowances)
       let financialSummary = {};
-      try {
-        const finRes = await EmployeeProfileService.getFinancialSummary(empId);
-        if (finRes && finRes.success && finRes.data) {
-          financialSummary = finRes.data;
-        }
-      } catch (e) {
-        console.debug('Financial fetch failed:', e.message || e);
-      }
-
-      // Fetch employee resources from employee_dynamic_resources table
       let dynamicResources = [];
       let resourcesMessage = '';
-      try {
-        const resRes = await EmployeeProfileService.getEmployeeResources(empId);
-        if (resRes && resRes.success) {
-          dynamicResources = resRes.data || [];
-          resourcesMessage = resRes.message || '';
-        }
-      } catch (e) {
-        console.debug('Dynamic resources fetch failed:', e.message || e);
-      }
-
-      // Fetch employee skills (technical and soft) from skills endpoint
       let skillsData = { technical: [], soft: [] };
-      try {
-        const skillsRes = await EmployeeProfileService.getEmployeeSkills(empId);
-        if (skillsRes && skillsRes.success && skillsRes.data) {
-          skillsData = {
-            technical: Array.isArray(skillsRes.data.technical) ? skillsRes.data.technical : [],
-            soft: Array.isArray(skillsRes.data.soft) ? skillsRes.data.soft : []
-          };
-        }
-      } catch (e) {
-        console.debug('Skills fetch failed:', e.message || e);
-        // Fallback to parsing from profile data if available
-        if (profileData?.skills_json) {
-          try {
-            const parsed = JSON.parse(profileData.skills_json);
-            skillsData = {
-              technical: Array.isArray(parsed?.technical) ? parsed.technical : [],
-              soft: Array.isArray(parsed?.soft) ? parsed.soft : []
-            };
-          } catch (parseErr) {
-            skillsData = { technical: [], soft: [] };
-          }
-        }
-      }
-
-      // Fetch employee social links
       let socialLinksData = {};
-      try {
-        const socialRes = await EmployeeProfileService.getEmployeeSocialLinks(empId);
-        console.log('🔗 [Fetch Social Links] Response:', socialRes);
-        if (socialRes && socialRes.success && socialRes.data) {
-          socialLinksData = socialRes.data;
-          console.log('✅ [Fetch Social Links] Data fetched:', socialLinksData);
-        } else {
-          console.warn('⚠️ [Fetch Social Links] Response not successful or no data:', socialRes);
-        }
-      } catch (e) {
-        console.error('❌ [Fetch Social Links] Error:', e.message || e);
-        if (profileData?.social_links_json) {
-          try {
-            socialLinksData = JSON.parse(profileData.social_links_json);
-            console.log('📋 [Fetch Social Links] Using fallback from profile JSON:', socialLinksData);
-          } catch (parseErr) {
-            socialLinksData = {};
-          }
-        }
-      }
-
-      // Fetch employee required documents
       let requiredDocumentsData = [];
-      try {
-        const docsRes = await EmployeeProfileService.getEmployeeRequiredDocuments(empId);
-        if (docsRes && docsRes.success && docsRes.data) {
-          requiredDocumentsData = Array.isArray(docsRes.data) ? docsRes.data : [];
-        }
-      } catch (e) {
-        console.debug('Required documents fetch failed:', e.message || e);
-        if (profileData?.required_documents_json) {
-          try {
-            requiredDocumentsData = JSON.parse(profileData.required_documents_json);
-          } catch (parseErr) {
-            requiredDocumentsData = [];
-          }
+      let achievementsData = [];
+
+      // Parallelize all independent fetches for faster profile loading
+      const [onboardingResult, finResult, resResult, skillsResult, socialResult, docsResult, achResult] = await Promise.allSettled([
+        // 1. Onboarding details
+        fetch(`${API_BASE_URL}/employees/${empId}`).then(r => r.json()).catch(e => ({ success: false })),
+        // 2. Financial summary
+        EmployeeProfileService.getFinancialSummary(empId).catch(e => ({ success: false })),
+        // 3. Dynamic resources
+        EmployeeProfileService.getEmployeeResources(empId).catch(e => ({ success: false })),
+        // 4. Skills
+        EmployeeProfileService.getEmployeeSkills(empId).catch(e => ({ success: false })),
+        // 5. Social links
+        EmployeeProfileService.getEmployeeSocialLinks(empId).catch(e => ({ success: false })),
+        // 6. Required documents
+        EmployeeProfileService.getEmployeeRequiredDocuments(empId).catch(e => ({ success: false })),
+        // 7. Achievements
+        EmployeeProfileService.getEmployeeAchievements(empId).catch(e => ({ success: false })),
+      ]);
+
+      // Process onboarding
+      if (onboardingResult.status === 'fulfilled') {
+        const onboardingJson = onboardingResult.value;
+        if (onboardingJson?.success) onboardingDetails = onboardingJson.data || {};
+      }
+
+      // Process financial summary
+      if (finResult.status === 'fulfilled' && finResult.value?.success && finResult.value?.data) {
+        financialSummary = finResult.value.data;
+      }
+
+      // Process dynamic resources
+      if (resResult.status === 'fulfilled' && resResult.value?.success) {
+        dynamicResources = resResult.value.data || [];
+        resourcesMessage = resResult.value.message || '';
+      }
+
+      // Process skills
+      if (skillsResult.status === 'fulfilled' && skillsResult.value?.success && skillsResult.value?.data) {
+        skillsData = {
+          technical: Array.isArray(skillsResult.value.data.technical) ? skillsResult.value.data.technical : [],
+          soft: Array.isArray(skillsResult.value.data.soft) ? skillsResult.value.data.soft : []
+        };
+      } else if (profileData?.skills_json) {
+        try {
+          const parsed = JSON.parse(profileData.skills_json);
+          skillsData = {
+            technical: Array.isArray(parsed?.technical) ? parsed.technical : [],
+            soft: Array.isArray(parsed?.soft) ? parsed.soft : []
+          };
+        } catch (parseErr) {
+          skillsData = { technical: [], soft: [] };
         }
       }
 
-      // Fetch employee achievements
-      let achievementsData = [];
-      try {
-        const achRes = await EmployeeProfileService.getEmployeeAchievements(empId);
-        if (achRes && achRes.success && achRes.data) {
-          achievementsData = Array.isArray(achRes.data) ? achRes.data : [];
+      // Process social links
+      if (socialResult.status === 'fulfilled' && socialResult.value?.success && socialResult.value?.data) {
+        socialLinksData = socialResult.value.data;
+      } else if (profileData?.social_links_json) {
+        try {
+          socialLinksData = JSON.parse(profileData.social_links_json);
+        } catch (parseErr) {
+          socialLinksData = {};
         }
-      } catch (e) {
-        console.debug('Achievements fetch failed:', e.message || e);
-        if (profileData?.achievements_json) {
-          try {
-            achievementsData = JSON.parse(profileData.achievements_json);
-          } catch (parseErr) {
-            achievementsData = [];
-          }
+      }
+
+      // Process required documents
+      if (docsResult.status === 'fulfilled' && docsResult.value?.success && docsResult.value?.data) {
+        requiredDocumentsData = Array.isArray(docsResult.value.data) ? docsResult.value.data : [];
+      } else if (profileData?.required_documents_json) {
+        try {
+          requiredDocumentsData = JSON.parse(profileData.required_documents_json);
+        } catch (parseErr) {
+          requiredDocumentsData = [];
+        }
+      }
+
+      // Process achievements
+      if (achResult.status === 'fulfilled' && achResult.value?.success && achResult.value?.data) {
+        achievementsData = Array.isArray(achResult.value.data) ? achResult.value.data : [];
+      } else if (profileData?.achievements_json) {
+        try {
+          achievementsData = JSON.parse(profileData.achievements_json);
+        } catch (parseErr) {
+          achievementsData = [];
         }
       }
 
@@ -1453,7 +1430,7 @@ const EmployeePersonalProfileV2 = ({ employeeId: propsEmployeeId, onBack }) => {
                         <button
                           onClick={() => {
                             if (!newSocialLink?.platform || !newSocialLink?.url) {
-                              alert('Please enter both platform name and URL');
+                              toast.error('Please enter both platform name and URL');
                               return;
                             }
                             const updated = { ...employee.socialLinks };

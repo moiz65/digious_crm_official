@@ -6,6 +6,9 @@ const debugController = require('./controllers/debugController');
 const authMiddleware = require('../middleware/auth');
 // const employeeProfilePictureRoutes = require('../routes/employeeProfilePicture');
 
+// GET - Return the next unused employee numeric ID
+router.get('/next-employee-id', onboardingController.getNextEmployeeId);
+
 // GET - Check if employee ID exists and get next available ID
 router.get('/check-employee-id/:numericId', onboardingController.checkEmployeeIdAvailability);
 

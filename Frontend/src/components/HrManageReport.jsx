@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 
 const HrManageReport = () => {
   const [activeTab, setActiveTab] = useState('applications');
@@ -505,7 +506,7 @@ const HrManageReport = () => {
     if (format === 'csv') {
       // Generate CSV
       if (exportData.length === 0) {
-        alert('No data to export');
+        toast.error('No data to export');
         return;
       }
       
@@ -525,10 +526,10 @@ const HrManageReport = () => {
       link.click();
       document.body.removeChild(link);
     } else if (format === 'pdf') {
-      alert(`Exporting ${exportData.length} items as PDF...`);
+      toast.success(`Exporting ${exportData.length} items as PDF...`);
       // In real app, you would generate PDF here
     } else if (format === 'excel') {
-      alert(`Exporting ${exportData.length} items as Excel...`);
+      toast.success(`Exporting ${exportData.length} items as Excel...`);
       // In real app, you would generate Excel here
     }
   };
@@ -555,7 +556,7 @@ const HrManageReport = () => {
       link.click();
       document.body.removeChild(link);
     } else {
-      alert(`Exporting ${employee.name}'s report in ${format.toUpperCase()} format...`);
+      toast.success(`Exporting ${employee.name}'s report in ${format.toUpperCase()} format...`);
     }
   };
 
@@ -578,7 +579,7 @@ const HrManageReport = () => {
 
     if (format === 'csv') {
       if (dataToExport.length === 0) {
-        alert('No data to export');
+        toast.error('No data to export');
         return;
       }
       
@@ -598,7 +599,7 @@ const HrManageReport = () => {
       link.click();
       document.body.removeChild(link);
     } else {
-      alert(`Exporting ${dataToExport.length} items as ${format.toUpperCase()}...`);
+      toast.success(`Exporting ${dataToExport.length} items as ${format.toUpperCase()}...`);
     }
   };
 
@@ -611,7 +612,7 @@ const HrManageReport = () => {
   // Bulk actions handler - FIXED: Removed confirm
   const handleBulkActions = (action) => {
     if (selectedItems.length === 0) {
-      alert('Please select items first');
+      toast.error('Please select items first');
       return;
     }
     
@@ -629,7 +630,7 @@ const HrManageReport = () => {
 
   const handleDeleteConfirm = () => {
     // In a real app, you would make an API call here
-    alert(`${selectedItems.length} items marked for deletion`);
+    toast.success(`${selectedItems.length} items marked for deletion`);
     setSelectedItems([]);
     setShowDeleteConfirm(false);
   };

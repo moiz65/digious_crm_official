@@ -1,5 +1,6 @@
 // EmployeeManagementDashboard.jsx
 import React, { useState } from 'react';
+import toast from 'react-hot-toast';
 
 const EmployeeManagementDashboard = () => {
   const [activeTab, setActiveTab] = useState('profile');
@@ -69,35 +70,35 @@ const EmployeeManagementDashboard = () => {
   };
 
   const handleSaveProfile = () => {
-    alert('Profile updated successfully!');
+    toast.success('Profile updated successfully!');
     setIsEditing(false);
   };
 
   const handleChangePassword = () => {
     if (!passwords.current) {
-      alert('Please enter your current password');
+      toast.error('Please enter your current password');
       return;
     }
     if (passwords.new.length < 8) {
-      alert('Password must be at least 8 characters long');
+      toast.error('Password must be at least 8 characters long');
       return;
     }
     if (passwords.new !== passwords.confirm) {
-      alert('New passwords do not match');
+      toast.error('New passwords do not match');
       return;
     }
-    alert('Password changed successfully!');
+    toast.success('Password changed successfully!');
     setPasswords({ current: '', new: '', confirm: '' });
     setPasswordStrength(0);
   };
 
   const handleLogout = () => {
-    alert('Logging out...');
+    toast('Logging out...');
     // Add actual logout logic here
   };
 
   const handleDeleteAccount = () => {
-    alert('Account deletion request submitted. You will receive a confirmation email.');
+    toast.success('Account deletion request submitted. You will receive a confirmation email.');
     setShowDeleteConfirm(false);
   };
 

@@ -53,6 +53,7 @@ const ensurePayrollTable = async () => {
       bonus decimal(12,2) NOT NULL DEFAULT 0.00,
       adjustment decimal(12,2) NOT NULL DEFAULT 0.00,
       adjustment_reason text DEFAULT NULL,
+      advance_deduction decimal(12,2) NOT NULL DEFAULT 0.00,
       net_salary decimal(12,2) DEFAULT 0.00,
       status enum('pending','processing','success','failed') DEFAULT 'pending',
       notes text DEFAULT NULL,
@@ -64,6 +65,14 @@ const ensurePayrollTable = async () => {
       KEY idx_status (status)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
   `);
+
+  // Ensure advance_deduction column exists (added for advance/loan integration)
+  try {
+    await pool.query(`ALTER TABLE payroll_records ADD COLUMN advance_deduction decimal(12,2) NOT NULL DEFAULT 0.00 AFTER adjustment_reason`);
+  } catch (e) {
+    // Column already exists — ignore ER_DUP_FIELDNAME
+    if (!e.message.includes('Duplicate column')) throw e;
+  }
 };
 
 // Helper: Get days in a given month (handles leap years)
@@ -365,6 +374,25 @@ const generatePayroll = async (req, res) => {
       yearlyPaidMap[a.employee_id] = a.yearly_paid_count;
     });
 
+    // 3f. Get pending advance/loan installments for this month
+    let advanceInstallmentMap = {};
+    try {
+      const [advInstallments] = await pool.query(`
+        SELECT ai.employee_id, SUM(ai.amount) AS total_advance_deduction,
+               GROUP_CONCAT(CONCAT(ea.type, ':', ai.amount, ':aid', ai.advance_id) SEPARATOR ', ') AS advance_details
+        FROM advance_installments ai
+        JOIN employee_advances ea ON ea.id = ai.advance_id AND ea.status = 'active'
+        WHERE ai.year = ? AND ai.month = ? AND ai.status = 'pending'
+        GROUP BY ai.employee_id
+      `, [yearNum, monthNum]);
+      advInstallments.forEach(a => {
+        advanceInstallmentMap[a.employee_id] = a;
+      });
+    } catch (e) {
+      // advance_installments table may not exist yet — safe to ignore
+      console.log('Note: advance_installments not available yet:', e.message);
+    }
+
     // 4. Calculate pay period, days in month, and issue date
     const payPeriod = getPayPeriod(yearNum, monthNum);
     const daysInMonth = payPeriod.daysInMonth;
@@ -434,10 +462,14 @@ const generatePayroll = async (req, res) => {
         // Gross salary = base + allowances
         const grossSalary = baseSalary + totalAllowances;
 
+        // Advance/loan deduction for this month
+        const advanceInfo = advanceInstallmentMap[emp.id] || {};
+        const advanceDeduction = parseFloat(advanceInfo.total_advance_deduction) || 0;
+
         // Net salary (bonus and adjustment are added later via edit)
         const bonus = 0;
         const adjustment = 0;
-        const netSalary = grossSalary + bonus + adjustment - totalDeductions;
+        const netSalary = grossSalary + bonus + adjustment - totalDeductions - advanceDeduction;
 
         payrollRecords.push({
           employee_id: emp.id,
@@ -466,11 +498,15 @@ const generatePayroll = async (req, res) => {
           bonus: bonus,
           adjustment: adjustment,
           adjustment_reason: null,
+          advance_deduction: advanceDeduction,
           net_salary: netSalary,
           status: 'pending',
-          notes: totalPaidLeaveDays > 0
-            ? `Paid leaves: ${totalPaidLeaveDays} (${casualLeaveDays > 0 ? casualLeaveDays + ' casual' : ''}${sickLeaveDays > 0 ? (casualLeaveDays > 0 ? ', ' : '') + sickLeaveDays + ' sick' : ''}${annualLeaveDays > 0 ? ((casualLeaveDays > 0 || sickLeaveDays > 0) ? ', ' : '') + annualLeaveDays + ' annual' : ''}${unlinkedForThisMonth > 0 ? ' [' + unlinkedForThisMonth + ' from leave balance]' : ''}). Total absent: ${totalAbsentDays}, Paid: ${totalPaidLeaveDays}, Unpaid: ${unpaidAbsentDays}`
-            : (totalAbsentDays > 0 ? `Unpaid absences: ${unpaidAbsentDays}` : null)
+          notes: [
+            totalPaidLeaveDays > 0
+              ? `Paid leaves: ${totalPaidLeaveDays} (${casualLeaveDays > 0 ? casualLeaveDays + ' casual' : ''}${sickLeaveDays > 0 ? (casualLeaveDays > 0 ? ', ' : '') + sickLeaveDays + ' sick' : ''}${annualLeaveDays > 0 ? ((casualLeaveDays > 0 || sickLeaveDays > 0) ? ', ' : '') + annualLeaveDays + ' annual' : ''}${unlinkedForThisMonth > 0 ? ' [' + unlinkedForThisMonth + ' from leave balance]' : ''}). Total absent: ${totalAbsentDays}, Paid: ${totalPaidLeaveDays}, Unpaid: ${unpaidAbsentDays}`
+              : (totalAbsentDays > 0 ? `Unpaid absences: ${unpaidAbsentDays}` : null),
+            advanceDeduction > 0 ? `Advance/loan deduction: Rs.${advanceDeduction.toLocaleString()} (${advanceInfo.advance_details || ''})` : null
+          ].filter(Boolean).join(' | ') || null
         });
       } catch (empError) {
         errors.push({ employee_id: emp.id, name: emp.name, error: empError.message });
@@ -490,8 +526,8 @@ const generatePayroll = async (req, res) => {
              working_days, present_days, absent_days, late_days, leave_days,
              half_days, paid_leave_days, late_deduction_days,
              absent_deduction, late_deduction, leave_deduction, total_deductions,
-             gross_salary, bonus, adjustment, adjustment_reason, net_salary, status, notes)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             gross_salary, bonus, adjustment, adjustment_reason, advance_deduction, net_salary, status, notes)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           ON DUPLICATE KEY UPDATE
             pay_period_start = VALUES(pay_period_start),
             pay_period_end = VALUES(pay_period_end),
@@ -516,7 +552,8 @@ const generatePayroll = async (req, res) => {
             bonus = COALESCE(bonus, VALUES(bonus)),
             adjustment = COALESCE(adjustment, VALUES(adjustment)),
             adjustment_reason = COALESCE(adjustment_reason, VALUES(adjustment_reason)),
-            net_salary = VALUES(gross_salary) + COALESCE(bonus, 0) + COALESCE(adjustment, 0) - VALUES(total_deductions),
+            advance_deduction = VALUES(advance_deduction),
+            net_salary = VALUES(gross_salary) + COALESCE(bonus, 0) + COALESCE(adjustment, 0) - VALUES(total_deductions) - VALUES(advance_deduction),
             notes = VALUES(notes),
             updated_at = CURRENT_TIMESTAMP
         `, [
@@ -529,6 +566,7 @@ const generatePayroll = async (req, res) => {
           record.absent_deduction, record.late_deduction, record.leave_deduction,
           record.total_deductions, record.gross_salary,
           record.bonus, record.adjustment, record.adjustment_reason,
+          record.advance_deduction,
           record.net_salary,
           record.status, record.notes
         ]);
@@ -538,6 +576,44 @@ const generatePayroll = async (req, res) => {
       } catch (dbError) {
         errors.push({ employee_id: record.employee_id, error: dbError.message });
       }
+    }
+
+    // 7. Mark advance installments as deducted and update advance balances
+    try {
+      // Get payroll record IDs for linking
+      const [payrollIds] = await pool.query(
+        `SELECT id, employee_id FROM payroll_records WHERE month = ? AND year = ?`,
+        [monthNum, yearNum]
+      );
+      const payrollIdMap = {};
+      payrollIds.forEach(p => { payrollIdMap[p.employee_id] = p.id; });
+
+      // Update installments to 'deducted'
+      const [pendingInsts] = await pool.query(`
+        SELECT ai.id, ai.advance_id, ai.employee_id, ai.amount
+        FROM advance_installments ai
+        JOIN employee_advances ea ON ea.id = ai.advance_id AND ea.status = 'active'
+        WHERE ai.year = ? AND ai.month = ? AND ai.status = 'pending'
+      `, [yearNum, monthNum]);
+
+      for (const inst of pendingInsts) {
+        const prId = payrollIdMap[inst.employee_id] || null;
+        await pool.query(
+          `UPDATE advance_installments SET status = 'deducted', payroll_record_id = ?, deducted_at = NOW() WHERE id = ?`,
+          [prId, inst.id]
+        );
+
+        // Update advance totals
+        await pool.query(`
+          UPDATE employee_advances 
+          SET total_repaid = total_repaid + ?, 
+              remaining_balance = remaining_balance - ?,
+              status = CASE WHEN remaining_balance - ? <= 0 THEN 'completed' ELSE status END
+          WHERE id = ?
+        `, [inst.amount, inst.amount, inst.amount, inst.advance_id]);
+      }
+    } catch (advError) {
+      console.log('Note: Could not update advance installments:', advError.message);
     }
 
     return res.status(200).json({
@@ -868,7 +944,7 @@ const editPayrollRecord = async (req, res) => {
 
     // Get current record to recalculate net salary
     const [existing] = await pool.query(
-      'SELECT gross_salary, total_deductions FROM payroll_records WHERE id = ?',
+      'SELECT gross_salary, total_deductions, advance_deduction FROM payroll_records WHERE id = ?',
       [id]
     );
 
@@ -878,7 +954,8 @@ const editPayrollRecord = async (req, res) => {
 
     const grossSalary = parseFloat(existing[0].gross_salary);
     const totalDeductions = parseFloat(existing[0].total_deductions);
-    const newNetSalary = grossSalary + bonusVal + adjustmentVal - totalDeductions;
+    const advanceDeduction = parseFloat(existing[0].advance_deduction) || 0;
+    const newNetSalary = grossSalary + bonusVal + adjustmentVal - totalDeductions - advanceDeduction;
 
     const [result] = await pool.query(`
       UPDATE payroll_records 
