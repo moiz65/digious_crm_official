@@ -51,6 +51,7 @@ import ApplicationandMemoEmployees from './pages/Employees/ApplicationandMemoEmp
 import EmployeesSettings from './pages/Employees/EmployeeSettings';
 import EmployeePayroll from './pages/Employees/EmployeePayroll';
 import Sales from './pages/Employees/Sales';
+import AttendanceCorrectionPage from './components/AttendanceCorrectionPage';
 
 function AppContent() {
   return (
@@ -254,6 +255,14 @@ function AppContent() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/hr/attendance-corrections"
+              element={
+                <ProtectedRoute requiredRole="hr">
+                  <AttendanceCorrectionPage />
+                </ProtectedRoute>
+              }
+            />
             
             {/* Employee Routes */}
             <Route
@@ -309,6 +318,14 @@ function AppContent() {
               element={
                 <ProtectedRoute requiredRole="employee">
                   <EmployeesSettings />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/employee/attendance-corrections"
+              element={
+                <ProtectedRoute requiredRole="employee">
+                  <AttendanceCorrectionPage />
                 </ProtectedRoute>
               }
             />

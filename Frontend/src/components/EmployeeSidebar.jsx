@@ -13,7 +13,8 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
-  DollarSign
+  DollarSign,
+  ClipboardCheck
 } from 'lucide-react';
 
 const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) => {
@@ -29,6 +30,7 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveIte
     { id: 'profile', icon: User, label: 'My Profile', path: '/employee/profile' },
     // Sales menu only visible for Sales department employees
     ...(user?.department === 'Sales' ? [{ id: 'sales', icon: DollarSign, label: 'Sales', path: '/employee/sales' }] : []),
+    { id: 'corrections', icon: ClipboardCheck, label: 'Attendance Corrections', path: '/employee/attendance-corrections' },
     { id: 'applications', icon: FileText, label: 'Applications', path: '/employee/applications' },
     { id: 'payroll', icon: Wallet, label: 'My Payroll', path: '/employee/payroll' },
     { id: 'settings', icon: FileText, label: 'Settings', path: '/employee/settings' }
@@ -219,9 +221,9 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveIte
                   `}
                   title={item.label}
                 >
-                  <Icon className={`h-5 w-5 ${(isCollapsed && !isMobile) ? '' : 'mr-3'} ${active ? 'text-white' : 'text-blue-500'}`} />
+                  <Icon className={`h-5 w-5 flex-shrink-0 ${(isCollapsed && !isMobile) ? '' : 'mr-3'} ${active ? 'text-white' : 'text-blue-500'}`} />
                   {(!isCollapsed || isMobile) && (
-                    <span className="font-semibold">{item.label}</span>
+                    <span className="font-semibold text-left">{item.label}</span>
                   )}
                   {/* Active indicator for collapsed view */}
                   {isCollapsed && !isMobile && active && (

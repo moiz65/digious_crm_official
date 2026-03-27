@@ -197,6 +197,19 @@ export const endpoints = {
     myPayroll: `${config.FULL_API_URL}/payroll/my-payroll`,
     myPayslip: (id) => `${config.FULL_API_URL}/payroll/my-payslip/${id}`,
   },
+
+  // Attendance Correction endpoints
+  attendanceCorrections: {
+    create: `${config.FULL_API_URL}/attendance-corrections`,
+    my: `${config.FULL_API_URL}/attendance-corrections/my`,
+    counts: `${config.FULL_API_URL}/attendance-corrections/counts`,
+    tagged: `${config.FULL_API_URL}/attendance-corrections/tagged`,
+    taggedAction: (id) => `${config.FULL_API_URL}/attendance-corrections/tagged/${id}`,
+    all: `${config.FULL_API_URL}/attendance-corrections/all`,
+    hrAction: (id) => `${config.FULL_API_URL}/attendance-corrections/hr/${id}`,
+    getById: (id) => `${config.FULL_API_URL}/attendance-corrections/${id}`,
+    logs: (id) => `${config.FULL_API_URL}/attendance-corrections/${id}/logs`,
+  },
 };
 
 // Helper function to build URL with query parameters
