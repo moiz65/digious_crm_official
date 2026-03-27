@@ -84,7 +84,8 @@ const HrSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) =
       submenu: [
         { id: 'manage-attendance', label: 'Manage Attendance', path: '/hr/attendance', icon: Settings },
         { id: 'my-attendance', label: 'My Attendance', path: '/hr/my-attendance', icon: User },
-        { id: 'attendance-adjustment', label: 'Adjustment', path: '/hr/attendance-adjustment', icon: BarChart3 }
+        { id: 'attendance-adjustment', label: 'Adjustment', path: '/hr/attendance-adjustment', icon: BarChart3 },
+        { id: 'attendance-corrections', label: 'Corrections', path: '/hr/attendance-corrections', icon: FileText }
       ]
     },
     // { id: 'applications', icon: FileText, label: 'Applications & Memos', path: '/hr/applications' },

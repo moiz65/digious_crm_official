@@ -134,6 +134,7 @@ const salesRoutes = require('./routes/salesRoutes');
 const salesTargetRoutes = require('./routes/salesTargetRoutes');
 const customerRoutes = require('./routes/customerRoutes');
 const advanceRoutes = require('./routes/advanceRoutes');
+const attendanceCorrectionRoutes = require('./routes/attendanceCorrectionRoutes');
 
 app.use(`/api/${process.env.API_VERSION}`, onboardingRoutes);
 app.use(`/api/${process.env.API_VERSION}/auth`, authRoutes);
@@ -155,6 +156,7 @@ app.use(`/api/${process.env.API_VERSION}/sales`, salesRoutes);
 app.use(`/api/${process.env.API_VERSION}/sales-targets`, salesTargetRoutes);
 app.use(`/api/${process.env.API_VERSION}/customers`, customerRoutes);
 app.use(`/api/${process.env.API_VERSION}/advances`, advanceRoutes);
+app.use(`/api/${process.env.API_VERSION}/attendance-corrections`, attendanceCorrectionRoutes);
 
 // 404 handler
 app.use((req, res) => {
