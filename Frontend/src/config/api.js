@@ -210,6 +210,20 @@ export const endpoints = {
     getById: (id) => `${config.FULL_API_URL}/attendance-corrections/${id}`,
     logs: (id) => `${config.FULL_API_URL}/attendance-corrections/${id}/logs`,
   },
+
+  // Managed Leave endpoints
+  managedLeaves: {
+    create: `${config.FULL_API_URL}/managed-leaves`,
+    my: `${config.FULL_API_URL}/managed-leaves/my`,
+    counts: `${config.FULL_API_URL}/managed-leaves/counts`,
+    balance: `${config.FULL_API_URL}/managed-leaves/balance`,
+    tagged: `${config.FULL_API_URL}/managed-leaves/tagged`,
+    taggedAction: (id) => `${config.FULL_API_URL}/managed-leaves/tagged/${id}`,
+    all: `${config.FULL_API_URL}/managed-leaves/all`,
+    hrAction: (id) => `${config.FULL_API_URL}/managed-leaves/hr/${id}`,
+    getById: (id) => `${config.FULL_API_URL}/managed-leaves/${id}`,
+    logs: (id) => `${config.FULL_API_URL}/managed-leaves/${id}/logs`,
+  },
 };
 
 // Helper function to build URL with query parameters
