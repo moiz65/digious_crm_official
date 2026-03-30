@@ -19,8 +19,9 @@ import Dashboard from './pages/SuperAdmin/Dashboard';
 import Attendance from './pages/SuperAdmin/Attendance';
 import ActivityTracker from './pages/SuperAdmin/ActivityTracker';
 import Employees from './pages/SuperAdmin/Employee';
-import ApplicationandMemos from './pages/SuperAdmin/ApplicationandMemos';
-import AdminApplicationsMemos from './pages/SuperAdmin/ApplicationsMemos';
+// Legacy application imports removed — unified ApplicationsPage used via wrappers
+// import ApplicationandMemos from './pages/SuperAdmin/ApplicationandMemos';
+// import AdminApplicationsMemos from './pages/SuperAdmin/ApplicationsMemos';
 import AdminSalesManagement from './pages/SuperAdmin/AdminSalesManagement';
 import PayrollManagement from './pages/SuperAdmin/PayrollManagement';
 import AdminExpense from './pages/Admin/AdminExpense';
@@ -34,7 +35,7 @@ import HrAttendance from './pages/HR/HrAttendance';
 import HRMyAttendance from './pages/HR/HRMyAttendance';
 import EmployeeManagement from './pages/HR/EmployeeManagement';
 import EmployeeOnboarding from './pages/HR/EmployeeOnboarding';
-import ApplicationsMemos from './pages/HR/ApplicationsMemos';
+// import ApplicationsMemos from './pages/HR/ApplicationsMemos'; // Legacy — replaced by Applications_and_Memos
 // import LeaveManagement from './pages/HR/Applications_and_Memos';
 import UserRoles_and_Permissions from './pages/HR/UserRoles_and_Permissions';
 import RoleTemplates from './pages/HR/RoleTemplates';
@@ -136,7 +137,7 @@ function AppContent() {
               path="/admin/applications"
               element={
                 <ProtectedRoute requiredRole="admin">
-                  <AdminApplicationsMemos />
+                  <Applications_and_Memos />
                 </ProtectedRoute>
               }
             />
@@ -200,11 +201,7 @@ function AppContent() {
             />
             <Route
               path="/hr/applications"
-              element={
-                <ProtectedRoute requiredRole="hr">
-                  <ApplicationsMemos />
-                </ProtectedRoute>
-              }
+              element={<Navigate to="/hr/applications-memos" replace />}
             />
             <Route
               path="/hr/applications-memos"
@@ -343,8 +340,8 @@ function AppContent() {
               
             {/* superAdmin */}
             <Route path="/employeedetails" element={<EmployeeDetails />} />
-            <Route path="/application-memos" element={<ApplicationandMemos />} />
-            <Route path="/applications-memos" element={<ApplicationandMemoEmployees />} />
+            <Route path="/application-memos" element={<Navigate to="/employee/applications" replace />} />
+            <Route path="/applications-memos" element={<Navigate to="/employee/applications" replace />} />
             <Route path="/sales" element={<AdminSalesManagement />} />
             
             {/* Default redirect */}
