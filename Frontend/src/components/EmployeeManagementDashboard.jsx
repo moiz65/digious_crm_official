@@ -103,7 +103,7 @@ const EmployeeManagementDashboard = () => {
   };
 
   return (
-    <div className="max-w-7xl p-6">
+    <div className="max-w-full p-6">
       
       {/* Settings Navigation with Icons */}
       <div className="mb-8 border-b border-gray-200">

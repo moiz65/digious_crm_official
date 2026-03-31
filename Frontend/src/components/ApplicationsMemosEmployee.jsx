@@ -9,19 +9,8 @@ import {
   Package, ShoppingCart, CreditCard, PieChart, Grid,
   Bell, Settings, LogOut, Home, BarChart, Users,
   Shield, Building, Globe, Bookmark, Star,
-  CloudUpload, FileText, Send, Edit, Trash2,
-  FilePlus, FolderPlus, FolderOpen, Folder,
-  MessageSquare, Mail as MailIcon, BellRing, 
-  CalendarDays, Target, Timer, Zap, Rocket,
-  Trophy, Medal, Crown, Heart, ThumbsUp,
-  TrendingDown, RefreshCw, ExternalLink, Link,
-  Copy, QrCode, Smartphone, Tablet, Monitor,
-  Headphones, Camera, Video, Mic, Music,
-  Wifi, Battery, Power, Database, Server,
-  Cpu, HardDrive, Network, Lock, Key,
-  EyeOff, Eye as EyeIcon, Fingerprint,
-  ShieldCheck, ShieldAlert, ShieldOff,
-  Truck, Wrench, Loader,
+  CloudUpload, FileText, Send, Edit,  
+  MessageSquare, Mail as MailIcon,  Target,  Eye as EyeIcon, Fingerprint, Loader,
   ChevronUp, ChevronDown, ArrowRight
 } from 'lucide-react';
 import { endpoints, apiRequest, getAuthHeaders } from '../config/api';
@@ -323,12 +312,12 @@ const ApplicationsMemosEmployee = () => {
       <div className="relative z-10 p-6">
         
         {/* Header */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-8">
+        {/* <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-8">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Applications & Memos</h1>
             <p className="text-gray-600 mt-2">Manage your applications and view memos â€” submit requests, track status, and stay informed.</p>
           </div>
-        </div>
+        </div> */}
 
         {/* Loading State */}
         {loading && (
@@ -617,12 +606,12 @@ const MyApplicationsTab = ({ applications, onSelect }) => {
         {filteredApplications.map(app => (
           <div 
             key={app.id} 
-            className="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md transition duration-200 cursor-pointer"
+            className="bg-gradient-to-br from-white-50 to-white-100 border border-gray-200 rounded-xl p-4 hover:shadow-md transition duration-200 cursor-pointer"
             onClick={() => onSelect(app)}
           >
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-50 rounded-lg">
+                <div className="p-2 bg-blue-100 rounded-lg">
                   {getApplicationIcon(app.type)}
                 </div>
                 <div>
@@ -636,17 +625,17 @@ const MyApplicationsTab = ({ applications, onSelect }) => {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-              <div className="bg-gray-50 p-3 rounded-lg">
+              <div className="bg-gradient-to-br from-white to-white border border-blue-200 p-3 rounded-lg">
                 <p className="text-xs text-gray-500 mb-1">Submitted</p>
                 <p className="font-medium text-sm">{app.submissionDate}</p>
               </div>
               
-              <div className="bg-gray-50 p-3 rounded-lg">
+              <div className="bg-gradient-to-br from-white to-white border border-blue-200 p-3 rounded-lg">
                 <p className="text-xs text-gray-500 mb-1">Last Updated</p>
                 <p className="font-medium text-sm">{app.lastUpdated}</p>
               </div>
               
-              <div className="bg-gray-50 p-3 rounded-lg">
+              <div className="bg-gradient-to-br from-white to-white border border-blue-200 p-3 rounded-lg">
                 <p className="text-xs text-gray-500 mb-1">Documents</p>
                 <p className="font-medium text-sm">{app.documents?.length || 0} files</p>
               </div>
@@ -764,12 +753,12 @@ const AssignedToMeTab = ({ applications, onSelect }) => {
         {filteredApplications.map(app => (
           <div 
             key={app.id} 
-            className="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md transition duration-200 cursor-pointer"
+            className="bg-gradient-to-br from-white-50 to-white-100 border border-gray-200 rounded-xl p-4 hover:shadow-md transition duration-200 cursor-pointer"
             onClick={() => onSelect(app)}
           >
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-purple-50 rounded-lg">
+                <div className="p-2 bg-purple-100 rounded-lg">
                   <UserPlus className="h-4 w-4 text-purple-600" />
                 </div>
                 <div>
@@ -784,7 +773,7 @@ const AssignedToMeTab = ({ applications, onSelect }) => {
             </div>
 
             {/* Applicant Info */}
-            <div className="bg-blue-50 p-3 rounded-lg mb-3">
+            <div className="bg-blue-100 p-3 rounded-lg mb-3">
               <p className="text-xs text-blue-600 font-medium mb-1">From</p>
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 rounded-full bg-blue-200 flex items-center justify-center text-xs font-bold text-blue-800">
@@ -798,17 +787,17 @@ const AssignedToMeTab = ({ applications, onSelect }) => {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-              <div className="bg-gray-50 p-3 rounded-lg">
+              <div className="bg-gradient-to-br from-white to-white border border-blue-200 p-3 rounded-lg">
                 <p className="text-xs text-gray-500 mb-1">Department</p>
                 <p className="font-medium text-sm">{app.department}</p>
               </div>
               
-              <div className="bg-gray-50 p-3 rounded-lg">
+              <div className="bg-gradient-to-br from-white to-white border border-blue-200 p-3 rounded-lg">
                 <p className="text-xs text-gray-500 mb-1">Submitted</p>
                 <p className="font-medium text-sm">{app.submissionDate}</p>
               </div>
               
-              <div className="bg-gray-50 p-3 rounded-lg">
+              <div className="bg-gradient-to-br from-white to-white border border-blue-200 p-3 rounded-lg">
                 <p className="text-xs text-gray-500 mb-1">CC</p>
                 <p className="font-medium text-sm">{app.ccDepartment || 'None'}</p>
               </div>
@@ -828,7 +817,7 @@ const AssignedToMeTab = ({ applications, onSelect }) => {
                   e.stopPropagation();
                   onSelect(app);
                 }}
-                className="px-3 py-1 text-sm bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100"
+                className="px-3 py-1 text-sm bg-purple-100 text-purple-600 rounded-lg hover:bg-purple-200"
               >
                 View Details
               </button>
@@ -909,7 +898,7 @@ const MyMemosTab = ({ memos, onSelect, onMarkAsRead }) => {
         {filteredMemos.map(memo => (
           <div 
             key={memo.id} 
-            className={`bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md transition duration-200 cursor-pointer ${memo.status === 'unread' ? 'bg-blue-50' : ''}`}
+            className={`bg-gradient-to-br from-white-50 to-white-100 border border-gray-200 rounded-xl p-4 hover:shadow-md transition duration-200 cursor-pointer rounded-xl p-4 hover:shadow-md transition duration-200 cursor-pointer ${memo.status === 'unread' ? 'bg-blue-50' : ''}`}
             onClick={() => {
               onSelect(memo);
               if (memo.status === 'unread') {
@@ -1280,7 +1269,7 @@ const NewApplicationModal = ({ onClose, onSave, employee, initialData = null, is
                 type="text"
                 value={applicationNumber}
                 readOnly
-                className="w-full px-3 py-2 border border-gray-300 rounded-xl bg-gray-50 text-gray-700 font-medium cursor-not-allowed"
+                className="w-full px-3 py-2 border border-gray-300 rounded-xl bg-gradient-to-br from-white-50 to-white-100 border border-gray-200 text-gray-700 font-medium cursor-not-allowed"
               />
               <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-1">
                 <span className="text-xs text-gray-500">Auto-generated</span>
@@ -1412,7 +1401,7 @@ const NewApplicationModal = ({ onClose, onSave, employee, initialData = null, is
                   className={`flex-1 px-4 py-2 rounded-xl border text-sm font-medium transition-colors ${
                     formData.assignTo === 'department' 
                       ? 'bg-blue-50 border-blue-300 text-blue-700' 
-                      : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'
+                      : 'bg-white border-gray-300 text-gray-600 hover:bg-gradient-to-br from-white-50 to-white-100 border border-gray-200'
                   }`}
                 >
                   <Building className="h-4 w-4 inline mr-2" />
@@ -1424,7 +1413,7 @@ const NewApplicationModal = ({ onClose, onSave, employee, initialData = null, is
                   className={`flex-1 px-4 py-2 rounded-xl border text-sm font-medium transition-colors ${
                     formData.assignTo === 'person' 
                       ? 'bg-purple-50 border-purple-300 text-purple-700' 
-                      : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'
+                      : 'bg-white border-gray-300 text-gray-600 hover:bg-gradient-to-br from-white-50 to-white-100 border border-gray-200'
                   }`}
                 >
                   <Users className="h-4 w-4 inline mr-2" />
@@ -1475,7 +1464,7 @@ const NewApplicationModal = ({ onClose, onSave, employee, initialData = null, is
                           key={emp.employee_id}
                           type="button"
                           onClick={() => handleSelectEmployee(emp)}
-                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0 text-left"
+                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gradient-to-br from-white-50 to-white-100 border border-gray-200 border-b border-gray-100 last:border-b-0 text-left"
                         >
                           <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-xs font-bold text-purple-800">
                             {emp.name.split(' ').map(n => n[0]).join('')}
@@ -1561,7 +1550,7 @@ const NewApplicationModal = ({ onClose, onSave, employee, initialData = null, is
 
           {/* CC Info */}
           {formData.department && (
-            <div className={`p-3 rounded-xl border ${isHRDepartment ? 'bg-gray-50 border-gray-200' : 'bg-amber-50 border-amber-200'}`}>
+            <div className={`p-3 rounded-xl border ${isHRDepartment ? 'bg-gradient-to-br from-white-50 to-white-100 border border-gray-200 border-gray-200' : 'bg-amber-50 border-amber-200'}`}>
               <p className="text-sm font-medium text-gray-700 mb-1">CC (Carbon Copy)</p>
               {isHRDepartment ? (
                 <p className="text-xs text-gray-500">No CC needed â€” this application is directed to HR department.</p>
@@ -1648,7 +1637,7 @@ const NewApplicationModal = ({ onClose, onSave, employee, initialData = null, is
             {/* Uploaded File Display (Single PDF) */}
             {uploadedFiles.length > 0 && (
               <div className="mt-4">
-                <div className="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-xl">
+                <div className="flex items-center justify-between p-4 bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-xl">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
                       <FileText className="h-6 w-6 text-green-600" />
@@ -1865,13 +1854,13 @@ const ApplicationDetailModal = ({ application, onClose, employee, onEdit }) => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'approved': return 'bg-green-100 text-green-800';
-      case 'rejected': return 'bg-red-100 text-red-800';
-      case 'in_review': return 'bg-blue-100 text-blue-800';
-      case 'in-progress': return 'bg-indigo-100 text-indigo-800';
-      case 'withdrawn': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'pending': return 'bg-gradient-to-br from-yellow-50 to-yellow-100 border border-gray-200 text-yellow-800';
+      case 'approved': return 'bg-gradient-to-br from-green-50 to-green-100 border border-gray-200 text-green-800';
+      case 'rejected': return 'bg-gradient-to-br from-red-50 to-red-100 border border-gray-200 text-red-800';
+      case 'in_review': return 'bg-gradient-to-br from-blue-50 to-blue-100 border border-gray-200 text-blue-800';
+      case 'in-progress': return 'bg-gradient-to-br from-indigo-50 to-indigo-100 border border-gray-200 text-indigo-800';
+      case 'withdrawn': return 'bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 text-gray-800';
+      default: return 'bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 text-gray-800';
     }
   };
 
@@ -1927,23 +1916,23 @@ const ApplicationDetailModal = ({ application, onClose, employee, onEdit }) => {
                 <h4 className="font-semibold text-gray-900">Application Details</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {application.department && (
-                    <div className="bg-gray-50 p-4 rounded-xl">
+                    <div className="bg-gradient-to-br from-white-50 to-white-100 border border-gray-200 rounded-xl p-4 cursor-pointer">
                       <p className="text-sm text-gray-500 mb-1">Department</p>
                       <p className="font-medium">{application.department}</p>
                     </div>
                   )}
                   
-                  <div className="bg-gray-50 p-4 rounded-xl">
+                  <div className="bg-gradient-to-br from-white-50 to-white-100 border border-gray-200 rounded-xl p-4 cursor-pointer">
                     <p className="text-sm text-gray-500 mb-1">Application Type</p>
                     <p className="font-medium">{application.type}</p>
                   </div>
                   
-                  <div className="bg-gray-50 p-4 rounded-xl">
+                  <div className="bg-gradient-to-br from-white-50 to-white-100 border border-gray-200 rounded-xl p-4 cursor-pointer">
                     <p className="text-sm text-gray-500 mb-1">Application Number</p>
                     <p className="font-medium">{application.applicationNumber}</p>
                   </div>
                   
-                  <div className="bg-gray-50 p-4 rounded-xl">
+                  <div className="bg-gradient-to-br from-white-50 to-white-100 border border-gray-200 rounded-xl p-4 cursor-pointer">
                     <p className="text-sm text-gray-500 mb-1">Submission Date</p>
                     <p className="font-medium">{application.submissionDate}</p>
                   </div>
@@ -1965,9 +1954,9 @@ const ApplicationDetailModal = ({ application, onClose, employee, onEdit }) => {
                         
                         return (
                           <div key={assignee.id || index} className={`flex items-center gap-3 p-2 rounded-lg ${
-                            isCurrent ? 'bg-purple-100 border border-purple-300' : 
-                            isApproved ? 'bg-green-50 border border-green-200' : 
-                            isRejected ? 'bg-red-50 border border-red-200' : 
+                            isCurrent ? 'bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-300' : 
+                            isApproved ? 'bg-gradient-to-br from-green-50 to-green-100 border border-green-200' : 
+                            isRejected ? 'bg-gradient-to-br from-red-50 to-red-100 border border-red-200' : 
                             'bg-white border border-gray-100'
                           }`}>
                             {/* Step indicator */}
@@ -2001,7 +1990,7 @@ const ApplicationDetailModal = ({ application, onClose, employee, onEdit }) => {
                         <div className={`flex items-center gap-3 p-2 rounded-lg ${
                           application.currentStep > application.totalSteps && application.status !== 'approved' 
                             ? 'bg-amber-50 border border-amber-300' 
-                            : application.status === 'approved' ? 'bg-green-50 border border-green-200' : 'bg-white border border-gray-100'
+                            : application.status === 'approved' ? 'bg-gradient-to-br from-green-50 to-green-100 border border-green-200' : 'bg-white border border-gray-100'
                         }`}>
                           <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
                             application.status === 'approved' ? 'bg-green-500 text-white' : 
@@ -2059,7 +2048,7 @@ const ApplicationDetailModal = ({ application, onClose, employee, onEdit }) => {
 
                 {/* Description */}
                 {application.notes && (
-                  <div className="bg-gray-50 p-4 rounded-xl">
+                  <div className="bg-gradient-to-br from-white-50 to-white-100 border border-gray-200 p-4 rounded-xl">
                     <p className="text-sm text-gray-500 mb-2">Description</p>
                     <p className="text-gray-900 whitespace-pre-line">{application.notes}</p>
                   </div>
@@ -2067,7 +2056,7 @@ const ApplicationDetailModal = ({ application, onClose, employee, onEdit }) => {
 
                 {/* Additional Info */}
                 {application.approvedBy && (
-                  <div className="bg-green-50 p-4 rounded-xl">
+                  <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-xl">
                     <p className="text-sm text-green-600 font-medium mb-1">Approved By</p>
                     <p className="font-medium">{application.approvedBy}</p>
                     {application.approvedDate && (
@@ -2093,7 +2082,7 @@ const ApplicationDetailModal = ({ application, onClose, employee, onEdit }) => {
                 {application.documents && application.documents.length > 0 ? (
                   <div className="space-y-2">
                     {application.documents.map((doc, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div key={index} className="flex items-center justify-between p-3 bg-gradient-to-br from-white-50 to-white-100 border border-gray-200 rounded-lg">
                         <div className="flex items-center gap-3">
                           <FileText className="h-5 w-5 text-gray-500" />
                           <div>
@@ -2108,7 +2097,7 @@ const ApplicationDetailModal = ({ application, onClose, employee, onEdit }) => {
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center p-4 bg-gray-50 rounded-xl">
+                  <div className="text-center p-4 bg-gradient-to-br from-white-50 to-white-100 border border-gray-200 rounded-xl">
                     <FileText className="h-8 w-8 text-gray-400 mx-auto mb-2" />
                     <p className="text-sm text-gray-600">No supporting documents</p>
                   </div>
@@ -2128,7 +2117,7 @@ const ApplicationDetailModal = ({ application, onClose, employee, onEdit }) => {
 
                 {/* Inline Approve Form */}
                 {showApproveForm && (
-                  <div className="mb-3 p-4 bg-green-50 border border-green-200 rounded-xl">
+                  <div className="mb-3 p-4 bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-xl">
                     <h5 className="text-sm font-semibold text-green-800 mb-2">Approve & Forward to Next Step</h5>
                     <textarea
                       value={approveNotes}
@@ -2196,7 +2185,7 @@ const ApplicationDetailModal = ({ application, onClose, employee, onEdit }) => {
                         Download All
                       </button>
                     )}
-                    <button className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-50 text-gray-700 rounded-xl hover:bg-gray-100">
+                    <button className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-br from-white-50 to-white-100 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-100">
                       <Printer className="h-4 w-4" />
                       Print Application
                     </button>
@@ -2205,7 +2194,7 @@ const ApplicationDetailModal = ({ application, onClose, employee, onEdit }) => {
                     {canApproveReject && (
                       <button 
                         onClick={() => setShowApproveForm(true)}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-50 text-green-600 rounded-xl hover:bg-green-100 font-medium">
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-br from-green-50 to-green-100 text-green-600 rounded-xl hover:bg-green-200 font-medium">
                         <CheckCircle className="h-4 w-4" />
                         Approve & Forward
                       </button>
@@ -2243,7 +2232,7 @@ const ApplicationDetailModal = ({ application, onClose, employee, onEdit }) => {
                     
                     {/* Info message if not owner */}
                     {!isOwner && (
-                      <div className="p-3 bg-gray-50 rounded-xl text-sm text-gray-600 text-center">
+                      <div className="p-3 bg-gradient-to-br from-white-50 to-white-100 border border-gray-200 rounded-xl text-sm text-gray-600 text-center">
                         You can only edit your own applications
                       </div>
                     )}
@@ -2338,7 +2327,7 @@ const MemoDetailModal = ({ memo, onClose, onMarkAsRead }) => {
             {/* Left Column */}
             <div className="lg:col-span-2 space-y-6">
               {/* Memo Header */}
-              <div className="bg-gray-50 p-4 rounded-xl">
+              <div className="bg-gradient-to-br from-white-50 to-white-100 border border-gray-200 p-4 rounded-xl">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     {memo.priority === 'urgent' && <AlertCircle className="h-5 w-5 text-red-500" />}
@@ -2367,7 +2356,7 @@ const MemoDetailModal = ({ memo, onClose, onMarkAsRead }) => {
               {/* Memo Content */}
               <div className="prose max-w-none">
                 <h4 className="font-semibold text-gray-900 mb-4">Memo Content</h4>
-                <div className="bg-gray-50 p-6 rounded-xl">
+                <div className="bg-gradient-to-br from-white-50 to-white-100 border border-gray-200 p-6 rounded-xl">
                   <p className="text-gray-900 whitespace-pre-line">{memo.summary}</p>
                 </div>
               </div>
@@ -2392,7 +2381,7 @@ const MemoDetailModal = ({ memo, onClose, onMarkAsRead }) => {
               {/* Status */}
               <div>
                 <h4 className="font-semibold text-gray-900 mb-4">Status</h4>
-                <div className="bg-gray-50 p-4 rounded-xl">
+                <div className="bg-gradient-to-br from-white-50 to-white-100 border border-gray-200 p-4 rounded-xl">
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">Read Status</span>
@@ -2429,15 +2418,15 @@ const MemoDetailModal = ({ memo, onClose, onMarkAsRead }) => {
               <div>
                 <h4 className="font-semibold text-gray-900 mb-4">Actions</h4>
                 <div className="space-y-2">
-                  <button className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100">
+                  <button className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-br from-blue-50 to-blue-100 text-blue-600 rounded-xl hover:bg-blue-200">
                     <Download className="h-4 w-4" />
                     Download Memo
                   </button>
-                  <button className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-50 text-green-600 rounded-xl hover:bg-green-100">
+                  <button className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-br from-green-50 to-green-100 text-green-600 rounded-xl hover:bg-green-200">
                     <Check className="h-4 w-4" />
                     Mark as Complete
                   </button>
-                  <button className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-purple-50 text-purple-600 rounded-xl hover:bg-purple-100">
+                  <button className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-br from-purple-50 to-purple-100 text-purple-600 rounded-xl hover:bg-purple-200">
                     <Share2 className="h-4 w-4" />
                     Share
                   </button>
@@ -2447,7 +2436,7 @@ const MemoDetailModal = ({ memo, onClose, onMarkAsRead }) => {
               {/* Related Info */}
               <div>
                 <h4 className="font-semibold text-gray-900 mb-4">Related Information</h4>
-                <div className="bg-gray-50 p-4 rounded-xl">
+                <div className="bg-gradient-to-br from-white-50 to-white-100 border border-gray-200 p-4 rounded-xl">
                   <p className="text-sm text-gray-600 mb-2">If you have questions about this memo:</p>
                   <div className="space-y-2">
                     <button className="w-full text-left text-sm text-blue-600 hover:text-blue-800">

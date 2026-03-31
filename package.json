@@ -1,0 +1,25 @@
+{
+  "name": "digious_crm_official",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "concurrently \"npm start --prefix Backend\" \"npm start --prefix Frontend\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/moiz65/digious_crm_official.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/moiz65/digious_crm_official/issues"
+  },
+  "homepage": "https://github.com/moiz65/digious_crm_official#readme",
+  "dependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

@@ -20,7 +20,7 @@ import {
 } from '../services/salesService';
 
 // ─── Icon map used by both main comp and modal ─────────────────────────────
-const ICON_MAP = { Globe, Palette, PenTool, Megaphone, Code, ShoppingCart, Camera, Layout };
+const ICON_MAP = { Globe, Palette, PenTool, Megaphone, Code, ShoppingCart, Layout };
 
 const DEFAULT_CATEGORIES = [
   { id: 'website-design',  name: 'Website Design',  icon: Globe        },
@@ -29,12 +29,11 @@ const DEFAULT_CATEGORIES = [
   { id: 'marketing',       name: 'Marketing',         icon: Megaphone    },
   { id: 'development',     name: 'Development',       icon: Code         },
   { id: 'ecommerce',       name: 'E-commerce',        icon: ShoppingCart },
-  { id: 'photography',     name: 'Photography',       icon: Camera       },
   { id: 'graphic-design',  name: 'Graphic Design',    icon: Layout       },
 ];
 
 const ALL_STATUSES = ['pending', 'in-progress', 'completed', 'cancelled', 'refunded'];
-const MERCHANTS    = ['PayPal', 'Stripe', 'CashApp', 'Venmo', 'Crypto', 'Zelle', 'Apple Pay'];
+const MERCHANTS    = ['Stripe','Ziffs PayPal',  'Digious PayPal', ' Innovative PayPal', 'Crypto'];
 
 const formatCurrency = (amount) =>
   new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(amount);
@@ -57,7 +56,7 @@ const CAT_STYLE = {
   'marketing':      { color: 'text-orange-600 bg-orange-50', Icon: Megaphone    },
   'development':    { color: 'text-green-600 bg-green-50',   Icon: Code         },
   'ecommerce':      { color: 'text-pink-600 bg-pink-50',     Icon: ShoppingCart },
-  'photography':    { color: 'text-yellow-600 bg-yellow-50', Icon: Camera       },
+  
   'graphic-design': { color: 'text-red-600 bg-red-50',       Icon: Layout       },
 };
 
@@ -403,10 +402,10 @@ const AdvancedSalesManagement = () => {
                   { label: 'Category',  field: null        },
                   { label: 'Total',     field: 'amount'   },
                   { label: 'Upfront',   field: null        },
-                  { label: 'Remaining', field: null        },
+                 
                   { label: 'Merchant',  field: null        },
-                  { label: 'Status',    field: 'status'   },
-                  { label: 'Deadline',  field: 'deadline' },
+                 
+                  
                   { label: 'Date',      field: 'date'     },
                   { label: 'Actions',   field: null        },
                 ].map(col => (
@@ -471,7 +470,7 @@ const AdvancedSalesManagement = () => {
                     </td>
 
                     {/* Total */}
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-4 py-3 text-left">
                       {isEdit ? (
                         <input type="number" min="0" step="0.01" value={editData.totalAmount}
                           onChange={e => onEditChange('totalAmount', e.target.value)}
@@ -483,7 +482,7 @@ const AdvancedSalesManagement = () => {
                     </td>
 
                     {/* Upfront */}
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-4 py-3 text-left">
                       {isEdit ? (
                         <input type="number" min="0" step="0.01" value={editData.upfrontPayment}
                           onChange={e => onEditChange('upfrontPayment', e.target.value)}
@@ -494,14 +493,7 @@ const AdvancedSalesManagement = () => {
                       )}
                     </td>
 
-                    {/* Remaining */}
-                    <td className="px-4 py-3 text-right">
-                      {isEdit ? (
-                        <span className="text-xs text-gray-500">{formatCurrency(Math.max(0, (parseFloat(editData.totalAmount) || 0) - (parseFloat(editData.upfrontPayment) || 0)))}</span>
-                      ) : (
-                        <span className="text-xs font-medium text-orange-600">{formatCurrency(sale.remainingBalance)}</span>
-                      )}
-                    </td>
+                   
 
                     {/* Merchant */}
                     <td className="px-4 py-3">
@@ -516,36 +508,10 @@ const AdvancedSalesManagement = () => {
                       )}
                     </td>
 
-                    {/* Status */}
-                    <td className="px-4 py-3">
-                      {isEdit ? (
-                        <select value={editData.status} onChange={e => onEditChange('status', e.target.value)}
-                          className="px-2 py-1 border border-gray-300 rounded-lg text-xs">
-                          {ALL_STATUSES.map(s => <option key={s} value={s}>{s[0].toUpperCase() + s.slice(1).replace('-', ' ')}</option>)}
-                        </select>
-                      ) : (
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 w-fit ${statusBg}`}>
-                          <StatusIcon className="w-3 h-3" />
-                          {sale.status[0].toUpperCase() + sale.status.slice(1).replace('-', ' ')}
-                        </span>
-                      )}
-                    </td>
+                    
 
-                    {/* Deadline */}
-                    <td className="px-4 py-3">
-                      {isEdit ? (
-                        <input type="date" value={editData.deadline}
-                          onChange={e => onEditChange('deadline', e.target.value)}
-                          className="px-2 py-1 border border-gray-300 rounded-lg text-xs" />
-                      ) : (
-                        sale.deadline ? (
-                          <div className="space-y-1">
-                            <p className="text-xs text-gray-600">{fmtDate(sale.deadline)}</p>
-                            {dlInfo && <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${dlInfo.color}`}><Flag className="w-2.5 h-2.5 inline mr-0.5" />{dlInfo.label}</span>}
-                          </div>
-                        ) : <span className="text-xs text-gray-400">\u2014</span>
-                      )}
-                    </td>
+                    
+                    
 
                     {/* Sale Date */}
                     <td className="px-4 py-3">

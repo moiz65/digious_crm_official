@@ -799,7 +799,7 @@ const EmployeeOnboarding = () => {
                               name="employeeId"
                               value={formData.employeeId}
                               onChange={handleInputChange}
-                              readOnly={!isGeneratingId} // Make it read-only by default, but allow manual override if needed
+                              // readOnly={!isGeneratingId} // Make it read-only by default, but allow manual override if needed
                               placeholder="Auto-generated"
                               className={`w-full pl-20 pr-12 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 transition-all bg-gray-50 ${
                                 errors.employeeId ? 'border-red-400 focus:ring-red-400 focus:border-red-400' : 
