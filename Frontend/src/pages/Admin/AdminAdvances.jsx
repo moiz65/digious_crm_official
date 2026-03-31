@@ -120,6 +120,7 @@ const AdminAdvances = () => {
   // Modals
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [selectedAdvance, setSelectedAdvance] = useState(null);
   const [saving, setSaving] = useState(false);
 
@@ -138,6 +139,7 @@ const AdminAdvances = () => {
     notes: "",
   };
   const [form, setForm] = useState({ ...defaultForm });
+  const [editForm, setEditForm] = useState({ ...defaultForm, status: 'active' });
 
   // ─── Fetchers ───────────────────────────────────────────────────────────
   const fetchAdvances = useCallback(async () => {
@@ -251,6 +253,94 @@ const AdminAdvances = () => {
     const data = await apiFetch(`${API_BASE}/advances/${adv.id}`);
     if (data.success) { setSelectedAdvance(data.data); setShowViewModal(true); }
     else setError(data.message);
+  };
+
+  const openEdit = async (adv) => {
+    const data = await apiFetch(`${API_BASE}/advances/${adv.id}`);
+    if (data.success) {
+      setSelectedAdvance(data.data);
+      // Pre-populate the edit form
+      const a = data.data;
+      const disbDate = a.disbursement_date
+        ? new Date(a.disbursement_date).toISOString().slice(0, 10)
+        : (a.start_date ? new Date(a.start_date).toISOString().slice(0, 10) : '');
+      const repayDate = a.repayment_start_date
+        ? new Date(a.repayment_start_date).toISOString().slice(0, 10)
+        : '';
+      setEditForm({
+        employee_id: String(a.employee_id || ''),
+        type: a.type || 'advance',
+        amount: String(a.amount || ''),
+        repayment_months: String(a.repayment_months || '1'),
+        disbursement_date: disbDate,
+        repayment_start_option: 'custom',
+        repayment_start_date: repayDate,
+        grace_period_months: String(a.grace_period_months || '0'),
+        reason: a.reason || '',
+        reason_custom: '',
+        notes: a.notes || '',
+        status: a.status || 'active',
+      });
+      setShowEditModal(true);
+    } else setError(data.message);
+  };
+
+  const handleEditSave = async (id, updates) => {
+    setSaving(true); setError(null);
+    try {
+      // Calculate repayment_start_date from the option
+      let repayStartDate = updates.repayment_start_date || null;
+      let gracePeriod = parseInt(updates.grace_period_months) || 0;
+      const disbDate = updates.disbursement_date;
+
+      if (updates.repayment_start_option && disbDate) {
+        const disbD = new Date(disbDate + 'T00:00:00');
+        switch (updates.repayment_start_option) {
+          case 'same_month':
+            repayStartDate = disbDate;
+            gracePeriod = 0;
+            break;
+          case 'next_month': {
+            const next = new Date(disbD);
+            next.setMonth(next.getMonth() + 1);
+            repayStartDate = next.toISOString().slice(0, 10);
+            gracePeriod = 0;
+            break;
+          }
+          case 'grace_period':
+            repayStartDate = null; // backend calculates from grace
+            break;
+          case 'custom':
+            // repayStartDate is already set
+            gracePeriod = 0;
+            break;
+          default:
+            break;
+        }
+      }
+
+      const body = {
+        employee_id: updates.employee_id ? +updates.employee_id : undefined,
+        type: updates.type,
+        amount: updates.amount ? +updates.amount : undefined,
+        repayment_months: updates.repayment_months ? +updates.repayment_months : undefined,
+        disbursement_date: disbDate,
+        repayment_start_date: repayStartDate,
+        grace_period_months: gracePeriod,
+        reason: updates.reason === 'Other' ? (updates.reason_custom || 'Other') : (updates.reason || null),
+        notes: updates.notes,
+        status: updates.status,
+      };
+
+      const data = await apiFetch(`${API_BASE}/advances/${id}`, { method: "PUT", body: JSON.stringify(body) });
+      if (data.success) {
+        await fetchAdvances();
+        await fetchSummary();
+        setShowEditModal(false);
+        setSelectedAdvance(null);
+      } else setError(data.message || "Failed to update");
+    } catch (err) { setError(err.message); }
+    finally { setSaving(false); }
   };
 
   // ─── Computed ───────────────────────────────────────────────────────────
@@ -474,6 +564,7 @@ const AdminAdvances = () => {
                           <td className="px-4 py-4">
                             <div className="flex gap-1">
                               <button onClick={() => openView(a)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition" title="View Details"><Eye size={15} /></button>
+                              <button onClick={() => openEdit(a)} className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition" title="Edit"><Edit size={15} /></button>
                               {(a.status === 'active' || a.status === 'on_hold') && (
                                 <button onClick={() => handleToggleHold(a)}
                                   className={`p-2 rounded-lg transition ${a.status === 'on_hold' ? 'text-emerald-600 hover:bg-emerald-50' : 'text-amber-600 hover:bg-amber-50'}`}
@@ -484,9 +575,7 @@ const AdminAdvances = () => {
                               {a.status === 'active' && (
                                 <button onClick={() => handleCancel(a.id)} className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition" title="Cancel"><XCircle size={15} /></button>
                               )}
-                              {a.status !== 'completed' && (
-                                <button onClick={() => handleDelete(a.id)} className="p-2 text-slate-400 hover:bg-slate-50 rounded-lg transition" title="Delete"><Trash2 size={15} /></button>
-                              )}
+                              <button onClick={() => handleDelete(a.id)} className="p-2 text-slate-400 hover:bg-slate-50 rounded-lg transition" title="Delete"><Trash2 size={15} /></button>
                             </div>
                           </td>
                         </tr>
@@ -532,6 +621,20 @@ const AdminAdvances = () => {
         <ViewAdvanceModal
           advance={selectedAdvance}
           onClose={() => { setShowViewModal(false); setSelectedAdvance(null); }}
+        />
+      )}
+
+      {/* Edit Modal */}
+      {showEditModal && selectedAdvance && (
+        <EditAdvanceModal
+          advance={selectedAdvance}
+          form={editForm}
+          setForm={setEditForm}
+          employees={employees}
+          saving={saving}
+          error={error}
+          onClose={() => { setShowEditModal(false); setSelectedAdvance(null); }}
+          onSave={handleEditSave}
         />
       )}
     </div>
@@ -889,6 +992,320 @@ const ViewAdvanceModal = ({ advance, onClose }) => {
             <button onClick={onClose} className="px-6 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 transition">Close</button>
           </div>
         </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── Edit Modal ────────────────────────────────────────────────────────────
+const EditAdvanceModal = ({ advance, form, setForm, employees, saving, error, onClose, onSave }) => {
+  const [empSearch, setEmpSearch] = useState("");
+  const [showEmpDropdown, setShowEmpDropdown] = useState(false);
+  const empRef = React.useRef(null);
+  const filteredEmps = employees.filter(e => e.name.toLowerCase().includes(empSearch.toLowerCase()) || (e.employee_code || "").toLowerCase().includes(empSearch.toLowerCase())).slice(0, 8);
+  const selectedEmpName = form.employee_id ? employees.find(e => e.id === +form.employee_id)?.name : "";
+
+  const hasDeductions = advance.installments?.some(i => i.status === 'deducted') || false;
+
+  const monthlyPreview = form.amount && form.repayment_months
+    ? Math.round((parseFloat(form.amount) / parseInt(form.repayment_months)) * 100) / 100
+    : 0;
+
+  const firstDeduction = computeFirstDeduction(form);
+
+  React.useEffect(() => {
+    const handler = (e) => { if (empRef.current && !empRef.current.contains(e.target)) setShowEmpDropdown(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!form.employee_id || !form.amount || !form.repayment_months) return;
+    onSave(advance.id, { ...form });
+  };
+
+  const isReasonCustom = form.reason && !REASON_OPTIONS.includes(form.reason) && form.reason !== '';
+  const displayReason = isReasonCustom ? 'Other' : form.reason;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+      onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl max-h-[90vh] overflow-y-auto" onMouseDown={e => e.stopPropagation()}>
+        <div className="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white px-6 py-5 rounded-t-2xl flex items-center justify-between sticky top-0 z-10">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-white/20 rounded-lg"><Edit className="h-5 w-5" /></div>
+            <div>
+              <h2 className="text-xl font-bold">Edit Advance / Loan</h2>
+              <p className="text-indigo-100 text-sm mt-0.5">All fields are editable{hasDeductions ? ' (core fields locked — deductions exist)' : ''}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-1 hover:bg-white/20 rounded-lg"><X size={20} /></button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+          {error && <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-rose-700 text-sm">{error}</div>}
+
+          {hasDeductions && (
+            <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-2">
+              <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+              <p className="text-xs text-amber-700">Some installments have already been deducted. Employee, amount, repayment months, disbursement date, and schedule fields are locked.</p>
+            </div>
+          )}
+
+          {/* Employee Select */}
+          <div ref={empRef}>
+            <label className="block text-gray-700 font-medium mb-2">Employee <span className="text-indigo-600">*</span></label>
+            <div className="relative">
+              <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+              <input type="text" placeholder="Search employee…"
+                value={empSearch || selectedEmpName}
+                onChange={(e) => { setEmpSearch(e.target.value); setForm({ ...form, employee_id: "" }); setShowEmpDropdown(true); }}
+                onFocus={() => setShowEmpDropdown(true)}
+                className={`w-full pl-10 pr-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 ${hasDeductions ? 'bg-slate-100 cursor-not-allowed' : ''}`}
+                disabled={hasDeductions}
+                required={!form.employee_id} />
+              {showEmpDropdown && !hasDeductions && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl z-50 max-h-48 overflow-y-auto">
+                  {filteredEmps.length === 0 ? (
+                    <div className="px-4 py-3 text-slate-500 text-sm">No employees found</div>
+                  ) : filteredEmps.map(emp => (
+                    <button key={emp.id} type="button"
+                      className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-indigo-50 text-left transition border-b border-slate-100 last:border-0"
+                      onMouseDown={() => { setForm({ ...form, employee_id: emp.id.toString() }); setEmpSearch(""); setShowEmpDropdown(false); }}>
+                      <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold text-xs flex-shrink-0">
+                        {emp.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-slate-700">{emp.name}</p>
+                        <p className="text-xs text-slate-400">{emp.employee_code} &bull; {emp.department}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Type */}
+          <div>
+            <label className="block text-gray-700 font-medium mb-2">Type <span className="text-indigo-600">*</span></label>
+            <div className="grid grid-cols-3 gap-2">
+              {[["advance", "Advance"], ["short_term_loan", "Short-Term"], ["long_term_loan", "Long-Term"]].map(([val, label]) => (
+                <button key={val} type="button" onClick={() => setForm({ ...form, type: val })}
+                  className={`py-2.5 rounded-xl text-sm font-semibold border transition ${form.type === val ? "bg-indigo-600 text-white border-indigo-600 shadow" : "bg-white text-slate-600 border-slate-300 hover:bg-slate-50"}`}>
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Status */}
+          <div>
+            <label className="block text-gray-700 font-medium mb-2">Status</label>
+            <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}
+              className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 bg-white text-sm">
+              {['pending_approval', 'active', 'on_hold', 'completed', 'cancelled'].map(s => (
+                <option key={s} value={s}>{STATUS_LABELS[s] || s}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Amount + Repayment Months side by side */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-gray-700 font-medium mb-2">Total Amount <span className="text-indigo-600">*</span></label>
+              <div className="relative">
+                <span className="absolute left-3 top-3 text-gray-500 font-medium text-sm">Rs.</span>
+                <input type="number" placeholder="0" value={form.amount}
+                  onChange={e => setForm({ ...form, amount: e.target.value })}
+                  className={`w-full pl-12 pr-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 ${hasDeductions ? 'bg-slate-100 cursor-not-allowed' : ''}`}
+                  disabled={hasDeductions}
+                  required step="1" min="1" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-gray-700 font-medium mb-2">Repay in (months) <span className="text-indigo-600">*</span></label>
+              <input type="number" placeholder="e.g. 6" value={form.repayment_months}
+                onChange={e => setForm({ ...form, repayment_months: e.target.value })}
+                className={`w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 ${hasDeductions ? 'bg-slate-100 cursor-not-allowed' : ''}`}
+                disabled={hasDeductions}
+                required min="1" max="60" />
+            </div>
+          </div>
+
+          {/* Reason */}
+          <div>
+            <label className="block text-gray-700 font-medium mb-2">Reason</label>
+            <select value={displayReason}
+              onChange={e => { setForm({ ...form, reason: e.target.value, reason_custom: '' }); }}
+              className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 bg-white text-sm">
+              <option value="">Select reason…</option>
+              {REASON_OPTIONS.map(r => <option key={r} value={r}>{r}</option>)}
+            </select>
+            {(displayReason === 'Other') && (
+              <input type="text" placeholder="Specify reason…"
+                value={form.reason_custom || (isReasonCustom ? form.reason : '')}
+                onChange={e => setForm({ ...form, reason_custom: e.target.value, reason: 'Other' })}
+                className="w-full mt-2 px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 text-sm" />
+            )}
+          </div>
+
+          {/* Disbursement Date */}
+          <div>
+            <label className="block text-gray-700 font-medium mb-2">Disbursement Date <span className="text-indigo-600">*</span></label>
+            <input type="date" value={form.disbursement_date}
+              onChange={e => setForm({ ...form, disbursement_date: e.target.value })}
+              className={`w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 ${hasDeductions ? 'bg-slate-100 cursor-not-allowed' : ''}`}
+              disabled={hasDeductions}
+              required />
+            <p className="text-xs text-slate-400 mt-1">The date the advance / loan amount was given to the employee</p>
+          </div>
+
+          {/* Repayment Start Option */}
+          {!hasDeductions && (
+            <div>
+              <label className="block text-gray-700 font-medium mb-2">When should deductions start? <span className="text-indigo-600">*</span></label>
+              <div className="space-y-2">
+                {[
+                  { value: "same_month", label: "Same month as disbursement", desc: "Deduct from this month's payroll" },
+                  { value: "next_month", label: "Next month", desc: "Start deductions from the following month" },
+                  { value: "grace_period", label: "After a grace period", desc: "Wait N months before first deduction" },
+                  { value: "custom", label: "Custom date", desc: "Pick a specific start date for deductions" },
+                ].map(opt => (
+                  <label key={opt.value}
+                    className={`flex items-start gap-3 p-3 border rounded-xl cursor-pointer transition ${
+                      form.repayment_start_option === opt.value
+                        ? 'border-indigo-500 bg-indigo-50/50 ring-1 ring-indigo-200'
+                        : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                    }`}>
+                    <input type="radio" name="edit_repayment_start_option" value={opt.value}
+                      checked={form.repayment_start_option === opt.value}
+                      onChange={() => setForm({ ...form, repayment_start_option: opt.value })}
+                      className="mt-1 accent-indigo-600" />
+                    <div>
+                      <p className="text-sm font-semibold text-slate-800">{opt.label}</p>
+                      <p className="text-xs text-slate-500">{opt.desc}</p>
+                    </div>
+                  </label>
+                ))}
+              </div>
+
+              {/* Grace Period Input */}
+              {form.repayment_start_option === 'grace_period' && (
+                <div className="mt-3 ml-8">
+                  <label className="block text-sm text-slate-600 mb-1">Grace period (months)</label>
+                  <input type="number" min="1" max="24" value={form.grace_period_months}
+                    onChange={e => setForm({ ...form, grace_period_months: e.target.value })}
+                    className="w-32 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm" />
+                  <p className="text-xs text-slate-400 mt-1">
+                    Employee gets {form.grace_period_months || 0} month{parseInt(form.grace_period_months) !== 1 ? 's' : ''} before deductions begin
+                  </p>
+                </div>
+              )}
+
+              {/* Custom Date Input */}
+              {form.repayment_start_option === 'custom' && (
+                <div className="mt-3 ml-8">
+                  <label className="block text-sm text-slate-600 mb-1">Deduction start date</label>
+                  <input type="date" value={form.repayment_start_date}
+                    onChange={e => setForm({ ...form, repayment_start_date: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm"
+                    min={form.disbursement_date} />
+                </div>
+              )}
+            </div>
+          )}
+
+          {hasDeductions && (
+            <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
+              <p className="text-xs text-slate-500 mb-1">Repayment Schedule (locked)</p>
+              <p className="text-sm text-slate-700 font-medium">First deduction: {formatDate(advance.repayment_start_date)} &bull; End: {formatDate(advance.end_date)} &bull; {advance.repayment_months} months</p>
+              {advance.grace_period_months > 0 && <p className="text-xs text-amber-600 mt-1">{advance.grace_period_months} month grace period</p>}
+            </div>
+          )}
+
+          {/* Monthly Deduction + First Deduction Preview */}
+          {monthlyPreview > 0 && (
+            <div className="p-4 bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200 rounded-xl">
+              <div className="flex items-center gap-2 mb-2">
+                <CreditCard className="h-4 w-4 text-indigo-600" />
+                <span className="text-sm font-semibold text-indigo-800">Repayment Plan Summary</span>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="text-xs text-indigo-500 mb-0.5">Monthly Deduction</p>
+                  <p className="text-xl font-bold text-indigo-600">{formatCurrency(monthlyPreview)}<span className="text-sm font-normal text-indigo-400"> /mo</span></p>
+                </div>
+                <div>
+                  <p className="text-xs text-indigo-500 mb-0.5">First Deduction In</p>
+                  <p className="text-xl font-bold text-indigo-600">{firstDeduction || '—'}</p>
+                </div>
+              </div>
+              <p className="text-xs text-indigo-500 mt-2">
+                {formatCurrency(form.amount)} over {form.repayment_months} month{parseInt(form.repayment_months) !== 1 ? 's' : ''}
+                — auto-deducted from payroll each month
+              </p>
+            </div>
+          )}
+
+          {/* Notes */}
+          <div>
+            <label className="block text-gray-700 font-medium mb-2">Notes</label>
+            <textarea placeholder="Additional details or terms…" value={form.notes}
+              onChange={e => setForm({ ...form, notes: e.target.value })}
+              className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 resize-none text-sm" rows="2" />
+          </div>
+
+          {/* Installments Preview (read-only) */}
+          {advance.installments && advance.installments.length > 0 && (
+            <div>
+              <h3 className="font-bold text-slate-700 mb-2 flex items-center gap-2 text-sm">
+                <Calendar className="h-4 w-4 text-indigo-600" />
+                Current Installments ({advance.installments.length})
+                {!hasDeductions && <span className="text-xs font-normal text-amber-600">(will be regenerated on save)</span>}
+              </h3>
+              <div className="border border-slate-200 rounded-xl overflow-hidden max-h-40 overflow-y-auto">
+                <table className="w-full">
+                  <thead className="bg-slate-100 sticky top-0">
+                    <tr>
+                      {["#", "Month", "Amount", "Status"].map(h => (
+                        <th key={h} className="px-3 py-2 text-left text-xs font-bold text-slate-700 uppercase">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {advance.installments.map((inst) => (
+                      <tr key={inst.id} className={`${inst.status === 'deducted' ? 'bg-emerald-50/50' : inst.status === 'skipped' ? 'bg-slate-50 opacity-50' : ''}`}>
+                        <td className="px-3 py-2 text-xs text-slate-600">{inst.installment_no}</td>
+                        <td className="px-3 py-2 text-xs font-medium text-slate-800">{MONTH_NAMES[inst.month]} {inst.year}</td>
+                        <td className="px-3 py-2 text-xs font-semibold text-slate-700">{formatCurrency(inst.amount)}</td>
+                        <td className="px-3 py-2">
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-semibold capitalize ${
+                            inst.status === 'deducted' ? 'bg-emerald-100 text-emerald-700' :
+                            inst.status === 'skipped' ? 'bg-slate-100 text-slate-500' :
+                            'bg-amber-100 text-amber-700'
+                          }`}>
+                            {inst.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Actions */}
+          <div className="flex gap-3 pt-2">
+            <button type="button" onClick={onClose} className="flex-1 py-3 border border-slate-300 text-gray-700 font-semibold rounded-xl hover:bg-slate-50 transition">Cancel</button>
+            <button type="submit" disabled={saving}
+              className="flex-1 py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white font-semibold rounded-xl hover:from-indigo-700 hover:to-indigo-800 transition shadow-lg disabled:opacity-60">
+              {saving ? "Saving…" : "Save Changes"}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

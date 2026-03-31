@@ -195,10 +195,16 @@ const PaySlipModal = ({ payroll, onClose }) => {
                     <span>0</span>
                   </div>
                 )}
-                {payroll.total_deductions === 0 && <p className="text-sm text-slate-400">No deductions</p>}
+                {(payroll.advance_deduction || 0) > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-600">Advance / Loan Deduction</span>
+                    <span className="font-medium text-purple-600">−{formatNum(payroll.advance_deduction)}</span>
+                  </div>
+                )}
+                {payroll.total_deductions === 0 && (payroll.advance_deduction || 0) === 0 && <p className="text-sm text-slate-400">No deductions</p>}
                 <div className="flex justify-between pt-2 mt-2 border-t border-rose-100">
                   <span className="font-bold text-sm text-slate-700">Total Deductions</span>
-                  <span className="font-bold text-sm text-rose-700">−{formatNum(payroll.total_deductions)}</span>
+                  <span className="font-bold text-sm text-rose-700">−{formatNum(parseFloat(payroll.total_deductions || 0) + parseFloat(payroll.advance_deduction || 0))}</span>
                 </div>
               </div>
             </div>
@@ -214,7 +220,8 @@ const PaySlipModal = ({ payroll, onClose }) => {
                   {formatNum(payroll.gross_salary)}
                   {(payroll.bonus || 0) > 0 && ` + ${formatNum(payroll.bonus)} bonus`}
                   {(payroll.adjustment || 0) !== 0 && ` + ${formatNum(payroll.adjustment)} adj`}
-                  {` − ${formatNum(payroll.total_deductions)}`}
+                  {` − ${formatNum(payroll.total_deductions)} deductions`}
+                  {(payroll.advance_deduction || 0) > 0 && ` − ${formatNum(payroll.advance_deduction)} advance/loan`}
                 </p>
               </div>
               <button 

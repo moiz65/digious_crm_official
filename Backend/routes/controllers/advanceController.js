@@ -267,7 +267,13 @@ const updateAdvance = async (req, res) => {
   try {
     await ensureAdvanceTables();
     const { id } = req.params;
-    const { notes, status, reason, repayment_start_date, grace_period_months } = req.body;
+    const {
+      employee_id, type, amount, repayment_months,
+      disbursement_date, repayment_start_date, grace_period_months,
+      reason, notes, status,
+      repayment_start_option,   // same_month | next_month | grace_period | custom (from frontend)
+      start_date,               // legacy alias for disbursement_date
+    } = req.body;
 
     const [existing] = await pool.query('SELECT * FROM employee_advances WHERE id = ?', [id]);
     if (!existing.length) {
@@ -275,26 +281,32 @@ const updateAdvance = async (req, res) => {
     }
     const adv = existing[0];
 
+    // Check if any installments have been deducted
+    const [deductedRows] = await pool.query(
+      `SELECT COUNT(*) AS cnt FROM advance_installments WHERE advance_id = ? AND status = 'deducted'`, [id]
+    );
+    const hasDeductions = deductedRows[0].cnt > 0;
+
     const fields = [];
     const values = [];
 
+    // ── Simple text fields (always editable) ──
     if (notes !== undefined) { fields.push('notes = ?'); values.push(notes); }
     if (reason !== undefined) { fields.push('reason = ?'); values.push(reason); }
 
+    // ── Status changes ──
     if (status !== undefined) {
       if (!['pending_approval', 'active', 'completed', 'cancelled', 'on_hold'].includes(status)) {
         return res.status(400).json({ success: false, message: 'Invalid status' });
       }
       fields.push('status = ?'); values.push(status);
 
-      // If cancelling or putting on hold, mark remaining pending installments as skipped
       if (status === 'cancelled') {
         await pool.query(
           `UPDATE advance_installments SET status = 'skipped' WHERE advance_id = ? AND status = 'pending'`,
           [id]
         );
       }
-      // If resuming from on_hold → reactivate skipped installments that haven't been deducted
       if (status === 'active' && adv.status === 'on_hold') {
         await pool.query(
           `UPDATE advance_installments SET status = 'pending' WHERE advance_id = ? AND status = 'skipped'`,
@@ -303,44 +315,124 @@ const updateAdvance = async (req, res) => {
       }
     }
 
-    // Allow changing repayment_start_date only if no installments have been deducted yet
-    if (repayment_start_date !== undefined || grace_period_months !== undefined) {
-      const [deducted] = await pool.query(
-        `SELECT COUNT(*) AS cnt FROM advance_installments WHERE advance_id = ? AND status = 'deducted'`, [id]
-      );
-      if (deducted[0].cnt > 0) {
-        return res.status(400).json({ success: false, message: 'Cannot change repayment schedule — installments have already been deducted' });
-      }
+    // ── Core fields (only if no deductions yet) ──
+    let needRecalc = false;
+    let newEmployeeId = adv.employee_id;
+    let newType = adv.type;
+    let newAmount = parseFloat(adv.amount);
+    let newRepaymentMonths = parseInt(adv.repayment_months);
+    let newDisbDate = adv.disbursement_date || adv.start_date;
+    let newGrace = adv.grace_period_months || 0;
+    let newRepayStart = adv.repayment_start_date;
 
-      const newGrace = grace_period_months !== undefined ? parseInt(grace_period_months) : (adv.grace_period_months || 0);
-      let newRepayStart;
-      if (repayment_start_date) {
-        newRepayStart = new Date(repayment_start_date + 'T00:00:00');
-      } else {
-        const disbD = new Date((adv.disbursement_date || adv.start_date) + 'T00:00:00');
-        newRepayStart = new Date(disbD);
-        newRepayStart.setMonth(newRepayStart.getMonth() + newGrace);
+    if (employee_id !== undefined && parseInt(employee_id) !== adv.employee_id) {
+      if (hasDeductions) {
+        return res.status(400).json({ success: false, message: 'Cannot change employee — installments have already been deducted' });
       }
+      const [emp] = await pool.query('SELECT id, name FROM employee_onboarding WHERE id = ?', [employee_id]);
+      if (!emp.length) {
+        return res.status(404).json({ success: false, message: 'Employee not found' });
+      }
+      newEmployeeId = parseInt(employee_id);
+      fields.push('employee_id = ?'); values.push(newEmployeeId);
+      needRecalc = true;
+    }
 
-      fields.push('repayment_start_date = ?'); values.push(newRepayStart.toISOString().slice(0, 10));
+    if (type !== undefined && type !== adv.type) {
+      if (!['advance', 'short_term_loan', 'long_term_loan'].includes(type)) {
+        return res.status(400).json({ success: false, message: 'Invalid type' });
+      }
+      newType = type;
+      fields.push('type = ?'); values.push(newType);
+    }
+
+    if (amount !== undefined && parseFloat(amount) !== parseFloat(adv.amount)) {
+      if (hasDeductions) {
+        return res.status(400).json({ success: false, message: 'Cannot change amount — installments have already been deducted. Cancel and create a new one instead.' });
+      }
+      newAmount = parseFloat(amount);
+      fields.push('amount = ?'); values.push(newAmount);
+      needRecalc = true;
+    }
+
+    if (repayment_months !== undefined && parseInt(repayment_months) !== parseInt(adv.repayment_months)) {
+      if (hasDeductions) {
+        return res.status(400).json({ success: false, message: 'Cannot change repayment months — installments have already been deducted' });
+      }
+      newRepaymentMonths = parseInt(repayment_months);
+      fields.push('repayment_months = ?'); values.push(newRepaymentMonths);
+      needRecalc = true;
+    }
+
+    const disbDateVal = disbursement_date || start_date;
+    if (disbDateVal !== undefined) {
+      const existingDisb = adv.disbursement_date ? new Date(adv.disbursement_date).toISOString().slice(0, 10) : (adv.start_date ? new Date(adv.start_date).toISOString().slice(0, 10) : null);
+      if (disbDateVal !== existingDisb) {
+        if (hasDeductions) {
+          return res.status(400).json({ success: false, message: 'Cannot change disbursement date — installments have already been deducted' });
+        }
+        newDisbDate = disbDateVal;
+        fields.push('disbursement_date = ?'); values.push(newDisbDate);
+        fields.push('start_date = ?'); values.push(newDisbDate);
+        needRecalc = true;
+      }
+    }
+
+    if (grace_period_months !== undefined && parseInt(grace_period_months) !== (adv.grace_period_months || 0)) {
+      if (hasDeductions) {
+        return res.status(400).json({ success: false, message: 'Cannot change grace period — installments have already been deducted' });
+      }
+      newGrace = parseInt(grace_period_months) || 0;
       fields.push('grace_period_months = ?'); values.push(newGrace);
+      needRecalc = true;
+    }
 
-      // Recalculate end_date
-      const endD = new Date(newRepayStart);
-      endD.setMonth(endD.getMonth() + adv.repayment_months - 1);
+    if (repayment_start_date !== undefined) {
+      const existingRepay = adv.repayment_start_date ? new Date(adv.repayment_start_date).toISOString().slice(0, 10) : null;
+      if (repayment_start_date !== existingRepay) {
+        if (hasDeductions) {
+          return res.status(400).json({ success: false, message: 'Cannot change repayment start date — installments have already been deducted' });
+        }
+        newRepayStart = repayment_start_date;
+        needRecalc = true;
+      }
+    }
+
+    // ── Recalculate monthly deduction, remaining balance, end date, and installments ──
+    if (needRecalc) {
+      const monthlyDeduction = Math.round((newAmount / newRepaymentMonths) * 100) / 100;
+      fields.push('monthly_deduction = ?'); values.push(monthlyDeduction);
+      fields.push('remaining_balance = ?'); values.push(newAmount); // Reset since no deductions
+
+      // Compute repayment start
+      const disbD = new Date(newDisbDate + 'T00:00:00');
+      let repayStart;
+      if (newRepayStart) {
+        repayStart = new Date(newRepayStart + 'T00:00:00');
+      } else {
+        repayStart = new Date(disbD);
+        repayStart.setMonth(repayStart.getMonth() + newGrace);
+      }
+      const repayStartStr = repayStart.toISOString().slice(0, 10);
+      fields.push('repayment_start_date = ?'); values.push(repayStartStr);
+
+      // End date
+      const endD = new Date(repayStart);
+      endD.setMonth(endD.getMonth() + newRepaymentMonths - 1);
       fields.push('end_date = ?'); values.push(endD.toISOString().slice(0, 10));
 
       // Regenerate installments
       await pool.query('DELETE FROM advance_installments WHERE advance_id = ?', [id]);
       const installmentValues = [];
-      let remaining = parseFloat(adv.amount);
-      const monthlyDed = parseFloat(adv.monthly_deduction);
-      for (let i = 0; i < adv.repayment_months; i++) {
-        const instDate = new Date(newRepayStart);
+      let remainingForInstallments = newAmount;
+      for (let i = 0; i < newRepaymentMonths; i++) {
+        const instDate = new Date(repayStart);
         instDate.setMonth(instDate.getMonth() + i);
-        const instAmount = i === adv.repayment_months - 1 ? remaining : monthlyDed;
-        remaining -= monthlyDed;
-        installmentValues.push([id, adv.employee_id, i + 1, instDate.getMonth() + 1, instDate.getFullYear(), Math.max(instAmount, 0), 'pending']);
+        const instMonth = instDate.getMonth() + 1;
+        const instYear = instDate.getFullYear();
+        const instAmount = i === newRepaymentMonths - 1 ? remainingForInstallments : monthlyDeduction;
+        remainingForInstallments -= monthlyDeduction;
+        installmentValues.push([id, newEmployeeId, i + 1, instMonth, instYear, Math.max(instAmount, 0), 'pending']);
       }
       if (installmentValues.length > 0) {
         await pool.query(

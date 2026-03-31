@@ -165,6 +165,7 @@ const getMonthlyPayroll = async (req, res) => {
           absent_deduction: parseFloat(r.absent_deduction),
           late_deduction: parseFloat(r.late_deduction),
           leave_deduction: parseFloat(r.leave_deduction),
+          advance_deduction: parseFloat(r.advance_deduction || 0),
           total_deductions: parseFloat(r.total_deductions),
           gross_salary: parseFloat(r.gross_salary),
           net_salary: parseFloat(r.net_salary),
@@ -374,15 +375,16 @@ const generatePayroll = async (req, res) => {
       yearlyPaidMap[a.employee_id] = a.yearly_paid_count;
     });
 
-    // 3f. Get pending advance/loan installments for this month
+    // 3f. Get pending + already-deducted advance/loan installments for this month
+    //     Include 'deducted' so re-generating payroll preserves advance amounts
     let advanceInstallmentMap = {};
     try {
       const [advInstallments] = await pool.query(`
         SELECT ai.employee_id, SUM(ai.amount) AS total_advance_deduction,
                GROUP_CONCAT(CONCAT(ea.type, ':', ai.amount, ':aid', ai.advance_id) SEPARATOR ', ') AS advance_details
         FROM advance_installments ai
-        JOIN employee_advances ea ON ea.id = ai.advance_id AND ea.status = 'active'
-        WHERE ai.year = ? AND ai.month = ? AND ai.status = 'pending'
+        JOIN employee_advances ea ON ea.id = ai.advance_id AND ea.status IN ('active', 'completed')
+        WHERE ai.year = ? AND ai.month = ? AND ai.status IN ('pending', 'deducted')
         GROUP BY ai.employee_id
       `, [yearNum, monthNum]);
       advInstallments.forEach(a => {
@@ -513,9 +515,44 @@ const generatePayroll = async (req, res) => {
       }
     }
 
-    // 6. Insert/update payroll records (UPSERT)
+    // 6. Delete old payroll records for this month/year (clean slate)
+    try {
+      // Get all deducted installments for this month to reverse advance totals
+      const [deductedInsts] = await pool.query(`
+        SELECT ai.id, ai.advance_id, ai.amount
+        FROM advance_installments ai
+        WHERE ai.year = ? AND ai.month = ? AND ai.status = 'deducted'
+      `, [yearNum, monthNum]);
+
+      // Reverse the advance totals for each deducted installment
+      for (const inst of deductedInsts) {
+        await pool.query(`
+          UPDATE employee_advances 
+          SET total_repaid = total_repaid - ?, 
+              remaining_balance = remaining_balance + ?,
+              status = CASE WHEN status = 'completed' THEN 'active' ELSE status END
+          WHERE id = ?
+        `, [inst.amount, inst.amount, inst.advance_id]);
+      }
+
+      // Reset advance installments back to 'pending' if they were deducted
+      await pool.query(`
+        UPDATE advance_installments
+        SET status = 'pending', payroll_record_id = NULL, deducted_at = NULL
+        WHERE year = ? AND month = ? AND status = 'deducted'
+      `, [yearNum, monthNum]);
+
+      // Delete payroll records
+      await pool.query(`
+        DELETE FROM payroll_records
+        WHERE month = ? AND year = ?
+      `, [monthNum, yearNum]);
+    } catch (delError) {
+      console.log('Note: Error deleting old payroll records:', delError.message);
+    }
+
+    // 7. Insert new payroll records
     let insertedCount = 0;
-    let updatedCount = 0;
 
     for (const record of payrollRecords) {
       try {
@@ -528,34 +565,6 @@ const generatePayroll = async (req, res) => {
              absent_deduction, late_deduction, leave_deduction, total_deductions,
              gross_salary, bonus, adjustment, adjustment_reason, advance_deduction, net_salary, status, notes)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-          ON DUPLICATE KEY UPDATE
-            pay_period_start = VALUES(pay_period_start),
-            pay_period_end = VALUES(pay_period_end),
-            days_in_month = VALUES(days_in_month),
-            issue_date = VALUES(issue_date),
-            base_salary = VALUES(base_salary),
-            daily_rate = VALUES(daily_rate),
-            total_allowances = VALUES(total_allowances),
-            working_days = VALUES(working_days),
-            present_days = VALUES(present_days),
-            absent_days = VALUES(absent_days),
-            late_days = VALUES(late_days),
-            leave_days = VALUES(leave_days),
-            half_days = VALUES(half_days),
-            paid_leave_days = VALUES(paid_leave_days),
-            late_deduction_days = VALUES(late_deduction_days),
-            absent_deduction = VALUES(absent_deduction),
-            late_deduction = VALUES(late_deduction),
-            leave_deduction = VALUES(leave_deduction),
-            total_deductions = VALUES(total_deductions),
-            gross_salary = VALUES(gross_salary),
-            bonus = COALESCE(bonus, VALUES(bonus)),
-            adjustment = COALESCE(adjustment, VALUES(adjustment)),
-            adjustment_reason = COALESCE(adjustment_reason, VALUES(adjustment_reason)),
-            advance_deduction = VALUES(advance_deduction),
-            net_salary = VALUES(gross_salary) + COALESCE(bonus, 0) + COALESCE(adjustment, 0) - VALUES(total_deductions) - VALUES(advance_deduction),
-            notes = VALUES(notes),
-            updated_at = CURRENT_TIMESTAMP
         `, [
           record.employee_id, record.month, record.year,
           record.pay_period_start, record.pay_period_end, record.days_in_month, record.issue_date,
@@ -571,14 +580,13 @@ const generatePayroll = async (req, res) => {
           record.status, record.notes
         ]);
 
-        if (result.affectedRows === 1) insertedCount++;
-        else if (result.affectedRows === 2) updatedCount++;
+        if (result.affectedRows > 0) insertedCount++;
       } catch (dbError) {
         errors.push({ employee_id: record.employee_id, error: dbError.message });
       }
     }
 
-    // 7. Mark advance installments as deducted and update advance balances
+    // 8. Mark advance installments as deducted and update advance balances
     try {
       // Get payroll record IDs for linking
       const [payrollIds] = await pool.query(
@@ -621,8 +629,7 @@ const generatePayroll = async (req, res) => {
       message: `Payroll generated for ${monthNum}/${yearNum}`,
       data: {
         total_employees: employees.length,
-        inserted: insertedCount,
-        updated: updatedCount,
+        processed: insertedCount,
         errors: errors,
         month: monthNum,
         year: yearNum,
@@ -760,6 +767,7 @@ const getPayslip = async (req, res) => {
         absent_deduction: parseFloat(record.absent_deduction),
         late_deduction: parseFloat(record.late_deduction),
         leave_deduction: parseFloat(record.leave_deduction),
+        advance_deduction: parseFloat(record.advance_deduction || 0),
         total_deductions: parseFloat(record.total_deductions),
         gross_salary: parseFloat(record.gross_salary),
         bonus: parseFloat(record.bonus || 0),
@@ -834,6 +842,7 @@ const getMyPayroll = async (req, res) => {
           absent_deduction: parseFloat(r.absent_deduction),
           late_deduction: parseFloat(r.late_deduction),
           leave_deduction: parseFloat(r.leave_deduction),
+          advance_deduction: parseFloat(r.advance_deduction || 0),
           total_deductions: parseFloat(r.total_deductions),
           gross_salary: parseFloat(r.gross_salary),
           bonus: parseFloat(r.bonus || 0),
@@ -908,6 +917,7 @@ const getMyPayslip = async (req, res) => {
         absent_deduction: parseFloat(record.absent_deduction),
         late_deduction: parseFloat(record.late_deduction),
         leave_deduction: parseFloat(record.leave_deduction),
+        advance_deduction: parseFloat(record.advance_deduction || 0),
         total_deductions: parseFloat(record.total_deductions),
         gross_salary: parseFloat(record.gross_salary),
         bonus: parseFloat(record.bonus || 0),

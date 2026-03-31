@@ -194,17 +194,18 @@ const PayrollManagements = () => {
   // ─── Stats (single reduce pass, memoized) ────────────────────────────────
   const stats = useMemo(() => {
     const s = payrollData.reduce((acc, r) => {
-      acc.totalPayroll += (r.net_salary || 0);
-      acc.totalDeductions += (r.total_deductions || 0);
-      acc.totalAbsentDeductions += (r.absent_deduction || 0);
-      acc.totalLateDeductions += (r.late_deduction || 0);
+      acc.totalPayroll += parseFloat(r.net_salary || 0);
+      acc.totalDeductions += parseFloat(r.total_deductions || 0);
+      acc.totalAbsentDeductions += parseFloat(r.absent_deduction || 0);
+      acc.totalLateDeductions += parseFloat(r.late_deduction || 0);
+      acc.totalAdvanceDeductions += parseFloat(r.advance_deduction || 0);
       if (r.status === "success") acc.successCount++;
       if (r.status === "pending") {
         acc.pendingCount++;
         acc.pendingPayroll += (r.net_salary || 0);
       }
       return acc;
-    }, { totalPayroll: 0, totalDeductions: 0, totalAbsentDeductions: 0, totalLateDeductions: 0, successCount: 0, pendingCount: 0, pendingPayroll: 0 });
+    }, { totalPayroll: 0, totalDeductions: 0, totalAbsentDeductions: 0, totalLateDeductions: 0, totalAdvanceDeductions: 0, successCount: 0, pendingCount: 0, pendingPayroll: 0 });
     s.totalEmployees = payrollData.length;
     s.avgSalary = payrollData.length > 0 ? s.totalPayroll / payrollData.length : 0;
     return s;
@@ -402,6 +403,7 @@ const PayrollManagements = () => {
               <span>Absent: {formatCurrency(stats.totalAbsentDeductions)}</span>
               <span>|</span>
               <span>Late: {formatCurrency(stats.totalLateDeductions)}</span>
+              {stats.totalAdvanceDeductions > 0 && <><span>|</span><span>Advance/Loan: {formatCurrency(stats.totalAdvanceDeductions)}</span></>}
             </div>
           </div>
         </div>
@@ -609,6 +611,7 @@ const PayrollTable = ({
                       <div className="flex flex-wrap gap-1 text-xs text-slate-500">
                         {record.absent_deduction > 0 && <span className="px-1 py-0.5 bg-rose-50 rounded" title="Absent Deduction">A:{formatCurrency(record.absent_deduction)}</span>}
                         {record.late_deduction > 0 && <span className="px-1 py-0.5 bg-amber-50 rounded" title={`Late: ${record.late_days} lates = ${record.late_deduction_days} day(s) deducted`}>L:{formatCurrency(record.late_deduction)}</span>}
+                        {record.advance_deduction > 0 && <span className="px-1 py-0.5 bg-purple-50 text-purple-700 rounded" title="Advance/Loan Deduction">Adv:{formatCurrency(record.advance_deduction)}</span>}
                       </div>
                     </div>
                   </td>
@@ -796,22 +799,10 @@ const PaySlipModal = ({ payroll, onClose, onUpdateStatus, onEditPayroll }) => {
                     <span className="font-medium text-rose-600">{formatCurrency(payroll.absent_deduction)}</span>
                   </div>
                 )}
-                {payroll.leave_days > 0 && (
-                  <div className="flex justify-between py-2 border-b border-slate-100">
-                    <span className="text-sm text-emerald-600">Paid Leaves ({payroll.leave_days} day{payroll.leave_days !== 1 ? "s" : ""}) — No deduction</span>
-                    <span className="font-medium text-emerald-600">{formatCurrency(0)}</span>
-                  </div>
-                )}
                 {payroll.late_deduction > 0 && (
                   <div className="flex justify-between py-2 border-b border-slate-100">
                     <span className="text-sm text-slate-600">Late ({payroll.late_days} late{payroll.late_days !== 1 ? "s" : ""} = {payroll.late_deduction_days} day{payroll.late_deduction_days !== 1 ? "s" : ""})</span>
                     <span className="font-medium text-amber-600">{formatCurrency(payroll.late_deduction)}</span>
-                  </div>
-                )}
-                {payroll.late_days > 0 && payroll.late_deduction === 0 && (
-                  <div className="flex justify-between py-2 border-b border-slate-100">
-                    <span className="text-sm text-slate-400">Late ({payroll.late_days} - no deduction, need 2+)</span>
-                    <span className="font-medium text-slate-400">{formatCurrency(0)}</span>
                   </div>
                 )}
                 {payroll.leave_deduction > 0 && (
@@ -820,10 +811,16 @@ const PaySlipModal = ({ payroll, onClose, onUpdateStatus, onEditPayroll }) => {
                     <span className="font-medium text-purple-600">{formatCurrency(payroll.leave_deduction)}</span>
                   </div>
                 )}
-                {payroll.total_deductions === 0 && <p className="text-sm text-slate-400 py-2">No deductions this month</p>}
+                {payroll.advance_deduction > 0 && (
+                  <div className="flex justify-between py-2 border-b border-slate-100">
+                    <span className="text-sm text-slate-600">Advance / Loan Deduction</span>
+                    <span className="font-medium text-purple-600">{formatCurrency(payroll.advance_deduction)}</span>
+                  </div>
+                )}
+                {payroll.total_deductions === 0 && (payroll.advance_deduction || 0) === 0 && <p className="text-sm text-slate-400 py-2">No deductions this month</p>}
                 <div className="flex justify-between py-3 bg-rose-50 rounded-lg px-3 mt-2">
                   <span className="font-bold text-slate-700">Total Deductions</span>
-                  <span className="font-bold text-rose-700">{formatCurrency(payroll.total_deductions)}</span>
+                  <span className="font-bold text-rose-700">{formatCurrency(parseFloat(payroll.total_deductions || 0) + parseFloat(payroll.advance_deduction || 0))}</span>
                 </div>
               </div>
             </div>
@@ -839,7 +836,8 @@ const PaySlipModal = ({ payroll, onClose, onUpdateStatus, onEditPayroll }) => {
                   Base ({formatCurrency(payroll.base_salary)}) + Allowances ({formatCurrency(payroll.total_allowances)})
                   {(payroll.bonus || 0) > 0 && ` + Bonus (${formatCurrency(payroll.bonus)})`}
                   {(payroll.adjustment || 0) !== 0 && ` + Adj (${formatCurrency(payroll.adjustment)})`}
-                  {` - Deductions (${formatCurrency(payroll.total_deductions)})`}
+                  {` − Deductions (${formatCurrency(payroll.total_deductions)})`}
+                  {(payroll.advance_deduction || 0) > 0 && ` − Advance/Loan (${formatCurrency(payroll.advance_deduction)})`}
                 </p>
               </div>
               <div className="flex gap-3">
@@ -855,46 +853,6 @@ const PaySlipModal = ({ payroll, onClose, onUpdateStatus, onEditPayroll }) => {
               </div>
             </div>
           </div>
-
-          {/* Late deduction explanation */}
-          <div className="p-4 bg-amber-50 rounded-xl border border-amber-200">
-            <div className="flex items-start gap-3">
-              <Clock className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="text-sm font-semibold text-amber-800">Late Deduction Rule</p>
-                <p className="text-xs text-amber-700 mt-1">
-                  Every 3 late arrivals result in 1 day salary deduction. Daily rate = Base Salary / 30.
-                  {payroll.late_days > 0 && (
-                    <span className="block mt-1">
-                      This month: {payroll.late_days} late(s) → {payroll.late_deduction_days || Math.floor(payroll.late_days / 3)} day(s) deducted = {formatCurrency(payroll.late_deduction)}
-                    </span>
-                  )}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Leave Balance Summary */}
-          {(payroll.casual_leaves_used > 0 || payroll.sick_leaves_used > 0 || payroll.annual_leaves_used > 0 || payroll.casual_leaves_total > 0) && (
-            <div className="p-4 bg-violet-50 rounded-xl border border-violet-200">
-              <p className="text-sm font-semibold text-violet-800 mb-3">Annual Leave Balance</p>
-              <div className="grid grid-cols-3 gap-3">
-                <div className="text-center p-2 bg-white rounded-lg">
-                  <p className="text-xs text-slate-500">Casual</p>
-                  <p className="text-lg font-bold text-violet-700">{payroll.casual_leaves_used || 0}<span className="text-xs text-slate-400 font-normal">/{payroll.casual_leaves_total || 0}</span></p>
-                </div>
-                <div className="text-center p-2 bg-white rounded-lg">
-                  <p className="text-xs text-slate-500">Sick</p>
-                  <p className="text-lg font-bold text-violet-700">{payroll.sick_leaves_used || 0}<span className="text-xs text-slate-400 font-normal">/{payroll.sick_leaves_total || 0}</span></p>
-                </div>
-                <div className="text-center p-2 bg-white rounded-lg">
-                  <p className="text-xs text-slate-500">Annual</p>
-                  <p className="text-lg font-bold text-violet-700">{payroll.annual_leaves_used || 0}<span className="text-xs text-slate-400 font-normal">/{payroll.annual_leaves_total || 0}</span></p>
-                </div>
-              </div>
-              <p className="text-xs text-violet-600 mt-2 text-center">Used / Total for the year</p>
-            </div>
-          )}
 
           {payroll.notes && (
             <div className="p-4 bg-slate-50 rounded-xl">
@@ -962,9 +920,10 @@ const EditPayrollModal = ({ record, onClose, onSave }) => {
   const [adjustmentReason, setAdjustmentReason] = useState(record.adjustment_reason || "");
   const [saving, setSaving] = useState(false);
 
-  const grossSalary = record.gross_salary || 0;
-  const totalDeductions = record.total_deductions || 0;
-  const previewNet = grossSalary + (parseFloat(bonus) || 0) + (parseFloat(adjustment) || 0) - totalDeductions;
+  const grossSalary = parseFloat(record.gross_salary || 0);
+  const totalDeductions = parseFloat(record.total_deductions || 0);
+  const advanceDeduction = parseFloat(record.advance_deduction || 0);
+  const previewNet = grossSalary + (parseFloat(bonus) || 0) + (parseFloat(adjustment) || 0) - totalDeductions - advanceDeduction;
 
   const handleSave = async () => {
     setSaving(true);
@@ -1008,7 +967,8 @@ const EditPayrollModal = ({ record, onClose, onSave }) => {
             </div>
             <div className="p-3 bg-rose-50 rounded-lg">
               <p className="text-xs text-rose-600">Deductions</p>
-              <p className="text-lg font-bold text-rose-700">{formatCurrency(totalDeductions)}</p>
+              <p className="text-lg font-bold text-rose-700">{formatCurrency(totalDeductions + advanceDeduction)}</p>
+              {advanceDeduction > 0 && <p className="text-[10px] text-rose-500 mt-0.5">incl. {formatCurrency(advanceDeduction)} adv/loan</p>}
             </div>
             <div className="p-3 bg-blue-50 rounded-lg">
               <p className="text-xs text-blue-600">Net Salary</p>
@@ -1075,6 +1035,7 @@ const EditPayrollModal = ({ record, onClose, onSave }) => {
             </div>
             <p className="text-xs text-blue-500 mt-1">
               {formatCurrency(grossSalary)} + {formatCurrency(parseFloat(bonus) || 0)} (bonus) + {formatCurrency(parseFloat(adjustment) || 0)} (adj) − {formatCurrency(totalDeductions)} (deductions)
+              {advanceDeduction > 0 && ` − ${formatCurrency(advanceDeduction)} (advance/loan)`}
             </p>
           </div>
 

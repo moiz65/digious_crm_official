@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Mar 17, 2026 at 09:56 AM
+-- Generation Time: Mar 31, 2026 at 06:34 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -480,6 +480,33 @@ INSERT INTO `admin_users` (`id`, `email`, `password`, `full_name`, `phone`, `rol
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `advance_installments`
+--
+
+CREATE TABLE `advance_installments` (
+  `id` int(11) NOT NULL,
+  `advance_id` int(11) NOT NULL,
+  `employee_id` int(11) NOT NULL,
+  `installment_no` int(11) NOT NULL,
+  `month` int(11) NOT NULL,
+  `year` int(11) NOT NULL,
+  `amount` decimal(12,2) NOT NULL,
+  `status` enum('pending','deducted','skipped') NOT NULL DEFAULT 'pending',
+  `payroll_record_id` int(11) DEFAULT NULL,
+  `deducted_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `advance_installments`
+--
+
+INSERT INTO `advance_installments` (`id`, `advance_id`, `employee_id`, `installment_no`, `month`, `year`, `amount`, `status`, `payroll_record_id`, `deducted_at`, `created_at`) VALUES
+(4, 3, 44, 1, 2, 2026, 10000.00, 'deducted', 313, '2026-03-26 17:06:15', '2026-03-26 17:06:07');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `applications`
 --
 
@@ -521,14 +548,18 @@ INSERT INTO `applications` (`id`, `employee_id`, `application_number`, `departme
 (4, 44, 'APP-N04U-X4Q', 'HR', 'Annual Leave Request', 'Annual Leave Request', 'njjnfje', 'pending', 'medium', NULL, NULL, 0, 0, 0, NULL, '2026-02-13 23:17:39', '2026-02-13 23:17:39', '2026-02-13 23:17:39', '2026-02-13 23:17:39', NULL, NULL, NULL, NULL, NULL, NULL),
 (5, 44, 'APP-7FMS-QXL', 'Productions', 'Production Report', 'Production Report', 'this is personal assign with CC of HR', 'pending', 'medium', 'Abdul Moiz Khan', 44, 1, 1, 0, 'HR', '2026-02-16 17:20:38', '2026-02-18 17:50:17', '2026-02-16 17:20:38', '2026-02-18 17:50:17', NULL, NULL, NULL, NULL, NULL, NULL),
 (6, 44, 'APP-BFDV-5HY', 'Productions', 'Raw Material Request', 'Raw Material Request', 'this is whole department mail ', 'pending', 'medium', NULL, NULL, 0, 0, 0, 'HR', '2026-02-16 17:23:44', '2026-02-16 17:23:44', '2026-02-16 17:23:44', '2026-02-16 17:23:44', NULL, NULL, NULL, NULL, NULL, NULL),
-(7, 44, 'APP-E1BA-ZFF', 'HR', 'Remote Work Request', 'Remote Work Request', 'this is HR Request ', 'pending', 'medium', 'Muhammad Hamza Hassan', 27, 1, 1, 0, NULL, '2026-02-16 17:25:46', '2026-02-18 19:30:18', '2026-02-16 17:25:46', '2026-02-18 19:30:18', NULL, NULL, NULL, NULL, NULL, NULL),
+(7, 44, 'APP-E1BA-ZFF', 'HR', 'Remote Work Request', 'Remote Work Request', 'this is HR Request ', 'rejected', 'medium', 'Muhammad Hamza Hassan', 27, 1, 1, 0, NULL, '2026-02-16 17:25:46', '2026-03-30 23:39:47', '2026-02-16 17:25:46', '2026-03-30 23:39:47', NULL, NULL, NULL, 'reject', NULL, NULL),
 (8, 44, 'APP-4HJA-9UN', 'Productions', 'Machine Maintenance', 'Machine Maintenance', 'xyz', 'pending', 'medium', 'Abdul Moiz Khan', 44, 1, 1, 0, 'HR', '2026-02-16 23:22:16', '2026-02-18 17:50:17', '2026-02-16 23:22:16', '2026-02-18 17:50:17', NULL, NULL, NULL, NULL, NULL, NULL),
 (9, 44, 'APP-8PQK-7MW', 'Productions', 'Raw Material Request', 'Raw Material Request', 'this is test', 'in-progress', 'high', 'Abdul Moiz Khan', 44, 2, 2, 1, 'HR', '2026-02-18 18:20:57', '2026-02-18 19:14:32', '2026-02-18 18:20:57', '2026-02-18 19:14:32', NULL, NULL, NULL, NULL, NULL, NULL),
 (10, 56, 'APP-DLC2-AL8', 'Operations', 'Equipment Request', 'Equipment Request', 'this is testg', 'pending', 'medium', 'Abdul Moiz Khan', 44, 1, 1, 1, 'HR', '2026-02-18 19:48:44', '2026-02-18 19:48:44', '2026-02-18 19:48:44', '2026-02-18 19:48:44', NULL, NULL, NULL, NULL, NULL, NULL),
 (11, 44, 'APP-498X-3K1', 'Operations', 'Safety Equipment Request', 'Safety Equipment Request', 'nbnbn', 'in-progress', 'medium', 'Muhammad Hunain', 56, 2, 3, 1, 'HR', '2026-02-18 22:57:26', '2026-02-18 22:58:06', '2026-02-18 22:57:26', '2026-02-18 22:58:06', NULL, NULL, NULL, NULL, NULL, NULL),
 (12, 56, 'APP-9OG8-LCO', 'Productions', 'For leave ', 'For leave ', 'demo testing', 'approved', 'urgent', 'Abdul Moiz Khan', 44, 2, 1, 1, 'HR', '2026-02-18 23:01:39', '2026-02-18 23:06:15', '2026-02-18 23:01:39', '2026-02-18 23:06:15', 'Muhammad Hamza Hassan', '2026-02-18 23:06:15', NULL, NULL, NULL, NULL),
 (13, 44, 'APP-RUCY-09W', 'HR', 'Missing Checkout', 'Missing Checkout', 'i was present forgot to check out ', 'approved', 'medium', 'Muhammad Hamza Hassan', 27, 2, 1, 1, NULL, '2026-02-19 19:47:29', '2026-02-19 23:37:38', '2026-02-19 19:47:29', '2026-02-19 23:37:38', 'Muhammad Hamza Hassan', '2026-02-19 19:48:15', NULL, NULL, '{\"adjustment_resolved\":true,\"adjustment_resolved_at\":\"2026-02-19T18:37:38.218Z\",\"adjustment_resolved_by\":27,\"resolution_notes\":\"resolved \"}', NULL),
-(14, 56, 'APP-QHXE-J2X', 'HR', 'Adjustment of Absent in Leaves ', 'Adjustment of Absent in Leaves ', 'this is test', 'approved', 'medium', 'Muhammad Hamza Hassan', 27, 2, 1, 1, NULL, '2026-02-20 18:10:08', '2026-02-20 18:18:10', '2026-02-20 18:10:08', '2026-02-20 18:18:10', 'Muhammad Hamza Hassan', '2026-02-20 18:11:07', NULL, NULL, '{\"adjustment_resolved\":true,\"adjustment_resolved_at\":\"2026-02-20T13:18:10.629Z\",\"adjustment_resolved_by\":27,\"resolution_notes\":\"\"}', NULL);
+(14, 56, 'APP-QHXE-J2X', 'HR', 'Adjustment of Absent in Leaves ', 'Adjustment of Absent in Leaves ', 'this is test', 'approved', 'medium', 'Muhammad Hamza Hassan', 27, 2, 1, 1, NULL, '2026-02-20 18:10:08', '2026-02-20 18:18:10', '2026-02-20 18:10:08', '2026-02-20 18:18:10', 'Muhammad Hamza Hassan', '2026-02-20 18:11:07', NULL, NULL, '{\"adjustment_resolved\":true,\"adjustment_resolved_at\":\"2026-02-20T13:18:10.629Z\",\"adjustment_resolved_by\":27,\"resolution_notes\":\"\"}', NULL),
+(15, 56, 'APP-HRH6-EL3', 'Human Resources', 'Salary Revision', 'test', 'test', 'approved', 'high', 'Abdul Moiz Khan', 44, 2, 1, 1, NULL, '2026-03-28 21:51:26', '2026-03-28 21:51:51', '2026-03-28 21:51:26', '2026-03-28 21:51:51', 'Abdul Moiz Khan', '2026-03-28 21:51:51', NULL, NULL, NULL, NULL),
+(16, 56, 'APP-KHOY-XXJ', 'Administration', 'Meeting Room Booking', 'test 1', 'test1', 'approved', 'medium', 'Abdul Moiz Khan', 44, 3, 2, 1, 'HR', '2026-03-28 21:53:33', '2026-03-28 21:55:03', '2026-03-28 21:53:33', '2026-03-28 21:55:03', 'Muhammad Hamza Hassan', '2026-03-28 21:55:03', 'approved', NULL, NULL, NULL),
+(17, 27, 'APP-XE08-SCQ', 'Human Resources', 'Promotion Request', 'hhb', 'hb', 'pending', 'medium', 'Abdul Moiz Khan', 44, 1, 1, 1, NULL, '2026-03-28 22:03:35', '2026-03-28 22:03:35', '2026-03-28 22:03:35', '2026-03-28 22:03:35', NULL, NULL, NULL, NULL, NULL, NULL),
+(18, 56, 'APP-5JF9-W02', 'Human Resources', 'Overtime Request', 'ppp', 'aaa', 'approved', 'high', 'Abdul Moiz Khan', 44, 3, 2, 1, NULL, '2026-03-30 23:37:15', '2026-03-30 23:40:53', '2026-03-30 23:37:15', '2026-03-30 23:40:53', 'Muhammad Hamza Hassan', '2026-03-30 23:40:53', 'ok', NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -570,7 +601,23 @@ INSERT INTO `application_approval_log` (`id`, `application_id`, `employee_id`, `
 (16, 13, 27, 'Muhammad Hamza Hassan', 'assigned', 1, 'Assigned as step 1 approver', '2026-02-19 19:47:29', '2026-02-19 19:47:29'),
 (17, 13, 27, 'Muhammad Hamza Hassan', 'approved', 1, NULL, '2026-02-19 19:48:15', '2026-02-19 19:48:15'),
 (18, 14, 27, 'Muhammad Hamza Hassan', 'assigned', 1, 'Assigned as step 1 approver', '2026-02-20 18:10:08', '2026-02-20 18:10:08'),
-(19, 14, 27, 'Muhammad Hamza Hassan', 'approved', 1, NULL, '2026-02-20 18:11:07', '2026-02-20 18:11:07');
+(19, 14, 27, 'Muhammad Hamza Hassan', 'approved', 1, NULL, '2026-02-20 18:11:07', '2026-02-20 18:11:07'),
+(20, 15, 44, 'Abdul Moiz Khan', 'assigned', 1, 'Assigned as step 1 approver', '2026-03-28 21:51:26', '2026-03-28 21:51:26'),
+(21, 15, 44, 'Abdul Moiz Khan', 'approved', 1, NULL, '2026-03-28 21:51:51', '2026-03-28 21:51:51'),
+(22, 16, 44, 'Abdul Moiz Khan', 'assigned', 1, 'Assigned as step 1 approver', '2026-03-28 21:53:33', '2026-03-28 21:53:33'),
+(23, 16, 27, 'Muhammad Hamza Hassan', 'assigned', 2, 'Assigned as step 2 approver', '2026-03-28 21:53:33', '2026-03-28 21:53:33'),
+(24, 16, 44, 'Abdul Moiz Khan', 'approved', 1, 'approved', '2026-03-28 21:54:21', '2026-03-28 21:54:21'),
+(25, 16, 44, 'Abdul Moiz Khan', 'forwarded', 2, 'Forwarded to Muhammad Hamza Hassan', '2026-03-28 21:54:21', '2026-03-28 21:54:21'),
+(26, 16, 27, 'Muhammad Hamza Hassan', 'approved', 2, 'approved 2', '2026-03-28 21:54:46', '2026-03-28 21:54:46'),
+(27, 16, 27, 'Muhammad Hamza Hassan', 'forwarded', 3, 'All assignees approved. Awaiting HR final approval.', '2026-03-28 21:54:46', '2026-03-28 21:54:46'),
+(28, 16, 27, 'Muhammad Hamza Hassan', 'approved', 3, 'HR Final Approval: approved', '2026-03-28 21:55:03', '2026-03-28 21:55:03'),
+(29, 17, 44, 'Abdul Moiz Khan', 'assigned', 1, 'Assigned as step 1 approver', '2026-03-28 22:03:35', '2026-03-28 22:03:35'),
+(30, 18, 44, 'Abdul Moiz Khan', 'assigned', 1, 'Assigned as step 1 approver', '2026-03-30 23:37:15', '2026-03-30 23:37:15'),
+(31, 18, 27, 'Muhammad Hamza Hassan', 'assigned', 2, 'Assigned as step 2 approver', '2026-03-30 23:37:15', '2026-03-30 23:37:15'),
+(32, 18, 44, 'Abdul Moiz Khan', 'approved', 1, 'ok', '2026-03-30 23:38:12', '2026-03-30 23:38:12'),
+(33, 18, 44, 'Abdul Moiz Khan', 'forwarded', 2, 'Forwarded to Muhammad Hamza Hassan', '2026-03-30 23:38:12', '2026-03-30 23:38:12'),
+(34, 7, 27, 'Muhammad Hamza Hassan', 'rejected', 1, 'reject', '2026-03-30 23:39:47', '2026-03-30 23:39:47'),
+(35, 18, 27, 'Muhammad Hamza Hassan', 'approved', 2, 'ok', '2026-03-30 23:40:53', '2026-03-30 23:40:53');
 
 -- --------------------------------------------------------
 
@@ -597,7 +644,7 @@ CREATE TABLE `application_assignees` (
 
 INSERT INTO `application_assignees` (`id`, `application_id`, `employee_id`, `employee_name`, `step_order`, `status`, `action_date`, `notes`, `created_at`, `updated_at`) VALUES
 (1, 5, 44, 'Abdul Moiz Khan', 1, 'pending', NULL, NULL, '2026-02-16 17:20:38', '2026-02-18 17:50:17'),
-(2, 7, 27, 'Muhammad Hamza Hassan', 1, 'pending', NULL, 'Budget constraints - not approved for this quarter', '2026-02-16 17:25:46', '2026-02-18 19:30:18'),
+(2, 7, 27, 'Muhammad Hamza Hassan', 1, 'rejected', '2026-03-30 23:39:47', 'reject', '2026-02-16 17:25:46', '2026-03-30 23:39:47'),
 (3, 8, 44, 'Abdul Moiz Khan', 1, 'pending', NULL, NULL, '2026-02-16 23:22:16', '2026-02-18 17:50:17'),
 (4, 9, 44, 'Abdul Moiz Khan', 1, 'approved', '2026-02-18 19:12:25', NULL, '2026-02-18 18:20:57', '2026-02-18 19:12:25'),
 (5, 9, 39, 'Muhammad Hamza', 2, 'pending', NULL, NULL, '2026-02-18 18:20:57', '2026-02-18 18:20:57'),
@@ -607,7 +654,93 @@ INSERT INTO `application_assignees` (`id`, `application_id`, `employee_id`, `emp
 (9, 11, 35, 'Muhammad Taha', 3, 'pending', NULL, NULL, '2026-02-18 22:57:26', '2026-02-18 22:57:26'),
 (10, 12, 44, 'Abdul Moiz Khan', 1, 'approved', '2026-02-18 23:04:00', NULL, '2026-02-18 23:01:39', '2026-02-18 23:04:00'),
 (11, 13, 27, 'Muhammad Hamza Hassan', 1, 'approved', '2026-02-19 19:48:15', NULL, '2026-02-19 19:47:29', '2026-02-19 19:48:15'),
-(12, 14, 27, 'Muhammad Hamza Hassan', 1, 'approved', '2026-02-20 18:11:07', NULL, '2026-02-20 18:10:08', '2026-02-20 18:11:07');
+(12, 14, 27, 'Muhammad Hamza Hassan', 1, 'approved', '2026-02-20 18:11:07', NULL, '2026-02-20 18:10:08', '2026-02-20 18:11:07'),
+(13, 15, 44, 'Abdul Moiz Khan', 1, 'approved', '2026-03-28 21:51:51', NULL, '2026-03-28 21:51:26', '2026-03-28 21:51:51'),
+(14, 16, 44, 'Abdul Moiz Khan', 1, 'approved', '2026-03-28 21:54:21', 'approved', '2026-03-28 21:53:33', '2026-03-28 21:54:21'),
+(15, 16, 27, 'Muhammad Hamza Hassan', 2, 'approved', '2026-03-28 21:54:46', 'approved 2', '2026-03-28 21:53:33', '2026-03-28 21:54:46'),
+(16, 17, 44, 'Abdul Moiz Khan', 1, 'pending', NULL, NULL, '2026-03-28 22:03:35', '2026-03-28 22:03:35'),
+(17, 18, 44, 'Abdul Moiz Khan', 1, 'approved', '2026-03-30 23:38:12', 'ok', '2026-03-30 23:37:15', '2026-03-30 23:38:12'),
+(18, 18, 27, 'Muhammad Hamza Hassan', 2, 'approved', '2026-03-30 23:40:53', 'ok', '2026-03-30 23:37:15', '2026-03-30 23:40:53');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `attendance_corrections`
+--
+
+CREATE TABLE `attendance_corrections` (
+  `id` int(11) NOT NULL,
+  `ticket_number` varchar(30) NOT NULL,
+  `employee_id` int(11) NOT NULL COMMENT 'FK → employee_onboarding.id',
+  `employee_name` varchar(100) NOT NULL,
+  `employee_email` varchar(100) NOT NULL,
+  `attendance_id` int(11) DEFAULT NULL COMMENT 'FK → Employee_Attendance.id (NULL if absent record)',
+  `attendance_date` date NOT NULL,
+  `original_check_in` time DEFAULT NULL,
+  `original_check_out` time DEFAULT NULL,
+  `original_status` varchar(50) DEFAULT NULL,
+  `original_working_minutes` int(11) DEFAULT NULL,
+  `original_break_minutes` int(11) DEFAULT NULL,
+  `original_late_minutes` int(11) DEFAULT NULL,
+  `original_overtime_minutes` int(11) DEFAULT NULL,
+  `corrected_check_in` time DEFAULT NULL,
+  `corrected_check_out` time DEFAULT NULL,
+  `corrected_status` varchar(50) DEFAULT NULL,
+  `reason` text NOT NULL,
+  `tagged_employee_id` int(11) NOT NULL COMMENT 'FK → employee_onboarding.id',
+  `tagged_employee_name` varchar(100) NOT NULL,
+  `tagged_employee_email` varchar(100) NOT NULL,
+  `tagged_status` enum('pending','approved','rejected') DEFAULT 'pending',
+  `tagged_remarks` text DEFAULT NULL,
+  `tagged_action_at` timestamp NULL DEFAULT NULL,
+  `hr_status` enum('pending','approved','rejected') DEFAULT 'pending',
+  `hr_remarks` text DEFAULT NULL,
+  `hr_action_by` int(11) DEFAULT NULL COMMENT 'HR employee who took action',
+  `hr_action_by_name` varchar(100) DEFAULT NULL,
+  `hr_action_at` timestamp NULL DEFAULT NULL,
+  `overall_status` enum('open','tagged_approved','tagged_rejected','hr_approved','hr_rejected','applied') DEFAULT 'open',
+  `is_applied` tinyint(1) DEFAULT 0,
+  `applied_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `attendance_corrections`
+--
+
+INSERT INTO `attendance_corrections` (`id`, `ticket_number`, `employee_id`, `employee_name`, `employee_email`, `attendance_id`, `attendance_date`, `original_check_in`, `original_check_out`, `original_status`, `original_working_minutes`, `original_break_minutes`, `original_late_minutes`, `original_overtime_minutes`, `corrected_check_in`, `corrected_check_out`, `corrected_status`, `reason`, `tagged_employee_id`, `tagged_employee_name`, `tagged_employee_email`, `tagged_status`, `tagged_remarks`, `tagged_action_at`, `hr_status`, `hr_remarks`, `hr_action_by`, `hr_action_by_name`, `hr_action_at`, `overall_status`, `is_applied`, `applied_at`, `created_at`, `updated_at`) VALUES
+(1, 'AC-20260327-2827', 56, 'Muhammad Hunain', 'muhammad.hunain@digioussolutions.com', 368, '2026-03-26', '01:29:27', '09:00:00', 'Late', 451, NULL, 254, NULL, NULL, '07:00:00', NULL, 'leave on early', 44, 'Abdul Moiz Khan', 'Moiz@digioussolutions.com', 'approved', NULL, '2026-03-27 13:07:24', 'approved', NULL, 27, 'Muhammad Hamza Hassan', '2026-03-27 13:08:01', 'applied', 1, '2026-03-27 13:08:01', '2026-03-27 13:06:39', '2026-03-27 13:08:01'),
+(2, 'AC-20260327-7042', 56, 'Muhammad Hunain', 'muhammad.hunain@digioussolutions.com', 368, '2026-03-26', '01:29:27', '07:00:00', 'Late', 331, NULL, 254, NULL, '21:01:00', '06:00:00', 'Present', 'correct entry', 44, 'Abdul Moiz Khan', 'Moiz@digioussolutions.com', 'approved', 'ok confirmed ', '2026-03-27 18:56:38', 'approved', 'ok done ', 27, 'Muhammad Hamza Hassan', '2026-03-27 18:58:09', 'applied', 1, '2026-03-27 18:58:09', '2026-03-27 18:54:10', '2026-03-27 18:58:09');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `attendance_correction_logs`
+--
+
+CREATE TABLE `attendance_correction_logs` (
+  `id` int(11) NOT NULL,
+  `correction_id` int(11) NOT NULL COMMENT 'FK → attendance_corrections.id',
+  `action` enum('created','tagged_approved','tagged_rejected','hr_approved','hr_rejected','applied','reopened') NOT NULL,
+  `action_by_id` int(11) NOT NULL,
+  `action_by_name` varchar(100) NOT NULL,
+  `action_by_role` varchar(50) DEFAULT NULL,
+  `remarks` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `attendance_correction_logs`
+--
+
+INSERT INTO `attendance_correction_logs` (`id`, `correction_id`, `action`, `action_by_id`, `action_by_name`, `action_by_role`, `remarks`, `created_at`) VALUES
+(1, 1, 'created', 56, 'Muhammad Hunain', 'Operations', 'leave on early', '2026-03-27 13:06:39'),
+(2, 1, 'tagged_approved', 44, 'Abdul Moiz Khan', 'tagged_person', NULL, '2026-03-27 13:07:24'),
+(3, 1, 'hr_approved', 27, 'Muhammad Hamza Hassan', 'HR', NULL, '2026-03-27 13:08:01'),
+(4, 2, 'created', 56, 'Muhammad Hunain', 'Operations', 'correct entry', '2026-03-27 18:54:10'),
+(5, 2, 'tagged_approved', 44, 'Abdul Moiz Khan', 'tagged_person', 'ok confirmed ', '2026-03-27 18:56:38'),
+(6, 2, 'hr_approved', 27, 'Muhammad Hamza Hassan', 'HR', 'ok done ', '2026-03-27 18:58:09');
 
 -- --------------------------------------------------------
 
@@ -669,6 +802,34 @@ INSERT INTO `Company_Rules` (`id`, `rule_name`, `rule_type`, `description`, `sta
 (4, 'Washroom Break', 'BREAK_TIME', 'Washroom/Restroom break', NULL, NULL, NULL, 10, 'Washroom Break', NULL, NULL, 1, 3, '2025-12-23 16:25:46', '2025-12-23 16:25:46'),
 (5, 'Prayer Break', 'BREAK_TIME', 'Prayer break during working hours', NULL, NULL, NULL, 10, 'Prayer Break', NULL, NULL, 1, 3, '2025-12-23 16:25:46', '2025-12-23 16:25:46'),
 (6, 'Overtime - Standard Rate', 'OVERTIME', 'Overtime payment after regular working hours (9 hours)', NULL, NULL, NULL, NULL, NULL, 540, 1.50, 1, 4, '2025-12-23 16:25:46', '2025-12-23 16:25:46');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `customers`
+--
+
+CREATE TABLE `customers` (
+  `id` int(11) NOT NULL,
+  `client_name` varchar(200) NOT NULL,
+  `client_email` varchar(200) NOT NULL,
+  `client_phone` varchar(50) DEFAULT NULL,
+  `total_spent` decimal(14,2) NOT NULL DEFAULT 0.00,
+  `total_projects` int(11) NOT NULL DEFAULT 0,
+  `first_sale_date` date DEFAULT NULL,
+  `last_sale_date` date DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `customers`
+--
+
+INSERT INTO `customers` (`id`, `client_name`, `client_email`, `client_phone`, `total_spent`, `total_projects`, `first_sale_date`, `last_sale_date`, `created_at`, `updated_at`) VALUES
+(1, 'david', 'david@gmail.com', '0981726354', 1234.00, 1, '2026-03-02', '2026-03-02', '2026-03-24 17:41:59', '2026-03-24 17:41:59'),
+(2, 'Kamaran', 'kamran@gmail.com', '0981726534', 123.00, 1, '2026-03-13', '2026-03-13', '2026-03-24 17:41:59', '2026-03-24 17:41:59'),
+(3, 'Moiz', 'Moiz@gmail.com', '0918277661', 990.00, 1, '2026-03-02', '2026-03-02', '2026-03-24 17:41:59', '2026-03-24 17:41:59');
 
 -- --------------------------------------------------------
 
@@ -1504,7 +1665,6 @@ INSERT INTO `Employee_Absent` (`id`, `employee_id`, `email`, `name`, `absent_dat
 (809, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-03-10', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-10 12:01:15', '2026-03-10 12:01:15', NULL, NULL),
 (810, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-03-10', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-10 12:01:16', '2026-03-10 12:01:16', NULL, NULL),
 (811, 55, 'JFAD@digioussolutions.com', 'JFAD', '2026-03-10', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-10 12:01:16', '2026-03-10 12:01:16', NULL, NULL),
-(812, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-10', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-10 12:01:16', '2026-03-10 12:01:16', NULL, NULL),
 (813, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-11', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-11 08:34:48', '2026-03-11 08:34:48', NULL, NULL),
 (814, 28, 'Shahmeerabbas@digioussolutions.com', 'Syed Shahmeer Abbas', '2026-03-11', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-11 08:34:48', '2026-03-11 08:34:48', NULL, NULL),
 (815, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-03-11', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-11 08:34:48', '2026-03-11 08:34:48', NULL, NULL),
@@ -1528,7 +1688,6 @@ INSERT INTO `Employee_Absent` (`id`, `employee_id`, `email`, `name`, `absent_dat
 (833, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-03-11', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-11 08:34:48', '2026-03-11 08:34:48', NULL, NULL),
 (834, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-03-11', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-11 08:34:48', '2026-03-11 08:34:48', NULL, NULL),
 (835, 55, 'JFAD@digioussolutions.com', 'JFAD', '2026-03-11', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-11 08:34:48', '2026-03-11 08:34:48', NULL, NULL),
-(836, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-11', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-11 08:34:48', '2026-03-11 08:34:48', NULL, NULL),
 (837, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-12', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-12 09:04:05', '2026-03-12 09:04:05', NULL, NULL),
 (838, 28, 'Shahmeerabbas@digioussolutions.com', 'Syed Shahmeer Abbas', '2026-03-12', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-12 09:04:05', '2026-03-12 09:04:05', NULL, NULL),
 (839, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-03-12', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-12 09:04:05', '2026-03-12 09:04:05', NULL, NULL),
@@ -1552,7 +1711,6 @@ INSERT INTO `Employee_Absent` (`id`, `employee_id`, `email`, `name`, `absent_dat
 (857, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-03-12', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-12 09:04:06', '2026-03-12 09:04:06', NULL, NULL),
 (858, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-03-12', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-12 09:04:06', '2026-03-12 09:04:06', NULL, NULL),
 (859, 55, 'JFAD@digioussolutions.com', 'JFAD', '2026-03-12', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-12 09:04:06', '2026-03-12 09:04:06', NULL, NULL),
-(860, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-12', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-12 09:04:06', '2026-03-12 09:04:06', NULL, NULL),
 (861, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-13', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-13 13:03:04', '2026-03-13 13:03:04', NULL, NULL),
 (862, 28, 'Shahmeerabbas@digioussolutions.com', 'Syed Shahmeer Abbas', '2026-03-13', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-13 13:03:04', '2026-03-13 13:03:04', NULL, NULL),
 (863, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-03-13', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-13 13:03:04', '2026-03-13 13:03:04', NULL, NULL),
@@ -1576,7 +1734,6 @@ INSERT INTO `Employee_Absent` (`id`, `employee_id`, `email`, `name`, `absent_dat
 (881, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-03-13', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-13 13:03:04', '2026-03-13 13:03:04', NULL, NULL),
 (882, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-03-13', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-13 13:03:04', '2026-03-13 13:03:04', NULL, NULL),
 (883, 55, 'JFAD@digioussolutions.com', 'JFAD', '2026-03-13', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-13 13:03:04', '2026-03-13 13:03:04', NULL, NULL),
-(884, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-13', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-13 13:03:04', '2026-03-13 13:03:04', NULL, NULL),
 (885, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-16', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
 (886, 28, 'Shahmeerabbas@digioussolutions.com', 'Syed Shahmeer Abbas', '2026-03-16', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
 (887, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-03-16', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
@@ -1624,7 +1781,304 @@ INSERT INTO `Employee_Absent` (`id`, `employee_id`, `email`, `name`, `absent_dat
 (929, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-03-17', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
 (930, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-03-17', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
 (931, 55, 'JFAD@digioussolutions.com', 'JFAD', '2026-03-17', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
-(932, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-17', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL);
+(932, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-17', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 08:23:35', '2026-03-17 08:23:35', NULL, NULL),
+(933, 57, 'mhunaindigious.com@digioussolutions.com', 'MHunain', '2026-03-16', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 09:40:03', '2026-03-17 09:40:03', NULL, NULL),
+(934, 57, 'mhunaindigious.com@digioussolutions.com', 'MHunain', '2026-03-17', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-17 09:40:03', '2026-03-17 09:40:03', NULL, NULL),
+(935, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-18', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-18 14:57:40', '2026-03-18 14:57:40', NULL, NULL),
+(936, 28, 'Shahmeerabbas@digioussolutions.com', 'Syed Shahmeer Abbas', '2026-03-18', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-18 14:57:40', '2026-03-18 14:57:40', NULL, NULL),
+(937, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-03-18', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-18 14:57:40', '2026-03-18 14:57:40', NULL, NULL),
+(938, 30, 'wajih@digioussolutions.com', 'Wajih ul Hasan', '2026-03-18', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-18 14:57:40', '2026-03-18 14:57:40', NULL, NULL),
+(939, 31, 'Wahajabbas@digioussolutions.com', 'Syed Wahaj Abbas ', '2026-03-18', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-18 14:57:40', '2026-03-18 14:57:40', NULL, NULL),
+(940, 32, 'Humaiz@digioussolutions.com', 'Muhammad Humaiz', '2026-03-18', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-18 14:57:40', '2026-03-18 14:57:40', NULL, NULL),
+(941, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-03-18', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-18 14:57:40', '2026-03-18 14:57:40', NULL, NULL),
+(942, 34, 'Khisal@digioussolutions.com', 'Khisal Zafar', '2026-03-18', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-18 14:57:40', '2026-03-18 14:57:40', NULL, NULL),
+(943, 35, 'Taha@digioussolutions.com', 'Muhammad Taha', '2026-03-18', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-18 14:57:40', '2026-03-18 14:57:40', NULL, NULL),
+(944, 36, 'Faiq@digioussolutions.com', 'Faiq Shahzad', '2026-03-18', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-18 14:57:40', '2026-03-18 14:57:40', NULL, NULL),
+(945, 37, 'Taimoor@digioussolutions.com', 'Taimoor Shah', '2026-03-18', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-18 14:57:40', '2026-03-18 14:57:40', NULL, NULL),
+(946, 38, 'Ebad@digioussolutions.com', 'Muhammad Ebad', '2026-03-18', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-18 14:57:40', '2026-03-18 14:57:40', NULL, NULL),
+(947, 39, 'muhammadHamza@digioussolutions.com', 'Muhammad Hamza', '2026-03-18', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-18 14:57:40', '2026-03-18 14:57:40', NULL, NULL),
+(948, 40, 'Yanish@digioussolutions.com', 'Yanish Hyder', '2026-03-18', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-18 14:57:40', '2026-03-18 14:57:40', NULL, NULL),
+(949, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-03-18', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-18 14:57:40', '2026-03-18 14:57:40', NULL, NULL),
+(950, 42, 'Tahir@digioussolutions.com', 'Tahir ', '2026-03-18', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-18 14:57:40', '2026-03-18 14:57:40', NULL, NULL),
+(951, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-03-18', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-18 14:57:40', '2026-03-18 14:57:40', NULL, NULL),
+(952, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-03-18', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-18 14:57:40', '2026-03-18 14:57:40', NULL, NULL),
+(953, 45, 'SyedAwais@digioussolutions.com', 'Syed Awais Ahmed', '2026-03-18', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-18 14:57:40', '2026-03-18 14:57:40', NULL, NULL),
+(954, 46, 'Shahrukh@digioussolutions.com', 'Shahrukh Hussain Siddiqui', '2026-03-18', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-18 14:57:40', '2026-03-18 14:57:40', NULL, NULL),
+(955, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-03-18', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-18 14:57:40', '2026-03-18 14:57:40', NULL, NULL),
+(956, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-03-18', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-18 14:57:40', '2026-03-18 14:57:40', NULL, NULL),
+(957, 55, 'JFAD@digioussolutions.com', 'JFAD', '2026-03-18', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-18 14:57:40', '2026-03-18 14:57:40', NULL, NULL);
+INSERT INTO `Employee_Absent` (`id`, `employee_id`, `email`, `name`, `absent_date`, `reason_type`, `reason`, `supporting_document_url`, `is_approved`, `approved_by`, `approved_at`, `remarks`, `created_at`, `updated_at`, `leave_type_key`, `application_id`) VALUES
+(958, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-18', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-18 14:57:40', '2026-03-18 14:57:40', NULL, NULL),
+(959, 57, 'mhunaindigious.com@digioussolutions.com', 'MHunain ', '2026-03-18', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-18 14:57:40', '2026-03-18 14:57:40', NULL, NULL),
+(960, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-19', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-19 14:22:53', '2026-03-19 14:22:53', NULL, NULL),
+(961, 28, 'Shahmeerabbas@digioussolutions.com', 'Syed Shahmeer Abbas', '2026-03-19', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-19 14:22:53', '2026-03-19 14:22:53', NULL, NULL),
+(962, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-03-19', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-19 14:22:53', '2026-03-19 14:22:53', NULL, NULL),
+(963, 30, 'wajih@digioussolutions.com', 'Wajih ul Hasan', '2026-03-19', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-19 14:22:53', '2026-03-19 14:22:53', NULL, NULL),
+(964, 31, 'Wahajabbas@digioussolutions.com', 'Syed Wahaj Abbas ', '2026-03-19', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-19 14:22:53', '2026-03-19 14:22:53', NULL, NULL),
+(965, 32, 'Humaiz@digioussolutions.com', 'Muhammad Humaiz', '2026-03-19', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-19 14:22:53', '2026-03-19 14:22:53', NULL, NULL),
+(966, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-03-19', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-19 14:22:53', '2026-03-19 14:22:53', NULL, NULL),
+(967, 34, 'Khisal@digioussolutions.com', 'Khisal Zafar', '2026-03-19', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-19 14:22:53', '2026-03-19 14:22:53', NULL, NULL),
+(968, 35, 'Taha@digioussolutions.com', 'Muhammad Taha', '2026-03-19', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-19 14:22:53', '2026-03-19 14:22:53', NULL, NULL),
+(969, 36, 'Faiq@digioussolutions.com', 'Faiq Shahzad', '2026-03-19', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-19 14:22:53', '2026-03-19 14:22:53', NULL, NULL),
+(970, 37, 'Taimoor@digioussolutions.com', 'Taimoor Shah', '2026-03-19', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-19 14:22:53', '2026-03-19 14:22:53', NULL, NULL),
+(971, 38, 'Ebad@digioussolutions.com', 'Muhammad Ebad', '2026-03-19', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-19 14:22:53', '2026-03-19 14:22:53', NULL, NULL),
+(972, 39, 'muhammadHamza@digioussolutions.com', 'Muhammad Hamza', '2026-03-19', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-19 14:22:53', '2026-03-19 14:22:53', NULL, NULL),
+(973, 40, 'Yanish@digioussolutions.com', 'Yanish Hyder', '2026-03-19', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-19 14:22:53', '2026-03-19 14:22:53', NULL, NULL),
+(974, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-03-19', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-19 14:22:53', '2026-03-19 14:22:53', NULL, NULL),
+(975, 42, 'Tahir@digioussolutions.com', 'Tahir ', '2026-03-19', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-19 14:22:53', '2026-03-19 14:22:53', NULL, NULL),
+(976, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-03-19', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-19 14:22:53', '2026-03-19 14:22:53', NULL, NULL),
+(977, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-03-19', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-19 14:22:53', '2026-03-19 14:22:53', NULL, NULL),
+(978, 45, 'SyedAwais@digioussolutions.com', 'Syed Awais Ahmed', '2026-03-19', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-19 14:22:53', '2026-03-19 14:22:53', NULL, NULL),
+(979, 46, 'Shahrukh@digioussolutions.com', 'Shahrukh Hussain Siddiqui', '2026-03-19', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-19 14:22:53', '2026-03-19 14:22:53', NULL, NULL),
+(980, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-03-19', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-19 14:22:53', '2026-03-19 14:22:53', NULL, NULL),
+(981, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-03-19', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-19 14:22:53', '2026-03-19 14:22:53', NULL, NULL),
+(982, 55, 'JFAD@digioussolutions.com', 'JFAD', '2026-03-19', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-19 14:22:53', '2026-03-19 14:22:53', NULL, NULL),
+(983, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-19', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-19 14:22:53', '2026-03-19 14:22:53', NULL, NULL),
+(984, 57, 'mhunaindigious.com@digioussolutions.com', 'MHunain ', '2026-03-19', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-19 14:22:53', '2026-03-19 14:22:53', NULL, NULL),
+(985, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-20', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-20 12:26:10', '2026-03-20 12:26:10', NULL, NULL),
+(986, 28, 'Shahmeerabbas@digioussolutions.com', 'Syed Shahmeer Abbas', '2026-03-20', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-20 12:26:10', '2026-03-20 12:26:10', NULL, NULL),
+(987, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-03-20', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-20 12:26:10', '2026-03-20 12:26:10', NULL, NULL),
+(988, 30, 'wajih@digioussolutions.com', 'Wajih ul Hasan', '2026-03-20', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-20 12:26:10', '2026-03-20 12:26:10', NULL, NULL),
+(989, 31, 'Wahajabbas@digioussolutions.com', 'Syed Wahaj Abbas ', '2026-03-20', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-20 12:26:10', '2026-03-20 12:26:10', NULL, NULL),
+(990, 32, 'Humaiz@digioussolutions.com', 'Muhammad Humaiz', '2026-03-20', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-20 12:26:10', '2026-03-20 12:26:10', NULL, NULL),
+(991, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-03-20', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-20 12:26:10', '2026-03-20 12:26:10', NULL, NULL),
+(992, 34, 'Khisal@digioussolutions.com', 'Khisal Zafar', '2026-03-20', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-20 12:26:10', '2026-03-20 12:26:10', NULL, NULL),
+(993, 35, 'Taha@digioussolutions.com', 'Muhammad Taha', '2026-03-20', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-20 12:26:10', '2026-03-20 12:26:10', NULL, NULL),
+(994, 36, 'Faiq@digioussolutions.com', 'Faiq Shahzad', '2026-03-20', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-20 12:26:10', '2026-03-20 12:26:10', NULL, NULL),
+(995, 37, 'Taimoor@digioussolutions.com', 'Taimoor Shah', '2026-03-20', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-20 12:26:10', '2026-03-20 12:26:10', NULL, NULL),
+(996, 38, 'Ebad@digioussolutions.com', 'Muhammad Ebad', '2026-03-20', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-20 12:26:11', '2026-03-20 12:26:11', NULL, NULL),
+(997, 39, 'muhammadHamza@digioussolutions.com', 'Muhammad Hamza', '2026-03-20', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-20 12:26:11', '2026-03-20 12:26:11', NULL, NULL),
+(998, 40, 'Yanish@digioussolutions.com', 'Yanish Hyder', '2026-03-20', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-20 12:26:11', '2026-03-20 12:26:11', NULL, NULL),
+(999, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-03-20', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-20 12:26:11', '2026-03-20 12:26:11', NULL, NULL),
+(1000, 42, 'Tahir@digioussolutions.com', 'Tahir ', '2026-03-20', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-20 12:26:11', '2026-03-20 12:26:11', NULL, NULL),
+(1001, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-03-20', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-20 12:26:11', '2026-03-20 12:26:11', NULL, NULL),
+(1002, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-03-20', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-20 12:26:11', '2026-03-20 12:26:11', NULL, NULL),
+(1003, 45, 'SyedAwais@digioussolutions.com', 'Syed Awais Ahmed', '2026-03-20', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-20 12:26:11', '2026-03-20 12:26:11', NULL, NULL),
+(1004, 46, 'Shahrukh@digioussolutions.com', 'Shahrukh Hussain Siddiqui', '2026-03-20', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-20 12:26:11', '2026-03-20 12:26:11', NULL, NULL),
+(1005, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-03-20', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-20 12:26:11', '2026-03-20 12:26:11', NULL, NULL),
+(1006, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-03-20', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-20 12:26:11', '2026-03-20 12:26:11', NULL, NULL),
+(1007, 55, 'JFAD@digioussolutions.com', 'JFAD', '2026-03-20', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-20 12:26:11', '2026-03-20 12:26:11', NULL, NULL),
+(1009, 57, 'mhunaindigious.com@digioussolutions.com', 'MHunain ', '2026-03-20', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-20 12:26:11', '2026-03-20 12:26:11', NULL, NULL),
+(1010, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-23', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 17:26:26', '2026-03-24 17:26:26', NULL, NULL),
+(1011, 28, 'Shahmeerabbas@digioussolutions.com', 'Syed Shahmeer Abbas', '2026-03-23', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 17:26:26', '2026-03-24 17:26:26', NULL, NULL),
+(1012, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-03-23', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 17:26:26', '2026-03-24 17:26:26', NULL, NULL),
+(1013, 30, 'wajih@digioussolutions.com', 'Wajih ul Hasan', '2026-03-23', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 17:26:26', '2026-03-24 17:26:26', NULL, NULL),
+(1014, 31, 'Wahajabbas@digioussolutions.com', 'Syed Wahaj Abbas ', '2026-03-23', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 17:26:26', '2026-03-24 17:26:26', NULL, NULL),
+(1015, 32, 'Humaiz@digioussolutions.com', 'Muhammad Humaiz', '2026-03-23', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 17:26:26', '2026-03-24 17:26:26', NULL, NULL),
+(1016, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-03-23', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 17:26:26', '2026-03-24 17:26:26', NULL, NULL),
+(1017, 34, 'Khisal@digioussolutions.com', 'Khisal Zafar', '2026-03-23', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 17:26:26', '2026-03-24 17:26:26', NULL, NULL),
+(1018, 35, 'Taha@digioussolutions.com', 'Muhammad Taha', '2026-03-23', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 17:26:26', '2026-03-24 17:26:26', NULL, NULL),
+(1019, 36, 'Faiq@digioussolutions.com', 'Faiq Shahzad', '2026-03-23', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 17:26:26', '2026-03-24 17:26:26', NULL, NULL),
+(1020, 37, 'Taimoor@digioussolutions.com', 'Taimoor Shah', '2026-03-23', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 17:26:26', '2026-03-24 17:26:26', NULL, NULL),
+(1021, 38, 'Ebad@digioussolutions.com', 'Muhammad Ebad', '2026-03-23', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 17:26:26', '2026-03-24 17:26:26', NULL, NULL),
+(1022, 39, 'muhammadHamza@digioussolutions.com', 'Muhammad Hamza', '2026-03-23', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 17:26:26', '2026-03-24 17:26:26', NULL, NULL),
+(1023, 40, 'Yanish@digioussolutions.com', 'Yanish Hyder', '2026-03-23', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 17:26:26', '2026-03-24 17:26:26', NULL, NULL),
+(1024, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-03-23', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 17:26:26', '2026-03-24 17:26:26', NULL, NULL),
+(1025, 42, 'Tahir@digioussolutions.com', 'Tahir ', '2026-03-23', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 17:26:26', '2026-03-24 17:26:26', NULL, NULL),
+(1026, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-03-23', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 17:26:26', '2026-03-24 17:26:26', NULL, NULL),
+(1027, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-03-23', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 17:26:26', '2026-03-24 17:26:26', NULL, NULL),
+(1028, 45, 'SyedAwais@digioussolutions.com', 'Syed Awais Ahmed', '2026-03-23', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 17:26:26', '2026-03-24 17:26:26', NULL, NULL),
+(1029, 46, 'Shahrukh@digioussolutions.com', 'Shahrukh Hussain Siddiqui', '2026-03-23', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 17:26:26', '2026-03-24 17:26:26', NULL, NULL),
+(1030, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-03-23', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 17:26:26', '2026-03-24 17:26:26', NULL, NULL),
+(1031, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-03-23', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 17:26:26', '2026-03-24 17:26:26', NULL, NULL),
+(1032, 55, 'JFAD@digioussolutions.com', 'JFAD', '2026-03-23', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 17:26:26', '2026-03-24 17:26:26', NULL, NULL),
+(1034, 57, 'mhunaindigious.com@digioussolutions.com', 'MHunain ', '2026-03-23', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 17:26:26', '2026-03-24 17:26:26', NULL, NULL),
+(1035, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-24', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 17:26:26', '2026-03-24 17:26:26', NULL, NULL),
+(1036, 28, 'Shahmeerabbas@digioussolutions.com', 'Syed Shahmeer Abbas', '2026-03-24', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 17:26:26', '2026-03-24 17:26:26', NULL, NULL),
+(1037, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-03-24', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 17:26:26', '2026-03-24 17:26:26', NULL, NULL),
+(1038, 30, 'wajih@digioussolutions.com', 'Wajih ul Hasan', '2026-03-24', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 17:26:26', '2026-03-24 17:26:26', NULL, NULL),
+(1039, 31, 'Wahajabbas@digioussolutions.com', 'Syed Wahaj Abbas ', '2026-03-24', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 17:26:26', '2026-03-24 17:26:26', NULL, NULL),
+(1040, 32, 'Humaiz@digioussolutions.com', 'Muhammad Humaiz', '2026-03-24', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 17:26:26', '2026-03-24 17:26:26', NULL, NULL),
+(1041, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-03-24', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 17:26:26', '2026-03-24 17:26:26', NULL, NULL),
+(1042, 34, 'Khisal@digioussolutions.com', 'Khisal Zafar', '2026-03-24', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 17:26:26', '2026-03-24 17:26:26', NULL, NULL),
+(1043, 35, 'Taha@digioussolutions.com', 'Muhammad Taha', '2026-03-24', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 17:26:26', '2026-03-24 17:26:26', NULL, NULL),
+(1044, 36, 'Faiq@digioussolutions.com', 'Faiq Shahzad', '2026-03-24', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 17:26:26', '2026-03-24 17:26:26', NULL, NULL),
+(1045, 37, 'Taimoor@digioussolutions.com', 'Taimoor Shah', '2026-03-24', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 17:26:26', '2026-03-24 17:26:26', NULL, NULL),
+(1046, 38, 'Ebad@digioussolutions.com', 'Muhammad Ebad', '2026-03-24', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 17:26:26', '2026-03-24 17:26:26', NULL, NULL),
+(1047, 39, 'muhammadHamza@digioussolutions.com', 'Muhammad Hamza', '2026-03-24', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 17:26:26', '2026-03-24 17:26:26', NULL, NULL),
+(1048, 40, 'Yanish@digioussolutions.com', 'Yanish Hyder', '2026-03-24', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 17:26:26', '2026-03-24 17:26:26', NULL, NULL),
+(1049, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-03-24', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 17:26:26', '2026-03-24 17:26:26', NULL, NULL),
+(1050, 42, 'Tahir@digioussolutions.com', 'Tahir ', '2026-03-24', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 17:26:26', '2026-03-24 17:26:26', NULL, NULL),
+(1051, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-03-24', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 17:26:26', '2026-03-24 17:26:26', NULL, NULL),
+(1052, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-03-24', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 17:26:26', '2026-03-24 17:26:26', NULL, NULL),
+(1053, 45, 'SyedAwais@digioussolutions.com', 'Syed Awais Ahmed', '2026-03-24', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 17:26:26', '2026-03-24 17:26:26', NULL, NULL),
+(1054, 46, 'Shahrukh@digioussolutions.com', 'Shahrukh Hussain Siddiqui', '2026-03-24', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 17:26:26', '2026-03-24 17:26:26', NULL, NULL),
+(1055, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-03-24', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 17:26:26', '2026-03-24 17:26:26', NULL, NULL),
+(1056, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-03-24', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 17:26:26', '2026-03-24 17:26:26', NULL, NULL),
+(1057, 55, 'JFAD@digioussolutions.com', 'JFAD', '2026-03-24', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 17:26:26', '2026-03-24 17:26:26', NULL, NULL),
+(1059, 57, 'mhunaindigious.com@digioussolutions.com', 'MHunain ', '2026-03-24', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 17:26:26', '2026-03-24 17:26:26', NULL, NULL),
+(1060, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-25', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 19:03:24', '2026-03-24 19:03:24', NULL, NULL),
+(1061, 28, 'Shahmeerabbas@digioussolutions.com', 'Syed Shahmeer Abbas', '2026-03-25', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 19:03:24', '2026-03-24 19:03:24', NULL, NULL),
+(1062, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-03-25', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 19:03:24', '2026-03-24 19:03:24', NULL, NULL),
+(1063, 30, 'wajih@digioussolutions.com', 'Wajih ul Hasan', '2026-03-25', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 19:03:24', '2026-03-24 19:03:24', NULL, NULL),
+(1064, 31, 'Wahajabbas@digioussolutions.com', 'Syed Wahaj Abbas ', '2026-03-25', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 19:03:24', '2026-03-24 19:03:24', NULL, NULL),
+(1065, 32, 'Humaiz@digioussolutions.com', 'Muhammad Humaiz', '2026-03-25', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 19:03:24', '2026-03-24 19:03:24', NULL, NULL),
+(1066, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-03-25', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 19:03:24', '2026-03-24 19:03:24', NULL, NULL),
+(1067, 34, 'Khisal@digioussolutions.com', 'Khisal Zafar', '2026-03-25', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 19:03:24', '2026-03-24 19:03:24', NULL, NULL),
+(1068, 35, 'Taha@digioussolutions.com', 'Muhammad Taha', '2026-03-25', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 19:03:24', '2026-03-24 19:03:24', NULL, NULL),
+(1069, 36, 'Faiq@digioussolutions.com', 'Faiq Shahzad', '2026-03-25', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 19:03:24', '2026-03-24 19:03:24', NULL, NULL),
+(1070, 37, 'Taimoor@digioussolutions.com', 'Taimoor Shah', '2026-03-25', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 19:03:24', '2026-03-24 19:03:24', NULL, NULL),
+(1071, 38, 'Ebad@digioussolutions.com', 'Muhammad Ebad', '2026-03-25', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 19:03:24', '2026-03-24 19:03:24', NULL, NULL),
+(1072, 39, 'muhammadHamza@digioussolutions.com', 'Muhammad Hamza', '2026-03-25', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 19:03:24', '2026-03-24 19:03:24', NULL, NULL),
+(1073, 40, 'Yanish@digioussolutions.com', 'Yanish Hyder', '2026-03-25', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 19:03:24', '2026-03-24 19:03:24', NULL, NULL),
+(1074, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-03-25', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 19:03:24', '2026-03-24 19:03:24', NULL, NULL),
+(1075, 42, 'Tahir@digioussolutions.com', 'Tahir ', '2026-03-25', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 19:03:24', '2026-03-24 19:03:24', NULL, NULL),
+(1076, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-03-25', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 19:03:24', '2026-03-24 19:03:24', NULL, NULL),
+(1077, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-03-25', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 19:03:24', '2026-03-24 19:03:24', NULL, NULL),
+(1078, 45, 'SyedAwais@digioussolutions.com', 'Syed Awais Ahmed', '2026-03-25', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 19:03:24', '2026-03-24 19:03:24', NULL, NULL),
+(1079, 46, 'Shahrukh@digioussolutions.com', 'Shahrukh Hussain Siddiqui', '2026-03-25', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 19:03:24', '2026-03-24 19:03:24', NULL, NULL),
+(1080, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-03-25', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 19:03:24', '2026-03-24 19:03:24', NULL, NULL),
+(1081, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-03-25', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 19:03:24', '2026-03-24 19:03:24', NULL, NULL),
+(1082, 55, 'JFAD@digioussolutions.com', 'JFAD', '2026-03-25', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 19:03:24', '2026-03-24 19:03:24', NULL, NULL),
+(1084, 57, 'mhunaindigious.com@digioussolutions.com', 'MHunain ', '2026-03-25', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-24 19:03:24', '2026-03-24 19:03:24', NULL, NULL),
+(1085, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-26', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-25 19:05:06', '2026-03-25 19:05:06', NULL, NULL),
+(1086, 28, 'Shahmeerabbas@digioussolutions.com', 'Syed Shahmeer Abbas', '2026-03-26', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-25 19:05:06', '2026-03-25 19:05:06', NULL, NULL),
+(1087, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-03-26', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-25 19:05:06', '2026-03-25 19:05:06', NULL, NULL),
+(1088, 30, 'wajih@digioussolutions.com', 'Wajih ul Hasan', '2026-03-26', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-25 19:05:06', '2026-03-25 19:05:06', NULL, NULL),
+(1089, 31, 'Wahajabbas@digioussolutions.com', 'Syed Wahaj Abbas ', '2026-03-26', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-25 19:05:06', '2026-03-25 19:05:06', NULL, NULL),
+(1090, 32, 'Humaiz@digioussolutions.com', 'Muhammad Humaiz', '2026-03-26', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-25 19:05:06', '2026-03-25 19:05:06', NULL, NULL),
+(1091, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-03-26', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-25 19:05:06', '2026-03-25 19:05:06', NULL, NULL),
+(1092, 34, 'Khisal@digioussolutions.com', 'Khisal Zafar', '2026-03-26', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-25 19:05:06', '2026-03-25 19:05:06', NULL, NULL),
+(1093, 35, 'Taha@digioussolutions.com', 'Muhammad Taha', '2026-03-26', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-25 19:05:06', '2026-03-25 19:05:06', NULL, NULL),
+(1094, 36, 'Faiq@digioussolutions.com', 'Faiq Shahzad', '2026-03-26', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-25 19:05:06', '2026-03-25 19:05:06', NULL, NULL),
+(1095, 37, 'Taimoor@digioussolutions.com', 'Taimoor Shah', '2026-03-26', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-25 19:05:06', '2026-03-25 19:05:06', NULL, NULL),
+(1096, 38, 'Ebad@digioussolutions.com', 'Muhammad Ebad', '2026-03-26', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-25 19:05:06', '2026-03-25 19:05:06', NULL, NULL),
+(1097, 39, 'muhammadHamza@digioussolutions.com', 'Muhammad Hamza', '2026-03-26', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-25 19:05:06', '2026-03-25 19:05:06', NULL, NULL),
+(1098, 40, 'Yanish@digioussolutions.com', 'Yanish Hyder', '2026-03-26', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-25 19:05:06', '2026-03-25 19:05:06', NULL, NULL),
+(1099, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-03-26', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-25 19:05:06', '2026-03-25 19:05:06', NULL, NULL),
+(1100, 42, 'Tahir@digioussolutions.com', 'Tahir ', '2026-03-26', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-25 19:05:06', '2026-03-25 19:05:06', NULL, NULL),
+(1101, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-03-26', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-25 19:05:06', '2026-03-25 19:05:06', NULL, NULL),
+(1102, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-03-26', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-25 19:05:06', '2026-03-25 19:05:06', NULL, NULL),
+(1103, 45, 'SyedAwais@digioussolutions.com', 'Syed Awais Ahmed', '2026-03-26', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-25 19:05:06', '2026-03-25 19:05:06', NULL, NULL),
+(1104, 46, 'Shahrukh@digioussolutions.com', 'Shahrukh Hussain Siddiqui', '2026-03-26', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-25 19:05:06', '2026-03-25 19:05:06', NULL, NULL),
+(1105, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-03-26', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-25 19:05:06', '2026-03-25 19:05:06', NULL, NULL),
+(1106, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-03-26', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-25 19:05:06', '2026-03-25 19:05:06', NULL, NULL),
+(1107, 55, 'JFAD@digioussolutions.com', 'JFAD', '2026-03-26', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-25 19:05:06', '2026-03-25 19:05:06', NULL, NULL),
+(1109, 57, 'mhunaindigious.com@digioussolutions.com', 'MHunain ', '2026-03-26', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-25 19:05:06', '2026-03-25 19:05:06', NULL, NULL),
+(1111, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-27', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-26 20:27:27', '2026-03-26 20:27:27', NULL, NULL),
+(1112, 28, 'Shahmeerabbas@digioussolutions.com', 'Syed Shahmeer Abbas', '2026-03-27', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-26 20:27:27', '2026-03-26 20:27:27', NULL, NULL),
+(1113, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-03-27', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-26 20:27:27', '2026-03-26 20:27:27', NULL, NULL),
+(1114, 30, 'wajih@digioussolutions.com', 'Wajih ul Hasan', '2026-03-27', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-26 20:27:27', '2026-03-26 20:27:27', NULL, NULL),
+(1115, 31, 'Wahajabbas@digioussolutions.com', 'Syed Wahaj Abbas ', '2026-03-27', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-26 20:27:27', '2026-03-26 20:27:27', NULL, NULL),
+(1116, 32, 'Humaiz@digioussolutions.com', 'Muhammad Humaiz', '2026-03-27', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-26 20:27:27', '2026-03-26 20:27:27', NULL, NULL),
+(1117, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-03-27', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-26 20:27:27', '2026-03-26 20:27:27', NULL, NULL),
+(1118, 34, 'Khisal@digioussolutions.com', 'Khisal Zafar', '2026-03-27', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-26 20:27:27', '2026-03-26 20:27:27', NULL, NULL),
+(1119, 35, 'Taha@digioussolutions.com', 'Muhammad Taha', '2026-03-27', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-26 20:27:27', '2026-03-26 20:27:27', NULL, NULL),
+(1120, 36, 'Faiq@digioussolutions.com', 'Faiq Shahzad', '2026-03-27', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-26 20:27:27', '2026-03-26 20:27:27', NULL, NULL),
+(1121, 37, 'Taimoor@digioussolutions.com', 'Taimoor Shah', '2026-03-27', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-26 20:27:27', '2026-03-26 20:27:27', NULL, NULL),
+(1122, 38, 'Ebad@digioussolutions.com', 'Muhammad Ebad', '2026-03-27', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-26 20:27:27', '2026-03-26 20:27:27', NULL, NULL),
+(1123, 39, 'muhammadHamza@digioussolutions.com', 'Muhammad Hamza', '2026-03-27', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-26 20:27:27', '2026-03-26 20:27:27', NULL, NULL),
+(1124, 40, 'Yanish@digioussolutions.com', 'Yanish Hyder', '2026-03-27', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-26 20:27:27', '2026-03-26 20:27:27', NULL, NULL),
+(1125, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-03-27', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-26 20:27:27', '2026-03-26 20:27:27', NULL, NULL),
+(1126, 42, 'Tahir@digioussolutions.com', 'Tahir ', '2026-03-27', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-26 20:27:27', '2026-03-26 20:27:27', NULL, NULL),
+(1127, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-03-27', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-26 20:27:27', '2026-03-26 20:27:27', NULL, NULL),
+(1128, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-03-27', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-26 20:27:27', '2026-03-26 20:27:27', NULL, NULL),
+(1129, 45, 'SyedAwais@digioussolutions.com', 'Syed Awais Ahmed', '2026-03-27', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-26 20:27:27', '2026-03-26 20:27:27', NULL, NULL),
+(1130, 46, 'Shahrukh@digioussolutions.com', 'Shahrukh Hussain Siddiqui', '2026-03-27', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-26 20:27:27', '2026-03-26 20:27:27', NULL, NULL),
+(1131, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-03-27', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-26 20:27:27', '2026-03-26 20:27:27', NULL, NULL),
+(1132, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-03-27', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-26 20:27:27', '2026-03-26 20:27:27', NULL, NULL),
+(1133, 55, 'JFAD@digioussolutions.com', 'JFAD', '2026-03-27', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-26 20:27:27', '2026-03-26 20:27:27', NULL, NULL),
+(1135, 57, 'mhunaindigious.com@digioussolutions.com', 'MHunain ', '2026-03-27', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-26 20:27:27', '2026-03-26 20:27:27', NULL, NULL),
+(1136, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-28', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-27 21:33:43', '2026-03-27 21:33:43', NULL, NULL),
+(1137, 28, 'Shahmeerabbas@digioussolutions.com', 'Syed Shahmeer Abbas', '2026-03-28', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-27 21:33:43', '2026-03-27 21:33:43', NULL, NULL),
+(1138, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-03-28', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-27 21:33:43', '2026-03-27 21:33:43', NULL, NULL),
+(1139, 30, 'wajih@digioussolutions.com', 'Wajih ul Hasan', '2026-03-28', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-27 21:33:43', '2026-03-27 21:33:43', NULL, NULL),
+(1140, 31, 'Wahajabbas@digioussolutions.com', 'Syed Wahaj Abbas ', '2026-03-28', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-27 21:33:43', '2026-03-27 21:33:43', NULL, NULL),
+(1141, 32, 'Humaiz@digioussolutions.com', 'Muhammad Humaiz', '2026-03-28', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-27 21:33:43', '2026-03-27 21:33:43', NULL, NULL),
+(1142, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-03-28', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-27 21:33:43', '2026-03-27 21:33:43', NULL, NULL),
+(1143, 34, 'Khisal@digioussolutions.com', 'Khisal Zafar', '2026-03-28', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-27 21:33:43', '2026-03-27 21:33:43', NULL, NULL),
+(1144, 35, 'Taha@digioussolutions.com', 'Muhammad Taha', '2026-03-28', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-27 21:33:43', '2026-03-27 21:33:43', NULL, NULL),
+(1145, 36, 'Faiq@digioussolutions.com', 'Faiq Shahzad', '2026-03-28', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-27 21:33:43', '2026-03-27 21:33:43', NULL, NULL),
+(1146, 37, 'Taimoor@digioussolutions.com', 'Taimoor Shah', '2026-03-28', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-27 21:33:43', '2026-03-27 21:33:43', NULL, NULL),
+(1147, 38, 'Ebad@digioussolutions.com', 'Muhammad Ebad', '2026-03-28', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-27 21:33:43', '2026-03-27 21:33:43', NULL, NULL),
+(1148, 39, 'muhammadHamza@digioussolutions.com', 'Muhammad Hamza', '2026-03-28', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-27 21:33:43', '2026-03-27 21:33:43', NULL, NULL),
+(1149, 40, 'Yanish@digioussolutions.com', 'Yanish Hyder', '2026-03-28', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-27 21:33:43', '2026-03-27 21:33:43', NULL, NULL),
+(1150, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-03-28', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-27 21:33:43', '2026-03-27 21:33:43', NULL, NULL),
+(1151, 42, 'Tahir@digioussolutions.com', 'Tahir ', '2026-03-28', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-27 21:33:43', '2026-03-27 21:33:43', NULL, NULL),
+(1152, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-03-28', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-27 21:33:43', '2026-03-27 21:33:43', NULL, NULL),
+(1153, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-03-28', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-27 21:33:43', '2026-03-27 21:33:43', NULL, NULL),
+(1154, 45, 'SyedAwais@digioussolutions.com', 'Syed Awais Ahmed', '2026-03-28', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-27 21:33:43', '2026-03-27 21:33:43', NULL, NULL),
+(1155, 46, 'Shahrukh@digioussolutions.com', 'Shahrukh Hussain Siddiqui', '2026-03-28', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-27 21:33:43', '2026-03-27 21:33:43', NULL, NULL),
+(1156, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-03-28', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-27 21:33:43', '2026-03-27 21:33:43', NULL, NULL),
+(1157, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-03-28', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-27 21:33:43', '2026-03-27 21:33:43', NULL, NULL),
+(1158, 55, 'JFAD@digioussolutions.com', 'JFAD', '2026-03-28', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-27 21:33:43', '2026-03-27 21:33:43', NULL, NULL),
+(1160, 57, 'mhunaindigious.com@digioussolutions.com', 'MHunain ', '2026-03-28', 'No Check-in', 'Auto-generated by daily scheduler: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-27 21:33:43', '2026-03-27 21:33:43', NULL, NULL),
+(1161, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-29', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-30 18:23:32', '2026-03-30 18:23:32', NULL, NULL),
+(1162, 28, 'Shahmeerabbas@digioussolutions.com', 'Syed Shahmeer Abbas', '2026-03-29', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-30 18:23:32', '2026-03-30 18:23:32', NULL, NULL);
+INSERT INTO `Employee_Absent` (`id`, `employee_id`, `email`, `name`, `absent_date`, `reason_type`, `reason`, `supporting_document_url`, `is_approved`, `approved_by`, `approved_at`, `remarks`, `created_at`, `updated_at`, `leave_type_key`, `application_id`) VALUES
+(1163, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-03-29', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-30 18:23:32', '2026-03-30 18:23:32', NULL, NULL),
+(1164, 30, 'wajih@digioussolutions.com', 'Wajih ul Hasan', '2026-03-29', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-30 18:23:32', '2026-03-30 18:23:32', NULL, NULL),
+(1165, 31, 'Wahajabbas@digioussolutions.com', 'Syed Wahaj Abbas ', '2026-03-29', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-30 18:23:32', '2026-03-30 18:23:32', NULL, NULL),
+(1166, 32, 'Humaiz@digioussolutions.com', 'Muhammad Humaiz', '2026-03-29', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-30 18:23:32', '2026-03-30 18:23:32', NULL, NULL),
+(1167, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-03-29', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-30 18:23:32', '2026-03-30 18:23:32', NULL, NULL),
+(1168, 34, 'Khisal@digioussolutions.com', 'Khisal Zafar', '2026-03-29', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-30 18:23:32', '2026-03-30 18:23:32', NULL, NULL),
+(1169, 35, 'Taha@digioussolutions.com', 'Muhammad Taha', '2026-03-29', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-30 18:23:32', '2026-03-30 18:23:32', NULL, NULL),
+(1170, 36, 'Faiq@digioussolutions.com', 'Faiq Shahzad', '2026-03-29', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-30 18:23:32', '2026-03-30 18:23:32', NULL, NULL),
+(1171, 37, 'Taimoor@digioussolutions.com', 'Taimoor Shah', '2026-03-29', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-30 18:23:32', '2026-03-30 18:23:32', NULL, NULL),
+(1172, 38, 'Ebad@digioussolutions.com', 'Muhammad Ebad', '2026-03-29', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-30 18:23:32', '2026-03-30 18:23:32', NULL, NULL),
+(1173, 39, 'muhammadHamza@digioussolutions.com', 'Muhammad Hamza', '2026-03-29', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-30 18:23:32', '2026-03-30 18:23:32', NULL, NULL),
+(1174, 40, 'Yanish@digioussolutions.com', 'Yanish Hyder', '2026-03-29', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-30 18:23:32', '2026-03-30 18:23:32', NULL, NULL),
+(1175, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-03-29', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-30 18:23:32', '2026-03-30 18:23:32', NULL, NULL),
+(1176, 42, 'Tahir@digioussolutions.com', 'Tahir ', '2026-03-29', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-30 18:23:32', '2026-03-30 18:23:32', NULL, NULL),
+(1177, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-03-29', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-30 18:23:32', '2026-03-30 18:23:32', NULL, NULL),
+(1178, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-03-29', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-30 18:23:32', '2026-03-30 18:23:32', NULL, NULL),
+(1179, 45, 'SyedAwais@digioussolutions.com', 'Syed Awais Ahmed', '2026-03-29', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-30 18:23:32', '2026-03-30 18:23:32', NULL, NULL),
+(1180, 46, 'Shahrukh@digioussolutions.com', 'Shahrukh Hussain Siddiqui', '2026-03-29', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-30 18:23:32', '2026-03-30 18:23:32', NULL, NULL),
+(1181, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-03-29', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-30 18:23:32', '2026-03-30 18:23:32', NULL, NULL),
+(1182, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-03-29', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-30 18:23:32', '2026-03-30 18:23:32', NULL, NULL),
+(1183, 55, 'JFAD@digioussolutions.com', 'JFAD', '2026-03-29', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-30 18:23:32', '2026-03-30 18:23:32', NULL, NULL),
+(1184, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-29', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-30 18:23:32', '2026-03-30 18:23:32', NULL, NULL),
+(1185, 57, 'mhunaindigious.com@digioussolutions.com', 'MHunain ', '2026-03-29', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-30 18:23:32', '2026-03-30 18:23:32', NULL, NULL),
+(1186, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-30', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-30 18:23:32', '2026-03-30 18:23:32', NULL, NULL),
+(1187, 28, 'Shahmeerabbas@digioussolutions.com', 'Syed Shahmeer Abbas', '2026-03-30', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-30 18:23:32', '2026-03-30 18:23:32', NULL, NULL),
+(1188, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-03-30', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-30 18:23:32', '2026-03-30 18:23:32', NULL, NULL),
+(1189, 30, 'wajih@digioussolutions.com', 'Wajih ul Hasan', '2026-03-30', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-30 18:23:32', '2026-03-30 18:23:32', NULL, NULL),
+(1190, 31, 'Wahajabbas@digioussolutions.com', 'Syed Wahaj Abbas ', '2026-03-30', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-30 18:23:32', '2026-03-30 18:23:32', NULL, NULL),
+(1191, 32, 'Humaiz@digioussolutions.com', 'Muhammad Humaiz', '2026-03-30', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-30 18:23:32', '2026-03-30 18:23:32', NULL, NULL),
+(1192, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-03-30', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-30 18:23:32', '2026-03-30 18:23:32', NULL, NULL),
+(1193, 34, 'Khisal@digioussolutions.com', 'Khisal Zafar', '2026-03-30', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-30 18:23:32', '2026-03-30 18:23:32', NULL, NULL),
+(1194, 35, 'Taha@digioussolutions.com', 'Muhammad Taha', '2026-03-30', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-30 18:23:32', '2026-03-30 18:23:32', NULL, NULL),
+(1195, 36, 'Faiq@digioussolutions.com', 'Faiq Shahzad', '2026-03-30', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-30 18:23:32', '2026-03-30 18:23:32', NULL, NULL),
+(1196, 37, 'Taimoor@digioussolutions.com', 'Taimoor Shah', '2026-03-30', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-30 18:23:32', '2026-03-30 18:23:32', NULL, NULL),
+(1197, 38, 'Ebad@digioussolutions.com', 'Muhammad Ebad', '2026-03-30', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-30 18:23:32', '2026-03-30 18:23:32', NULL, NULL),
+(1198, 39, 'muhammadHamza@digioussolutions.com', 'Muhammad Hamza', '2026-03-30', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-30 18:23:32', '2026-03-30 18:23:32', NULL, NULL),
+(1199, 40, 'Yanish@digioussolutions.com', 'Yanish Hyder', '2026-03-30', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-30 18:23:32', '2026-03-30 18:23:32', NULL, NULL),
+(1200, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-03-30', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-30 18:23:32', '2026-03-30 18:23:32', NULL, NULL),
+(1201, 42, 'Tahir@digioussolutions.com', 'Tahir ', '2026-03-30', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-30 18:23:32', '2026-03-30 18:23:32', NULL, NULL),
+(1202, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-03-30', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-30 18:23:32', '2026-03-30 18:23:32', NULL, NULL),
+(1203, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-03-30', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-30 18:23:32', '2026-03-30 18:23:32', NULL, NULL),
+(1204, 45, 'SyedAwais@digioussolutions.com', 'Syed Awais Ahmed', '2026-03-30', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-30 18:23:32', '2026-03-30 18:23:32', NULL, NULL),
+(1205, 46, 'Shahrukh@digioussolutions.com', 'Shahrukh Hussain Siddiqui', '2026-03-30', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-30 18:23:32', '2026-03-30 18:23:32', NULL, NULL),
+(1206, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-03-30', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-30 18:23:32', '2026-03-30 18:23:32', NULL, NULL),
+(1207, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-03-30', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-30 18:23:32', '2026-03-30 18:23:32', NULL, NULL),
+(1208, 55, 'JFAD@digioussolutions.com', 'JFAD', '2026-03-30', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-30 18:23:32', '2026-03-30 18:23:32', NULL, NULL),
+(1209, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-30', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-30 18:23:32', '2026-03-30 18:23:32', NULL, NULL),
+(1210, 57, 'mhunaindigious.com@digioussolutions.com', 'MHunain ', '2026-03-30', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-30 18:23:32', '2026-03-30 18:23:32', NULL, NULL),
+(1211, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-31', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-31 14:52:07', '2026-03-31 14:52:07', NULL, NULL),
+(1212, 28, 'Shahmeerabbas@digioussolutions.com', 'Syed Shahmeer Abbas', '2026-03-31', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-31 14:52:08', '2026-03-31 14:52:08', NULL, NULL),
+(1213, 29, 'smashhar@digioussolutions.com', 'Syed Muhammad Ashhar', '2026-03-31', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-31 14:52:08', '2026-03-31 14:52:08', NULL, NULL),
+(1214, 30, 'wajih@digioussolutions.com', 'Wajih ul Hasan', '2026-03-31', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-31 14:52:08', '2026-03-31 14:52:08', NULL, NULL),
+(1215, 31, 'Wahajabbas@digioussolutions.com', 'Syed Wahaj Abbas ', '2026-03-31', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-31 14:52:08', '2026-03-31 14:52:08', NULL, NULL),
+(1216, 32, 'Humaiz@digioussolutions.com', 'Muhammad Humaiz', '2026-03-31', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-31 14:52:08', '2026-03-31 14:52:08', NULL, NULL),
+(1217, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-03-31', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-31 14:52:08', '2026-03-31 14:52:08', NULL, NULL),
+(1218, 34, 'Khisal@digioussolutions.com', 'Khisal Zafar', '2026-03-31', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-31 14:52:08', '2026-03-31 14:52:08', NULL, NULL),
+(1219, 35, 'Taha@digioussolutions.com', 'Muhammad Taha', '2026-03-31', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-31 14:52:08', '2026-03-31 14:52:08', NULL, NULL),
+(1220, 36, 'Faiq@digioussolutions.com', 'Faiq Shahzad', '2026-03-31', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-31 14:52:08', '2026-03-31 14:52:08', NULL, NULL),
+(1221, 37, 'Taimoor@digioussolutions.com', 'Taimoor Shah', '2026-03-31', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-31 14:52:08', '2026-03-31 14:52:08', NULL, NULL),
+(1222, 38, 'Ebad@digioussolutions.com', 'Muhammad Ebad', '2026-03-31', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-31 14:52:08', '2026-03-31 14:52:08', NULL, NULL),
+(1223, 39, 'muhammadHamza@digioussolutions.com', 'Muhammad Hamza', '2026-03-31', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-31 14:52:08', '2026-03-31 14:52:08', NULL, NULL),
+(1224, 40, 'Yanish@digioussolutions.com', 'Yanish Hyder', '2026-03-31', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-31 14:52:08', '2026-03-31 14:52:08', NULL, NULL),
+(1225, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-03-31', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-31 14:52:08', '2026-03-31 14:52:08', NULL, NULL),
+(1226, 42, 'Tahir@digioussolutions.com', 'Tahir ', '2026-03-31', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-31 14:52:08', '2026-03-31 14:52:08', NULL, NULL),
+(1227, 43, 'Hamdan@digioussolutions.com', 'Muhammad Hamdan Pir Zada', '2026-03-31', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-31 14:52:08', '2026-03-31 14:52:08', NULL, NULL),
+(1228, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-03-31', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-31 14:52:08', '2026-03-31 14:52:08', NULL, NULL),
+(1229, 45, 'SyedAwais@digioussolutions.com', 'Syed Awais Ahmed', '2026-03-31', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-31 14:52:08', '2026-03-31 14:52:08', NULL, NULL),
+(1230, 46, 'Shahrukh@digioussolutions.com', 'Shahrukh Hussain Siddiqui', '2026-03-31', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-31 14:52:08', '2026-03-31 14:52:08', NULL, NULL),
+(1231, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-03-31', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-31 14:52:08', '2026-03-31 14:52:08', NULL, NULL),
+(1232, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', '2026-03-31', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-31 14:52:08', '2026-03-31 14:52:08', NULL, NULL),
+(1233, 55, 'JFAD@digioussolutions.com', 'JFAD', '2026-03-31', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-31 14:52:08', '2026-03-31 14:52:08', NULL, NULL),
+(1234, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-31', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-31 14:52:08', '2026-03-31 14:52:08', NULL, NULL),
+(1235, 57, 'mhunaindigious.com@digioussolutions.com', 'MHunain ', '2026-03-31', 'No Check-in', 'Auto-generated on server start: Employee did not check in', NULL, 0, NULL, NULL, 'System auto-marked', '2026-03-31 14:52:08', '2026-03-31 14:52:08', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -1669,6 +2123,41 @@ CREATE TABLE `Employee_Activities` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `employee_advances`
+--
+
+CREATE TABLE `employee_advances` (
+  `id` int(11) NOT NULL,
+  `employee_id` int(11) NOT NULL,
+  `type` enum('advance','short_term_loan','long_term_loan') NOT NULL DEFAULT 'advance',
+  `amount` decimal(12,2) NOT NULL,
+  `repayment_months` int(11) NOT NULL DEFAULT 1,
+  `monthly_deduction` decimal(12,2) NOT NULL,
+  `total_repaid` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `remaining_balance` decimal(12,2) NOT NULL,
+  `status` enum('pending_approval','active','completed','cancelled','on_hold') NOT NULL DEFAULT 'active',
+  `disbursement_date` date DEFAULT NULL,
+  `repayment_start_date` date DEFAULT NULL,
+  `grace_period_months` int(11) NOT NULL DEFAULT 0,
+  `start_date` date NOT NULL,
+  `end_date` date DEFAULT NULL,
+  `approved_by` int(11) DEFAULT NULL,
+  `reason` varchar(255) DEFAULT NULL,
+  `notes` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `employee_advances`
+--
+
+INSERT INTO `employee_advances` (`id`, `employee_id`, `type`, `amount`, `repayment_months`, `monthly_deduction`, `total_repaid`, `remaining_balance`, `status`, `disbursement_date`, `repayment_start_date`, `grace_period_months`, `start_date`, `end_date`, `approved_by`, `reason`, `notes`, `created_at`, `updated_at`) VALUES
+(3, 44, 'advance', 10000.00, 1, 10000.00, 10000.00, 0.00, 'completed', '2026-01-28', '2026-02-26', 0, '2026-01-28', '2026-02-26', 1, 'Medical Emergency', 'mmm', '2026-03-26 17:06:07', '2026-03-26 17:06:15');
 
 -- --------------------------------------------------------
 
@@ -1785,7 +2274,7 @@ INSERT INTO `Employee_Attendance` (`id`, `employee_id`, `email`, `name`, `attend
 (24, 39, 'muhammadHamza@digioussolutions.com', 'Muhammad Hamza', '2026-01-19', '21:17:45', '06:20:06', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 2, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-19 16:17:45', '2026-01-20 01:20:32'),
 (25, 40, 'Yanish@digioussolutions.com', 'Yanish Hyder', '2026-01-19', '21:19:32', '06:20:06', 'Late', 3, 0, 1, 1, 1, 0, 17, 5, 0, 22, 0, 0, 540, 0, 0.00, 0, 4, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-19 16:19:32', '2026-01-20 01:20:36'),
 (26, 30, 'wajih@digioussolutions.com', 'Wajih ul Hasan', '2026-01-19', '21:20:45', '06:20:06', 'Late', 2, 1, 1, 0, 0, 11, 45, 0, 0, 56, 0, 0, 540, 0, 0.00, 0, 5, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-19 16:20:45', '2026-01-20 01:20:39'),
-(27, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-01-19', '21:20:47', '06:20:06', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 5, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-19 16:20:47', '2026-01-20 01:20:41'),
+(27, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-01-19', '21:20:47', '06:20:06', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 540, 540, 0, 0.00, 0, 5, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-19 16:20:47', '2026-03-26 12:27:51'),
 (28, 38, 'Ebad@digioussolutions.com', 'Muhammad Ebad', '2026-01-19', '21:22:04', '06:20:06', 'Late', 1, 0, 1, 0, 0, 0, 10, 0, 0, 10, 0, 0, 540, 0, 0.00, 0, 7, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-19 16:22:04', '2026-01-20 01:20:44'),
 (29, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-01-19', '21:47:27', '02:08:34', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 261, 261, 540, 0, 0.00, 0, 32, NULL, 'Web Browser', NULL, '2026-01-19 16:47:27', '2026-01-19 21:08:34'),
 (30, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-01-19', '22:30:54', '06:20:06', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 470, 470, 540, 0, 0.00, 0, 75, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-19 17:30:54', '2026-02-10 19:47:04'),
@@ -1797,7 +2286,7 @@ INSERT INTO `Employee_Attendance` (`id`, `employee_id`, `email`, `name`, `attend
 (36, 31, 'Wahajabbas@digioussolutions.com', 'Syed Wahaj Abbas ', '2026-01-19', '00:15:23', '06:20:06', 'Late', 2, 0, 2, 0, 0, 0, 41, 0, 0, 41, 0, 0, 540, 0, 0.00, 0, 180, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-19 19:15:23', '2026-01-20 01:21:02'),
 (37, 45, 'SyedAwais@digioussolutions.com', 'Syed Awais Ahmed', '2026-01-20', '21:02:50', '09:00:00', 'Present', 3, 0, 2, 1, 0, 0, 42, 6, 0, 48, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-20 16:02:50', '2026-02-13 12:33:38'),
 (38, 46, 'Shahrukh@digioussolutions.com', 'Shahrukh Hussain Siddiqui', '2026-01-20', '21:04:53', '03:05:03', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 361, 361, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-20 16:04:53', '2026-01-20 22:05:04'),
-(39, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-01-20', '21:08:19', '09:00:00', 'Present', 2, 0, 0, 1, 1, 0, 0, 21, 21, 42, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-20 16:08:19', '2026-02-13 12:33:38'),
+(39, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-01-20', '21:08:19', '09:00:00', 'Present', 2, 0, 0, 1, 1, 0, 0, 21, 21, 42, 712, 670, 540, 130, 2.17, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-20 16:08:19', '2026-03-26 12:06:33'),
 (40, 34, 'Khisal@digioussolutions.com', 'Khisal Zafar', '2026-01-20', '21:09:32', '09:00:00', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-20 16:09:32', '2026-02-13 12:33:38'),
 (41, 37, 'Taimoor@digioussolutions.com', 'Taimoor Shah', '2026-01-20', '21:12:24', '09:00:00', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-20 16:12:24', '2026-02-13 12:33:38'),
 (42, 38, 'Ebad@digioussolutions.com', 'Muhammad Ebad', '2026-01-20', '21:14:21', '09:00:00', 'Present', 1, 0, 1, 0, 0, 0, 26, 0, 0, 26, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-20 16:14:21', '2026-02-13 12:33:38'),
@@ -1807,15 +2296,15 @@ INSERT INTO `Employee_Attendance` (`id`, `employee_id`, `email`, `name`, `attend
 (46, 36, 'Faiq@digioussolutions.com', 'Faiq Shahzad', '2026-01-20', '21:16:35', '09:00:00', 'Late', 3, 2, 1, 0, 0, 32, 31, 0, 0, 63, 0, 0, 540, 0, 0.00, 0, 1, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-20 16:16:35', '2026-02-13 12:33:38'),
 (47, 39, 'muhammadHamza@digioussolutions.com', 'Muhammad Hamza', '2026-01-20', '21:18:42', '05:41:09', 'Late', 4, 3, 1, 0, 0, 2, 4, 0, 0, 6, 503, 497, 540, 0, 0.00, 0, 3, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-20 16:18:42', '2026-01-21 00:41:09'),
 (48, 28, 'Shahmeerabbas@digioussolutions.com', 'Syed Shahmeer Abbas', '2026-01-20', '21:19:35', '09:00:00', 'Late', 3, 0, 1, 2, 0, 0, 52, 11, 0, 63, 0, 0, 540, 0, 0.00, 0, 4, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-20 16:19:35', '2026-02-13 12:33:38'),
-(49, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-01-20', '21:19:45', '09:00:00', 'Late', 5, 1, 1, 2, 1, 7, 42, 5, 19, 73, 0, 0, 540, 0, 0.00, 0, 4, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-20 16:19:45', '2026-02-13 12:33:38'),
+(49, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-01-20', '21:19:45', '09:00:00', 'Late', 5, 1, 1, 2, 1, 7, 42, 5, 19, 73, 701, 628, 540, 88, 1.47, 0, 4, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-20 16:19:45', '2026-03-26 12:27:51'),
 (50, 30, 'wajih@digioussolutions.com', 'Wajih ul Hasan', '2026-01-20', '21:19:51', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 4, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-20 16:19:51', '2026-02-13 12:33:38'),
 (51, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-01-20', '21:20:24', '09:00:00', 'Late', 4, 0, 3, 1, 0, 0, 48, 3, 0, 51, 0, 0, 540, 0, 0.00, 0, 5, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-20 16:20:24', '2026-02-13 12:33:38'),
 (52, 31, 'Wahajabbas@digioussolutions.com', 'Syed Wahaj Abbas ', '2026-01-20', '21:21:10', '09:00:00', 'Late', 4, 0, 4, 0, 0, 0, 48, 0, 0, 48, 0, 0, 540, 0, 0.00, 0, 6, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-20 16:21:10', '2026-02-13 12:33:38'),
 (53, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-01-20', '21:23:58', '01:14:13', 'Late', 2, 2, 0, 0, 0, 27405909, 0, 0, 0, 27405909, 231, 0, 540, 0, 0.00, 0, 8, NULL, 'Web Browser', NULL, '2026-01-20 16:23:59', '2026-01-20 20:14:13'),
 (54, 42, 'Tahir@digioussolutions.com', 'Tahir ', '2026-01-20', '21:40:14', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 25, NULL, 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-20 16:40:14', '2026-02-13 12:33:38'),
-(55, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-01-20', '22:20:00', '07:00:04', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 740, '', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-20 17:20:01', '2026-02-19 18:28:34'),
+(55, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-01-20', '22:20:00', '07:00:04', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 520, 520, 540, 0, 0.00, 0, 740, '', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-20 17:20:01', '2026-03-26 11:34:10'),
 (56, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-01-21', '06:00:46', '21:04:13', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 904, 904, 540, 364, 6.07, 0, 525, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-21 01:00:46', '2026-01-21 16:04:14'),
-(57, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-01-21', '06:02:05', '06:02:30', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-21 01:02:06', '2026-01-21 01:02:31'),
+(57, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-01-21', '06:02:05', '06:02:30', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-21 01:02:06', '2026-03-26 12:27:51'),
 (58, 42, 'Tahir@digioussolutions.com', 'Tahir ', '2026-01-21', '06:07:18', '06:07:29', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-21 01:07:18', '2026-01-21 01:07:25'),
 (59, 45, 'SyedAwais@digioussolutions.com', 'Syed Awais Ahmed', '2026-01-21', '21:04:07', '09:00:00', 'Present', 4, 0, 2, 2, 0, 0, 55, 9, 0, 64, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-21 16:04:08', '2026-02-13 12:33:38'),
 (60, 34, 'Khisal@digioussolutions.com', 'Khisal Zafar', '2026-01-21', '21:05:44', '09:00:00', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-21 16:05:44', '2026-02-13 12:33:38'),
@@ -1832,7 +2321,7 @@ INSERT INTO `Employee_Attendance` (`id`, `employee_id`, `email`, `name`, `attend
 (71, 30, 'wajih@digioussolutions.com', 'Wajih ul Hasan', '2026-01-21', '21:23:27', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 8, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-21 16:23:27', '2026-02-13 12:33:38'),
 (72, 28, 'Shahmeerabbas@digioussolutions.com', 'Syed Shahmeer Abbas', '2026-01-21', '21:28:39', '09:00:00', 'Late', 2, 0, 1, 1, 0, 0, 59, 17, 0, 76, 0, 0, 540, 0, 0.00, 0, 13, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-21 16:28:40', '2026-02-13 12:33:38'),
 (73, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-01-21', '21:37:57', '09:00:00', 'Late', 2, 0, 1, 0, 1, 0, 13704000, 0, 13704000, 27408000, 0, 0, 540, 0, 0.00, 0, 22, NULL, 'Web Browser', NULL, '2026-01-21 16:37:57', '2026-02-13 12:33:38'),
-(74, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-01-21', '00:56:40', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 221, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-21 19:56:40', '2026-02-13 12:33:38'),
+(74, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-01-21', '00:56:40', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 484, 484, 540, 0, 0.00, 0, 221, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-21 19:56:40', '2026-03-26 11:34:10'),
 (75, 40, 'Yanish@digioussolutions.com', 'Yanish Hyder', '2026-01-22', '06:06:11', '06:06:54', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-22 01:06:11', '2026-01-22 01:06:55'),
 (76, 31, 'Wahajabbas@digioussolutions.com', 'Syed Wahaj Abbas ', '2026-01-22', '06:08:26', '06:08:30', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-22 01:08:26', '2026-01-22 01:08:31'),
 (77, 42, 'Tahir@digioussolutions.com', 'Tahir ', '2026-01-22', '20:43:45', '09:00:00', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-22 15:43:45', '2026-02-13 12:33:38'),
@@ -1840,17 +2329,17 @@ INSERT INTO `Employee_Attendance` (`id`, `employee_id`, `email`, `name`, `attend
 (79, 46, 'Shahrukh@digioussolutions.com', 'Shahrukh Hussain Siddiqui', '2026-01-22', '21:11:28', '03:03:31', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 352, 352, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-22 16:11:28', '2026-01-22 22:03:32'),
 (80, 36, 'Faiq@digioussolutions.com', 'Faiq Shahzad', '2026-01-22', '21:13:31', '09:00:00', 'Present', 5, 3, 1, 1, 0, 29, 22, 3, 0, 54, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-22 16:13:31', '2026-02-13 12:33:38'),
 (81, 35, 'Taha@digioussolutions.com', 'Muhammad Taha', '2026-01-22', '21:15:13', '09:00:00', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-22 16:15:13', '2026-02-13 12:33:38'),
-(82, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-01-22', '21:16:27', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 1, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-22 16:16:27', '2026-02-13 12:33:38'),
+(82, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-01-22', '21:16:27', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 704, 704, 540, 164, 2.73, 0, 1, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-22 16:16:27', '2026-03-26 12:06:33'),
 (83, 28, 'Shahmeerabbas@digioussolutions.com', 'Syed Shahmeer Abbas', '2026-01-22', '21:20:22', '09:00:00', 'Late', 3, 0, 2, 1, 0, 0, 77, 4, 0, 81, 0, 0, 540, 0, 0.00, 0, 5, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-22 16:20:22', '2026-02-13 12:33:38'),
 (84, 37, 'Taimoor@digioussolutions.com', 'Taimoor Shah', '2026-01-22', '21:20:37', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 5, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-22 16:20:37', '2026-02-13 12:33:38'),
 (85, 32, 'Humaiz@digioussolutions.com', 'Muhammad Humaiz', '2026-01-22', '21:21:42', '09:00:00', 'Late', 5, 1, 3, 1, 0, 0, 44, 2, 0, 46, 0, 0, 540, 0, 0.00, 0, 6, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-22 16:21:43', '2026-02-13 12:33:38'),
 (86, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-01-22', '21:22:05', '09:00:00', 'Late', 2, 0, 1, 1, 0, 0, 92, 9, 0, 101, 0, 0, 540, 0, 0.00, 0, 7, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-22 16:22:05', '2026-02-13 12:33:38'),
 (87, 30, 'wajih@digioussolutions.com', 'Wajih ul Hasan', '2026-01-22', '21:26:34', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 11, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-22 16:26:34', '2026-02-13 12:33:38'),
-(88, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-01-22', '21:30:02', '09:00:00', 'Late', 2, 0, 1, 0, 1, 0, 54, 0, 18, 72, 0, 0, 540, 0, 0.00, 0, 15, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-22 16:30:02', '2026-02-13 12:33:38'),
+(88, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-01-22', '21:30:02', '09:00:00', 'Late', 2, 0, 1, 0, 1, 0, 54, 0, 18, 72, 690, 618, 540, 78, 1.30, 0, 15, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-22 16:30:02', '2026-03-26 12:27:51'),
 (89, 38, 'Ebad@digioussolutions.com', 'Muhammad Ebad', '2026-01-22', '21:32:36', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 17, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-22 16:32:36', '2026-02-13 12:33:38'),
 (90, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-01-22', '22:21:16', '09:00:00', 'Late', 1, 1, 0, 0, 0, 13706221, 0, 0, 0, 13706221, 0, 0, 540, 0, 0.00, 0, 66, NULL, 'Web Browser', NULL, '2026-01-22 17:21:16', '2026-02-13 12:33:38'),
 (91, 39, 'muhammadHamza@digioussolutions.com', 'Muhammad Hamza', '2026-01-22', '22:24:10', '09:00:00', 'Late', 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 69, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-22 17:24:10', '2026-02-13 12:33:38'),
-(92, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-01-22', '23:04:32', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 109, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-22 18:04:32', '2026-02-13 12:33:38'),
+(92, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-01-22', '23:04:32', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 596, 596, 540, 56, 0.93, 0, 109, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-22 18:04:32', '2026-03-26 11:34:10'),
 (93, 42, 'Tahir@digioussolutions.com', 'Tahir ', '2026-01-23', '20:22:06', '09:00:00', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-23 15:22:06', '2026-02-13 12:33:38'),
 (94, 46, 'Shahrukh@digioussolutions.com', 'Shahrukh Hussain Siddiqui', '2026-01-23', '21:07:00', '09:00:00', 'Present', 1, 0, 1, 0, 0, 0, 33, 0, 0, 33, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-23 16:07:00', '2026-02-13 12:33:38'),
 (95, 45, 'SyedAwais@digioussolutions.com', 'Syed Awais Ahmed', '2026-01-23', '21:07:01', '09:00:00', 'Present', 2, 0, 2, 0, 0, 0, 31, 0, 0, 31, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-23 16:07:01', '2026-02-13 12:33:38'),
@@ -1858,17 +2347,17 @@ INSERT INTO `Employee_Attendance` (`id`, `employee_id`, `email`, `name`, `attend
 (97, 32, 'Humaiz@digioussolutions.com', 'Muhammad Humaiz', '2026-01-23', '21:10:53', '09:00:00', 'Present', 3, 0, 2, 1, 0, 0, 32, 2, 0, 34, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-23 16:10:53', '2026-02-13 12:33:38'),
 (98, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-01-23', '21:11:12', '05:57:32', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 526, 526, 540, 0, 0.00, 1, 0, NULL, 'Web Browser', NULL, '2026-01-23 16:11:12', '2026-01-24 00:57:32'),
 (99, 37, 'Taimoor@digioussolutions.com', 'Taimoor Shah', '2026-01-23', '21:11:57', '09:00:00', 'Present', 2, 0, 2, 0, 0, 0, 33, 0, 0, 33, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-23 16:11:57', '2026-02-13 12:33:38'),
-(100, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-01-23', '21:17:39', '09:00:00', 'Late', 1, 0, 0, 0, 1, 0, 0, 0, 10, 10, 0, 0, 540, 0, 0.00, 0, 2, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-23 16:17:39', '2026-02-13 12:33:38'),
+(100, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-01-23', '21:17:39', '09:00:00', 'Late', 1, 0, 0, 0, 1, 0, 0, 0, 10, 10, 703, 693, 540, 153, 2.55, 0, 2, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-23 16:17:39', '2026-03-26 12:27:51'),
 (101, 36, 'Faiq@digioussolutions.com', 'Faiq Shahzad', '2026-01-23', '21:18:33', '09:00:00', 'Late', 4, 0, 3, 1, 0, 0, 54, 3, 0, 57, 0, 0, 540, 0, 0.00, 0, 3, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-23 16:18:33', '2026-02-13 12:33:38'),
 (102, 38, 'Ebad@digioussolutions.com', 'Muhammad Ebad', '2026-01-23', '21:20:51', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 5, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-23 16:20:51', '2026-02-13 12:33:38'),
 (103, 34, 'Khisal@digioussolutions.com', 'Khisal Zafar', '2026-01-23', '21:21:33', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 6, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-23 16:21:33', '2026-02-13 12:33:38'),
 (104, 31, 'Wahajabbas@digioussolutions.com', 'Syed Wahaj Abbas ', '2026-01-23', '21:28:28', '00:38:26', 'Late', 1, 0, 0, 0, 1, 0, 0, 0, 47, 47, 190, 143, 540, 0, 0.00, 0, 13, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-23 16:28:28', '2026-01-23 19:38:26'),
 (105, 40, 'Yanish@digioussolutions.com', 'Yanish Hyder', '2026-01-23', '21:36:14', '09:00:00', 'Late', 1, 0, 1, 0, 0, 0, 46, 0, 0, 46, 0, 0, 540, 0, 0.00, 0, 21, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-23 16:36:14', '2026-02-13 12:33:38'),
-(106, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-01-23', '21:47:07', '09:00:00', 'Late', 2, 0, 0, 1, 1, 0, 0, 17, 17, 34, 0, 0, 540, 0, 0.00, 0, 32, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-23 16:47:07', '2026-02-13 12:33:38'),
+(106, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-01-23', '21:47:07', '09:00:00', 'Late', 2, 0, 0, 1, 1, 0, 0, 17, 17, 34, 673, 639, 540, 99, 1.65, 0, 32, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-23 16:47:07', '2026-03-26 12:06:33'),
 (107, 39, 'muhammadHamza@digioussolutions.com', 'Muhammad Hamza', '2026-01-23', '22:34:59', '09:00:00', 'Late', 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 79, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-23 17:34:59', '2026-02-13 12:33:38'),
 (108, 28, 'Shahmeerabbas@digioussolutions.com', 'Syed Shahmeer Abbas', '2026-01-23', '22:52:33', '09:00:00', 'Late', 2, 0, 2, 0, 0, 0, 81, 0, 0, 81, 0, 0, 540, 0, 0.00, 0, 97, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-23 17:52:33', '2026-02-13 12:33:38'),
 (109, 42, 'Tahir@digioussolutions.com', 'Tahir ', '2026-01-24', '07:07:42', '07:07:50', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-24 02:07:42', '2026-01-24 02:07:48'),
-(110, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-01-24', '20:55:38', '02:04:48', 'Present', 1, 0, 1, 0, 0, 0, 13, 0, 0, 13, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-24 15:55:38', '2026-01-24 21:04:49'),
+(110, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-01-24', '20:55:38', '02:04:48', 'Present', 1, 0, 1, 0, 0, 0, 13, 0, 0, 13, 309, 296, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-24 15:55:38', '2026-03-26 12:06:33'),
 (111, 36, 'Faiq@digioussolutions.com', 'Faiq Shahzad', '2026-01-24', '21:08:11', '02:00:38', 'Present', 1, 0, 1, 0, 0, 0, 31, 0, 0, 31, 292, 261, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-24 16:08:11', '2026-01-24 21:00:12'),
 (112, 46, 'Shahrukh@digioussolutions.com', 'Shahrukh Hussain Siddiqui', '2026-01-24', '21:08:38', '02:03:03', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 295, 295, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-24 16:08:38', '2026-01-24 21:03:03'),
 (113, 37, 'Taimoor@digioussolutions.com', 'Taimoor Shah', '2026-01-24', '21:09:34', '02:02:52', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 293, 293, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-24 16:09:34', '2026-01-24 21:02:55'),
@@ -1889,16 +2378,16 @@ INSERT INTO `Employee_Attendance` (`id`, `employee_id`, `email`, `name`, `attend
 (128, 38, 'Ebad@digioussolutions.com', 'Muhammad Ebad', '2026-01-26', '21:08:57', '09:00:00', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-26 16:08:57', '2026-02-13 12:33:38'),
 (129, 32, 'Humaiz@digioussolutions.com', 'Muhammad Humaiz', '2026-01-26', '21:09:52', '09:00:00', 'Present', 5, 0, 4, 1, 0, 0, 46, 0, 0, 46, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-26 16:09:52', '2026-02-13 12:33:38'),
 (130, 37, 'Taimoor@digioussolutions.com', 'Taimoor Shah', '2026-01-26', '21:14:11', '09:00:00', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-26 16:14:11', '2026-02-13 12:33:38'),
-(131, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-01-26', '21:14:16', '09:00:00', 'Present', 1, 0, 0, 1, 0, 0, 0, 5, 0, 5, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-26 16:14:16', '2026-02-13 12:33:38'),
+(131, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-01-26', '21:14:16', '09:00:00', 'Present', 1, 0, 0, 1, 0, 0, 0, 5, 0, 5, 706, 701, 540, 161, 2.68, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-26 16:14:16', '2026-03-26 12:06:33'),
 (132, 28, 'Shahmeerabbas@digioussolutions.com', 'Syed Shahmeer Abbas', '2026-01-26', '21:19:45', '09:00:00', 'Late', 2, 0, 2, 0, 0, 0, 115, 0, 0, 115, 0, 0, 540, 0, 0.00, 0, 4, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-26 16:19:45', '2026-02-13 12:33:38'),
-(133, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-01-26', '21:19:51', '09:00:00', 'Late', 1, 0, 0, 0, 1, 0, 0, 0, 25, 25, 0, 0, 540, 0, 0.00, 0, 4, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-26 16:19:51', '2026-02-13 12:33:38'),
+(133, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-01-26', '21:19:51', '09:00:00', 'Late', 1, 0, 0, 0, 1, 0, 0, 0, 25, 25, 701, 676, 540, 136, 2.27, 0, 4, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-26 16:19:51', '2026-03-26 12:27:51'),
 (134, 31, 'Wahajabbas@digioussolutions.com', 'Syed Wahaj Abbas ', '2026-01-26', '21:22:03', '09:00:00', 'Late', 2, 0, 2, 0, 0, 0, 47, 0, 0, 47, 0, 0, 540, 0, 0.00, 0, 7, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-26 16:22:03', '2026-02-13 12:33:38'),
 (135, 39, 'muhammadHamza@digioussolutions.com', 'Muhammad Hamza', '2026-01-26', '21:30:05', '09:00:00', 'Late', 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 15, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-26 16:30:05', '2026-02-13 12:33:38'),
 (136, 40, 'Yanish@digioussolutions.com', 'Yanish Hyder', '2026-01-26', '21:48:36', '09:00:00', 'Late', 1, 0, 1, 0, 0, 0, 18, 0, 0, 18, 0, 0, 540, 0, 0.00, 0, 33, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-26 16:48:37', '2026-02-13 12:33:38'),
 (137, 34, 'Khisal@digioussolutions.com', 'Khisal Zafar', '2026-01-26', '22:48:10', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 93, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-26 17:48:10', '2026-02-13 12:33:38'),
 (138, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-01-26', '23:24:23', '09:00:00', 'Late', 1, 0, 1, 0, 0, 0, 17, 0, 0, 17, 0, 0, 540, 0, 0.00, 0, 129, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-26 18:24:23', '2026-02-13 12:33:38'),
 (139, 30, 'wajih@digioussolutions.com', 'Wajih ul Hasan', '2026-01-26', '00:26:51', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 191, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-26 19:26:51', '2026-02-13 12:33:38'),
-(140, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-01-27', '21:00:27', '09:00:00', 'Present', 1, 0, 0, 1, 0, 0, 0, 7, 0, 7, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-27 16:00:27', '2026-02-13 12:33:38'),
+(140, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-01-27', '21:00:27', '09:00:00', 'Present', 1, 0, 0, 1, 0, 0, 0, 7, 0, 7, 720, 713, 540, 173, 2.88, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-27 16:00:27', '2026-03-26 12:06:33'),
 (141, 36, 'Faiq@digioussolutions.com', 'Faiq Shahzad', '2026-01-27', '21:05:47', '09:00:00', 'Present', 3, 2, 1, 0, 0, 24, 34, 0, 0, 58, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-27 16:05:47', '2026-02-13 12:33:38'),
 (142, 37, 'Taimoor@digioussolutions.com', 'Taimoor Shah', '2026-01-27', '21:07:10', '09:00:00', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-27 16:07:10', '2026-02-13 12:33:38'),
 (143, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-01-27', '21:08:27', '09:00:00', 'Present', 1, 1, 0, 0, 0, 308, 0, 0, 0, 308, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Web Browser', NULL, '2026-01-27 16:08:27', '2026-02-13 12:33:38'),
@@ -1910,12 +2399,12 @@ INSERT INTO `Employee_Attendance` (`id`, `employee_id`, `email`, `name`, `attend
 (148, 34, 'Khisal@digioussolutions.com', 'Khisal Zafar', '2026-01-27', '21:16:37', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 1, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-27 16:16:37', '2026-02-13 12:33:38'),
 (149, 38, 'Ebad@digioussolutions.com', 'Muhammad Ebad', '2026-01-27', '21:18:31', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 3, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-27 16:18:32', '2026-02-13 12:33:38'),
 (150, 30, 'wajih@digioussolutions.com', 'Wajih ul Hasan', '2026-01-27', '21:21:41', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 6, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-27 16:21:41', '2026-02-13 12:33:38'),
-(151, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-01-27', '21:26:35', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 11, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-27 16:26:35', '2026-02-13 12:33:38'),
+(151, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-01-27', '21:26:35', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 694, 694, 540, 154, 2.57, 0, 11, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-27 16:26:35', '2026-03-26 12:27:51'),
 (152, 39, 'muhammadHamza@digioussolutions.com', 'Muhammad Hamza', '2026-01-27', '21:26:56', '09:00:00', 'Late', 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 11, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-27 16:26:56', '2026-02-13 12:33:38'),
 (153, 45, 'SyedAwais@digioussolutions.com', 'Syed Awais Ahmed', '2026-01-27', '21:27:01', '09:00:00', 'Late', 1, 0, 1, 0, 0, 0, 21, 0, 0, 21, 0, 0, 540, 0, 0.00, 0, 12, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-27 16:27:01', '2026-02-13 12:33:38'),
 (154, 31, 'Wahajabbas@digioussolutions.com', 'Syed Wahaj Abbas ', '2026-01-27', '21:28:41', '21:29:58', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 540, 0, 0.00, 0, 13, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-27 16:28:42', '2026-01-27 16:29:59'),
 (155, 40, 'Yanish@digioussolutions.com', 'Yanish Hyder', '2026-01-27', '21:40:23', '09:00:00', 'Late', 3, 0, 2, 1, 0, 0, 39, 5, 0, 44, 0, 0, 540, 0, 0.00, 0, 25, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-27 16:40:23', '2026-02-13 12:33:38'),
-(156, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-01-27', '22:07:00', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 52, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-27 17:07:00', '2026-02-13 12:33:38'),
+(156, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-01-27', '22:07:00', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 653, 653, 540, 113, 1.88, 0, 52, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-27 17:07:00', '2026-03-26 11:34:10'),
 (157, 45, 'SyedAwais@digioussolutions.com', 'Syed Awais Ahmed', '2026-01-28', '06:00:28', '06:02:22', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 540, 0, 0.00, 0, 525, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-28 01:00:28', '2026-01-28 01:02:22'),
 (158, 34, 'Khisal@digioussolutions.com', 'Khisal Zafar', '2026-01-28', '21:06:02', '09:00:00', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-28 16:06:02', '2026-02-13 12:33:38'),
 (159, 46, 'Shahrukh@digioussolutions.com', 'Shahrukh Hussain Siddiqui', '2026-01-28', '21:06:15', '03:08:18', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 362, 362, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-28 16:06:15', '2026-01-28 22:08:19'),
@@ -1925,14 +2414,14 @@ INSERT INTO `Employee_Attendance` (`id`, `employee_id`, `email`, `name`, `attend
 (163, 32, 'Humaiz@digioussolutions.com', 'Muhammad Humaiz', '2026-01-28', '21:15:26', '09:00:00', 'Present', 3, 0, 2, 1, 0, 0, 47, 0, 0, 47, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-28 16:15:26', '2026-02-13 12:33:38'),
 (164, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-01-28', '21:17:17', '09:00:00', 'Late', 1, 0, 1, 0, 0, 0, 25, 0, 0, 25, 0, 0, 540, 0, 0.00, 0, 2, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-28 16:17:17', '2026-02-13 12:33:38'),
 (165, 38, 'Ebad@digioussolutions.com', 'Muhammad Ebad', '2026-01-28', '21:24:26', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 9, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-28 16:24:26', '2026-02-13 12:33:38'),
-(166, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-01-28', '21:28:12', '09:00:00', 'Late', 1, 0, 0, 1, 0, 0, 0, 4, 0, 4, 0, 0, 540, 0, 0.00, 0, 13, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-28 16:28:12', '2026-02-13 12:33:38'),
+(166, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-01-28', '21:28:12', '09:00:00', 'Late', 1, 0, 0, 1, 0, 0, 0, 4, 0, 4, 692, 688, 540, 148, 2.47, 0, 13, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-28 16:28:12', '2026-03-26 12:06:33'),
 (167, 31, 'Wahajabbas@digioussolutions.com', 'Syed Wahaj Abbas ', '2026-01-28', '21:29:43', '09:00:00', 'Late', 3, 0, 2, 0, 1, 0, 47, 0, 0, 47, 0, 0, 540, 0, 0.00, 0, 14, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-28 16:29:43', '2026-02-13 12:33:38'),
 (168, 28, 'Shahmeerabbas@digioussolutions.com', 'Syed Shahmeer Abbas', '2026-01-28', '21:29:55', '09:00:00', 'Late', 1, 0, 1, 0, 0, 0, 52, 0, 0, 52, 0, 0, 540, 0, 0.00, 0, 14, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-28 16:29:55', '2026-02-13 12:33:38'),
 (169, 30, 'wajih@digioussolutions.com', 'Wajih ul Hasan', '2026-01-28', '21:34:01', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 19, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-28 16:34:01', '2026-02-13 12:33:38'),
 (170, 40, 'Yanish@digioussolutions.com', 'Yanish Hyder', '2026-01-28', '21:36:32', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 21, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-28 16:36:32', '2026-02-13 12:33:38'),
 (171, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-01-28', '00:01:32', '02:58:59', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 177, 177, 540, 0, 0.00, 0, 166, NULL, 'Web Browser', NULL, '2026-01-28 19:01:32', '2026-01-28 21:58:59'),
-(172, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-01-28', '00:01:34', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 166, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-28 19:01:34', '2026-02-13 12:33:38'),
-(173, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-01-28', '00:19:03', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 184, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-28 19:19:03', '2026-02-13 12:33:38'),
+(172, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-01-28', '00:01:34', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 539, 539, 540, 0, 0.00, 0, 166, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-28 19:01:34', '2026-03-26 12:27:51'),
+(173, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-01-28', '00:19:03', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 521, 521, 540, 0, 0.00, 0, 184, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-28 19:19:03', '2026-03-26 11:34:10'),
 (174, 46, 'Shahrukh@digioussolutions.com', 'Shahrukh Hussain Siddiqui', '2026-01-29', '21:07:03', '03:09:14', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 362, 362, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-29 16:07:04', '2026-01-29 22:09:15'),
 (175, 45, 'SyedAwais@digioussolutions.com', 'Syed Awais Ahmed', '2026-01-29', '21:11:05', '09:00:00', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-29 16:11:05', '2026-02-13 12:33:38'),
 (176, 36, 'Faiq@digioussolutions.com', 'Faiq Shahzad', '2026-01-29', '21:11:07', '09:00:00', 'Present', 2, 0, 2, 0, 0, 0, 23, 0, 0, 23, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-29 16:11:07', '2026-02-13 12:33:38'),
@@ -1946,17 +2435,17 @@ INSERT INTO `Employee_Attendance` (`id`, `employee_id`, `email`, `name`, `attend
 (184, 39, 'muhammadHamza@digioussolutions.com', 'Muhammad Hamza', '2026-01-29', '21:25:31', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 10, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-29 16:25:31', '2026-02-13 12:33:38'),
 (185, 28, 'Shahmeerabbas@digioussolutions.com', 'Syed Shahmeer Abbas', '2026-01-29', '21:26:39', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 11, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-29 16:26:39', '2026-02-13 12:33:38'),
 (186, 40, 'Yanish@digioussolutions.com', 'Yanish Hyder', '2026-01-29', '21:27:08', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 12, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-29 16:27:08', '2026-02-13 12:33:38'),
-(187, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-01-29', '22:00:37', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 45, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-29 17:00:37', '2026-02-13 12:33:38'),
+(187, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-01-29', '22:00:37', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 660, 660, 540, 120, 2.00, 0, 45, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-29 17:00:37', '2026-03-26 12:06:33'),
 (188, 31, 'Wahajabbas@digioussolutions.com', 'Syed Wahaj Abbas ', '2026-01-29', '01:21:08', '09:00:00', 'Late', 1, 0, 1, 0, 0, 0, 28, 0, 0, 28, 0, 0, 540, 0, 0.00, 0, 246, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-29 20:21:08', '2026-02-13 12:33:38'),
 (189, 42, 'Tahir@digioussolutions.com', 'Tahir ', '2026-01-29', '05:09:03', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 474, NULL, 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-30 00:09:03', '2026-02-13 12:33:38'),
-(190, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-01-29', '05:43:27', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 508, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-30 00:43:27', '2026-02-13 12:33:38'),
+(190, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-01-29', '05:43:27', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 197, 197, 540, 0, 0.00, 0, 508, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-30 00:43:27', '2026-03-26 11:34:10'),
 (191, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-01-30', '20:52:22', '09:00:00', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Web Browser', NULL, '2026-01-30 15:52:23', '2026-02-13 12:33:38'),
 (192, 37, 'Taimoor@digioussolutions.com', 'Taimoor Shah', '2026-01-30', '21:08:41', '09:00:00', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-30 16:08:41', '2026-02-13 12:33:38'),
 (193, 45, 'SyedAwais@digioussolutions.com', 'Syed Awais Ahmed', '2026-01-30', '21:10:06', '09:00:00', 'Present', 2, 0, 1, 1, 0, 0, 34, 2, 0, 19, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-30 16:10:06', '2026-02-13 12:33:38'),
 (194, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-01-30', '21:11:22', '09:00:00', 'Present', 1, 0, 1, 0, 0, 0, 120, 0, 0, 60, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-30 16:11:22', '2026-02-13 12:33:38'),
 (195, 36, 'Faiq@digioussolutions.com', 'Faiq Shahzad', '2026-01-30', '21:11:46', '09:00:00', 'Present', 1, 1, 0, 0, 0, 11, 0, 0, 0, 11, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-30 16:11:47', '2026-02-13 12:33:38'),
-(196, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-01-30', '21:13:40', '09:00:00', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-30 16:13:40', '2026-02-13 12:33:38'),
-(197, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-01-30', '21:15:54', '09:00:00', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Mobile Safari/537.36', '127.0.0.1', '2026-01-30 16:15:54', '2026-02-13 12:33:38'),
+(196, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-01-30', '21:13:40', '09:00:00', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 707, 707, 540, 167, 2.78, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-30 16:13:40', '2026-03-26 12:27:51'),
+(197, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-01-30', '21:15:54', '09:00:00', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 705, 705, 540, 165, 2.75, 1, 0, NULL, 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Mobile Safari/537.36', '127.0.0.1', '2026-01-30 16:15:54', '2026-03-26 12:06:33'),
 (198, 35, 'Taha@digioussolutions.com', 'Muhammad Taha', '2026-01-30', '21:17:47', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 2, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-30 16:17:47', '2026-02-13 12:33:38'),
 (199, 28, 'Shahmeerabbas@digioussolutions.com', 'Syed Shahmeer Abbas', '2026-01-30', '21:18:27', '09:00:00', 'Late', 2, 0, 1, 1, 0, 0, 60, 18, 0, 69, 0, 0, 540, 0, 0.00, 0, 3, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-30 16:18:27', '2026-02-13 12:33:38'),
 (200, 40, 'Yanish@digioussolutions.com', 'Yanish Hyder', '2026-01-30', '21:20:30', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 5, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-30 16:20:30', '2026-02-13 12:33:38'),
@@ -1966,7 +2455,7 @@ INSERT INTO `Employee_Attendance` (`id`, `employee_id`, `email`, `name`, `attend
 (204, 38, 'Ebad@digioussolutions.com', 'Muhammad Ebad', '2026-01-30', '22:58:07', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 103, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-30 17:58:07', '2026-02-13 12:33:38'),
 (205, 46, 'Shahrukh@digioussolutions.com', 'Shahrukh Hussain Siddiqui', '2026-01-30', '01:29:27', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 254, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-30 20:29:27', '2026-02-13 12:33:38'),
 (206, 32, 'Humaiz@digioussolutions.com', 'Muhammad Humaiz', '2026-01-30', '01:40:23', '09:00:00', 'Late', 1, 0, 1, 0, 0, 0, 21, 0, 0, 21, 0, 0, 540, 0, 0.00, 0, 265, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-30 20:40:24', '2026-02-13 12:33:38'),
-(207, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-01-30', '23:42:12', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 337, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-30 21:52:12', '2026-02-13 12:33:38'),
+(207, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-01-30', '23:42:12', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 558, 558, 540, 18, 0.30, 0, 337, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-30 21:52:12', '2026-03-26 11:34:10'),
 (208, 45, 'SyedAwais@digioussolutions.com', 'Syed Awais Ahmed', '2026-01-31', '20:57:37', '02:00:39', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-31 15:57:37', '2026-01-31 21:00:41'),
 (209, 42, 'Tahir@digioussolutions.com', 'Tahir ', '2026-01-31', '21:08:07', '09:00:00', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-31 16:08:07', '2026-02-13 12:33:38'),
 (210, 32, 'Humaiz@digioussolutions.com', 'Muhammad Humaiz', '2026-01-31', '21:11:49', '09:00:00', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-31 16:11:49', '2026-02-13 12:33:38'),
@@ -1979,7 +2468,7 @@ INSERT INTO `Employee_Attendance` (`id`, `employee_id`, `email`, `name`, `attend
 (217, 39, 'muhammadHamza@digioussolutions.com', 'Muhammad Hamza', '2026-01-31', '22:09:34', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 54, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-31 17:09:34', '2026-02-13 12:33:38'),
 (218, 40, 'Yanish@digioussolutions.com', 'Yanish Hyder', '2026-01-31', '22:10:12', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 55, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-31 17:10:12', '2026-02-13 12:33:38'),
 (219, 28, 'Shahmeerabbas@digioussolutions.com', 'Syed Shahmeer Abbas', '2026-01-31', '22:20:02', '09:00:00', 'Late', 1, 0, 1, 0, 0, 0, 80, 0, 0, 40, 0, 0, 540, 0, 0.00, 0, 65, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-31 17:20:02', '2026-02-13 12:33:38'),
-(220, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-01-31', '22:23:21', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 68, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-31 17:23:21', '2026-02-13 12:33:38'),
+(220, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-01-31', '22:23:21', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 637, 637, 540, 97, 1.62, 0, 68, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-31 17:23:21', '2026-03-26 12:27:51'),
 (221, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-01-31', '22:43:25', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 88, NULL, 'Web Browser', NULL, '2026-01-31 17:43:25', '2026-02-13 12:33:38'),
 (223, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-01-31', '23:50:50', '09:00:00', 'Late', 1, 0, 1, 0, 0, 0, 118, 0, 0, 59, 0, 0, 540, 0, 0.00, 0, 155, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-31 18:50:51', '2026-02-13 12:33:38'),
 (224, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-01-31', '22:07:00', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 27, 27, 540, 0, 0.00, 0, 171, NULL, 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-01-31 19:06:43', '2026-02-13 12:33:38'),
@@ -1995,7 +2484,7 @@ INSERT INTO `Employee_Attendance` (`id`, `employee_id`, `email`, `name`, `attend
 (234, 34, 'Khisal@digioussolutions.com', 'Khisal Zafar', '2026-02-02', '21:18:29', '06:11:26', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 533, 533, 540, 0, 0.00, 0, 3, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-02-02 16:18:29', '2026-02-03 01:11:27'),
 (235, 40, 'Yanish@digioussolutions.com', 'Yanish Hyder', '2026-02-02', '21:20:22', '09:00:00', 'Late', 1, 0, 0, 1, 0, 0, 0, 20, 0, 10, 0, 0, 540, 0, 0.00, 0, 5, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-02-02 16:20:22', '2026-02-13 12:33:38'),
 (236, 28, 'Shahmeerabbas@digioussolutions.com', 'Syed Shahmeer Abbas', '2026-02-02', '21:23:29', '06:03:55', 'Late', 3, 1, 2, 0, 0, 0, 40, 0, 0, 20, 520, 500, 540, 0, 0.00, 0, 8, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-02-02 16:23:29', '2026-02-03 01:03:39'),
-(237, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-02-02', '21:24:19', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 9, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-02-02 16:24:19', '2026-02-13 12:33:38'),
+(237, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-02-02', '21:24:19', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 696, 696, 540, 156, 2.60, 0, 9, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-02-02 16:24:19', '2026-03-26 12:27:51'),
 (238, 45, 'SyedAwais@digioussolutions.com', 'Syed Awais Ahmed', '2026-02-02', '21:25:24', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 10, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-02-02 16:25:24', '2026-02-13 12:33:38'),
 (239, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-02-02', '22:32:24', '06:04:32', 'Late', 2, 0, 2, 0, 0, 0, 42, 0, 0, 37, 452, 415, 540, 0, 0.00, 0, 77, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-02-02 17:32:24', '2026-02-03 01:04:32'),
 (240, 38, 'Ebad@digioussolutions.com', 'Muhammad Ebad', '2026-02-02', '22:45:45', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 90, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-02-02 17:45:45', '2026-02-13 12:33:38'),
@@ -2006,7 +2495,7 @@ INSERT INTO `Employee_Attendance` (`id`, `employee_id`, `email`, `name`, `attend
 (245, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-02-03', '21:05:08', '06:15:37', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 550, 550, 540, 10, 0.17, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-02-03 16:05:09', '2026-02-04 01:15:37'),
 (246, 34, 'Khisal@digioussolutions.com', 'Khisal Zafar', '2026-02-03', '21:05:33', '06:20:35', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 555, 555, 540, 15, 0.25, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-02-03 16:05:33', '2026-02-04 01:20:35'),
 (247, 40, 'Yanish@digioussolutions.com', 'Yanish Hyder', '2026-02-03', '21:14:51', '09:00:00', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-02-03 16:14:51', '2026-02-13 12:33:38'),
-(248, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-02-03', '21:15:17', '09:00:00', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-02-03 16:15:17', '2026-02-13 12:33:38'),
+(248, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-02-03', '21:15:17', '09:00:00', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 705, 705, 540, 165, 2.75, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-02-03 16:15:17', '2026-03-26 12:27:51'),
 (249, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-02-03', '21:15:23', '06:11:25', 'Present', 2, 0, 2, 0, 0, 0, 66, 0, 0, 43, 536, 493, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-02-03 16:15:23', '2026-02-04 01:11:26'),
 (250, 35, 'Taha@digioussolutions.com', 'Muhammad Taha', '2026-02-03', '21:17:18', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 2, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-02-03 16:17:19', '2026-02-13 12:33:38'),
 (251, 36, 'Faiq@digioussolutions.com', 'Faiq Shahzad', '2026-02-03', '21:18:31', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 3, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-02-03 16:18:31', '2026-02-13 12:33:38'),
@@ -2044,14 +2533,14 @@ INSERT INTO `Employee_Attendance` (`id`, `employee_id`, `email`, `name`, `attend
 (283, 39, 'muhammadHamza@digioussolutions.com', 'Muhammad Hamza', '2026-02-05', '21:11:17', '09:00:00', 'Present', 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 709, 709, 540, 169, 2.82, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-02-05 16:11:17', '2026-02-26 19:17:56'),
 (284, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-02-05', '21:16:14', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 1, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-02-05 16:16:14', '2026-02-13 12:33:38'),
 (285, 37, 'Taimoor@digioussolutions.com', 'Taimoor Shah', '2026-02-05', '21:20:02', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 5, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-02-05 16:20:02', '2026-02-13 12:33:38'),
-(286, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-02-05', '21:21:07', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 6, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-02-05 16:21:07', '2026-02-13 12:33:38'),
+(286, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-02-05', '21:21:07', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 699, 699, 540, 159, 2.65, 0, 6, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-02-05 16:21:07', '2026-03-26 12:27:51'),
 (287, 32, 'Humaiz@digioussolutions.com', 'Muhammad Humaiz', '2026-02-05', '21:23:12', '06:02:23', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 519, 519, 540, 0, 0.00, 0, 8, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-02-05 16:23:12', '2026-02-06 01:02:24'),
 (288, 38, 'Ebad@digioussolutions.com', 'Muhammad Ebad', '2026-02-05', '21:23:36', '06:07:09', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 524, 524, 540, 0, 0.00, 0, 8, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-02-05 16:23:37', '2026-02-06 01:07:11'),
 (289, 34, 'Khisal@digioussolutions.com', 'Khisal Zafar', '2026-02-05', '21:29:31', '01:05:56', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 216, 216, 540, 0, 0.00, 0, 14, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-02-05 16:29:31', '2026-02-05 20:05:57'),
 (290, 28, 'Shahmeerabbas@digioussolutions.com', 'Syed Shahmeer Abbas', '2026-02-05', '21:34:35', '09:00:00', 'Late', 3, 0, 2, 1, 0, 0, 54, 26, 0, 40, 0, 0, 540, 0, 0.00, 0, 19, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-02-05 16:34:36', '2026-02-13 12:33:38');
 INSERT INTO `Employee_Attendance` (`id`, `employee_id`, `email`, `name`, `attendance_date`, `check_in_time`, `check_out_time`, `status`, `total_breaks_taken`, `smoke_break_count`, `dinner_break_count`, `washroom_break_count`, `prayer_break_count`, `smoke_break_duration_minutes`, `dinner_break_duration_minutes`, `washroom_break_duration_minutes`, `prayer_break_duration_minutes`, `total_break_duration_minutes`, `gross_working_time_minutes`, `net_working_time_minutes`, `expected_working_time_minutes`, `overtime_minutes`, `overtime_hours`, `on_time`, `late_by_minutes`, `remarks`, `device_info`, `ip_address`, `created_at`, `updated_at`) VALUES
 (291, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-02-05', '04:15:11', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 285, 285, 540, 0, 0.00, 0, 420, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-02-05 23:15:12', '2026-02-13 12:49:37'),
-(292, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-02-06', '21:05:56', '06:04:27', 'Present', 3, 0, 0, 2, 1, 0, 0, 560, 289, 849, 539, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-02-06 16:05:56', '2026-02-07 01:04:27'),
+(292, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-02-06', '21:05:56', '06:04:27', 'Present', 3, 0, 0, 2, 1, 0, 0, 560, 289, 849, 539, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-02-06 16:05:56', '2026-03-26 12:06:33'),
 (293, 46, 'Shahrukh@digioussolutions.com', 'Shahrukh Hussain Siddiqui', '2026-02-06', '21:06:08', '06:10:14', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 544, 544, 540, 4, 0.07, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-02-06 16:06:08', '2026-02-07 01:10:14'),
 (294, 42, 'Tahir@digioussolutions.com', 'Tahir ', '2026-02-06', '21:06:55', '07:09:04', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 603, 603, 540, 63, 1.05, 1, 0, NULL, 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-02-06 16:06:55', '2026-02-07 02:09:04'),
 (295, 39, 'muhammadHamza@digioussolutions.com', 'Muhammad Hamza', '2026-02-06', '21:08:47', '09:00:00', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 712, 712, 540, 172, 2.87, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-02-06 16:08:47', '2026-02-26 19:17:56'),
@@ -2077,19 +2566,19 @@ INSERT INTO `Employee_Attendance` (`id`, `employee_id`, `email`, `name`, `attend
 (315, 37, 'Taimoor@digioussolutions.com', 'Taimoor Shah', '2026-02-09', '21:15:45', '09:00:00', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-02-09 16:15:45', '2026-02-13 12:33:38'),
 (316, 40, 'Yanish@digioussolutions.com', 'Yanish Hyder', '2026-02-09', '21:26:36', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 11, NULL, 'Web Browser', NULL, '2026-02-09 16:26:36', '2026-02-13 12:33:38'),
 (317, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-02-09', '21:30:50', '08:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 510, 510, 540, 0, 0.00, 0, 15, NULL, 'Web Browser', NULL, '2026-02-09 16:30:50', '2026-02-10 19:47:40'),
-(318, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-02-09', '21:31:34', '06:10:02', 'Late', 2, 0, 0, 1, 1, 0, 0, 308, 311, 619, 519, 0, 540, 0, 0.00, 0, 16, NULL, 'Web Browser', NULL, '2026-02-09 16:31:35', '2026-02-10 01:10:02'),
+(318, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-02-09', '21:31:34', '06:10:02', 'Late', 2, 0, 0, 1, 1, 0, 0, 308, 311, 619, 519, 0, 540, 0, 0.00, 0, 16, NULL, 'Web Browser', NULL, '2026-02-09 16:31:35', '2026-03-26 12:06:33'),
 (319, 36, 'Faiq@digioussolutions.com', 'Faiq Shahzad', '2026-02-09', '21:32:18', '09:00:00', 'Late', 1, 0, 1, 0, 0, 0, 61, 0, 0, 31, 0, 0, 540, 0, 0.00, 0, 17, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-02-09 16:32:18', '2026-02-13 12:33:38'),
 (320, 32, 'Humaiz@digioussolutions.com', 'Muhammad Humaiz', '2026-02-09', '21:32:53', '09:00:00', 'Late', 1, 0, 1, 0, 0, 0, 300, 0, 0, 300, 0, 0, 540, 0, 0.00, 0, 17, NULL, 'Web Browser', NULL, '2026-02-09 16:32:53', '2026-02-13 12:33:38'),
 (321, 28, 'Shahmeerabbas@digioussolutions.com', 'Syed Shahmeer Abbas', '2026-02-09', '21:43:26', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 28, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', '127.0.0.1', '2026-02-09 16:43:26', '2026-02-13 12:33:38'),
 (322, 31, 'Wahajabbas@digioussolutions.com', 'Syed Wahaj Abbas ', '2026-02-09', '23:36:10', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 141, NULL, 'Web Browser', NULL, '2026-02-09 18:36:10', '2026-02-13 12:33:38'),
 (324, 34, 'Khisal@digioussolutions.com', 'Khisal Zafar', '2026-02-09', '00:59:57', '06:17:50', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 318, 318, 540, 0, 0.00, 0, 224, NULL, 'Web Browser', NULL, '2026-02-09 19:59:57', '2026-02-10 01:17:50'),
 (325, 45, 'SyedAwais@digioussolutions.com', 'Syed Awais Ahmed', '2026-02-10', '21:00:11', '21:00:11', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Web Browser', NULL, '2026-02-10 16:00:11', '2026-02-10 16:00:12'),
-(327, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-02-10', '21:05:02', '21:05:03', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Web Browser', NULL, '2026-02-10 16:05:02', '2026-02-10 16:05:03'),
+(327, 33, 'Saheem@digioussolutions.com', 'Muhammad Saheem', '2026-02-10', '21:05:02', '21:05:03', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Web Browser', NULL, '2026-02-10 16:05:02', '2026-03-26 12:06:33'),
 (330, 36, 'Faiq@digioussolutions.com', 'Faiq Shahzad', '2026-02-10', '21:10:47', '09:00:00', 'Present', 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Web Browser', NULL, '2026-02-10 16:10:47', '2026-02-13 12:33:38'),
 (331, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', '2026-02-10', '21:14:57', '09:00:00', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 1, 0, NULL, 'Web Browser', NULL, '2026-02-10 16:14:57', '2026-02-13 12:33:38'),
 (332, 40, 'Yanish@digioussolutions.com', 'Yanish Hyder', '2026-02-10', '21:17:18', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 2, NULL, 'Web Browser', NULL, '2026-02-10 16:17:18', '2026-02-13 12:33:38'),
 (333, 32, 'Humaiz@digioussolutions.com', 'Muhammad Humaiz', '2026-02-10', '21:19:43', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 4, NULL, 'Web Browser', NULL, '2026-02-10 16:19:43', '2026-02-13 12:33:38'),
-(334, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-02-10', '21:20:16', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 5, NULL, 'Web Browser', NULL, '2026-02-10 16:20:16', '2026-02-13 12:33:38'),
+(334, 41, 'baqar@digioussolutions.com', 'Muhammad Baqar', '2026-02-10', '21:20:16', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 700, 700, 540, 160, 2.67, 0, 5, NULL, 'Web Browser', NULL, '2026-02-10 16:20:16', '2026-03-26 12:27:51'),
 (335, 34, 'Khisal@digioussolutions.com', 'Khisal Zafar', '2026-02-10', '21:22:02', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 7, NULL, 'Web Browser', NULL, '2026-02-10 16:22:02', '2026-02-13 12:33:38'),
 (336, 31, 'Wahajabbas@digioussolutions.com', 'Syed Wahaj Abbas ', '2026-02-10', '21:23:51', '21:23:53', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 8, NULL, 'Web Browser', NULL, '2026-02-10 16:23:51', '2026-02-10 16:23:53'),
 (338, 35, 'Taha@digioussolutions.com', 'Muhammad Taha', '2026-02-10', '21:26:50', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 0, 11, NULL, 'Web Browser', NULL, '2026-02-10 16:26:50', '2026-02-13 12:33:38'),
@@ -2103,7 +2592,19 @@ INSERT INTO `Employee_Attendance` (`id`, `employee_id`, `email`, `name`, `attend
 (352, 27, 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-02-16', '14:29:37', '17:29:40', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 180, 180, 540, 0, 0.00, 1, 0, NULL, 'Web Browser', NULL, '2026-02-16 09:29:37', '2026-02-18 12:29:40'),
 (354, 44, 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-02-18', '17:30:01', '06:43:00', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 793, 793, 540, 253, 4.22, 0, 450, 'present', 'Web Browser', NULL, '2026-02-18 12:30:01', '2026-02-28 18:51:36'),
 (355, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-02-18', '19:47:59', '18:09:03', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1342, 1342, 540, 802, 13.37, 1, 0, NULL, 'Web Browser', NULL, '2026-02-18 14:47:59', '2026-02-20 13:09:03'),
-(357, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-02-19', NULL, NULL, 'Paid Leave', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 1, 0, 'Paid leave (casual) approved by HR', NULL, NULL, '2026-02-20 13:17:29', '2026-02-20 13:17:29');
+(357, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-02-19', NULL, NULL, 'Paid Leave', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 0, 0.00, 1, 0, 'Paid leave (casual) approved by HR', NULL, NULL, '2026-02-20 13:17:29', '2026-02-20 13:17:29'),
+(358, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-23', '00:35:55', '09:00:00', 'Late', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 505, 505, 540, 0, 0.00, 0, 200, NULL, 'Web Browser', NULL, '2026-03-24 19:35:55', '2026-03-25 20:04:29'),
+(368, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-26', '21:01:00', '06:00:00', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 539, 539, 540, 0, 0.00, 1, 0, '\n[CORRECTION APPLIED - 2026-03-27T13:08:01.115Z] Ticket: AC-20260327-2827\n[CORRECTION APPLIED - 2026-03-27T18:58:09.023Z] Ticket: AC-20260327-7042', 'Web Browser', NULL, '2026-03-26 20:29:27', '2026-03-27 18:58:09'),
+(369, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-27', '12:52:42', '09:00:00', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1208, 1208, 540, 668, 11.13, 1, 0, NULL, 'Web Browser', NULL, '2026-03-27 07:52:42', '2026-03-28 08:28:15'),
+(370, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-28', '16:26:19', '09:00:00', 'Present', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 994, 994, 540, 454, 7.57, 1, 0, NULL, 'Web Browser', NULL, '2026-03-28 11:26:19', '2026-03-30 18:24:29'),
+(371, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-25', NULL, NULL, 'Paid Leave', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 540, 540, 0, 0.00, 1, 0, '[PAID LEAVE APPLIED - 2026-03-28T11:33:39.188Z] Ticket: ML-20260328-1553 (sick)', NULL, NULL, '2026-03-28 11:33:39', '2026-03-28 11:33:39'),
+(372, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-10', NULL, NULL, 'Paid Leave', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 540, 540, 0, 0.00, 1, 0, '[PAID LEAVE APPLIED - 2026-03-28T13:08:26.866Z] Ticket: ML-20260328-7843 (annual)', NULL, NULL, '2026-03-28 13:08:26', '2026-03-28 13:08:26'),
+(373, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-11', NULL, NULL, 'Paid Leave', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 540, 540, 0, 0.00, 1, 0, '[PAID LEAVE APPLIED - 2026-03-28T13:08:26.873Z] Ticket: ML-20260328-7843 (annual)', NULL, NULL, '2026-03-28 13:08:26', '2026-03-28 13:08:26'),
+(374, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-12', NULL, NULL, 'Paid Leave', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 540, 540, 0, 0.00, 1, 0, '[PAID LEAVE APPLIED - 2026-03-28T13:08:26.881Z] Ticket: ML-20260328-7843 (annual)', NULL, NULL, '2026-03-28 13:08:26', '2026-03-28 13:08:26'),
+(375, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-13', NULL, NULL, 'Paid Leave', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 540, 540, 0, 0.00, 1, 0, '[PAID LEAVE APPLIED - 2026-03-28T13:08:26.889Z] Ticket: ML-20260328-7843 (annual)', NULL, NULL, '2026-03-28 13:08:26', '2026-03-28 13:08:26'),
+(376, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-14', NULL, NULL, 'Paid Leave', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 540, 540, 0, 0.00, 1, 0, '[PAID LEAVE APPLIED - 2026-03-28T13:08:26.897Z] Ticket: ML-20260328-7843 (annual)', NULL, NULL, '2026-03-28 13:08:26', '2026-03-28 13:08:26'),
+(377, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-15', NULL, NULL, 'Paid Leave', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 540, 540, 0, 0.00, 1, 0, '[PAID LEAVE APPLIED - 2026-03-28T13:08:26.903Z] Ticket: ML-20260328-7843 (annual)', NULL, NULL, '2026-03-28 13:08:26', '2026-03-28 13:08:26'),
+(378, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-20', NULL, NULL, 'Paid Leave', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 540, 540, 540, 0, 0.00, 1, 0, '[PAID LEAVE APPLIED - 2026-03-30T18:32:18.737Z] Ticket: ML-20260330-6886 (casual)', NULL, NULL, '2026-03-30 18:32:18', '2026-03-30 18:32:18');
 
 -- --------------------------------------------------------
 
@@ -2554,7 +3055,7 @@ INSERT INTO `employee_dynamic_resources` (`id`, `employee_id`, `resource_name`, 
 (1, 54, 'hunain', 'yuu', '2026-02-10 19:33:32'),
 (2, 55, 'aaa', '1123aa', '2026-02-13 18:25:29'),
 (3, 56, 'resourse', '123', '2026-02-18 14:47:02'),
-(4, 57, 'Laptop', 'DELL G6', '2026-03-17 08:53:40');
+(5, 57, 'Laptop', 'DELL G6', '2026-03-17 09:59:16');
 
 -- --------------------------------------------------------
 
@@ -2634,7 +3135,7 @@ INSERT INTO `employee_leaves` (`id`, `employee_id`, `email`, `name`, `casual_lea
 (21, 47, 'Uzair@digioussolutions.com', 'Uzair Siddiqui', 0, 8, 0, 8, 0, 12, NULL, NULL, 'Auto-populated from employee_onboarding', '2026-02-12 14:20:17', '2026-02-12 14:20:17'),
 (22, 54, 'khalid.khan@digioussolutions.com', 'Khalid Khan', 0, 8, 0, 8, 0, 12, NULL, NULL, 'Auto-populated from employee_onboarding', '2026-02-12 14:20:17', '2026-02-12 14:20:17'),
 (23, 55, 'JFAD@digioussolutions.com', 'JFAD', 0, 8, 0, 8, 0, 12, NULL, NULL, 'Auto-created on employee onboarding', '2026-02-13 18:25:29', '2026-02-13 18:25:29'),
-(24, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', 1, 8, 0, 8, 0, 12, NULL, NULL, 'Auto-created on employee onboarding', '2026-02-18 14:47:02', '2026-02-20 13:17:29'),
+(24, 56, 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', 3, 8, 1, 8, 6, 12, NULL, NULL, 'Auto-created on employee onboarding', '2026-02-18 14:47:02', '2026-03-30 18:32:18'),
 (25, 57, 'mhunaindigious.com@digioussolutions.com', 'MHunain', 0, 8, 0, 8, 0, 12, NULL, NULL, 'Auto-created on employee onboarding', '2026-03-17 08:53:40', '2026-03-17 08:53:40');
 
 -- --------------------------------------------------------
@@ -2709,7 +3210,7 @@ INSERT INTO `employee_onboarding` (`id`, `employee_id`, `name`, `email`, `passwo
 (54, 'DG-003', 'Khalid Khan', 'khalid.khan@digioussolutions.com', '$2a$10$2zY/NffZK9nNoO3nFkNQ5OawgzcFqvDXZDcW0khIzjXFGGvOZa2rG', '0918276355', 'Production', 'America', 'Permanent', '2025-12-01', '2026-02-11', 'hunain', '0981726354', 1, 'IBAN 365', 'IBAN 365', 'NBP', NULL, '1234567182903', '2026-02-01', '2026-02-27', 'SMA', 'Active', '2026-02-10 19:33:32', '2026-02-10 19:33:32', '2002-02-01', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
 (55, 'DG-004', 'JFAD', 'JFAD@digioussolutions.com', '$2a$10$QXdtM9ge8NSxW/bVAzvL4.GZ69aPZmc/a/o.TVhceDL3KwoUKQs66', '091827354566', 'Sales', 'sss', 'Part-Time', '2026-02-05', '2026-02-27', 'jnvjknf', '001929882', 1, 'jcjjcj', 'jcjjfj', 'HBL', NULL, '12299938847745', '2026-02-13', '2026-02-13', 'sss', 'Active', '2026-02-13 18:25:29', '2026-02-13 18:25:29', '2026-02-05', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
 (56, 'DG-098', 'Muhammad Hunain', 'muhammad.hunain@digioussolutions.com', '$2a$10$IYxVKElO2Y.7xWVtSciH/Oc2KMfk.Riac/T2/6eobmP4R.rgYCMkq', '0928376514', 'Operations', 'Manager', 'Permanent', '2026-02-01', '2026-02-18', 'Shan Residency Block K SB-44', '03123598003', 1, '09878990998', 'IBN PKR 123', 'HBL', NULL, '42101-5103653-5', '2024-09-02', '2028-07-28', 'SM OPERt', 'Active', '2026-02-18 14:47:02', '2026-02-18 14:47:02', '2002-09-15', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(57, 'DG-009', 'MHunain', 'mhunaindigious.com@digioussolutions.com', '$2a$10$JxqJWgk7mhEubP.p0zyrDOH0Hh4ahYjO4zafSyPXqVL.pZ3rZ2vB6', '09182766355', 'Sales', 'POS', 'Permanent', '2026-03-02', '2026-03-02', 'this is test', '01882993887', 1, '09182766355', 'MHUNAIN', 'EasyPaisaa', NULL, '1234-5678901-1', '2026-03-02', '2026-03-27', 'Mid-Level', 'Active', '2026-03-17 08:53:40', '2026-03-17 08:53:40', '2026-03-05', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+(57, 'DG-009', 'MHunain ', 'mhunaindigious.com@digioussolutions.com', '$2a$10$JxqJWgk7mhEubP.p0zyrDOH0Hh4ahYjO4zafSyPXqVL.pZ3rZ2vB6', '09182766355', 'Sales', 'POS', 'Permanent', '2026-03-02', '2026-03-02', 'this is test', '01882993887', 1, '09182766355', 'MHUNAIN', 'EasyPaisaa', NULL, '1234-5678901-1', '2026-03-02', '2026-03-27', 'Mid-Level', 'Active', '2026-03-17 08:53:40', '2026-03-17 09:59:16', '2026-03-05', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
 --
 -- Triggers `employee_onboarding`
@@ -3018,7 +3519,8 @@ INSERT INTO `expenses` (`id`, `category_id`, `category_name`, `amount`, `note`, 
 (3, 1, 'Salaries', 500.00, 'test', '2026-03-09', '12:30:16', NULL, '2026-03-09 07:30:16', '2026-03-09 07:30:16'),
 (4, 1, 'Salaries', 500.00, 'test', '2026-03-09', '12:31:32', NULL, '2026-03-09 07:31:32', '2026-03-09 07:31:32'),
 (5, 3, 'Travel', 2500.00, 'Taxi to client meeting', '2026-03-09', '12:35:35', 1, '2026-03-09 07:35:35', '2026-03-09 07:35:35'),
-(7, 5, 'Marketing', 56700.00, 'this is test 2', '2026-03-09', '22:32:52', 1, '2026-03-09 17:32:52', '2026-03-09 17:33:00');
+(7, 5, 'Marketing', 56700.00, 'this is test 2', '2026-02-06', '22:32:52', 1, '2026-03-09 17:32:52', '2026-03-25 13:34:57'),
+(9, 5, 'Marketing', 1111111.00, '', '2025-12-24', '22:29:18', 1, '2026-03-25 17:29:18', '2026-03-25 17:31:31');
 
 -- --------------------------------------------------------
 
@@ -3049,6 +3551,84 @@ INSERT INTO `expense_categories` (`id`, `name`, `description`, `color`, `is_acti
 (6, 'Miscellaneous', 'Other uncategorised expenses', '#6B7280', 1, '2026-03-09 06:54:58', '2026-03-09 06:54:58'),
 (25, 'test', 'this is test', '#3B82F6', 1, '2026-03-09 07:40:00', '2026-03-11 17:14:10'),
 (32, 'test1', '', '#3B82F6', 0, '2026-03-09 17:31:38', '2026-03-12 17:52:33');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `managed_leave_logs`
+--
+
+CREATE TABLE `managed_leave_logs` (
+  `id` int(11) NOT NULL,
+  `ticket_id` int(11) NOT NULL COMMENT 'FK → managed_leave_tickets.id',
+  `action` enum('created','tagged_approved','tagged_rejected','hr_approved','hr_rejected','applied','reopened') NOT NULL,
+  `action_by_id` int(11) NOT NULL,
+  `action_by_name` varchar(100) NOT NULL,
+  `action_by_role` varchar(50) DEFAULT NULL,
+  `remarks` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `managed_leave_logs`
+--
+
+INSERT INTO `managed_leave_logs` (`id`, `ticket_id`, `action`, `action_by_id`, `action_by_name`, `action_by_role`, `remarks`, `created_at`) VALUES
+(1, 1, 'created', 56, 'Muhammad Hunain', 'Operations', 'urgent piece of work', '2026-03-28 11:32:20'),
+(2, 1, 'tagged_approved', 44, 'Abdul Moiz Khan', 'tagged_person', 'approved', '2026-03-28 11:33:01'),
+(3, 1, 'hr_approved', 27, 'Muhammad Hamza Hassan', 'HR', 'approved', '2026-03-28 11:33:39'),
+(4, 2, 'created', 56, 'Muhammad Hunain', 'Operations', 'something important to do', '2026-03-28 13:06:42'),
+(5, 2, 'tagged_approved', 44, 'Abdul Moiz Khan', 'tagged_person', 'approved ', '2026-03-28 13:07:59'),
+(6, 2, 'hr_approved', 27, 'Muhammad Hamza Hassan', 'HR', 'ok', '2026-03-28 13:08:26'),
+(7, 3, 'created', 56, 'Muhammad Hunain', 'Operations', 'work', '2026-03-30 18:31:23'),
+(8, 3, 'tagged_approved', 44, 'Abdul Moiz Khan', 'tagged_person', 'ok', '2026-03-30 18:31:53'),
+(9, 3, 'hr_approved', 27, 'Muhammad Hamza Hassan', 'HR', 'ok', '2026-03-30 18:32:18');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `managed_leave_tickets`
+--
+
+CREATE TABLE `managed_leave_tickets` (
+  `id` int(11) NOT NULL,
+  `ticket_number` varchar(30) NOT NULL,
+  `employee_id` int(11) NOT NULL COMMENT 'FK → employee_onboarding.id',
+  `employee_name` varchar(100) NOT NULL,
+  `employee_email` varchar(100) NOT NULL,
+  `leave_type` enum('casual','sick','annual') NOT NULL,
+  `leave_scenario` enum('mark_absent_as_leave','advance_leave') NOT NULL,
+  `start_date` date NOT NULL,
+  `end_date` date NOT NULL,
+  `total_days` int(11) NOT NULL DEFAULT 1,
+  `balance_at_request` int(11) DEFAULT NULL COMMENT 'remaining leaves of this type when ticket was created',
+  `reason` text NOT NULL,
+  `tagged_employee_id` int(11) NOT NULL COMMENT 'FK → employee_onboarding.id',
+  `tagged_employee_name` varchar(100) NOT NULL,
+  `tagged_employee_email` varchar(100) NOT NULL,
+  `tagged_status` enum('pending','approved','rejected') DEFAULT 'pending',
+  `tagged_remarks` text DEFAULT NULL,
+  `tagged_action_at` timestamp NULL DEFAULT NULL,
+  `hr_status` enum('pending','approved','rejected') DEFAULT 'pending',
+  `hr_remarks` text DEFAULT NULL,
+  `hr_action_by` int(11) DEFAULT NULL COMMENT 'HR employee who took action',
+  `hr_action_by_name` varchar(100) DEFAULT NULL,
+  `hr_action_at` timestamp NULL DEFAULT NULL,
+  `overall_status` enum('open','tagged_approved','tagged_rejected','hr_approved','hr_rejected','applied') DEFAULT 'open',
+  `is_applied` tinyint(1) DEFAULT 0,
+  `applied_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `managed_leave_tickets`
+--
+
+INSERT INTO `managed_leave_tickets` (`id`, `ticket_number`, `employee_id`, `employee_name`, `employee_email`, `leave_type`, `leave_scenario`, `start_date`, `end_date`, `total_days`, `balance_at_request`, `reason`, `tagged_employee_id`, `tagged_employee_name`, `tagged_employee_email`, `tagged_status`, `tagged_remarks`, `tagged_action_at`, `hr_status`, `hr_remarks`, `hr_action_by`, `hr_action_by_name`, `hr_action_at`, `overall_status`, `is_applied`, `applied_at`, `created_at`, `updated_at`) VALUES
+(1, 'ML-20260328-1553', 56, 'Muhammad Hunain', 'muhammad.hunain@digioussolutions.com', 'sick', 'mark_absent_as_leave', '2026-03-25', '2026-03-25', 1, 8, 'urgent piece of work', 44, 'Abdul Moiz Khan', 'Moiz@digioussolutions.com', 'approved', 'approved', '2026-03-28 11:33:01', 'approved', 'approved', 27, 'Muhammad Hamza Hassan', '2026-03-28 11:33:39', 'applied', 1, '2026-03-28 11:33:39', '2026-03-28 11:32:20', '2026-03-28 11:33:39'),
+(2, 'ML-20260328-7843', 56, 'Muhammad Hunain', 'muhammad.hunain@digioussolutions.com', 'annual', 'advance_leave', '2026-03-10', '2026-03-15', 6, 12, 'something important to do', 44, 'Abdul Moiz Khan', 'Moiz@digioussolutions.com', 'approved', 'approved ', '2026-03-28 13:07:59', 'approved', 'ok', 27, 'Muhammad Hamza Hassan', '2026-03-28 13:08:26', 'applied', 1, '2026-03-28 13:08:26', '2026-03-28 13:06:42', '2026-03-28 13:08:26'),
+(3, 'ML-20260330-6886', 56, 'Muhammad Hunain', 'muhammad.hunain@digioussolutions.com', 'casual', 'mark_absent_as_leave', '2026-03-20', '2026-03-20', 1, 6, 'work', 44, 'Abdul Moiz Khan', 'Moiz@digioussolutions.com', 'approved', 'ok', '2026-03-30 18:31:53', 'approved', 'ok', 27, 'Muhammad Hamza Hassan', '2026-03-30 18:32:18', 'applied', 1, '2026-03-30 18:32:18', '2026-03-30 18:31:23', '2026-03-30 18:32:18');
 
 -- --------------------------------------------------------
 
@@ -3154,6 +3734,35 @@ CREATE TABLE `Overtime_Report_View` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `password_reset_tokens`
+--
+
+CREATE TABLE `password_reset_tokens` (
+  `id` int(11) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `otp_code` varchar(10) NOT NULL,
+  `expires_at` datetime NOT NULL,
+  `is_used` tinyint(1) DEFAULT 0,
+  `attempts` int(11) DEFAULT 0 COMMENT 'Number of failed verification attempts',
+  `created_at` datetime DEFAULT current_timestamp(),
+  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `password_reset_tokens`
+--
+
+INSERT INTO `password_reset_tokens` (`id`, `email`, `otp_code`, `expires_at`, `is_used`, `attempts`, `created_at`, `updated_at`) VALUES
+(1, 'Moiz@digioussolutions.com', '630542', '2026-03-25 00:17:13', 1, 0, '2026-03-25 00:07:13', '2026-03-25 00:08:41'),
+(2, 'Moiz@digioussolutions.com', '665398', '2026-03-25 00:18:41', 1, 0, '2026-03-25 00:08:41', '2026-03-25 00:09:57'),
+(3, 'Moiz@digioussolutions.com', '898295', '2026-03-25 00:19:57', 1, 0, '2026-03-25 00:09:57', '2026-03-25 00:16:34'),
+(4, 'Moiz@digioussolutions.com', '116660', '2026-03-25 00:26:34', 0, 0, '2026-03-25 00:16:34', '2026-03-25 00:16:34'),
+(5, 'muhammad.hunain@digioussolutions.com', '603601', '2026-03-25 00:37:18', 1, 0, '2026-03-25 00:27:18', '2026-03-25 00:30:05'),
+(6, 'muhammad.hunain@digioussolutions.com', '296130', '2026-03-25 22:51:43', 1, 0, '2026-03-25 22:41:43', '2026-03-25 22:42:28');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `payroll_records`
 --
 
@@ -3185,6 +3794,7 @@ CREATE TABLE `payroll_records` (
   `bonus` decimal(12,2) NOT NULL DEFAULT 0.00,
   `adjustment` decimal(12,2) NOT NULL DEFAULT 0.00,
   `adjustment_reason` text DEFAULT NULL,
+  `advance_deduction` decimal(12,2) NOT NULL DEFAULT 0.00,
   `net_salary` decimal(12,2) DEFAULT 0.00 COMMENT 'gross_salary - total_deductions',
   `status` enum('pending','processing','success','failed') DEFAULT 'pending',
   `notes` text DEFAULT NULL,
@@ -3196,55 +3806,32 @@ CREATE TABLE `payroll_records` (
 -- Dumping data for table `payroll_records`
 --
 
-INSERT INTO `payroll_records` (`id`, `employee_id`, `month`, `year`, `pay_period_start`, `pay_period_end`, `days_in_month`, `issue_date`, `base_salary`, `daily_rate`, `total_allowances`, `working_days`, `present_days`, `absent_days`, `late_days`, `leave_days`, `half_days`, `paid_leave_days`, `late_deduction_days`, `absent_deduction`, `late_deduction`, `leave_deduction`, `total_deductions`, `gross_salary`, `bonus`, `adjustment`, `adjustment_reason`, `net_salary`, `status`, `notes`, `generated_at`, `updated_at`) VALUES
-(313, 44, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 29998.00, 999.93, 0.00, 28, 8, 15, 7, 2, 0, 2, 2, 14999.00, 1999.87, 0.00, 16998.87, 29998.00, 0.00, 0.00, NULL, 12999.13, 'pending', 'Paid leaves: 2 (2 casual [2 from leave balance]). Total absent: 17, Paid: 2, Unpaid: 15', '2026-03-04 18:59:53', '2026-03-09 08:27:38'),
-(314, 36, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 20000.00, 666.67, 0.00, 28, 6, 19, 3, 0, 0, 0, 1, 12666.67, 666.67, 0.00, 13333.33, 20000.00, 0.00, 0.00, NULL, 6666.67, 'pending', 'Unpaid absences: 19', '2026-03-04 18:59:53', '2026-03-09 08:27:38'),
-(315, 55, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 1234.00, 41.13, 111.00, 28, 0, 22, 0, 0, 0, 0, 0, 904.93, 0.00, 0.00, 904.93, 1345.00, 0.00, 0.00, NULL, 440.07, 'pending', 'Unpaid absences: 22', '2026-03-04 18:59:53', '2026-03-09 08:27:38'),
-(316, 54, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 78600.00, 2620.00, 998.00, 28, 0, 25, 0, 0, 0, 0, 0, 65500.00, 0.00, 0.00, 65500.00, 79598.00, 0.00, 0.00, NULL, 14098.00, 'pending', 'Unpaid absences: 25', '2026-03-04 18:59:53', '2026-03-09 08:27:38'),
-(317, 34, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 20000.00, 666.67, 0.00, 28, 7, 18, 4, 0, 0, 0, 1, 12000.00, 666.67, 0.00, 12666.67, 20000.00, 0.00, 0.00, NULL, 7333.33, 'pending', 'Unpaid absences: 18', '2026-03-04 18:59:53', '2026-03-09 08:27:38'),
-(318, 41, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 20000.00, 666.67, 0.00, 28, 7, 18, 5, 0, 0, 0, 1, 12000.00, 666.67, 0.00, 12666.67, 20000.00, 0.00, 0.00, NULL, 7333.33, 'pending', 'Unpaid absences: 18', '2026-03-04 18:59:53', '2026-03-09 08:27:38'),
-(319, 38, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 19998.00, 666.60, 0.00, 28, 6, 19, 5, 0, 0, 0, 1, 12665.40, 666.60, 0.00, 13332.00, 19998.00, 0.00, 0.00, NULL, 6666.00, 'pending', 'Unpaid absences: 19', '2026-03-04 18:59:53', '2026-03-09 08:27:38'),
-(320, 43, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 25000.00, 833.33, 0.00, 28, 0, 25, 0, 0, 0, 0, 0, 20833.33, 0.00, 0.00, 20833.33, 25000.00, 0.00, 0.00, NULL, 4166.67, 'pending', 'Unpaid absences: 25', '2026-03-04 18:59:53', '2026-03-09 08:27:38'),
-(321, 39, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 20000.00, 666.67, 0.00, 28, 5, 20, 2, 0, 0, 0, 0, 13333.33, 0.00, 0.00, 13333.33, 20000.00, 0.00, 0.00, NULL, 6666.67, 'pending', 'Unpaid absences: 20', '2026-03-04 18:59:53', '2026-03-09 08:27:38'),
-(322, 27, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 30000.00, 1000.00, 0.00, 28, 6, 19, 2, 0, 0, 0, 0, 19000.00, 0.00, 0.00, 19000.00, 30000.00, 0.00, 0.00, NULL, 11000.00, 'pending', 'Unpaid absences: 19', '2026-03-04 18:59:53', '2026-03-09 08:27:38'),
-(323, 32, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 20000.00, 666.67, 0.00, 28, 7, 18, 7, 0, 0, 0, 2, 12000.00, 1333.33, 0.00, 13333.33, 20000.00, 0.00, 0.00, NULL, 6666.67, 'pending', 'Unpaid absences: 18', '2026-03-04 18:59:53', '2026-03-09 08:27:38'),
-(324, 56, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 100000.00, 3333.33, 0.00, 28, 2, 20, 0, 1, 0, 2, 0, 66666.67, 0.00, 0.00, 66666.67, 100000.00, 1200.00, 1000.00, NULL, 35533.33, 'pending', 'Paid leaves: 1 (1 casual [1 from leave balance]). Total absent: 21, Paid: 1, Unpaid: 20', '2026-03-04 18:59:53', '2026-03-13 14:57:00'),
-(325, 33, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 20000.00, 666.67, 0.00, 28, 7, 18, 1, 0, 0, 0, 0, 12000.00, 0.00, 0.00, 12000.00, 20000.00, 0.00, 0.00, NULL, 8000.00, 'pending', 'Unpaid absences: 18', '2026-03-04 18:59:53', '2026-03-09 08:27:38'),
-(326, 35, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 20000.00, 666.67, 0.00, 28, 7, 18, 4, 0, 0, 0, 1, 12000.00, 666.67, 0.00, 12666.67, 20000.00, 0.00, 0.00, NULL, 7333.33, 'pending', 'Unpaid absences: 18', '2026-03-04 18:59:53', '2026-03-09 08:27:38'),
-(327, 46, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 19998.00, 666.60, 0.00, 28, 7, 18, 1, 0, 0, 0, 0, 11998.80, 0.00, 0.00, 11998.80, 19998.00, 0.00, 0.00, NULL, 7999.20, 'pending', 'Unpaid absences: 18', '2026-03-04 18:59:53', '2026-03-09 08:27:38'),
-(328, 45, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 20000.00, 666.67, 0.00, 28, 7, 18, 1, 0, 0, 0, 0, 12000.00, 0.00, 0.00, 12000.00, 20000.00, 0.00, 0.00, NULL, 8000.00, 'pending', 'Unpaid absences: 18', '2026-03-04 18:59:53', '2026-03-09 08:27:38'),
-(329, 29, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 25000.00, 833.33, 0.00, 28, 0, 25, 0, 0, 0, 0, 0, 20833.33, 0.00, 0.00, 20833.33, 25000.00, 0.00, 0.00, NULL, 4166.67, 'pending', 'Unpaid absences: 25', '2026-03-04 18:59:53', '2026-03-09 08:27:38'),
-(330, 28, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 25000.00, 833.33, 0.00, 28, 7, 18, 7, 0, 0, 0, 2, 15000.00, 1666.67, 0.00, 16666.67, 25000.00, 0.00, 0.00, NULL, 8333.33, 'pending', 'Unpaid absences: 18', '2026-03-04 18:59:53', '2026-03-09 08:27:38'),
-(331, 31, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 34999.00, 1166.63, 0.00, 28, 6, 19, 6, 0, 0, 0, 2, 22166.03, 2333.27, 0.00, 24499.30, 34999.00, 0.00, 0.00, NULL, 10499.70, 'pending', 'Unpaid absences: 19', '2026-03-04 18:59:53', '2026-03-09 08:27:38'),
-(332, 42, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 30000.00, 1000.00, 0.00, 28, 5, 20, 2, 0, 0, 0, 0, 20000.00, 0.00, 0.00, 20000.00, 30000.00, 0.00, 0.00, NULL, 10000.00, 'pending', 'Unpaid absences: 20', '2026-03-04 18:59:53', '2026-03-09 08:27:38'),
-(333, 37, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 2.00, 0.07, 0.00, 28, 7, 18, 3, 0, 0, 0, 1, 1.20, 0.07, 0.00, 1.27, 2.00, 0.00, 0.00, NULL, 0.73, 'pending', 'Unpaid absences: 18', '2026-03-04 18:59:53', '2026-03-09 08:27:38'),
-(334, 47, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 19998.00, 666.60, 0.00, 28, 6, 19, 4, 0, 0, 0, 1, 12665.40, 666.60, 0.00, 13332.00, 19998.00, 0.00, 0.00, NULL, 6666.00, 'pending', 'Unpaid absences: 19', '2026-03-04 18:59:53', '2026-03-09 08:27:38'),
-(335, 30, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 25000.00, 833.33, 0.00, 28, 0, 25, 0, 0, 0, 0, 0, 20833.33, 0.00, 0.00, 20833.33, 25000.00, 0.00, 0.00, NULL, 4166.67, 'pending', 'Unpaid absences: 25', '2026-03-04 18:59:53', '2026-03-09 08:27:38'),
-(336, 40, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 19997.00, 666.57, 0.00, 28, 7, 18, 5, 0, 0, 0, 1, 11998.20, 666.57, 0.00, 12664.77, 19997.00, 0.00, 0.00, NULL, 7332.23, 'pending', 'Unpaid absences: 18', '2026-03-04 18:59:53', '2026-03-09 08:27:38'),
-(337, 44, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 29998.00, 999.93, 0.00, 31, 10, 0, 10, 0, 0, 0, 3, 0.00, 2999.80, 0.00, 2999.80, 29998.00, 0.00, 0.00, NULL, 26998.20, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
-(338, 36, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 20000.00, 666.67, 0.00, 31, 12, 0, 3, 0, 0, 0, 1, 0.00, 666.67, 0.00, 666.67, 20000.00, 0.00, 0.00, NULL, 19333.33, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
-(339, 55, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 1234.00, 41.13, 111.00, 31, 0, 0, 0, 0, 0, 0, 0, 0.00, 0.00, 0.00, 0.00, 1345.00, 0.00, 0.00, NULL, 1345.00, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
-(340, 54, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 78600.00, 2620.00, 998.00, 31, 0, 0, 0, 0, 0, 0, 0, 0.00, 0.00, 0.00, 0.00, 79598.00, 0.00, 0.00, NULL, 79598.00, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
-(341, 34, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 20000.00, 666.67, 0.00, 31, 11, 0, 7, 0, 0, 0, 2, 0.00, 1333.33, 0.00, 1333.33, 20000.00, 0.00, 0.00, NULL, 18666.67, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
-(342, 41, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 20000.00, 666.67, 0.00, 31, 11, 0, 9, 0, 0, 0, 3, 0.00, 2000.00, 0.00, 2000.00, 20000.00, 0.00, 0.00, NULL, 18000.00, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
-(343, 38, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 19998.00, 666.60, 0.00, 31, 13, 0, 8, 0, 0, 0, 2, 0.00, 1333.20, 0.00, 1333.20, 19998.00, 0.00, 0.00, NULL, 18664.80, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
-(344, 43, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 25000.00, 833.33, 0.00, 31, 0, 0, 0, 0, 0, 0, 0, 0.00, 0.00, 0.00, 0.00, 25000.00, 0.00, 0.00, NULL, 25000.00, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
-(345, 39, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 20000.00, 666.67, 0.00, 31, 12, 0, 11, 0, 0, 0, 3, 0.00, 2000.00, 0.00, 2000.00, 20000.00, 0.00, 0.00, NULL, 18000.00, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
-(346, 27, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 30000.00, 1000.00, 0.00, 31, 12, 0, 8, 0, 0, 0, 2, 0.00, 2000.00, 0.00, 2000.00, 30000.00, 0.00, 0.00, NULL, 28000.00, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
-(347, 32, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 20000.00, 666.67, 0.00, 31, 13, 0, 5, 0, 0, 0, 1, 0.00, 666.67, 0.00, 666.67, 20000.00, 0.00, 0.00, NULL, 19333.33, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
-(348, 56, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 100000.00, 3333.33, 0.00, 31, 0, 0, 0, 0, 0, 0, 0, 0.00, 0.00, 0.00, 0.00, 100000.00, 0.00, 0.00, NULL, 100000.00, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
-(349, 33, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 20000.00, 666.67, 0.00, 31, 12, 0, 7, 0, 0, 0, 2, 0.00, 1333.33, 0.00, 1333.33, 20000.00, 0.00, 0.00, NULL, 18666.67, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
-(350, 35, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 20000.00, 666.67, 0.00, 31, 12, 0, 4, 0, 0, 0, 1, 0.00, 666.67, 0.00, 666.67, 20000.00, 0.00, 0.00, NULL, 19333.33, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
-(351, 46, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 19998.00, 666.60, 0.00, 31, 12, 0, 2, 0, 0, 0, 0, 0.00, 0.00, 0.00, 0.00, 19998.00, 0.00, 0.00, NULL, 19998.00, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
-(352, 45, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 20000.00, 666.67, 0.00, 31, 13, 0, 4, 0, 0, 0, 1, 0.00, 666.67, 0.00, 666.67, 20000.00, 0.00, 0.00, NULL, 19333.33, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
-(353, 29, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 25000.00, 833.33, 0.00, 31, 1, 0, 1, 0, 0, 0, 0, 0.00, 0.00, 0.00, 0.00, 25000.00, 0.00, 0.00, NULL, 25000.00, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
-(354, 28, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 25000.00, 833.33, 0.00, 31, 12, 0, 12, 0, 0, 0, 4, 0.00, 3333.33, 0.00, 3333.33, 25000.00, 0.00, 0.00, NULL, 21666.67, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
-(355, 31, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 34999.00, 1166.63, 0.00, 31, 12, 0, 11, 0, 0, 0, 3, 0.00, 3499.90, 0.00, 3499.90, 34999.00, 0.00, 0.00, NULL, 31499.10, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
-(356, 42, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 30000.00, 1000.00, 0.00, 31, 9, 0, 3, 0, 0, 0, 1, 0.00, 1000.00, 0.00, 1000.00, 30000.00, 0.00, 0.00, NULL, 29000.00, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
-(357, 37, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 2.00, 0.07, 0.00, 31, 13, 0, 1, 0, 0, 0, 0, 0.00, 0.00, 0.00, 0.00, 2.00, 0.00, 0.00, NULL, 2.00, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
-(358, 47, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 19998.00, 666.60, 0.00, 31, 12, 0, 8, 0, 0, 0, 2, 0.00, 1333.20, 0.00, 1333.20, 19998.00, 0.00, 0.00, NULL, 18664.80, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
-(359, 30, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 25000.00, 833.33, 0.00, 31, 9, 0, 9, 0, 0, 0, 3, 0.00, 2500.00, 0.00, 2500.00, 25000.00, 0.00, 0.00, NULL, 22500.00, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11'),
-(360, 40, 1, 2026, '2026-01-01', '2026-01-31', 31, '2026-02-05', 19997.00, 666.57, 0.00, 31, 12, 0, 10, 0, 0, 0, 3, 0.00, 1999.70, 0.00, 1999.70, 19997.00, 0.00, 0.00, NULL, 17997.30, 'pending', NULL, '2026-03-04 19:00:11', '2026-03-04 19:00:11');
+INSERT INTO `payroll_records` (`id`, `employee_id`, `month`, `year`, `pay_period_start`, `pay_period_end`, `days_in_month`, `issue_date`, `base_salary`, `daily_rate`, `total_allowances`, `working_days`, `present_days`, `absent_days`, `late_days`, `leave_days`, `half_days`, `paid_leave_days`, `late_deduction_days`, `absent_deduction`, `late_deduction`, `leave_deduction`, `total_deductions`, `gross_salary`, `bonus`, `adjustment`, `adjustment_reason`, `advance_deduction`, `net_salary`, `status`, `notes`, `generated_at`, `updated_at`) VALUES
+(510, 44, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 29998.00, 999.93, 0.00, 28, 8, 15, 7, 2, 0, 2, 2, 14999.00, 1999.87, 0.00, 16998.87, 29998.00, 0.00, 0.00, NULL, 0.00, 12999.13, 'pending', 'Paid leaves: 2 (2 casual [2 from leave balance]). Total absent: 17, Paid: 2, Unpaid: 15', '2026-03-31 15:52:59', '2026-03-31 15:52:59'),
+(511, 36, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 20000.00, 666.67, 0.00, 28, 6, 19, 3, 0, 0, 0, 1, 12666.67, 666.67, 0.00, 13333.33, 20000.00, 0.00, 0.00, NULL, 0.00, 6666.67, 'pending', 'Unpaid absences: 19', '2026-03-31 15:52:59', '2026-03-31 15:52:59'),
+(512, 55, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 1234.00, 41.13, 111.00, 28, 0, 22, 0, 0, 0, 0, 0, 904.93, 0.00, 0.00, 904.93, 1345.00, 0.00, 0.00, NULL, 0.00, 440.07, 'pending', 'Unpaid absences: 22', '2026-03-31 15:52:59', '2026-03-31 15:52:59'),
+(513, 54, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 78600.00, 2620.00, 998.00, 28, 0, 25, 0, 0, 0, 0, 0, 65500.00, 0.00, 0.00, 65500.00, 79598.00, 0.00, 0.00, NULL, 0.00, 14098.00, 'pending', 'Unpaid absences: 25', '2026-03-31 15:52:59', '2026-03-31 15:52:59'),
+(514, 34, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 20000.00, 666.67, 0.00, 28, 7, 18, 4, 0, 0, 0, 1, 12000.00, 666.67, 0.00, 12666.67, 20000.00, 0.00, 0.00, NULL, 0.00, 7333.33, 'pending', 'Unpaid absences: 18', '2026-03-31 15:52:59', '2026-03-31 15:52:59'),
+(515, 57, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 100000.00, 3333.33, 1234.00, 28, 0, 0, 0, 0, 0, 0, 0, 0.00, 0.00, 0.00, 0.00, 101234.00, 0.00, 0.00, NULL, 0.00, 101234.00, 'pending', NULL, '2026-03-31 15:52:59', '2026-03-31 15:52:59'),
+(516, 41, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 20000.00, 666.67, 0.00, 28, 7, 18, 5, 0, 0, 0, 1, 12000.00, 666.67, 0.00, 12666.67, 20000.00, 0.00, 0.00, NULL, 0.00, 7333.33, 'pending', 'Unpaid absences: 18', '2026-03-31 15:52:59', '2026-03-31 15:52:59'),
+(517, 38, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 19998.00, 666.60, 0.00, 28, 6, 19, 5, 0, 0, 0, 1, 12665.40, 666.60, 0.00, 13332.00, 19998.00, 0.00, 0.00, NULL, 0.00, 6666.00, 'pending', 'Unpaid absences: 19', '2026-03-31 15:52:59', '2026-03-31 15:52:59'),
+(518, 43, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 25000.00, 833.33, 0.00, 28, 0, 25, 0, 0, 0, 0, 0, 20833.33, 0.00, 0.00, 20833.33, 25000.00, 0.00, 0.00, NULL, 0.00, 4166.67, 'pending', 'Unpaid absences: 25', '2026-03-31 15:52:59', '2026-03-31 15:52:59'),
+(519, 39, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 20000.00, 666.67, 1000.00, 28, 5, 20, 2, 0, 0, 0, 0, 13333.33, 0.00, 0.00, 13333.33, 21000.00, 0.00, 0.00, NULL, 0.00, 7666.67, 'pending', 'Unpaid absences: 20', '2026-03-31 15:52:59', '2026-03-31 15:52:59'),
+(520, 27, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 30000.00, 1000.00, 0.00, 28, 6, 19, 2, 0, 0, 0, 0, 19000.00, 0.00, 0.00, 19000.00, 30000.00, 0.00, 0.00, NULL, 0.00, 11000.00, 'pending', 'Unpaid absences: 19', '2026-03-31 15:52:59', '2026-03-31 15:52:59'),
+(521, 32, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 20000.00, 666.67, 0.00, 28, 7, 18, 7, 0, 0, 0, 2, 12000.00, 1333.33, 0.00, 13333.33, 20000.00, 0.00, 0.00, NULL, 0.00, 6666.67, 'pending', 'Unpaid absences: 18', '2026-03-31 15:52:59', '2026-03-31 15:52:59'),
+(522, 56, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 100000.00, 3333.33, 0.00, 28, 1, 11, 0, 10, 0, 11, 0, 36666.67, 0.00, 0.00, 36666.67, 100000.00, 0.00, 0.00, NULL, 0.00, 63333.33, 'pending', 'Paid leaves: 10 (3 casual [10 from leave balance]). Total absent: 21, Paid: 10, Unpaid: 11', '2026-03-31 15:52:59', '2026-03-31 15:52:59'),
+(523, 33, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 20000.00, 666.67, 0.00, 28, 7, 18, 1, 0, 0, 0, 0, 12000.00, 0.00, 0.00, 12000.00, 20000.00, 0.00, 0.00, NULL, 0.00, 8000.00, 'pending', 'Unpaid absences: 18', '2026-03-31 15:52:59', '2026-03-31 15:52:59'),
+(524, 35, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 20000.00, 666.67, 0.00, 28, 7, 18, 4, 0, 0, 0, 1, 12000.00, 666.67, 0.00, 12666.67, 20000.00, 0.00, 0.00, NULL, 0.00, 7333.33, 'pending', 'Unpaid absences: 18', '2026-03-31 15:52:59', '2026-03-31 15:52:59'),
+(525, 46, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 19998.00, 666.60, 0.00, 28, 7, 18, 1, 0, 0, 0, 0, 11998.80, 0.00, 0.00, 11998.80, 19998.00, 0.00, 0.00, NULL, 0.00, 7999.20, 'pending', 'Unpaid absences: 18', '2026-03-31 15:52:59', '2026-03-31 15:52:59'),
+(526, 45, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 20000.00, 666.67, 0.00, 28, 7, 18, 1, 0, 0, 0, 0, 12000.00, 0.00, 0.00, 12000.00, 20000.00, 0.00, 0.00, NULL, 0.00, 8000.00, 'pending', 'Unpaid absences: 18', '2026-03-31 15:52:59', '2026-03-31 15:52:59'),
+(527, 29, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 25000.00, 833.33, 0.00, 28, 0, 25, 0, 0, 0, 0, 0, 20833.33, 0.00, 0.00, 20833.33, 25000.00, 0.00, 0.00, NULL, 0.00, 4166.67, 'pending', 'Unpaid absences: 25', '2026-03-31 15:52:59', '2026-03-31 15:52:59'),
+(528, 28, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 25000.00, 833.33, 0.00, 28, 7, 18, 7, 0, 0, 0, 2, 15000.00, 1666.67, 0.00, 16666.67, 25000.00, 0.00, 0.00, NULL, 0.00, 8333.33, 'pending', 'Unpaid absences: 18', '2026-03-31 15:52:59', '2026-03-31 15:52:59'),
+(529, 31, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 34999.00, 1166.63, 0.00, 28, 6, 19, 6, 0, 0, 0, 2, 22166.03, 2333.27, 0.00, 24499.30, 34999.00, 0.00, 0.00, NULL, 0.00, 10499.70, 'pending', 'Unpaid absences: 19', '2026-03-31 15:52:59', '2026-03-31 15:52:59'),
+(530, 42, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 30000.00, 1000.00, 0.00, 28, 5, 20, 2, 0, 0, 0, 0, 20000.00, 0.00, 0.00, 20000.00, 30000.00, 0.00, 0.00, NULL, 0.00, 10000.00, 'pending', 'Unpaid absences: 20', '2026-03-31 15:52:59', '2026-03-31 15:52:59'),
+(531, 37, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 2.00, 0.07, 0.00, 28, 7, 18, 3, 0, 0, 0, 1, 1.20, 0.07, 0.00, 1.27, 2.00, 0.00, 0.00, NULL, 0.00, 0.73, 'pending', 'Unpaid absences: 18', '2026-03-31 15:52:59', '2026-03-31 15:52:59'),
+(532, 47, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 0.00, 0.00, 0.00, 28, 6, 19, 4, 0, 0, 0, 1, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, 0.00, 'pending', 'Unpaid absences: 19', '2026-03-31 15:52:59', '2026-03-31 15:52:59'),
+(533, 30, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 25000.00, 833.33, 0.00, 28, 0, 25, 0, 0, 0, 0, 0, 20833.33, 0.00, 0.00, 20833.33, 25000.00, 0.00, 0.00, NULL, 0.00, 4166.67, 'pending', 'Unpaid absences: 25', '2026-03-31 15:52:59', '2026-03-31 15:52:59'),
+(534, 40, 2, 2026, '2026-02-01', '2026-02-28', 28, '2026-03-05', 19997.00, 666.57, 0.00, 28, 7, 18, 5, 0, 0, 0, 1, 11998.20, 666.57, 0.00, 12664.77, 19997.00, 0.00, 0.00, NULL, 0.00, 7332.23, 'pending', 'Unpaid absences: 18', '2026-03-31 15:52:59', '2026-03-31 15:52:59');
 
 -- --------------------------------------------------------
 
@@ -3284,7 +3871,8 @@ CREATE TABLE `sales` (
 
 INSERT INTO `sales` (`id`, `employee_id`, `employee_name`, `employee_email`, `client_name`, `client_email`, `client_phone`, `category_id`, `category_slug`, `project_description`, `total_amount`, `upfront_payment`, `merchant`, `payment_method`, `account_name`, `sale_date`, `deadline`, `status`, `notes`, `created_by`, `created_at`, `updated_at`) VALUES
 (1, 56, 'Muhammad Hunain', 'muhammad.hunain@digioussolutions.com', 'Kamaran', 'kamran@gmail.com', '0981726534', 3, 'branding', 'this is test', 123.00, 100.00, 'PayPal', NULL, NULL, '2026-03-13', '2026-04-28', 'in-progress', NULL, 49, '2026-03-13 13:05:39', '2026-03-13 15:12:35'),
-(2, 56, 'Muhammad Hunain', 'muhammad.hunain@digioussolutions.com', 'david', 'david@gmail.com', '0981726354', 1, 'website-design', 'this is david ', 1234.00, 1000.00, 'Stripe', NULL, NULL, '2026-03-02', '2026-04-28', 'completed', NULL, 49, '2026-03-13 15:00:18', '2026-03-13 15:01:01');
+(2, 56, 'Muhammad Hunain', 'muhammad.hunain@digioussolutions.com', 'david', 'david@gmail.com', '0981726354', 1, 'website-design', 'this is david ', 1234.00, 1000.00, 'Stripe', NULL, NULL, '2026-03-02', '2026-04-28', 'completed', NULL, 49, '2026-03-13 15:00:18', '2026-03-13 15:01:01'),
+(3, 57, 'MHunain', 'mhunaindigious.com@digioussolutions.com', 'Moiz', 'Moiz@gmail.com', '0918277661', 1, 'website-design', 'this is test', 990.00, 900.00, 'Stripe', NULL, NULL, '2026-03-02', '2026-04-01', 'in-progress', NULL, 50, '2026-03-17 10:00:44', '2026-03-17 10:00:44');
 
 -- --------------------------------------------------------
 
@@ -3317,6 +3905,31 @@ INSERT INTO `sales_categories` (`id`, `name`, `slug`, `description`, `icon`, `co
 (6, 'E-commerce', 'ecommerce', NULL, 'ShoppingCart', '#EC4899', 1, '2026-03-13 13:03:02', '2026-03-13 13:03:02'),
 (7, 'Photography', 'photography', NULL, 'Camera', '#EAB308', 1, '2026-03-13 13:03:02', '2026-03-13 13:03:02'),
 (8, 'Graphic Design', 'graphic-design', NULL, 'Layout', '#EF4444', 1, '2026-03-13 13:03:02', '2026-03-13 13:03:02');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `sales_targets`
+--
+
+CREATE TABLE `sales_targets` (
+  `id` int(11) NOT NULL,
+  `employee_id` int(11) NOT NULL COMMENT 'FK to employee_onboarding.id',
+  `month` tinyint(2) NOT NULL COMMENT 'Month (1-12)',
+  `year` smallint(4) NOT NULL COMMENT 'Year (e.g. 2026)',
+  `monthly_target` decimal(12,2) NOT NULL DEFAULT 0.00 COMMENT 'Target amount set by admin',
+  `achieved_override` decimal(12,2) DEFAULT NULL COMMENT 'Manual override for achieved amount (NULL = auto-calc from sales)',
+  `notes` text DEFAULT NULL COMMENT 'Admin notes about the target',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `sales_targets`
+--
+
+INSERT INTO `sales_targets` (`id`, `employee_id`, `month`, `year`, `monthly_target`, `achieved_override`, `notes`, `created_at`, `updated_at`) VALUES
+(1, 57, 3, 2026, 1000.00, NULL, NULL, '2026-03-17 09:59:13', '2026-03-17 09:59:13');
 
 -- --------------------------------------------------------
 
@@ -3398,8 +4011,8 @@ INSERT INTO `user_as_employees` (`id`, `employee_id`, `name`, `email`, `password
 (40, 47, 'Uzair Siddiqui', 'Uzair@digioussolutions.com', '$2a$10$N3mMXvO6.CY5QMLlqfzOY.8KnInQ6kFtHQWJkvGY4x3TTC5eExKei', 'Sales', '2025-07-10', 'Sales', 'Probation', 'Sales Executive', 'Active', 0, 0, NULL, NULL, NULL, 1, '2026-01-17 18:01:21', '2026-03-10 17:57:27', 'Muhammad Uzair', 'NO Bank', '2023-08-01', '2033-08-01'),
 (47, 54, 'Khalid Khan', 'khalid.khan@digioussolutions.com', '$2a$10$2zY/NffZK9nNoO3nFkNQ5OawgzcFqvDXZDcW0khIzjXFGGvOZa2rG', 'Production', '2026-02-11', 'America', 'Permanent', 'SMA', 'Active', 1, 0, NULL, NULL, NULL, 1, '2026-02-10 19:33:32', '2026-02-10 19:33:32', 'IBAN 365', 'NBP', '2026-02-01', '2026-02-27'),
 (48, 55, 'JFAD', 'JFAD@digioussolutions.com', '$2a$10$QXdtM9ge8NSxW/bVAzvL4.GZ69aPZmc/a/o.TVhceDL3KwoUKQs66', 'Sales', '2026-02-27', 'sss', 'Part-Time', 'sss', 'Active', 1, 0, NULL, NULL, NULL, 1, '2026-02-13 18:25:29', '2026-02-13 18:25:29', 'jcjjfj', 'HBL', '2026-02-13', '2026-02-13'),
-(49, 56, 'Muhammad Hunain', 'muhammad.hunain@digioussolutions.com', '$2a$10$wxumC980kvYy0wJ8BOOrU.uNiYvOYelh7jD2O87ARTwLctZ7X6E8C', 'Operations', '2026-02-18', 'Manager', 'Permanent', 'SM OPERt', 'Active', 0, 0, NULL, NULL, NULL, 1, '2026-02-18 14:47:02', '2026-02-18 14:47:46', 'IBN PKR 123', 'HBL', '2024-09-02', '2028-07-28'),
-(50, 57, 'MHunain', 'mhunaindigious.com@digioussolutions.com', '$2a$10$JxqJWgk7mhEubP.p0zyrDOH0Hh4ahYjO4zafSyPXqVL.pZ3rZ2vB6', 'Sales', '2026-03-02', 'POS', 'Permanent', 'Mid-Level', 'Active', 1, 0, NULL, NULL, NULL, 1, '2026-03-17 08:53:40', '2026-03-17 08:53:40', 'MHUNAIN', 'EasyPaisaa', '2026-03-02', '2026-03-27');
+(49, 56, 'Muhammad Hunain', 'muhammad.hunain@digioussolutions.com', '$2a$10$mqDmDVUTeEUh27c009LLo.cZzVmZ0FX8aLKI775v/I6QU2sA57kxK', 'Operations', '2026-02-18', 'Manager', 'Permanent', 'SM OPERt', 'Active', 0, 0, NULL, NULL, NULL, 1, '2026-02-18 14:47:02', '2026-03-25 17:42:28', 'IBN PKR 123', 'HBL', '2024-09-02', '2028-07-28'),
+(50, 57, 'MHunain ', 'mhunaindigious.com@digioussolutions.com', '$2a$10$wmY5znVIFnxnxjUJ/2ucc.I3PRA8okgE2nbneR/Pc3a5PNjAE83ta', 'Sales', '2026-03-02', 'POS', 'Permanent', 'Mid-Level', 'Active', 0, 0, NULL, NULL, NULL, 1, '2026-03-17 08:53:40', '2026-03-17 09:59:16', 'MHUNAIN', 'EasyPaisaa', '2026-03-02', '2026-03-27');
 
 -- --------------------------------------------------------
 
@@ -3424,7 +4037,7 @@ CREATE TABLE `user_concurrent_sessions` (
 --
 
 INSERT INTO `user_concurrent_sessions` (`id`, `employee_id`, `email`, `total_active_sessions`, `pc_count`, `mobile_count`, `tablet_count`, `other_count`, `updated_at`) VALUES
-(33, 27, 'hamza@digioussolutions.com', 103, 102, 1, 0, 0, '2026-03-17 08:53:55'),
+(33, 27, 'hamza@digioussolutions.com', 108, 107, 1, 0, 0, '2026-03-30 18:45:00'),
 (34, 32, 'Humaiz@digioussolutions.com', 32, 32, 0, 0, 0, '2026-02-09 16:32:25'),
 (35, 33, 'Saheem@digioussolutions.com', 46, 35, 11, 0, 0, '2026-02-10 17:38:21'),
 (36, 34, 'Khisal@digioussolutions.com', 22, 22, 0, 0, 0, '2026-02-10 16:21:55'),
@@ -3436,7 +4049,7 @@ INSERT INTO `user_concurrent_sessions` (`id`, `employee_id`, `email`, `total_act
 (42, 40, 'Yanish@digioussolutions.com', 37, 37, 0, 0, 0, '2026-02-09 16:26:08'),
 (43, 42, 'Tahir@digioussolutions.com', 34, 33, 1, 0, 0, '2026-02-07 02:09:43'),
 (44, 39, 'muhammadHamza@digioussolutions.com', 39, 39, 0, 0, 0, '2026-02-26 19:17:58'),
-(45, 44, 'Moiz@digioussolutions.com', 63, 63, 0, 0, 0, '2026-03-17 08:24:05'),
+(45, 44, 'Moiz@digioussolutions.com', 64, 64, 0, 0, 0, '2026-03-31 15:23:29'),
 (46, 30, 'wajih@digioussolutions.com', 22, 22, 0, 0, 0, '2026-01-29 16:23:47'),
 (47, 28, 'Shahmeerabbas@digioussolutions.com', 28, 28, 0, 0, 0, '2026-02-10 17:21:52'),
 (48, 41, 'baqar@digioussolutions.com', 35, 35, 0, 0, 0, '2026-02-10 16:20:02'),
@@ -3444,8 +4057,8 @@ INSERT INTO `user_concurrent_sessions` (`id`, `employee_id`, `email`, `total_act
 (50, 46, 'Shahrukh@digioussolutions.com', 37, 37, 0, 0, 0, '2026-02-10 16:39:37'),
 (51, 47, 'Uzair@digioussolutions.com', 19, 19, 0, 0, 0, '2026-02-10 16:14:52'),
 (52, 29, 'smashhar@digioussolutions.com', 1, 1, 0, 0, 0, '2026-01-17 18:08:30'),
-(55, 56, 'muhammad.hunain@digioussolutions.com', 4, 4, 0, 0, 0, '2026-03-17 08:50:17'),
-(56, 57, 'mhunaindigious.com@digioussolutions.com', 1, 1, 0, 0, 0, '2026-03-17 08:54:02');
+(55, 56, 'muhammad.hunain@digioussolutions.com', 14, 14, 0, 0, 0, '2026-03-30 18:43:04'),
+(56, 57, 'mhunaindigious.com@digioussolutions.com', 2, 2, 0, 0, 0, '2026-03-17 09:57:41');
 
 -- --------------------------------------------------------
 
@@ -4319,7 +4932,81 @@ INSERT INTO `user_system_info` (`id`, `employee_id`, `session_token`, `email`, `
 (808, 44, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjM3LCJlbXBsb3llZUlkIjo0NCwiZW1haWwiOiJNb2l6QGRpZ2lvdXNzb2x1dGlvbnMuY29tIiwibmFtZSI6IkFiZHVsIE1vaXogS2hhbiIsInJvbGUiOiJQcm9kdWN0aW9uIiwiZGVzaWduYXRpb24iOiJNYW5hZ2VyIiwiaWF0IjoxNzczNzM1ODI5LCJleHAiOjE3NzM4MjIyMjl9.hu6ugP-vABe7V0B2FPPEhQNa6zMdQFAytMQvwM7iOXQ', 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-03-17 08:23:49', '2026-03-17 08:24:05', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-17 08:24:05', '2026-03-17 08:23:49', '2026-03-17 08:24:05'),
 (809, 56, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ5LCJlbXBsb3llZUlkIjo1NiwiZW1haWwiOiJtdWhhbW1hZC5odW5haW5AZGlnaW91c3NvbHV0aW9ucy5jb20iLCJuYW1lIjoiTXVoYW1tYWQgSHVuYWluIiwicm9sZSI6Ik9wZXJhdGlvbnMiLCJkZXNpZ25hdGlvbiI6IlNNIE9QRVJ0IiwiaWF0IjoxNzczNzM1OTI1LCJleHAiOjE3NzM4MjIzMjV9.BAyRYF-skUjWP7drx13Khfm450rt1PPoX34vEspUg-4', 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-17 08:25:25', '2026-03-17 08:50:17', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-17 08:50:17', '2026-03-17 08:25:25', '2026-03-17 08:50:17'),
 (810, 27, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIwLCJlbXBsb3llZUlkIjoyNywiZW1haWwiOiJoYW16YUBkaWdpb3Vzc29sdXRpb25zLmNvbSIsIm5hbWUiOiJNdWhhbW1hZCBIYW16YSBIYXNzYW4iLCJyb2xlIjoiSFIiLCJkZXNpZ25hdGlvbiI6IkhSIC0gTWFuYWdlciIsImlhdCI6MTc3MzczNzQyMywiZXhwIjoxNzczODIzODIzfQ.3w36v5S1fDZqyj3JydurSlG8nuHxxqEAcA267dKvnyI', 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-17 08:50:23', '2026-03-17 08:53:55', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-17 08:53:55', '2026-03-17 08:50:23', '2026-03-17 08:53:55'),
-(811, 57, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwLCJlbXBsb3llZUlkIjo1NywiZW1haWwiOiJtaHVuYWluZGlnaW91cy5jb21AZGlnaW91c3NvbHV0aW9ucy5jb20iLCJuYW1lIjoiTUh1bmFpbiIsInJvbGUiOiJTYWxlcyIsImRlc2lnbmF0aW9uIjoiTWlkLUxldmVsIiwiaWF0IjoxNzczNzM3NjQyLCJleHAiOjE3NzM4MjQwNDJ9.lKlvaXTRBDLGNx9JT_pCBFoBRqFh2jsQ_az6Y7gruqE', 'mhunaindigious.com@digioussolutions.com', 'MHunain', '2026-03-17 08:54:02', NULL, 1, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-17 08:54:02', '2026-03-17 08:54:02', '2026-03-17 08:54:02');
+(811, 57, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwLCJlbXBsb3llZUlkIjo1NywiZW1haWwiOiJtaHVuYWluZGlnaW91cy5jb21AZGlnaW91c3NvbHV0aW9ucy5jb20iLCJuYW1lIjoiTUh1bmFpbiIsInJvbGUiOiJTYWxlcyIsImRlc2lnbmF0aW9uIjoiTWlkLUxldmVsIiwiaWF0IjoxNzczNzM3NjQyLCJleHAiOjE3NzM4MjQwNDJ9.lKlvaXTRBDLGNx9JT_pCBFoBRqFh2jsQ_az6Y7gruqE', 'mhunaindigious.com@digioussolutions.com', 'MHunain', '2026-03-17 08:54:02', '2026-03-17 09:02:33', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-17 09:02:33', '2026-03-17 08:54:02', '2026-03-17 09:02:33'),
+(812, 44, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjM3LCJlbXBsb3llZUlkIjo0NCwiZW1haWwiOiJNb2l6QGRpZ2lvdXNzb2x1dGlvbnMuY29tIiwibmFtZSI6IkFiZHVsIE1vaXogS2hhbiIsInJvbGUiOiJQcm9kdWN0aW9uIiwiZGVzaWduYXRpb24iOiJNYW5hZ2VyIiwiaWF0IjoxNzczNzM4MTYwLCJleHAiOjE3NzM4MjQ1NjB9.IHfpGBa-rob08TO-R3uRUTcpP57kd-KI5Q5Km8922H0', 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-03-17 09:02:40', '2026-03-17 09:02:45', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-17 09:02:45', '2026-03-17 09:02:40', '2026-03-17 09:02:45'),
+(813, 56, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ5LCJlbXBsb3llZUlkIjo1NiwiZW1haWwiOiJtdWhhbW1hZC5odW5haW5AZGlnaW91c3NvbHV0aW9ucy5jb20iLCJuYW1lIjoiTXVoYW1tYWQgSHVuYWluIiwicm9sZSI6Ik9wZXJhdGlvbnMiLCJkZXNpZ25hdGlvbiI6IlNNIE9QRVJ0IiwiaWF0IjoxNzczNzM4MTcwLCJleHAiOjE3NzM4MjQ1NzB9.5vAUAjRVIkE_O5IJg-emWWhDBPQxJZlpFRNpNTdQLTk', 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-17 09:02:50', '2026-03-17 09:08:44', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-17 09:08:44', '2026-03-17 09:02:50', '2026-03-17 09:08:44'),
+(814, 57, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwLCJlbXBsb3llZUlkIjo1NywiZW1haWwiOiJtaHVuYWluZGlnaW91cy5jb21AZGlnaW91c3NvbHV0aW9ucy5jb20iLCJuYW1lIjoiTUh1bmFpbiIsInJvbGUiOiJTYWxlcyIsImRlc2lnbmF0aW9uIjoiTWlkLUxldmVsIiwiaWF0IjoxNzczNzQwMjQ5LCJleHAiOjE3NzM4MjY2NDl9.puay_J4FlicXQQ6JV3S5vKBZEQpOic7wT7PSn2pBBZI', 'mhunaindigious.com@digioussolutions.com', 'MHunain', '2026-03-17 09:37:29', '2026-03-17 09:37:33', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-17 09:37:33', '2026-03-17 09:37:29', '2026-03-17 09:37:33'),
+(815, 56, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ5LCJlbXBsb3llZUlkIjo1NiwiZW1haWwiOiJtdWhhbW1hZC5odW5haW5AZGlnaW91c3NvbHV0aW9ucy5jb20iLCJuYW1lIjoiTXVoYW1tYWQgSHVuYWluIiwicm9sZSI6Ik9wZXJhdGlvbnMiLCJkZXNpZ25hdGlvbiI6IlNNIE9QRVJ0IiwiaWF0IjoxNzczNzQwMjU4LCJleHAiOjE3NzM4MjY2NTh9.n-75HsKFsMA7k-jUwWnIA9eH2HMI3kSfURfr4b3iNew', 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-17 09:37:38', '2026-03-17 09:40:12', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-17 09:40:12', '2026-03-17 09:37:38', '2026-03-17 09:40:12'),
+(816, 56, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ5LCJlbXBsb3llZUlkIjo1NiwiZW1haWwiOiJtdWhhbW1hZC5odW5haW5AZGlnaW91c3NvbHV0aW9ucy5jb20iLCJuYW1lIjoiTXVoYW1tYWQgSHVuYWluIiwicm9sZSI6Ik9wZXJhdGlvbnMiLCJkZXNpZ25hdGlvbiI6IlNNIE9QRVJ0IiwiaWF0IjoxNzczNzQxNDQwLCJleHAiOjE3NzM4Mjc4NDB9.GDIbm45YrAtcm9gmYpXp84rRUJODRTIsFwsDPQzvVjM', 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-17 09:57:20', '2026-03-17 09:57:26', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-17 09:57:26', '2026-03-17 09:57:20', '2026-03-17 09:57:26'),
+(817, 57, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwLCJlbXBsb3llZUlkIjo1NywiZW1haWwiOiJtaHVuYWluZGlnaW91cy5jb21AZGlnaW91c3NvbHV0aW9ucy5jb20iLCJuYW1lIjoiTUh1bmFpbiIsInJvbGUiOiJTYWxlcyIsImRlc2lnbmF0aW9uIjoiTWlkLUxldmVsIiwiaWF0IjoxNzczNzQxNDUxLCJleHAiOjE3NzM4Mjc4NTF9.Cn3YcgzvM2Ng40GED_oATd89KEP2i_Ys0sVF2qfhnfY', 'mhunaindigious.com@digioussolutions.com', 'MHunain', '2026-03-17 09:57:31', NULL, 1, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-17 09:57:31', '2026-03-17 09:57:31', '2026-03-17 09:57:31'),
+(818, 57, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwLCJlbXBsb3llZUlkIjo1NywiZW1haWwiOiJtaHVuYWluZGlnaW91cy5jb21AZGlnaW91c3NvbHV0aW9ucy5jb20iLCJuYW1lIjoiTUh1bmFpbiIsInJvbGUiOiJTYWxlcyIsImRlc2lnbmF0aW9uIjoiTWlkLUxldmVsIiwiaWF0IjoxNzczNzQxNDYxLCJleHAiOjE3NzM4Mjc4NjF9.WsTY7_ccn6NNoqLlqHUvv32Hrg1J89pQ9rNYY4WaA9M', 'mhunaindigious.com@digioussolutions.com', 'MHunain', '2026-03-17 09:57:41', NULL, 1, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-17 09:57:41', '2026-03-17 09:57:41', '2026-03-17 09:57:41'),
+(819, 27, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIwLCJlbXBsb3llZUlkIjoyNywiZW1haWwiOiJoYW16YUBkaWdpb3Vzc29sdXRpb25zLmNvbSIsIm5hbWUiOiJNdWhhbW1hZCBIYW16YSBIYXNzYW4iLCJyb2xlIjoiSFIiLCJkZXNpZ25hdGlvbiI6IkhSIC0gTWFuYWdlciIsImlhdCI6MTc3MzkzMDg1NiwiZXhwIjoxNzc0MDE3MjU2fQ.6EAkfVkYaqOKjPLkIOP6QbEXxQI6xouBPt2KticqlvU', 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-19 14:34:16', NULL, 1, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-19 14:34:16', '2026-03-19 14:34:16', '2026-03-19 14:34:16'),
+(820, 27, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIwLCJlbXBsb3llZUlkIjoyNywiZW1haWwiOiJoYW16YUBkaWdpb3Vzc29sdXRpb25zLmNvbSIsIm5hbWUiOiJNdWhhbW1hZCBIYW16YSBIYXNzYW4iLCJyb2xlIjoiSFIiLCJkZXNpZ25hdGlvbiI6IkhSIC0gTWFuYWdlciIsImlhdCI6MTc3NDAwOTcwMiwiZXhwIjoxNzc0MDk2MTAyfQ.Z6F8TXjwZqtU1LtAdyXWLDO9qFMxVjvJoZ-2ZD5PBdg', 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-20 12:28:22', '2026-03-20 12:31:19', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-20 12:31:19', '2026-03-20 12:28:22', '2026-03-20 12:31:19'),
+(821, 27, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIwLCJlbXBsb3llZUlkIjoyNywiZW1haWwiOiJoYW16YUBkaWdpb3Vzc29sdXRpb25zLmNvbSIsIm5hbWUiOiJNdWhhbW1hZCBIYW16YSBIYXNzYW4iLCJyb2xlIjoiSFIiLCJkZXNpZ25hdGlvbiI6IkhSIC0gTWFuYWdlciIsImlhdCI6MTc3NDM3OTE5MCwiZXhwIjoxNzc0NDY1NTkwfQ.nJ3dzoeWCoT639gWq3N5K3jPxgQpSE5jx5LptfKOhHA', 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-24 19:06:30', '2026-03-24 19:07:09', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-24 19:07:09', '2026-03-24 19:06:30', '2026-03-24 19:07:09');
+INSERT INTO `user_system_info` (`id`, `employee_id`, `session_token`, `email`, `name`, `login_time`, `logout_time`, `is_active`, `device_type`, `device_name`, `browser`, `os`, `ip_address`, `hostname`, `mac_address`, `country`, `city`, `timezone`, `user_agent`, `last_activity_time`, `created_at`, `updated_at`) VALUES
+(822, 27, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIwLCJlbXBsb3llZUlkIjoyNywiZW1haWwiOiJoYW16YUBkaWdpb3Vzc29sdXRpb25zLmNvbSIsIm5hbWUiOiJNdWhhbW1hZCBIYW16YSBIYXNzYW4iLCJyb2xlIjoiSFIiLCJkZXNpZ25hdGlvbiI6IkhSIC0gTWFuYWdlciIsImlhdCI6MTc3NDM3OTg2OSwiZXhwIjoxNzc0NDY2MjY5fQ.XP7AuvX1fbgllkKeDnqRK5qkcZBds4Hp5nCRm5UBaSI', 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-24 19:17:49', '2026-03-24 19:27:15', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-24 19:27:15', '2026-03-24 19:17:49', '2026-03-24 19:27:15'),
+(823, 56, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ5LCJlbXBsb3llZUlkIjo1NiwiZW1haWwiOiJtdWhhbW1hZC5odW5haW5AZGlnaW91c3NvbHV0aW9ucy5jb20iLCJuYW1lIjoiTXVoYW1tYWQgSHVuYWluIiwicm9sZSI6Ik9wZXJhdGlvbnMiLCJkZXNpZ25hdGlvbiI6IlNNIE9QRVJ0IiwiaWF0IjoxNzc0MzgwNjI0LCJleHAiOjE3NzQ0NjcwMjR9.5c8gQnLpC167bdCHFz8WSNHEu6RbEMHxFnsPr4-CkX4', 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-24 19:30:24', NULL, 1, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-24 19:30:24', '2026-03-24 19:30:24', '2026-03-24 19:30:24'),
+(824, 56, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ5LCJlbXBsb3llZUlkIjo1NiwiZW1haWwiOiJtdWhhbW1hZC5odW5haW5AZGlnaW91c3NvbHV0aW9ucy5jb20iLCJuYW1lIjoiTXVoYW1tYWQgSHVuYWluIiwicm9sZSI6Ik9wZXJhdGlvbnMiLCJkZXNpZ25hdGlvbiI6IlNNIE9QRVJ0IiwiaWF0IjoxNzc0NDU3NjI0LCJleHAiOjE3NzQ1NDQwMjR9.fYybwFNQtaU2JIpGrlVqTOEGNsae-7QVHNu5obNxF3c', 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-25 16:53:44', NULL, 1, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-25 16:53:44', '2026-03-25 16:53:44', '2026-03-25 16:53:44'),
+(825, 56, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ5LCJlbXBsb3llZUlkIjo1NiwiZW1haWwiOiJtdWhhbW1hZC5odW5haW5AZGlnaW91c3NvbHV0aW9ucy5jb20iLCJuYW1lIjoiTXVoYW1tYWQgSHVuYWluIiwicm9sZSI6Ik9wZXJhdGlvbnMiLCJkZXNpZ25hdGlvbiI6IlNNIE9QRVJ0IiwiaWF0IjoxNzc0NDU4NjA4LCJleHAiOjE3NzQ1NDUwMDh9.IarCWbF9GNcKsduXpAbalUEaNQqNY9HBUJnpG0RZAjU', 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-25 17:10:08', '2026-03-25 17:19:35', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-25 17:19:35', '2026-03-25 17:10:08', '2026-03-25 17:19:35'),
+(826, 56, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ5LCJlbXBsb3llZUlkIjo1NiwiZW1haWwiOiJtdWhhbW1hZC5odW5haW5AZGlnaW91c3NvbHV0aW9ucy5jb20iLCJuYW1lIjoiTXVoYW1tYWQgSHVuYWluIiwicm9sZSI6Ik9wZXJhdGlvbnMiLCJkZXNpZ25hdGlvbiI6IlNNIE9QRVJ0IiwiaWF0IjoxNzc0NDY5MDY3LCJleHAiOjE3NzQ1NTU0Njd9.C023z607XuBN1zxHcuNLK4SvBnKzps1_ChKGyiTyQmM', 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-25 20:04:27', '2026-03-26 10:13:33', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-26 10:13:33', '2026-03-25 20:04:27', '2026-03-26 10:13:33'),
+(827, 56, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ5LCJlbXBsb3llZUlkIjo1NiwiZW1haWwiOiJtdWhhbW1hZC5odW5haW5AZGlnaW91c3NvbHV0aW9ucy5jb20iLCJuYW1lIjoiTXVoYW1tYWQgSHVuYWluIiwicm9sZSI6Ik9wZXJhdGlvbnMiLCJkZXNpZ25hdGlvbiI6IlNNIE9QRVJ0IiwiaWF0IjoxNzc0NTIwMDE3LCJleHAiOjE3NzQ2MDY0MTd9.FKyHdDQe8xMA-BW3b1yCOdC61LmkE6JNJO5Ta74mM9Q', 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-26 10:13:37', NULL, 1, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-26 10:13:37', '2026-03-26 10:13:37', '2026-03-26 10:13:37'),
+(828, 27, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIwLCJlbXBsb3llZUlkIjoyNywiZW1haWwiOiJoYW16YUBkaWdpb3Vzc29sdXRpb25zLmNvbSIsIm5hbWUiOiJNdWhhbW1hZCBIYW16YSBIYXNzYW4iLCJyb2xlIjoiSFIiLCJkZXNpZ25hdGlvbiI6IkhSIC0gTWFuYWdlciIsImlhdCI6MTc3NDUyMzE0MiwiZXhwIjoxNzc0NjA5NTQyfQ.3rRhPUBScr2ll-oeExiyLUzdvsbmPLsrHlmOqg7DT0g', 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-26 11:05:42', '2026-03-26 13:02:45', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-26 13:02:45', '2026-03-26 11:05:42', '2026-03-26 13:02:45'),
+(829, 56, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ5LCJlbXBsb3llZUlkIjo1NiwiZW1haWwiOiJtdWhhbW1hZC5odW5haW5AZGlnaW91c3NvbHV0aW9ucy5jb20iLCJuYW1lIjoiTXVoYW1tYWQgSHVuYWluIiwicm9sZSI6Ik9wZXJhdGlvbnMiLCJkZXNpZ25hdGlvbiI6IlNNIE9QRVJ0IiwiaWF0IjoxNzc0NTMwMTcwLCJleHAiOjE3NzQ2MTY1NzB9.Je-VcSlo_no1NKTQYY4drtj7lb_11JajFZ3OzTb13Pw', 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-26 13:02:50', '2026-03-26 13:05:00', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-26 13:05:00', '2026-03-26 13:02:50', '2026-03-26 13:05:00'),
+(830, 56, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ5LCJlbXBsb3llZUlkIjo1NiwiZW1haWwiOiJtdWhhbW1hZC5odW5haW5AZGlnaW91c3NvbHV0aW9ucy5jb20iLCJuYW1lIjoiTXVoYW1tYWQgSHVuYWluIiwicm9sZSI6Ik9wZXJhdGlvbnMiLCJkZXNpZ25hdGlvbiI6IlNNIE9QRVJ0IiwiaWF0IjoxNzc0NTMzMDc2LCJleHAiOjE3NzQ2MTk0NzZ9.4mxw_fcRXzpGJSiSV18KJPZsoO0d_ay8xhJYS9qZ6ZE', 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-26 13:51:16', '2026-03-26 16:49:07', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-26 16:49:07', '2026-03-26 13:51:16', '2026-03-26 16:49:07'),
+(831, 27, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIwLCJlbXBsb3llZUlkIjoyNywiZW1haWwiOiJoYW16YUBkaWdpb3Vzc29sdXRpb25zLmNvbSIsIm5hbWUiOiJNdWhhbW1hZCBIYW16YSBIYXNzYW4iLCJyb2xlIjoiSFIiLCJkZXNpZ25hdGlvbiI6IkhSIC0gTWFuYWdlciIsImlhdCI6MTc3NDU0Mzc1MSwiZXhwIjoxNzc0NjMwMTUxfQ.hQmidZwzaqWLX0xPQToN_rD4TLcSuKKRHLG8LTcXYhw', 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-26 16:49:11', '2026-03-26 16:54:26', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-26 16:54:26', '2026-03-26 16:49:11', '2026-03-26 16:54:26'),
+(832, 27, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIwLCJlbXBsb3llZUlkIjoyNywiZW1haWwiOiJoYW16YUBkaWdpb3Vzc29sdXRpb25zLmNvbSIsIm5hbWUiOiJNdWhhbW1hZCBIYW16YSBIYXNzYW4iLCJyb2xlIjoiSFIiLCJkZXNpZ25hdGlvbiI6IkhSIC0gTWFuYWdlciIsImlhdCI6MTc3NDU0NDIyMSwiZXhwIjoxNzc0NjMwNjIxfQ.H1_riyR4hHz7PR2RjEkXkx_MlGHuT3tyq2rPmkQHk9c', 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-26 16:57:01', '2026-03-26 16:59:24', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-26 16:59:24', '2026-03-26 16:57:01', '2026-03-26 16:59:24'),
+(833, 56, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ5LCJlbXBsb3llZUlkIjo1NiwiZW1haWwiOiJtdWhhbW1hZC5odW5haW5AZGlnaW91c3NvbHV0aW9ucy5jb20iLCJuYW1lIjoiTXVoYW1tYWQgSHVuYWluIiwicm9sZSI6Ik9wZXJhdGlvbnMiLCJkZXNpZ25hdGlvbiI6IlNNIE9QRVJ0IiwiaWF0IjoxNzc0NTU2ODczLCJleHAiOjE3NzQ2NDMyNzN9.W5-7x6i7xIbbZo-My_3gXcPvCW2Lhrr-VrP89OImMFs', 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-26 20:27:53', NULL, 1, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-26 20:27:53', '2026-03-26 20:27:53', '2026-03-26 20:27:53'),
+(834, 56, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ5LCJlbXBsb3llZUlkIjo1NiwiZW1haWwiOiJtdWhhbW1hZC5odW5haW5AZGlnaW91c3NvbHV0aW9ucy5jb20iLCJuYW1lIjoiTXVoYW1tYWQgSHVuYWluIiwicm9sZSI6Ik9wZXJhdGlvbnMiLCJkZXNpZ25hdGlvbiI6IlNNIE9QRVJ0IiwiaWF0IjoxNzc0NTk3OTQ4LCJleHAiOjE3NzQ2ODQzNDh9.LqOp85cfnkVQRySl7Y72NBIb0j9X7lja-ffi3_rYy8k', 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-27 07:52:28', '2026-03-27 07:53:13', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-27 07:53:13', '2026-03-27 07:52:28', '2026-03-27 07:53:13'),
+(835, 27, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIwLCJlbXBsb3llZUlkIjoyNywiZW1haWwiOiJoYW16YUBkaWdpb3Vzc29sdXRpb25zLmNvbSIsIm5hbWUiOiJNdWhhbW1hZCBIYW16YSBIYXNzYW4iLCJyb2xlIjoiSFIiLCJkZXNpZ25hdGlvbiI6IkhSIC0gTWFuYWdlciIsImlhdCI6MTc3NDU5ODA5MywiZXhwIjoxNzc0Njg0NDkzfQ.2M9Pmd9Lbbhka7oIwI9Kh-QUaxgrd29xhx6Eble7QlU', 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-27 07:54:53', NULL, 1, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-27 07:54:53', '2026-03-27 07:54:53', '2026-03-27 07:54:53'),
+(836, 56, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ5LCJlbXBsb3llZUlkIjo1NiwiZW1haWwiOiJtdWhhbW1hZC5odW5haW5AZGlnaW91c3NvbHV0aW9ucy5jb20iLCJuYW1lIjoiTXVoYW1tYWQgSHVuYWluIiwicm9sZSI6Ik9wZXJhdGlvbnMiLCJkZXNpZ25hdGlvbiI6IlNNIE9QRVJ0IiwiaWF0IjoxNzc0NjE0MzUxLCJleHAiOjE3NzQ3MDA3NTF9.5Akp9M7EE5tdowaoO44n8IM_eiLBIGkYY9FYRabJOEc', 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-27 12:25:51', '2026-03-27 13:06:58', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-27 13:06:58', '2026-03-27 12:25:51', '2026-03-27 13:06:58'),
+(837, 44, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjM3LCJlbXBsb3llZUlkIjo0NCwiZW1haWwiOiJNb2l6QGRpZ2lvdXNzb2x1dGlvbnMuY29tIiwibmFtZSI6IkFiZHVsIE1vaXogS2hhbiIsInJvbGUiOiJQcm9kdWN0aW9uIiwiZGVzaWduYXRpb24iOiJNYW5hZ2VyIiwiaWF0IjoxNzc0NjE2ODIyLCJleHAiOjE3NzQ3MDMyMjJ9.LxpGlycGg610y7E3jmPCDO_hedcWKDM7IWr3-TaDuqg', 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-03-27 13:07:02', '2026-03-27 13:07:36', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-27 13:07:36', '2026-03-27 13:07:02', '2026-03-27 13:07:36'),
+(838, 56, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ5LCJlbXBsb3llZUlkIjo1NiwiZW1haWwiOiJtdWhhbW1hZC5odW5haW5AZGlnaW91c3NvbHV0aW9ucy5jb20iLCJuYW1lIjoiTXVoYW1tYWQgSHVuYWluIiwicm9sZSI6Ik9wZXJhdGlvbnMiLCJkZXNpZ25hdGlvbiI6IlNNIE9QRVJ0IiwiaWF0IjoxNzc0NjE2ODYxLCJleHAiOjE3NzQ3MDMyNjF9.-yAIDvBICRjrR9u501EJ26lkzeHK8V_VvW45bRFEgZg', 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-27 13:07:41', NULL, 1, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-27 13:07:41', '2026-03-27 13:07:41', '2026-03-27 13:07:41'),
+(839, 27, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIwLCJlbXBsb3llZUlkIjoyNywiZW1haWwiOiJoYW16YUBkaWdpb3Vzc29sdXRpb25zLmNvbSIsIm5hbWUiOiJNdWhhbW1hZCBIYW16YSBIYXNzYW4iLCJyb2xlIjoiSFIiLCJkZXNpZ25hdGlvbiI6IkhSIC0gTWFuYWdlciIsImlhdCI6MTc3NDYxNjg2OSwiZXhwIjoxNzc0NzAzMjY5fQ.jzA-xSRJSg-VwxJxtxLi1f6fVO-h4Zc8aq_qvz2gnjQ', 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-27 13:07:49', '2026-03-27 13:08:09', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-27 13:08:09', '2026-03-27 13:07:49', '2026-03-27 13:08:09'),
+(840, 56, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ5LCJlbXBsb3llZUlkIjo1NiwiZW1haWwiOiJtdWhhbW1hZC5odW5haW5AZGlnaW91c3NvbHV0aW9ucy5jb20iLCJuYW1lIjoiTXVoYW1tYWQgSHVuYWluIiwicm9sZSI6Ik9wZXJhdGlvbnMiLCJkZXNpZ25hdGlvbiI6IlNNIE9QRVJ0IiwiaWF0IjoxNzc0NjE2ODk0LCJleHAiOjE3NzQ3MDMyOTR9.5IHTpyRxXHuqlLphc2sOaZgB9FD7ZUeaTty8lkn7hbU', 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-27 13:08:14', '2026-03-27 13:10:01', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-27 13:10:01', '2026-03-27 13:08:14', '2026-03-27 13:10:01'),
+(841, 27, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIwLCJlbXBsb3llZUlkIjoyNywiZW1haWwiOiJoYW16YUBkaWdpb3Vzc29sdXRpb25zLmNvbSIsIm5hbWUiOiJNdWhhbW1hZCBIYW16YSBIYXNzYW4iLCJyb2xlIjoiSFIiLCJkZXNpZ25hdGlvbiI6IkhSIC0gTWFuYWdlciIsImlhdCI6MTc3NDYxNzAxMiwiZXhwIjoxNzc0NzAzNDEyfQ.quMd191CV9gGLeeMdGPtSL3JeHcBi5n6uprdkT21fRg', 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-27 13:10:12', NULL, 1, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-27 13:10:12', '2026-03-27 13:10:12', '2026-03-27 13:10:12'),
+(842, 56, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ5LCJlbXBsb3llZUlkIjo1NiwiZW1haWwiOiJtdWhhbW1hZC5odW5haW5AZGlnaW91c3NvbHV0aW9ucy5jb20iLCJuYW1lIjoiTXVoYW1tYWQgSHVuYWluIiwicm9sZSI6Ik9wZXJhdGlvbnMiLCJkZXNpZ25hdGlvbiI6IlNNIE9QRVJ0IiwiaWF0IjoxNzc0NjE5MjU2LCJleHAiOjE3NzQ3MDU2NTZ9._VrWXcwUti3KhpB9IqlUrD2v19IUoVghL80SNIKetKk', 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-27 13:47:36', '2026-03-27 13:48:47', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-27 13:48:47', '2026-03-27 13:47:36', '2026-03-27 13:48:47'),
+(843, 56, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ5LCJlbXBsb3llZUlkIjo1NiwiZW1haWwiOiJtdWhhbW1hZC5odW5haW5AZGlnaW91c3NvbHV0aW9ucy5jb20iLCJuYW1lIjoiTXVoYW1tYWQgSHVuYWluIiwicm9sZSI6Ik9wZXJhdGlvbnMiLCJkZXNpZ25hdGlvbiI6IlNNIE9QRVJ0IiwiaWF0IjoxNzc0NjE5MzY0LCJleHAiOjE3NzQ3MDU3NjR9.8m9z5Hdp0HeQ2Mqw3lMfM1vwbeah7Fv5K2mR_vKmDwo', 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-27 13:49:24', NULL, 1, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-27 13:49:24', '2026-03-27 13:49:24', '2026-03-27 13:49:24'),
+(844, 56, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ5LCJlbXBsb3llZUlkIjo1NiwiZW1haWwiOiJtdWhhbW1hZC5odW5haW5AZGlnaW91c3NvbHV0aW9ucy5jb20iLCJuYW1lIjoiTXVoYW1tYWQgSHVuYWluIiwicm9sZSI6Ik9wZXJhdGlvbnMiLCJkZXNpZ25hdGlvbiI6IlNNIE9QRVJ0IiwiaWF0IjoxNzc0NjIyMjE3LCJleHAiOjE3NzQ3MDg2MTd9.nKC0fR1Lbx5jtDvTjnp9YMY5_nYQ2HJlmTotkcccYC0', 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-27 14:36:57', '2026-03-27 14:57:51', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-27 14:57:51', '2026-03-27 14:36:57', '2026-03-27 14:57:51'),
+(845, 56, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ5LCJlbXBsb3llZUlkIjo1NiwiZW1haWwiOiJtdWhhbW1hZC5odW5haW5AZGlnaW91c3NvbHV0aW9ucy5jb20iLCJuYW1lIjoiTXVoYW1tYWQgSHVuYWluIiwicm9sZSI6Ik9wZXJhdGlvbnMiLCJkZXNpZ25hdGlvbiI6IlNNIE9QRVJ0IiwiaWF0IjoxNzc0NjIzNTc0LCJleHAiOjE3NzQ3MDk5NzR9.SdqbxZeLA64eOq5Fac_d7ctnca9F2HQrKKbLlHPX8Ug', 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-27 14:59:34', NULL, 1, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-27 14:59:34', '2026-03-27 14:59:34', '2026-03-27 14:59:34'),
+(846, 56, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ5LCJlbXBsb3llZUlkIjo1NiwiZW1haWwiOiJtdWhhbW1hZC5odW5haW5AZGlnaW91c3NvbHV0aW9ucy5jb20iLCJuYW1lIjoiTXVoYW1tYWQgSHVuYWluIiwicm9sZSI6Ik9wZXJhdGlvbnMiLCJkZXNpZ25hdGlvbiI6IlNNIE9QRVJ0IiwiaWF0IjoxNzc0NjM3NTI4LCJleHAiOjE3NzQ3MjM5Mjh9.mWhOBCiWZ_VsNLjns-nKZ387F_LrHVme9aFalhRHUD4', 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-27 18:52:08', '2026-03-27 18:55:50', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-27 18:55:50', '2026-03-27 18:52:08', '2026-03-27 18:55:50'),
+(847, 44, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjM3LCJlbXBsb3llZUlkIjo0NCwiZW1haWwiOiJNb2l6QGRpZ2lvdXNzb2x1dGlvbnMuY29tIiwibmFtZSI6IkFiZHVsIE1vaXogS2hhbiIsInJvbGUiOiJQcm9kdWN0aW9uIiwiZGVzaWduYXRpb24iOiJNYW5hZ2VyIiwiaWF0IjoxNzc0NjM3NzU1LCJleHAiOjE3NzQ3MjQxNTV9.ybbpSHNiKdV91bxtyu1zec6YA-Q-ZXk0UUARx1m4-Us', 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-03-27 18:55:55', '2026-03-27 18:56:56', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-27 18:56:56', '2026-03-27 18:55:55', '2026-03-27 18:56:56'),
+(848, 56, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ5LCJlbXBsb3llZUlkIjo1NiwiZW1haWwiOiJtdWhhbW1hZC5odW5haW5AZGlnaW91c3NvbHV0aW9ucy5jb20iLCJuYW1lIjoiTXVoYW1tYWQgSHVuYWluIiwicm9sZSI6Ik9wZXJhdGlvbnMiLCJkZXNpZ25hdGlvbiI6IlNNIE9QRVJ0IiwiaWF0IjoxNzc0NjM3ODIyLCJleHAiOjE3NzQ3MjQyMjJ9.JEYOlBWvEV8-6YIFB5VoDG940AwG-q9zaPnb7oze-1o', 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-27 18:57:02', '2026-03-27 18:57:21', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-27 18:57:21', '2026-03-27 18:57:02', '2026-03-27 18:57:21'),
+(849, 27, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIwLCJlbXBsb3llZUlkIjoyNywiZW1haWwiOiJoYW16YUBkaWdpb3Vzc29sdXRpb25zLmNvbSIsIm5hbWUiOiJNdWhhbW1hZCBIYW16YSBIYXNzYW4iLCJyb2xlIjoiSFIiLCJkZXNpZ25hdGlvbiI6IkhSIC0gTWFuYWdlciIsImlhdCI6MTc3NDYzNzg0NSwiZXhwIjoxNzc0NzI0MjQ1fQ.HlXZSULpwB_Jv9jVWv_STI7IBeJX_4DjWXhch8n11ys', 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-27 18:57:25', '2026-03-27 18:58:13', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-27 18:58:13', '2026-03-27 18:57:25', '2026-03-27 18:58:13'),
+(850, 56, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ5LCJlbXBsb3llZUlkIjo1NiwiZW1haWwiOiJtdWhhbW1hZC5odW5haW5AZGlnaW91c3NvbHV0aW9ucy5jb20iLCJuYW1lIjoiTXVoYW1tYWQgSHVuYWluIiwicm9sZSI6Ik9wZXJhdGlvbnMiLCJkZXNpZ25hdGlvbiI6IlNNIE9QRVJ0IiwiaWF0IjoxNzc0NjM3ODk3LCJleHAiOjE3NzQ3MjQyOTd9.IJXkuoDyYp0NSmAt3KcKFmOojKFW0uCWqUtUr4600Ns', 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-27 18:58:17', '2026-03-27 18:59:50', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-27 18:59:50', '2026-03-27 18:58:17', '2026-03-27 18:59:50'),
+(851, 27, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIwLCJlbXBsb3llZUlkIjoyNywiZW1haWwiOiJoYW16YUBkaWdpb3Vzc29sdXRpb25zLmNvbSIsIm5hbWUiOiJNdWhhbW1hZCBIYW16YSBIYXNzYW4iLCJyb2xlIjoiSFIiLCJkZXNpZ25hdGlvbiI6IkhSIC0gTWFuYWdlciIsImlhdCI6MTc3NDYzNzk5NCwiZXhwIjoxNzc0NzI0Mzk0fQ.MM7fmKn6GW6xycJWTnw4LduSC8w4_zfFRXXVyBFOj2U', 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-27 18:59:54', '2026-03-27 19:01:37', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-27 19:01:37', '2026-03-27 18:59:54', '2026-03-27 19:01:37'),
+(852, 27, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIwLCJlbXBsb3llZUlkIjoyNywiZW1haWwiOiJoYW16YUBkaWdpb3Vzc29sdXRpb25zLmNvbSIsIm5hbWUiOiJNdWhhbW1hZCBIYW16YSBIYXNzYW4iLCJyb2xlIjoiSFIiLCJkZXNpZ25hdGlvbiI6IkhSIC0gTWFuYWdlciIsImlhdCI6MTc3NDYzODExMiwiZXhwIjoxNzc0NzI0NTEyfQ.Ml4Vd8RfFxpt0kZVDl7UjsX8YRWLvhg8vzB_lsgVsFI', 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-27 19:01:52', '2026-03-27 19:02:11', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-27 19:02:11', '2026-03-27 19:01:52', '2026-03-27 19:02:11'),
+(853, 56, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ5LCJlbXBsb3llZUlkIjo1NiwiZW1haWwiOiJtdWhhbW1hZC5odW5haW5AZGlnaW91c3NvbHV0aW9ucy5jb20iLCJuYW1lIjoiTXVoYW1tYWQgSHVuYWluIiwicm9sZSI6Ik9wZXJhdGlvbnMiLCJkZXNpZ25hdGlvbiI6IlNNIE9QRVJ0IiwiaWF0IjoxNzc0NjM4MTQwLCJleHAiOjE3NzQ3MjQ1NDB9.hGW_x56nXzrlU42losWNLD8rydr07ceZgLKrLbwK90U', 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-27 19:02:20', '2026-03-27 19:09:34', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-27 19:09:34', '2026-03-27 19:02:20', '2026-03-27 19:09:34'),
+(854, 27, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIwLCJlbXBsb3llZUlkIjoyNywiZW1haWwiOiJoYW16YUBkaWdpb3Vzc29sdXRpb25zLmNvbSIsIm5hbWUiOiJNdWhhbW1hZCBIYW16YSBIYXNzYW4iLCJyb2xlIjoiSFIiLCJkZXNpZ25hdGlvbiI6IkhSIC0gTWFuYWdlciIsImlhdCI6MTc3NDYzODU3OCwiZXhwIjoxNzc0NzI0OTc4fQ.Vvzg7v5K68KtgSuoPWva7HsWZ7f1PxbY94h24PMPT4k', 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-27 19:09:38', NULL, 1, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '::ffff:127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-27 19:09:38', '2026-03-27 19:09:38', '2026-03-27 19:09:38'),
+(855, 56, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ5LCJlbXBsb3llZUlkIjo1NiwiZW1haWwiOiJtdWhhbW1hZC5odW5haW5AZGlnaW91c3NvbHV0aW9ucy5jb20iLCJuYW1lIjoiTXVoYW1tYWQgSHVuYWluIiwicm9sZSI6Ik9wZXJhdGlvbnMiLCJkZXNpZ25hdGlvbiI6IlNNIE9QRVJ0IiwiaWF0IjoxNzc0Njg2MzgxLCJleHAiOjE3NzQ3NzI3ODF9.oYc2cy2CagOphZW-CoftDvhck14IeQtMxlphsm2ZA2U', 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-28 08:26:21', NULL, 1, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-28 08:26:21', '2026-03-28 08:26:21', '2026-03-28 08:26:21'),
+(856, 56, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ5LCJlbXBsb3llZUlkIjo1NiwiZW1haWwiOiJtdWhhbW1hZC5odW5haW5AZGlnaW91c3NvbHV0aW9ucy5jb20iLCJuYW1lIjoiTXVoYW1tYWQgSHVuYWluIiwicm9sZSI6Ik9wZXJhdGlvbnMiLCJkZXNpZ25hdGlvbiI6IlNNIE9QRVJ0IiwiaWF0IjoxNzc0Njk3MTcxLCJleHAiOjE3NzQ3ODM1NzF9.7z6eO8KJaIMZy6lsXNuQ-qrz4hFloQM4dyxoVqjjn4c', 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-28 11:26:11', '2026-03-28 11:32:28', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-28 11:32:28', '2026-03-28 11:26:11', '2026-03-28 11:32:28'),
+(857, 44, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjM3LCJlbXBsb3llZUlkIjo0NCwiZW1haWwiOiJNb2l6QGRpZ2lvdXNzb2x1dGlvbnMuY29tIiwibmFtZSI6IkFiZHVsIE1vaXogS2hhbiIsInJvbGUiOiJQcm9kdWN0aW9uIiwiZGVzaWduYXRpb24iOiJNYW5hZ2VyIiwiaWF0IjoxNzc0Njk3NTU0LCJleHAiOjE3NzQ3ODM5NTR9.zRc9AnjAeUPA18f0f4n0VAXdh0rEo_247tt5dj6XWF8', 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-03-28 11:32:34', '2026-03-28 11:33:07', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-28 11:33:07', '2026-03-28 11:32:34', '2026-03-28 11:33:07'),
+(858, 56, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ5LCJlbXBsb3llZUlkIjo1NiwiZW1haWwiOiJtdWhhbW1hZC5odW5haW5AZGlnaW91c3NvbHV0aW9ucy5jb20iLCJuYW1lIjoiTXVoYW1tYWQgSHVuYWluIiwicm9sZSI6Ik9wZXJhdGlvbnMiLCJkZXNpZ25hdGlvbiI6IlNNIE9QRVJ0IiwiaWF0IjoxNzc0Njk3NTkwLCJleHAiOjE3NzQ3ODM5OTB9.L-zIFn5PPe1rzCGmFE6FnRbkU7ANBMrTN25Cpn33ljc', 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-28 11:33:10', '2026-03-28 11:33:20', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-28 11:33:20', '2026-03-28 11:33:10', '2026-03-28 11:33:20'),
+(859, 27, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIwLCJlbXBsb3llZUlkIjoyNywiZW1haWwiOiJoYW16YUBkaWdpb3Vzc29sdXRpb25zLmNvbSIsIm5hbWUiOiJNdWhhbW1hZCBIYW16YSBIYXNzYW4iLCJyb2xlIjoiSFIiLCJkZXNpZ25hdGlvbiI6IkhSIC0gTWFuYWdlciIsImlhdCI6MTc3NDY5NzYwNiwiZXhwIjoxNzc0Nzg0MDA2fQ.SDCNZce6cM_USBf4meaS_103YM7qpWfOQ9TJhULOQKQ', 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-28 11:33:26', '2026-03-28 11:33:42', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-28 11:33:42', '2026-03-28 11:33:26', '2026-03-28 11:33:42'),
+(860, 56, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ5LCJlbXBsb3llZUlkIjo1NiwiZW1haWwiOiJtdWhhbW1hZC5odW5haW5AZGlnaW91c3NvbHV0aW9ucy5jb20iLCJuYW1lIjoiTXVoYW1tYWQgSHVuYWluIiwicm9sZSI6Ik9wZXJhdGlvbnMiLCJkZXNpZ25hdGlvbiI6IlNNIE9QRVJ0IiwiaWF0IjoxNzc0Njk3NjI3LCJleHAiOjE3NzQ3ODQwMjd9.nT1rvzjwVs6XDim5t-o_crd0JmS9GV2I_dpomtw_OoA', 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-28 11:33:47', '2026-03-28 13:06:53', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-28 13:06:53', '2026-03-28 11:33:47', '2026-03-28 13:06:53'),
+(861, 27, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIwLCJlbXBsb3llZUlkIjoyNywiZW1haWwiOiJoYW16YUBkaWdpb3Vzc29sdXRpb25zLmNvbSIsIm5hbWUiOiJNdWhhbW1hZCBIYW16YSBIYXNzYW4iLCJyb2xlIjoiSFIiLCJkZXNpZ25hdGlvbiI6IkhSIC0gTWFuYWdlciIsImlhdCI6MTc3NDcwMzIxOCwiZXhwIjoxNzc0Nzg5NjE4fQ.o_CPGdosiPZG52UFNu5HFKo5lk8KPajV_GzZsfFTyIA', 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-28 13:06:58', '2026-03-28 13:07:32', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-28 13:07:32', '2026-03-28 13:06:58', '2026-03-28 13:07:32'),
+(862, 44, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjM3LCJlbXBsb3llZUlkIjo0NCwiZW1haWwiOiJNb2l6QGRpZ2lvdXNzb2x1dGlvbnMuY29tIiwibmFtZSI6IkFiZHVsIE1vaXogS2hhbiIsInJvbGUiOiJQcm9kdWN0aW9uIiwiZGVzaWduYXRpb24iOiJNYW5hZ2VyIiwiaWF0IjoxNzc0NzAzMjU4LCJleHAiOjE3NzQ3ODk2NTh9.lvMa441Ke8fLEo7MN7ie-bMDH2ETgO02U8H634-MDPs', 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-03-28 13:07:38', '2026-03-28 13:08:02', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-28 13:08:02', '2026-03-28 13:07:38', '2026-03-28 13:08:02'),
+(863, 27, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIwLCJlbXBsb3llZUlkIjoyNywiZW1haWwiOiJoYW16YUBkaWdpb3Vzc29sdXRpb25zLmNvbSIsIm5hbWUiOiJNdWhhbW1hZCBIYW16YSBIYXNzYW4iLCJyb2xlIjoiSFIiLCJkZXNpZ25hdGlvbiI6IkhSIC0gTWFuYWdlciIsImlhdCI6MTc3NDcwMzI4NSwiZXhwIjoxNzc0Nzg5Njg1fQ.JNXO2cI_DSMskB_C8JRrJWtJ06MoGfFNen4BBkdqJ_c', 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-28 13:08:05', '2026-03-28 13:09:26', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-28 13:09:26', '2026-03-28 13:08:05', '2026-03-28 13:09:26'),
+(864, 56, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ5LCJlbXBsb3llZUlkIjo1NiwiZW1haWwiOiJtdWhhbW1hZC5odW5haW5AZGlnaW91c3NvbHV0aW9ucy5jb20iLCJuYW1lIjoiTXVoYW1tYWQgSHVuYWluIiwicm9sZSI6Ik9wZXJhdGlvbnMiLCJkZXNpZ25hdGlvbiI6IlNNIE9QRVJ0IiwiaWF0IjoxNzc0NzAzMzcwLCJleHAiOjE3NzQ3ODk3NzB9.hl21XhPo7aKdgKfd4s3FGhQE98zmKJkCg-SFeKp7Ofc', 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-28 13:09:30', NULL, 1, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-28 13:09:30', '2026-03-28 13:09:30', '2026-03-28 13:09:30'),
+(865, 27, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIwLCJlbXBsb3llZUlkIjoyNywiZW1haWwiOiJoYW16YUBkaWdpb3Vzc29sdXRpb25zLmNvbSIsIm5hbWUiOiJNdWhhbW1hZCBIYW16YSBIYXNzYW4iLCJyb2xlIjoiSFIiLCJkZXNpZ25hdGlvbiI6IkhSIC0gTWFuYWdlciIsImlhdCI6MTc3NDcxMTQyNywiZXhwIjoxNzc0Nzk3ODI3fQ.WyeiOle5OqqymIK39ecP6y8C6C5Mif1VdSI4S8D92bQ', 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-28 15:23:47', '2026-03-28 16:20:25', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-28 16:20:25', '2026-03-28 15:23:47', '2026-03-28 16:20:25'),
+(866, 56, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ5LCJlbXBsb3llZUlkIjo1NiwiZW1haWwiOiJtdWhhbW1hZC5odW5haW5AZGlnaW91c3NvbHV0aW9ucy5jb20iLCJuYW1lIjoiTXVoYW1tYWQgSHVuYWluIiwicm9sZSI6Ik9wZXJhdGlvbnMiLCJkZXNpZ25hdGlvbiI6IlNNIE9QRVJ0IiwiaWF0IjoxNzc0NzE0ODI5LCJleHAiOjE3NzQ4MDEyMjl9.99cZ8DENqSq4xzLJiSndBe2pKaxSviC2p0f_rsYbHcc', 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-28 16:20:29', NULL, 1, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-28 16:20:29', '2026-03-28 16:20:29', '2026-03-28 16:20:29'),
+(867, 56, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ5LCJlbXBsb3llZUlkIjo1NiwiZW1haWwiOiJtdWhhbW1hZC5odW5haW5AZGlnaW91c3NvbHV0aW9ucy5jb20iLCJuYW1lIjoiTXVoYW1tYWQgSHVuYWluIiwicm9sZSI6Ik9wZXJhdGlvbnMiLCJkZXNpZ25hdGlvbiI6IlNNIE9QRVJ0IiwiaWF0IjoxNzc0NzE2NjI2LCJleHAiOjE3NzQ4MDMwMjZ9.guU4jZ5PUOR5_6n0ksJTM4ps3A_bYGhWCZZM_c3TPss', 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-28 16:50:26', '2026-03-28 16:51:35', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-28 16:51:35', '2026-03-28 16:50:26', '2026-03-28 16:51:35'),
+(868, 44, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjM3LCJlbXBsb3llZUlkIjo0NCwiZW1haWwiOiJNb2l6QGRpZ2lvdXNzb2x1dGlvbnMuY29tIiwibmFtZSI6IkFiZHVsIE1vaXogS2hhbiIsInJvbGUiOiJQcm9kdWN0aW9uIiwiZGVzaWduYXRpb24iOiJNYW5hZ2VyIiwiaWF0IjoxNzc0NzE2Njk5LCJleHAiOjE3NzQ4MDMwOTl9.ArtlStl9zuY_Xu0BCy9bJ7n2RQjEPmjqzjVsESAeVEE', 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-03-28 16:51:39', NULL, 1, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-28 16:51:39', '2026-03-28 16:51:39', '2026-03-28 16:51:39'),
+(869, 27, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIwLCJlbXBsb3llZUlkIjoyNywiZW1haWwiOiJoYW16YUBkaWdpb3Vzc29sdXRpb25zLmNvbSIsIm5hbWUiOiJNdWhhbW1hZCBIYW16YSBIYXNzYW4iLCJyb2xlIjoiSFIiLCJkZXNpZ25hdGlvbiI6IkhSIC0gTWFuYWdlciIsImlhdCI6MTc3NDcxNjcxNywiZXhwIjoxNzc0ODAzMTE3fQ.lYlcr1kv7ZUXm3wqOTCTva1hXupZI7N-wt0SOZ_wAck', 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-28 16:51:57', '2026-03-28 16:52:36', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-28 16:52:36', '2026-03-28 16:51:57', '2026-03-28 16:52:36'),
+(870, 56, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ5LCJlbXBsb3llZUlkIjo1NiwiZW1haWwiOiJtdWhhbW1hZC5odW5haW5AZGlnaW91c3NvbHV0aW9ucy5jb20iLCJuYW1lIjoiTXVoYW1tYWQgSHVuYWluIiwicm9sZSI6Ik9wZXJhdGlvbnMiLCJkZXNpZ25hdGlvbiI6IlNNIE9QRVJ0IiwiaWF0IjoxNzc0NzE2NzYwLCJleHAiOjE3NzQ4MDMxNjB9.534ywTqma9Q3silrzmA0b33yVbIC4LuskmONdfosmVM', 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-28 16:52:40', '2026-03-28 16:53:37', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-28 16:53:37', '2026-03-28 16:52:40', '2026-03-28 16:53:37'),
+(871, 27, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIwLCJlbXBsb3llZUlkIjoyNywiZW1haWwiOiJoYW16YUBkaWdpb3Vzc29sdXRpb25zLmNvbSIsIm5hbWUiOiJNdWhhbW1hZCBIYW16YSBIYXNzYW4iLCJyb2xlIjoiSFIiLCJkZXNpZ25hdGlvbiI6IkhSIC0gTWFuYWdlciIsImlhdCI6MTc3NDcxNjgyMSwiZXhwIjoxNzc0ODAzMjIxfQ.JRszQk5w83XhqQ5h2osUipBViqKpNDRzIInUd5lsb0c', 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-28 16:53:41', '2026-03-28 16:53:56', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-28 16:53:56', '2026-03-28 16:53:41', '2026-03-28 16:53:56'),
+(872, 44, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjM3LCJlbXBsb3llZUlkIjo0NCwiZW1haWwiOiJNb2l6QGRpZ2lvdXNzb2x1dGlvbnMuY29tIiwibmFtZSI6IkFiZHVsIE1vaXogS2hhbiIsInJvbGUiOiJQcm9kdWN0aW9uIiwiZGVzaWduYXRpb24iOiJNYW5hZ2VyIiwiaWF0IjoxNzc0NzE2ODQxLCJleHAiOjE3NzQ4MDMyNDF9.30aS6WFJvXahepnklpjNrKqJjzZV-g0Y3KWLHQTm26o', 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-03-28 16:54:01', '2026-03-28 16:54:24', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-28 16:54:24', '2026-03-28 16:54:01', '2026-03-28 16:54:24'),
+(873, 27, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIwLCJlbXBsb3llZUlkIjoyNywiZW1haWwiOiJoYW16YUBkaWdpb3Vzc29sdXRpb25zLmNvbSIsIm5hbWUiOiJNdWhhbW1hZCBIYW16YSBIYXNzYW4iLCJyb2xlIjoiSFIiLCJkZXNpZ25hdGlvbiI6IkhSIC0gTWFuYWdlciIsImlhdCI6MTc3NDcxNjg2OCwiZXhwIjoxNzc0ODAzMjY4fQ.LHq5ZnwAOdEURpfDz3z20oYLoqYeTUDbk29zHQi_ttI', 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-28 16:54:28', NULL, 1, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-28 16:54:28', '2026-03-28 16:54:28', '2026-03-28 16:54:28'),
+(874, 27, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIwLCJlbXBsb3llZUlkIjoyNywiZW1haWwiOiJoYW16YUBkaWdpb3Vzc29sdXRpb25zLmNvbSIsIm5hbWUiOiJNdWhhbW1hZCBIYW16YSBIYXNzYW4iLCJyb2xlIjoiSFIiLCJkZXNpZ25hdGlvbiI6IkhSIC0gTWFuYWdlciIsImlhdCI6MTc3NDg5NTAzNywiZXhwIjoxNzc0OTgxNDM3fQ.53Gp04SZBmjnbl_V8pTF3oE4mzThpfnPOri-DIEN3m8', 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-30 18:23:57', '2026-03-30 18:24:04', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-30 18:24:04', '2026-03-30 18:23:57', '2026-03-30 18:24:04'),
+(875, 56, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ5LCJlbXBsb3llZUlkIjo1NiwiZW1haWwiOiJtdWhhbW1hZC5odW5haW5AZGlnaW91c3NvbHV0aW9ucy5jb20iLCJuYW1lIjoiTXVoYW1tYWQgSHVuYWluIiwicm9sZSI6Ik9wZXJhdGlvbnMiLCJkZXNpZ25hdGlvbiI6IlNNIE9QRVJ0IiwiaWF0IjoxNzc0ODk1MDUyLCJleHAiOjE3NzQ5ODE0NTJ9.BJRnPe2AHVvSlqtNmrKJmm0ey8gQ5oO94IxCMRxQ1Uw', 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-30 18:24:12', '2026-03-30 18:31:37', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-30 18:31:37', '2026-03-30 18:24:12', '2026-03-30 18:31:37'),
+(876, 44, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjM3LCJlbXBsb3llZUlkIjo0NCwiZW1haWwiOiJNb2l6QGRpZ2lvdXNzb2x1dGlvbnMuY29tIiwibmFtZSI6IkFiZHVsIE1vaXogS2hhbiIsInJvbGUiOiJQcm9kdWN0aW9uIiwiZGVzaWduYXRpb24iOiJNYW5hZ2VyIiwiaWF0IjoxNzc0ODk1NTAxLCJleHAiOjE3NzQ5ODE5MDF9.PclFCONYkt72H6tf2lcgfhGpFlouC4qeBUI0zBRQpfc', 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-03-30 18:31:41', '2026-03-30 18:31:57', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-30 18:31:57', '2026-03-30 18:31:41', '2026-03-30 18:31:57'),
+(877, 27, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIwLCJlbXBsb3llZUlkIjoyNywiZW1haWwiOiJoYW16YUBkaWdpb3Vzc29sdXRpb25zLmNvbSIsIm5hbWUiOiJNdWhhbW1hZCBIYW16YSBIYXNzYW4iLCJyb2xlIjoiSFIiLCJkZXNpZ25hdGlvbiI6IkhSIC0gTWFuYWdlciIsImlhdCI6MTc3NDg5NTUyMSwiZXhwIjoxNzc0OTgxOTIxfQ.nLqLiXmLwFjPZn0gHfQZYH0lZJCiowLtU8JkGucNqSw', 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-30 18:32:01', '2026-03-30 18:32:26', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-30 18:32:26', '2026-03-30 18:32:01', '2026-03-30 18:32:26'),
+(878, 56, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ5LCJlbXBsb3llZUlkIjo1NiwiZW1haWwiOiJtdWhhbW1hZC5odW5haW5AZGlnaW91c3NvbHV0aW9ucy5jb20iLCJuYW1lIjoiTXVoYW1tYWQgSHVuYWluIiwicm9sZSI6Ik9wZXJhdGlvbnMiLCJkZXNpZ25hdGlvbiI6IlNNIE9QRVJ0IiwiaWF0IjoxNzc0ODk1NTUwLCJleHAiOjE3NzQ5ODE5NTB9.p8_tyi1gDf8hAjuljpjCfZ7H4UvdQPHHZBlE9gj7HIM', 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-30 18:32:30', '2026-03-30 18:37:28', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-30 18:37:28', '2026-03-30 18:32:30', '2026-03-30 18:37:28'),
+(879, 27, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIwLCJlbXBsb3llZUlkIjoyNywiZW1haWwiOiJoYW16YUBkaWdpb3Vzc29sdXRpb25zLmNvbSIsIm5hbWUiOiJNdWhhbW1hZCBIYW16YSBIYXNzYW4iLCJyb2xlIjoiSFIiLCJkZXNpZ25hdGlvbiI6IkhSIC0gTWFuYWdlciIsImlhdCI6MTc3NDg5NTg1NSwiZXhwIjoxNzc0OTgyMjU1fQ.3z_uMIW7ryrPxsYE_AyoeDYAtswc6QKAVKvzsVw9a8E', 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-30 18:37:35', '2026-03-30 18:37:52', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-30 18:37:52', '2026-03-30 18:37:35', '2026-03-30 18:37:52'),
+(880, 44, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjM3LCJlbXBsb3llZUlkIjo0NCwiZW1haWwiOiJNb2l6QGRpZ2lvdXNzb2x1dGlvbnMuY29tIiwibmFtZSI6IkFiZHVsIE1vaXogS2hhbiIsInJvbGUiOiJQcm9kdWN0aW9uIiwiZGVzaWduYXRpb24iOiJNYW5hZ2VyIiwiaWF0IjoxNzc0ODk1ODc3LCJleHAiOjE3NzQ5ODIyNzd9.TDxJqUoRrKedyhYzlMe0JgIBwh52Qk7O4k16_7YDFds', 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-03-30 18:37:57', '2026-03-30 18:38:19', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-30 18:38:19', '2026-03-30 18:37:57', '2026-03-30 18:38:19'),
+(881, 27, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIwLCJlbXBsb3llZUlkIjoyNywiZW1haWwiOiJoYW16YUBkaWdpb3Vzc29sdXRpb25zLmNvbSIsIm5hbWUiOiJNdWhhbW1hZCBIYW16YSBIYXNzYW4iLCJyb2xlIjoiSFIiLCJkZXNpZ25hdGlvbiI6IkhSIC0gTWFuYWdlciIsImlhdCI6MTc3NDg5NTkwMywiZXhwIjoxNzc0OTgyMzAzfQ.qzdL9oxk1Gnvvcc4LKuCHSicximYodIrjqECLH03YP8', 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-30 18:38:23', '2026-03-30 18:40:58', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-30 18:40:58', '2026-03-30 18:38:23', '2026-03-30 18:40:58'),
+(882, 56, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ5LCJlbXBsb3llZUlkIjo1NiwiZW1haWwiOiJtdWhhbW1hZC5odW5haW5AZGlnaW91c3NvbHV0aW9ucy5jb20iLCJuYW1lIjoiTXVoYW1tYWQgSHVuYWluIiwicm9sZSI6Ik9wZXJhdGlvbnMiLCJkZXNpZ25hdGlvbiI6IlNNIE9QRVJ0IiwiaWF0IjoxNzc0ODk2MDYxLCJleHAiOjE3NzQ5ODI0NjF9.Rr3XW0m-3M3sy8lszLWvp1xffNd4mhTcD2qXoPgz-mY', 'muhammad.hunain@digioussolutions.com', 'Muhammad Hunain', '2026-03-30 18:41:01', '2026-03-30 18:43:04', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-30 18:43:04', '2026-03-30 18:41:01', '2026-03-30 18:43:04'),
+(883, 27, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIwLCJlbXBsb3llZUlkIjoyNywiZW1haWwiOiJoYW16YUBkaWdpb3Vzc29sdXRpb25zLmNvbSIsIm5hbWUiOiJNdWhhbW1hZCBIYW16YSBIYXNzYW4iLCJyb2xlIjoiSFIiLCJkZXNpZ25hdGlvbiI6IkhSIC0gTWFuYWdlciIsImlhdCI6MTc3NDg5NjI1MCwiZXhwIjoxNzc0OTgyNjUwfQ.NWqT3n3-eFBT44HtD6637WTlMU51DldHV0g1VU_GyDY', 'hamza@digioussolutions.com', 'Muhammad Hamza Hassan', '2026-03-30 18:44:10', '2026-03-30 18:45:00', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-30 18:45:00', '2026-03-30 18:44:10', '2026-03-30 18:45:00'),
+(884, 44, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjM3LCJlbXBsb3llZUlkIjo0NCwiZW1haWwiOiJNb2l6QGRpZ2lvdXNzb2x1dGlvbnMuY29tIiwibmFtZSI6IkFiZHVsIE1vaXogS2hhbiIsInJvbGUiOiJQcm9kdWN0aW9uIiwiZGVzaWduYXRpb24iOiJNYW5hZ2VyIiwiaWF0IjoxNzc0OTcwNTEzLCJleHAiOjE3NzUwNTY5MTN9.O6VZvOktwXw13dKc-PjaQY85cjRKiZnDBwtfs9jgik8', 'Moiz@digioussolutions.com', 'Abdul Moiz Khan', '2026-03-31 15:21:53', '2026-03-31 15:23:29', 0, 'PC', 'Linux PC', 'Firefox 148', 'Linux', '127.0.0.1', 'localhost', 'N/A', 'Unknown', 'Unknown', 'Asia/Karachi', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0', '2026-03-31 15:23:29', '2026-03-31 15:21:53', '2026-03-31 15:23:29');
 
 -- --------------------------------------------------------
 
@@ -4445,6 +5132,16 @@ ALTER TABLE `admin_users`
   ADD KEY `idx_role` (`role`);
 
 --
+-- Indexes for table `advance_installments`
+--
+ALTER TABLE `advance_installments`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `unique_advance_installment` (`advance_id`,`installment_no`),
+  ADD KEY `idx_advance` (`advance_id`),
+  ADD KEY `idx_employee_month` (`employee_id`,`year`,`month`),
+  ADD KEY `idx_status` (`status`);
+
+--
 -- Indexes for table `applications`
 --
 ALTER TABLE `applications`
@@ -4482,6 +5179,25 @@ ALTER TABLE `application_assignees`
   ADD KEY `idx_app_assignee_status` (`status`);
 
 --
+-- Indexes for table `attendance_corrections`
+--
+ALTER TABLE `attendance_corrections`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `ticket_number` (`ticket_number`),
+  ADD KEY `idx_employee_id` (`employee_id`),
+  ADD KEY `idx_tagged_employee_id` (`tagged_employee_id`),
+  ADD KEY `idx_attendance_date` (`attendance_date`),
+  ADD KEY `idx_overall_status` (`overall_status`),
+  ADD KEY `idx_ticket_number` (`ticket_number`);
+
+--
+-- Indexes for table `attendance_correction_logs`
+--
+ALTER TABLE `attendance_correction_logs`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_correction_id` (`correction_id`);
+
+--
 -- Indexes for table `Company_Rules`
 --
 ALTER TABLE `Company_Rules`
@@ -4490,6 +5206,13 @@ ALTER TABLE `Company_Rules`
   ADD KEY `idx_rule_type` (`rule_type`),
   ADD KEY `idx_is_active` (`is_active`),
   ADD KEY `idx_priority` (`priority`);
+
+--
+-- Indexes for table `customers`
+--
+ALTER TABLE `customers`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_customer_email` (`client_email`);
 
 --
 -- Indexes for table `Employee_Absent`
@@ -4519,6 +5242,14 @@ ALTER TABLE `Employee_Activities`
   ADD KEY `idx_employee_id` (`employee_id`),
   ADD KEY `idx_activity_type` (`activity_type`),
   ADD KEY `idx_timestamp` (`timestamp`);
+
+--
+-- Indexes for table `employee_advances`
+--
+ALTER TABLE `employee_advances`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_employee` (`employee_id`),
+  ADD KEY `idx_status` (`status`);
 
 --
 -- Indexes for table `employee_allowances`
@@ -4666,6 +5397,27 @@ ALTER TABLE `expense_categories`
   ADD UNIQUE KEY `uq_category_name` (`name`);
 
 --
+-- Indexes for table `managed_leave_logs`
+--
+ALTER TABLE `managed_leave_logs`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_mll_ticket_id` (`ticket_id`);
+
+--
+-- Indexes for table `managed_leave_tickets`
+--
+ALTER TABLE `managed_leave_tickets`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `ticket_number` (`ticket_number`),
+  ADD KEY `idx_ml_employee_id` (`employee_id`),
+  ADD KEY `idx_ml_tagged_employee_id` (`tagged_employee_id`),
+  ADD KEY `idx_ml_start_date` (`start_date`),
+  ADD KEY `idx_ml_end_date` (`end_date`),
+  ADD KEY `idx_ml_overall_status` (`overall_status`),
+  ADD KEY `idx_ml_ticket_number` (`ticket_number`),
+  ADD KEY `idx_ml_leave_type` (`leave_type`);
+
+--
 -- Indexes for table `onboarding_progress`
 --
 ALTER TABLE `onboarding_progress`
@@ -4673,6 +5425,15 @@ ALTER TABLE `onboarding_progress`
   ADD UNIQUE KEY `employee_id` (`employee_id`),
   ADD KEY `idx_employee_id` (`employee_id`),
   ADD KEY `idx_is_completed` (`is_completed`);
+
+--
+-- Indexes for table `password_reset_tokens`
+--
+ALTER TABLE `password_reset_tokens`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_email` (`email`),
+  ADD KEY `idx_otp_code` (`otp_code`),
+  ADD KEY `idx_expires_at` (`expires_at`);
 
 --
 -- Indexes for table `payroll_records`
@@ -4699,6 +5460,15 @@ ALTER TABLE `sales`
 ALTER TABLE `sales_categories`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `uq_sales_cat_slug` (`slug`);
+
+--
+-- Indexes for table `sales_targets`
+--
+ALTER TABLE `sales_targets`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_employee_month_year` (`employee_id`,`month`,`year`),
+  ADD KEY `idx_employee_id` (`employee_id`),
+  ADD KEY `idx_month_year` (`month`,`year`);
 
 --
 -- Indexes for table `system_logs`
@@ -4749,22 +5519,40 @@ ALTER TABLE `admin_users`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
+-- AUTO_INCREMENT for table `advance_installments`
+--
+ALTER TABLE `advance_installments`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+
+--
 -- AUTO_INCREMENT for table `applications`
 --
 ALTER TABLE `applications`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- AUTO_INCREMENT for table `application_approval_log`
 --
 ALTER TABLE `application_approval_log`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
 
 --
 -- AUTO_INCREMENT for table `application_assignees`
 --
 ALTER TABLE `application_assignees`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
+
+--
+-- AUTO_INCREMENT for table `attendance_corrections`
+--
+ALTER TABLE `attendance_corrections`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT for table `attendance_correction_logs`
+--
+ALTER TABLE `attendance_correction_logs`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `Company_Rules`
@@ -4773,10 +5561,16 @@ ALTER TABLE `Company_Rules`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
+-- AUTO_INCREMENT for table `customers`
+--
+ALTER TABLE `customers`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
 -- AUTO_INCREMENT for table `Employee_Absent`
 --
 ALTER TABLE `Employee_Absent`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=933;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1236;
 
 --
 -- AUTO_INCREMENT for table `employee_achievements`
@@ -4791,6 +5585,12 @@ ALTER TABLE `Employee_Activities`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `employee_advances`
+--
+ALTER TABLE `employee_advances`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
 -- AUTO_INCREMENT for table `employee_allowances`
 --
 ALTER TABLE `employee_allowances`
@@ -4800,7 +5600,7 @@ ALTER TABLE `employee_allowances`
 -- AUTO_INCREMENT for table `Employee_Attendance`
 --
 ALTER TABLE `Employee_Attendance`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=358;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=379;
 
 --
 -- AUTO_INCREMENT for table `employee_bank_accounts`
@@ -4824,7 +5624,7 @@ ALTER TABLE `Employee_Checkout_Missing`
 -- AUTO_INCREMENT for table `employee_dynamic_resources`
 --
 ALTER TABLE `employee_dynamic_resources`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `employee_leaves`
@@ -4836,7 +5636,7 @@ ALTER TABLE `employee_leaves`
 -- AUTO_INCREMENT for table `employee_onboarding`
 --
 ALTER TABLE `employee_onboarding`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=58;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=61;
 
 --
 -- AUTO_INCREMENT for table `employee_required_documents`
@@ -4872,13 +5672,25 @@ ALTER TABLE `employee_social_links`
 -- AUTO_INCREMENT for table `expenses`
 --
 ALTER TABLE `expenses`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `expense_categories`
 --
 ALTER TABLE `expense_categories`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=46;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
+
+--
+-- AUTO_INCREMENT for table `managed_leave_logs`
+--
+ALTER TABLE `managed_leave_logs`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+
+--
+-- AUTO_INCREMENT for table `managed_leave_tickets`
+--
+ALTER TABLE `managed_leave_tickets`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `onboarding_progress`
@@ -4887,22 +5699,34 @@ ALTER TABLE `onboarding_progress`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=44;
 
 --
+-- AUTO_INCREMENT for table `password_reset_tokens`
+--
+ALTER TABLE `password_reset_tokens`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+
+--
 -- AUTO_INCREMENT for table `payroll_records`
 --
 ALTER TABLE `payroll_records`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=385;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=535;
 
 --
 -- AUTO_INCREMENT for table `sales`
 --
 ALTER TABLE `sales`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `sales_categories`
 --
 ALTER TABLE `sales_categories`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+
+--
+-- AUTO_INCREMENT for table `sales_targets`
+--
+ALTER TABLE `sales_targets`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `system_logs`
@@ -4926,7 +5750,7 @@ ALTER TABLE `user_concurrent_sessions`
 -- AUTO_INCREMENT for table `user_system_info`
 --
 ALTER TABLE `user_system_info`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=812;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=885;
 
 --
 -- Constraints for dumped tables
@@ -5028,6 +5852,12 @@ ALTER TABLE `onboarding_progress`
 --
 ALTER TABLE `sales`
   ADD CONSTRAINT `fk_sales_category` FOREIGN KEY (`category_id`) REFERENCES `sales_categories` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+--
+-- Constraints for table `sales_targets`
+--
+ALTER TABLE `sales_targets`
+  ADD CONSTRAINT `fk_sales_targets_employee` FOREIGN KEY (`employee_id`) REFERENCES `employee_onboarding` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Constraints for table `user_as_employees`

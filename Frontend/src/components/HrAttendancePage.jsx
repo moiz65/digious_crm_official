@@ -2282,12 +2282,17 @@ const EmployeeDetailView = ({
                           };
 
                           const badge = getBadge();
+                          
+                          // Build hover tooltip with check-in/check-out times
+                          const tooltipText = rec
+                            ? `${dateStr}: ${status}${rec.checkIn && rec.checkIn !== '-' ? ` | In: ${rec.checkIn}` : ''}${rec.checkOut && rec.checkOut !== '-' ? ` | Out: ${rec.checkOut}` : ''}`
+                            : `${dateStr}: ${status}`;
 
                           return (
                             <div
                               key={dateStr}
                               className={`p-2 rounded-lg border transition-all duration-200 hover:shadow-md cursor-pointer ${rec ? '' : 'bg-gray-50 border-dashed border-gray-200'} ${!matchesFilter ? 'opacity-40 pointer-events-none' : ''}`}
-                              title={`${dateStr}: ${status}`}
+                              title={tooltipText}
                             >
                               <div className="text-center">
                                 <div className="text-sm font-bold text-gray-900 mb-1">{day}</div>
