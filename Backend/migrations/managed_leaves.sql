@@ -1,41 +1,43 @@
 -- ============================================================
--- Attendance Correction Ticket System
--- Migration: Create tables for attendance correction workflow
+-- Managed Leave Ticket System
+-- Migration: Create tables for managed leave workflow
+-- Same approval flow as attendance corrections:
+--   Employee → Tagged Person → HR → Applied
 -- ============================================================
 
--- ─── Main correction tickets table ──────────────────────────
-CREATE TABLE IF NOT EXISTS `attendance_corrections` (
+-- ─── Main managed leave tickets table ───────────────────────
+CREATE TABLE IF NOT EXISTS `managed_leave_tickets` (
   `id` INT(11) NOT NULL AUTO_INCREMENT,
   `ticket_number` VARCHAR(30) NOT NULL UNIQUE,
+
+  -- Employee who is requesting the leave
   `employee_id` INT(11) NOT NULL COMMENT 'FK → employee_onboarding.id',
   `employee_name` VARCHAR(100) NOT NULL,
   `employee_email` VARCHAR(100) NOT NULL,
-  `attendance_id` INT(11) DEFAULT NULL COMMENT 'FK → Employee_Attendance.id (NULL if absent record)',
-  `attendance_date` DATE NOT NULL,
 
-  -- Original attendance data (snapshot at time of request)
-  `original_check_in` TIME DEFAULT NULL,
-  `original_check_out` TIME DEFAULT NULL,
-  `original_status` VARCHAR(50) DEFAULT NULL,
-  `original_working_minutes` INT(11) DEFAULT NULL,
-  `original_break_minutes` INT(11) DEFAULT NULL,
-  `original_late_minutes` INT(11) DEFAULT NULL,
-  `original_overtime_minutes` INT(11) DEFAULT NULL,
+  -- Leave type & category
+  `leave_type` ENUM('casual', 'sick', 'annual') NOT NULL,
 
-  -- Corrected values requested by employee
-  `corrected_check_in` TIME DEFAULT NULL,
-  `corrected_check_out` TIME DEFAULT NULL,
-  `corrected_status` VARCHAR(50) DEFAULT NULL,
+  -- Scenario: 'mark_absent_as_leave' (retroactive) or 'advance_leave' (future)
+  `leave_scenario` ENUM('mark_absent_as_leave', 'advance_leave') NOT NULL,
 
-  -- Employee's reason/explanation for the correction
+  -- Date range for the leave
+  `start_date` DATE NOT NULL,
+  `end_date` DATE NOT NULL,
+  `total_days` INT(11) NOT NULL DEFAULT 1,
+
+  -- Snapshot of leave balance at time of request
+  `balance_at_request` INT(11) DEFAULT NULL COMMENT 'remaining leaves of this type when ticket was created',
+
+  -- Employee's reason / explanation
   `reason` TEXT NOT NULL,
 
-  -- Tagged person (approver step 1)
+  -- Tagged person (approver step 1 — e.g., team lead / manager)
   `tagged_employee_id` INT(11) NOT NULL COMMENT 'FK → employee_onboarding.id',
   `tagged_employee_name` VARCHAR(100) NOT NULL,
   `tagged_employee_email` VARCHAR(100) NOT NULL,
 
-  -- Approval workflow
+  -- Approval workflow (same pattern as attendance_corrections)
   `tagged_status` ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
   `tagged_remarks` TEXT DEFAULT NULL,
   `tagged_action_at` TIMESTAMP NULL DEFAULT NULL,
@@ -49,7 +51,7 @@ CREATE TABLE IF NOT EXISTS `attendance_corrections` (
   -- Overall ticket status
   `overall_status` ENUM('open', 'tagged_approved', 'tagged_rejected', 'hr_approved', 'hr_rejected', 'applied') DEFAULT 'open',
 
-  -- Whether the correction was actually applied to the attendance record
+  -- Whether the leave was actually applied (balance deducted + attendance updated)
   `is_applied` TINYINT(1) DEFAULT 0,
   `applied_at` TIMESTAMP NULL DEFAULT NULL,
 
@@ -57,17 +59,19 @@ CREATE TABLE IF NOT EXISTS `attendance_corrections` (
   `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
   PRIMARY KEY (`id`),
-  KEY `idx_employee_id` (`employee_id`),
-  KEY `idx_tagged_employee_id` (`tagged_employee_id`),
-  KEY `idx_attendance_date` (`attendance_date`),
-  KEY `idx_overall_status` (`overall_status`),
-  KEY `idx_ticket_number` (`ticket_number`)
+  KEY `idx_ml_employee_id` (`employee_id`),
+  KEY `idx_ml_tagged_employee_id` (`tagged_employee_id`),
+  KEY `idx_ml_start_date` (`start_date`),
+  KEY `idx_ml_end_date` (`end_date`),
+  KEY `idx_ml_overall_status` (`overall_status`),
+  KEY `idx_ml_ticket_number` (`ticket_number`),
+  KEY `idx_ml_leave_type` (`leave_type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ─── Activity log for each correction ticket ────────────────
-CREATE TABLE IF NOT EXISTS `attendance_correction_logs` (
+-- ─── Activity log for each managed leave ticket ─────────────
+CREATE TABLE IF NOT EXISTS `managed_leave_logs` (
   `id` INT(11) NOT NULL AUTO_INCREMENT,
-  `correction_id` INT(11) NOT NULL COMMENT 'FK → attendance_corrections.id',
+  `ticket_id` INT(11) NOT NULL COMMENT 'FK → managed_leave_tickets.id',
   `action` ENUM('created', 'tagged_approved', 'tagged_rejected', 'hr_approved', 'hr_rejected', 'applied', 'reopened') NOT NULL,
   `action_by_id` INT(11) NOT NULL,
   `action_by_name` VARCHAR(100) NOT NULL,
@@ -76,5 +80,5 @@ CREATE TABLE IF NOT EXISTS `attendance_correction_logs` (
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
   PRIMARY KEY (`id`),
-  KEY `idx_correction_id` (`correction_id`)
+  KEY `idx_mll_ticket_id` (`ticket_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -305,6 +305,7 @@ const createApplication = async (req, res) => {
       assigned_to_employee_id = null,
       assignees = [],  // Multi-assign: [{ employee_id, employee_name }]
       cc_department = null,
+      tag_hr_department = false,  // When true, sends app directly to HR for review
       metadata = null
     } = req.body;
 
@@ -316,15 +317,17 @@ const createApplication = async (req, res) => {
       });
     }
 
-    // Auto-set CC: HR is always in CC unless application is FOR HR department
-    let ccDept = cc_department;
-    if (!ccDept && department !== 'HR' && department !== 'Human Resources') {
+    // Set CC department only when explicitly requested (tag HR department mode)
+    let ccDept = cc_department || null;
+    if (tag_hr_department) {
       ccDept = 'HR';
     }
 
     // Determine if multi-assign
     const isMultiAssign = assignees.length > 0;
     const totalSteps = isMultiAssign ? assignees.length : (assigned_to_employee_id ? 1 : 0);
+    // When sent directly to HR department with no assignees, start at step 1 so HR can approve
+    const initialCurrentStep = (totalSteps > 0 || tag_hr_department) ? 1 : 0;
 
     // Generate unique application number
     const applicationNumber = generateApplicationNumber();
@@ -366,7 +369,7 @@ const createApplication = async (req, res) => {
         priority,
         primaryAssignedTo,
         primaryAssignedToId,
-        totalSteps > 0 ? 1 : 0,  // Start at step 1 if there are assignees
+        initialCurrentStep,  // Start at step 1 for assignees or direct HR review
         totalSteps,
         isMultiAssign ? 1 : 0,
         ccDept,
@@ -1344,10 +1347,13 @@ const approveApplication = async (req, res) => {
     const isCurrentStepAssignee = currentAssignee.length > 0;
     const isHrApp = app.department === 'HR' || app.department === 'Human Resources';
 
-    // If not the current step assignee, check if this is HR doing final approval on a non-HR app
-    const isHrFinalApproval = !isCurrentStepAssignee && !isHrApp && app.current_step > app.total_steps;
+    // Direct HR department review: app was sent directly to HR with no individual assignees
+    const isDirectHrReview = !isCurrentStepAssignee && app.cc_department === 'HR' && app.total_steps === 0 && app.current_step >= 1;
+
+    // HR final approval: chain complete, awaiting HR sign-off (only for apps explicitly CC'd to HR)
+    const isHrFinalApproval = !isCurrentStepAssignee && !isHrApp && app.cc_department === 'HR' && app.current_step > app.total_steps && app.total_steps > 0;
     
-    if (!isCurrentStepAssignee && !isHrFinalApproval) {
+    if (!isCurrentStepAssignee && !isHrFinalApproval && !isDirectHrReview) {
       await connection.rollback();
       return res.status(403).json({
         success: false,
@@ -1406,8 +1412,10 @@ const approveApplication = async (req, res) => {
         });
       } else {
         // All assignees approved
-        if (isHrApp) {
-          // HR app: last assignee approval = final approval
+        const needsHrEscalation = !isHrApp && app.cc_department === 'HR';
+
+        if (!needsHrEscalation) {
+          // Final approval by last assignee (HR apps OR apps not CC'd to HR)
           await connection.query(
             `UPDATE applications SET 
               status = 'approved', 
@@ -1429,7 +1437,7 @@ const approveApplication = async (req, res) => {
             data: { id: applicationId, status: 'approved', approved_by: employeeName }
           });
         } else {
-          // Non-HR app: needs HR final approval
+          // Non-HR app with cc_department='HR': needs HR final approval
           await connection.query(
             `UPDATE applications SET current_step = ?, status = 'in-progress' WHERE id = ?`,
             [nextStep, applicationId]  // current_step goes beyond total_steps = waiting for HR
@@ -1457,8 +1465,8 @@ const approveApplication = async (req, res) => {
       }
     }
 
-    // HR Final Approval (non-HR apps only, when current_step > total_steps)
-    if (isHrFinalApproval) {
+    // HR Final Approval or Direct HR Review
+    if (isHrFinalApproval || isDirectHrReview) {
       await connection.query(
         `UPDATE applications SET 
           status = 'approved', 
@@ -1545,9 +1553,14 @@ const rejectApplication = async (req, res) => {
 
     const isCurrentStepAssignee = currentAssignee.length > 0;
     const isHrApp = app.department === 'HR' || app.department === 'Human Resources';
-    const isHrFinalReject = !isCurrentStepAssignee && !isHrApp && app.current_step > app.total_steps;
 
-    if (!isCurrentStepAssignee && !isHrFinalReject) {
+    // Direct HR department review: app was sent directly to HR with no individual assignees
+    const isDirectHrReview = !isCurrentStepAssignee && app.cc_department === 'HR' && app.total_steps === 0 && app.current_step >= 1;
+
+    // HR final reject: chain complete, HR can reject (only for apps explicitly CC'd to HR)
+    const isHrFinalReject = !isCurrentStepAssignee && !isHrApp && app.cc_department === 'HR' && app.current_step > app.total_steps && app.total_steps > 0;
+
+    if (!isCurrentStepAssignee && !isHrFinalReject && !isDirectHrReview) {
       return res.status(403).json({
         success: false,
         message: 'It is not your turn to act on this application'

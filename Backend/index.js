@@ -32,8 +32,8 @@ const corsOptions = {
       "http://127.0.0.1:5000",
       "http://192.168.100.14:3000",
       "http://192.168.100.14:5000",
-      "http://100.121.40.82:3000",
-      "http://100.121.40.82:5000",
+      "http://100.126.74.55:3000",
+      "http://100.126.74.55:5000",
     ];
 
     // Add environment-specific origins from .env
@@ -135,6 +135,7 @@ const salesTargetRoutes = require('./routes/salesTargetRoutes');
 const customerRoutes = require('./routes/customerRoutes');
 const advanceRoutes = require('./routes/advanceRoutes');
 const attendanceCorrectionRoutes = require('./routes/attendanceCorrectionRoutes');
+const managedLeaveRoutes = require('./routes/managedLeaveRoutes');
 
 app.use(`/api/${process.env.API_VERSION}`, onboardingRoutes);
 app.use(`/api/${process.env.API_VERSION}/auth`, authRoutes);
@@ -157,6 +158,7 @@ app.use(`/api/${process.env.API_VERSION}/sales-targets`, salesTargetRoutes);
 app.use(`/api/${process.env.API_VERSION}/customers`, customerRoutes);
 app.use(`/api/${process.env.API_VERSION}/advances`, advanceRoutes);
 app.use(`/api/${process.env.API_VERSION}/attendance-corrections`, attendanceCorrectionRoutes);
+app.use(`/api/${process.env.API_VERSION}/managed-leaves`, managedLeaveRoutes);
 
 // 404 handler
 app.use((req, res) => {
