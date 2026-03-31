@@ -407,10 +407,10 @@ const EmployeePayrollPage = () => {
   }
 
   return (
-    <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
+    <div className="p-4 md:p-6 lg:p-8 max-w-full mx-auto space-y-6">
       
       {/* ═══ Page Header ═══ */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+      {/* <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
             <div className="p-2.5 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-sm">
@@ -431,7 +431,7 @@ const EmployeePayrollPage = () => {
             </div>
           </div>
         )}
-      </div>
+      </div> */}
 
       {/* ═══ Summary Cards ═══ */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -463,13 +463,13 @@ const EmployeePayrollPage = () => {
         ].map((card, i) => {
           const Icon = card.icon;
           return (
-            <div key={i} className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-shadow">
+            <div key={i} className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-2xl p-6">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">{card.label}</span>
+                <span className="text-sm font-medium text-blue-800">{card.label}</span>
                 <div className={`p-2 ${card.iconBg} rounded-lg`}><Icon className={`h-4 w-4 ${card.iconColor}`} /></div>
               </div>
-              <p className="text-xl font-bold text-slate-800">{card.value}</p>
-              <p className="text-xs text-slate-400 mt-1">{card.sub}</p>
+              <p className="text-3xl font-bold text-blue-600">{card.value}</p>
+              <p className="text-xs text-blue-600 mt-1">{card.sub}</p>
             </div>
           );
         })}
@@ -477,7 +477,7 @@ const EmployeePayrollPage = () => {
 
       {/* ═══ Leave Balance ═══ */}
       {latest && (latest.casual_leaves_total > 0 || latest.sick_leaves_total > 0 || latest.annual_leaves_total > 0) && (
-        <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+        <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-2xl p-5 shadow-sm">
           <h3 className="text-sm font-semibold text-slate-700 mb-4 flex items-center gap-2">
             <Calendar className="h-4 w-4 text-violet-600" /> Annual Leave Balance
           </h3>
@@ -490,7 +490,7 @@ const EmployeePayrollPage = () => {
               const pct = l.total ? Math.min(100, (l.used / l.total) * 100) : 0;
               const remaining = Math.max(0, l.total - l.used);
               return (
-                <div key={l.label} className="p-4 bg-slate-50 rounded-xl text-center">
+                <div key={l.label} className="p-4 bg-white border border-slate-200 rounded-xl text-center">
                   <p className="text-xs text-slate-500 mb-1 font-medium">{l.label} Leaves</p>
                   <p className="text-2xl font-bold" style={{ color: l.colors[1] }}>
                     {l.used}<span className="text-sm text-slate-400 font-normal">/{l.total}</span>
@@ -555,12 +555,12 @@ const EmployeePayrollPage = () => {
                           {r.days_in_month || r.working_days || 30}d
                         </span>
                       </td>
-                      <td className="px-5 py-4 text-right font-medium text-slate-700">{formatNum(r.base_salary)}</td>
-                      <td className="px-5 py-4 text-right text-emerald-600 font-medium">+{formatNum(r.total_allowances)}</td>
-                      <td className="px-5 py-4 text-right text-rose-600 font-medium">
+                      <td className="px-5 py-4 text-center font-medium text-slate-700">{formatNum(r.base_salary)}</td>
+                      <td className="px-5 py-4 text-center text-emerald-600 font-medium">+{formatNum(r.total_allowances)}</td>
+                      <td className="px-5 py-4 text-center text-rose-600 font-medium">
                         {r.total_deductions > 0 ? `−${formatNum(r.total_deductions)}` : <span className="text-slate-300">0</span>}
                       </td>
-                      <td className="px-5 py-4 text-right">
+                      <td className="px-5 py-4 text-center">
                         <div className="space-y-0.5">
                           {(r.bonus || 0) > 0 && (
                             <span className="text-xs font-medium text-emerald-600 block">+{formatNum(r.bonus)}</span>
@@ -573,7 +573,7 @@ const EmployeePayrollPage = () => {
                           {(!r.bonus && !r.adjustment) && <span className="text-slate-300">—</span>}
                         </div>
                       </td>
-                      <td className="px-5 py-4 text-right">
+                      <td className="px-5 py-4 text-center">
                         <p className="font-bold text-blue-700">{formatNum(r.net_salary)}</p>
                       </td>
                       <td className="px-5 py-4">

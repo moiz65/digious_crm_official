@@ -45,7 +45,7 @@ import HrSettings from './pages/HR/HrSettings';
 import AttendanceAdjustment from './pages/HR/AttendanceAdjustment';
 
 // Employee Pages
-import EmployeeDashboard from './pages/Employee/EmployeeDashboard';
+import ProductionDashboard from './pages/Employees/ProductionDashboard';
 import EmployeeAttendance from './pages/Employees/EmployeeAtt';
 import EmployeeDetails from './pages/Employees/EmployeeDetails';
 import ApplicationandMemoEmployees from './pages/Employees/ApplicationandMemoEmployees';
@@ -266,7 +266,7 @@ function AppContent() {
               path="/employee/dashboard"
               element={
                 <ProtectedRoute requiredRole="employee">
-                  <EmployeeDashboard />
+                  <ProductionDashboard />
                 </ProtectedRoute>
               }
             />

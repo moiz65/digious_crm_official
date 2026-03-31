@@ -1,11 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import EmployeeSidebar from '../../components/EmployeeSidebar';
 import EmployeePayrollPage from '../../components/EmployeePayrollPage';
+import { DashboardHeader } from '../../components/DashboardComponents';
 
 const EmployeePayroll = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [activeItem, setActiveItem] = useState('payroll');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const toggleMobileMenu = useCallback(() => {
+    setIsMobileMenuOpen(prev => !prev);
+  }, []);
+
+  const closeMobileMenu = useCallback(() => {
+    setIsMobileMenuOpen(false);
+  }, []);
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -18,17 +27,16 @@ const EmployeePayroll = () => {
       />
 
       {/* Main Content */}
-      <div className={`
-        flex-1 flex flex-col overflow-hidden
-        transition-all duration-300 ease-in-out
-        ${isSidebarCollapsed ? 'lg:ml-0' : 'lg:ml-0'}
-      `}>
-        {/* Mobile Header */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <DashboardHeader title="My Payroll" />
+        
+        {/* Mobile Header - Only visible on mobile */}
         <header className="lg:hidden bg-white border-b border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-2 rounded-lg bg-gray-100"
+              onClick={toggleMobileMenu}
+              className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
+              aria-label="Toggle menu"
             >
               <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -52,7 +60,7 @@ const EmployeePayroll = () => {
           </div>
         </header>
 
-        {/* Dashboard Content */}
+        {/* Main Content Area */}
         <main className="flex-1 overflow-y-auto">
           <EmployeePayrollPage />
         </main>
@@ -62,10 +70,11 @@ const EmployeePayroll = () => {
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-40 lg:hidden">
           <div 
-            className="absolute inset-0 bg-black bg-opacity-50"
-            onClick={() => setIsMobileMenuOpen(false)}
+            className="absolute inset-0 bg-black bg-opacity-50 transition-opacity"
+            onClick={closeMobileMenu}
+            aria-label="Close menu"
           />
-          <div className="absolute inset-y-0 left-0 w-64 bg-white">
+          <div className="absolute inset-y-0 left-0 w-64 bg-white shadow-xl">
             <EmployeeSidebar 
               isCollapsed={false}
               setIsCollapsed={setIsMobileMenuOpen}

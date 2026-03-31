@@ -138,7 +138,7 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveIte
         ref={sidebarRef}
         className={`
           fixed lg:relative inset-y-0 left-0 z-40
-          bg-gradient-to-b from-blue-50/95 to-cyan-50/90 backdrop-blur-xl border-r border-blue-200/40
+          bg-gradient-to-b from-blue-50/95 to-blue-50/90 backdrop-blur-xl border-r border-blue-200/40
           transition-all duration-300 ease-in-out
           flex flex-col
           h-screen
@@ -205,7 +205,7 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveIte
             {menuItems.map((item) => {
               const Icon = item.icon;
               const active = isItemActive(item);
-              
+  
               return (
                 <button
                   key={item.id}

@@ -1079,7 +1079,7 @@ const EmployeePersonalProfileV2 = ({ employeeId: propsEmployeeId, onBack }) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 p-4 md:p-8">
       {/* Header with hero section */}
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-full mx-auto">
         {/* Back button */}
         {onBack && (
           <button
@@ -1149,15 +1149,15 @@ const EmployeePersonalProfileV2 = ({ employeeId: propsEmployeeId, onBack }) => {
 
                 {/* Name and title */}
                 <div className="flex-1 pb-2">
-                  <h1 className="text-3xl font-bold text-gray-900 mb-1">{employee?.basicInfo?.name || 'Unnamed'}</h1>
-                  <p className="text-xl text-gray-600 font-medium mb-3">{employee?.professionalInfo?.role || '—'}</p>
+                  <h1 className="text-3xl font-bold text-white mb-1">{employee?.basicInfo?.name || 'Unnamed'}</h1>
+                  <p className="text-xl text-white font-medium mb-3">{employee?.professionalInfo?.role || '—'}</p>
                   <div className="flex items-center gap-3">
                     <span className="px-4 py-1.5 bg-green-100 text-green-800 text-sm font-semibold rounded-full border border-green-200">
                       {employee?.professionalInfo?.employmentStatus || 'Unknown'}
                     </span>
-                    <span className="px-4 py-1.5 bg-blue-100 text-blue-800 text-sm font-semibold rounded-full border border-blue-200">
+                    {/* <span className="px-4 py-1.5 bg-blue-100 text-blue-800 text-sm font-semibold rounded-full border border-blue-200">
                       {employee?.professionalInfo?.employeeType || '—'}
-                    </span>
+                    </span> */}
                   </div>
                 </div>
               </div>
