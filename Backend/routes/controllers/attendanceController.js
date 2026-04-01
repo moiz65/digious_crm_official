@@ -466,10 +466,12 @@ exports.checkIn = async (req, res) => {
 
       // Determine attendance status based on check-in time
       // Time boundaries:
-      // - Shift Start: 21:00 (1260 minutes) - Evening check-in
-      // - Late After: 21:15 (1275 minutes) - Grace period ends, marked as Late if AFTER 21:15
-      const lateAfterTime = 21 * 60 + 15; // 21:15 = 1275 minutes
-      const shiftStart = 21 * 60; // 21:00 = 1260 minutes
+      // - Shift Start:  21:00 (1260 minutes)
+      // - ML After:     21:15 (1275 minutes) - Marginal Late window begins after this
+      // - Late After:   21:30 (1290 minutes) - Late window begins after this
+      const shiftStart = 21 * 60;        // 21:00 = 1260 minutes
+      const mlAfterTime = 21 * 60 + 15;  // 21:15 = 1275 minutes (ML boundary)
+      const lateAfterTime = 21 * 60 + 30; // 21:30 = 1290 minutes (Late boundary)
       
       let isLate = false;
       let lateByMinutes = 0;
@@ -477,10 +479,11 @@ exports.checkIn = async (req, res) => {
       let onTime = 1; // Default to on time
 
       // Status determination logic:
-      // 1. Early check-in (09:00 AM - 20:59 PM): Mark as Present (employee checking in early for their shift)
-      // 2. Evening check-in (21:00 - 21:15): On Time (Present)
-      // 3. Evening late (21:16 onwards): Late
-      // 4. Early morning (00:00 - 06:00): Late
+      // 1. Early check-in (09:00 AM - 20:59 PM): Present
+      // 2. On time (21:00 - 21:15):              Present
+      // 3. Marginal Late (21:15 - 21:30):        ML
+      // 4. Evening late (after 21:30):            Late
+      // 5. Early morning (00:00 - 06:00):         Late
       
       if (checkInTotalMinutes >= nineAM && checkInTotalMinutes < shiftStart) {
         // Early check-in (09:00 AM - 20:59 PM) - allowed and marked as Present
@@ -491,7 +494,7 @@ exports.checkIn = async (req, res) => {
         console.log(
           `✅ Early Check In: ${name} at ${checkInTime} (checked in before shift start at 21:00)`,
         );
-      } else if (checkInTotalMinutes >= shiftStart && checkInTotalMinutes <= lateAfterTime) {
+      } else if (checkInTotalMinutes >= shiftStart && checkInTotalMinutes <= mlAfterTime) {
         // On time: between 21:00 and 21:15 (inclusive)
         isLate = false;
         status = "Present";
@@ -500,27 +503,36 @@ exports.checkIn = async (req, res) => {
         console.log(
           `✅ On Time Check In: ${name} at ${checkInTime} (between 21:00-21:15)`,
         );
+      } else if (checkInTotalMinutes > mlAfterTime && checkInTotalMinutes <= lateAfterTime) {
+        // Marginal Late: between 21:15 and 21:30
+        isLate = false;
+        lateByMinutes = checkInTotalMinutes - mlAfterTime;
+        status = "ML";
+        onTime = 0;
+        console.log(
+          `🔵 Marginal Late (ML) Check In: ${name} at ${checkInTime} (${lateByMinutes} minutes after 21:15 - ML window)`,
+        );
       } else if (checkInTotalMinutes > lateAfterTime && checkInTotalMinutes <= 23 * 60 + 59) {
-        // Evening late: After 21:15 in evening
+        // Evening late: After 21:30 in evening
         isLate = true;
         lateByMinutes = checkInTotalMinutes - lateAfterTime;
         status = "Late";
         onTime = 0;
         console.log(
-          `⏱️ Late Check In: ${name} at ${checkInTime} (${lateByMinutes} minutes late - after 21:15 PM)`,
+          `⏱️ Late Check In: ${name} at ${checkInTime} (${lateByMinutes} minutes late - after 21:30 PM)`,
         );
       } else if (checkInTotalMinutes >= 0 && checkInTotalMinutes <= sixAM) {
         // Early morning late (any check-in from 00:00-06:00 is considered late)
         isLate = true;
         status = "Late";
         onTime = 0;
-        // Calculate minutes late: from 21:15 (1275) to early morning time
+        // Calculate minutes late: from 21:30 (1290) to early morning time
         // For early morning: add 24 hours (1440 minutes) to make comparison work
-        const earlyMorningMinutesFrom21_15 =
+        const earlyMorningMinutesFrom21_30 =
           1440 - lateAfterTime + checkInTotalMinutes;
-        lateByMinutes = earlyMorningMinutesFrom21_15;
+        lateByMinutes = earlyMorningMinutesFrom21_30;
         console.log(
-          `⏱️ Late Check In (Early Morning): ${name} at ${checkInTime} (${lateByMinutes} minutes late - after 21:15 PM)`,
+          `⏱️ Late Check In (Early Morning): ${name} at ${checkInTime} (${lateByMinutes} minutes late - after 21:30 PM)`,
         );
       }
 
@@ -3817,8 +3829,9 @@ exports.fixStatusById = async (req, res) => {
     const [hour, min, sec] = checkInTime.split(':').map(Number);
     const checkInTotalMinutes = hour * 60 + min;
     const nineAM = 9 * 60; // 540 minutes
-    const shiftStart = 21 * 60; // 1260 minutes
-    const lateAfterTime = 21 * 60 + 15; // 1275 minutes
+    const shiftStart = 21 * 60;        // 1260 minutes
+    const mlAfterTime = 21 * 60 + 15;  // 1275 minutes - ML boundary
+    const lateAfterTime = 21 * 60 + 30; // 1290 minutes - Late boundary
 
     let newStatus = 'Present';
     let newLateByMinutes = 0;
@@ -3830,13 +3843,18 @@ exports.fixStatusById = async (req, res) => {
       newStatus = 'Present';
       newLateByMinutes = 0;
       newOnTime = 1;
-    } else if (checkInTotalMinutes >= shiftStart && checkInTotalMinutes <= lateAfterTime) {
-      // On time check-in
+    } else if (checkInTotalMinutes >= shiftStart && checkInTotalMinutes <= mlAfterTime) {
+      // On time check-in (21:00 - 21:15)
       newStatus = 'Present';
       newLateByMinutes = 0;
       newOnTime = 1;
+    } else if (checkInTotalMinutes > mlAfterTime && checkInTotalMinutes <= lateAfterTime) {
+      // Marginal Late (21:15 - 21:30)
+      newStatus = 'ML';
+      newLateByMinutes = checkInTotalMinutes - mlAfterTime;
+      newOnTime = 0;
     } else if (checkInTotalMinutes > lateAfterTime && checkInTotalMinutes <= 23 * 60 + 59) {
-      // Evening late
+      // Evening late (after 21:30)
       newStatus = 'Late';
       newLateByMinutes = checkInTotalMinutes - lateAfterTime;
       newOnTime = 0;
@@ -4613,5 +4631,299 @@ exports.getPendingCheckout = async (req, res) => {
       message: 'Failed to check pending checkout',
       error: error.message
     });
+  }
+};
+
+// ═══════════════════════════════════════════════════════════════
+// HR Direct Update Attendance (no approval required)
+// PUT /attendance/:id
+// ═══════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════
+// HR DIRECT ATTENDANCE MANAGEMENT (No approval required)
+// ══════════════════════════════════════════════════════════════
+
+/**
+ * HR Update existing attendance record (PUT /attendance/:id)
+ * Uses correct DB columns: gross_working_time_minutes, net_working_time_minutes, etc.
+ * Modeled after the working applyCorrection() logic.
+ */
+exports.hrUpdateAttendance = async (req, res) => {
+  let connection;
+  try {
+    const { id } = req.params;
+    const { check_in_time, check_out_time, status, remarks } = req.body;
+
+    if (!id) {
+      return res.status(400).json({ success: false, message: 'Attendance ID is required' });
+    }
+
+    connection = await pool.getConnection();
+
+    // Check if record exists
+    const [existing] = await connection.query(
+      'SELECT * FROM Employee_Attendance WHERE id = ?', [id]
+    );
+
+    if (existing.length === 0) {
+      return res.status(404).json({ success: false, message: 'Attendance record not found' });
+    }
+
+    const record = existing[0];
+    const updateFields = [];
+    const updateValues = [];
+
+    // --- Update check_in_time ---
+    if (check_in_time !== undefined) {
+      updateFields.push('check_in_time = ?');
+      updateValues.push(check_in_time || null);
+    }
+
+    // --- Update check_out_time ---
+    if (check_out_time !== undefined) {
+      updateFields.push('check_out_time = ?');
+      updateValues.push(check_out_time || null);
+    }
+
+    // --- Update status (map frontend values to DB enum) ---
+    if (status !== undefined) {
+      const statusMap = {
+        'present': 'Present',
+        'late': 'Late',
+        'absent': 'Absent',
+        'leave': 'Paid Leave',
+        'halfday': 'Half Day',
+        'early-leave': 'Present',  // Still present but left early
+        'ml': 'ML'
+      };
+      const dbStatus = statusMap[status?.toLowerCase()] || status;
+      updateFields.push('status = ?');
+      updateValues.push(dbStatus);
+    }
+
+    // --- Update remarks ---
+    if (remarks !== undefined) {
+      const hrNote = `[HR EDIT - ${new Date().toISOString()}] ${remarks}`;
+      updateFields.push('remarks = ?');
+      updateValues.push(hrNote);
+    }
+
+    // --- Recalculate working hours (gross & net) ---
+    const finalCheckIn = check_in_time !== undefined ? check_in_time : record.check_in_time;
+    const finalCheckOut = check_out_time !== undefined ? check_out_time : record.check_out_time;
+
+    if (finalCheckIn && finalCheckOut) {
+      try {
+        const [ciH, ciM] = finalCheckIn.split(':').map(Number);
+        const [coH, coM] = finalCheckOut.split(':').map(Number);
+
+        let grossMinutes = (coH * 60 + coM) - (ciH * 60 + ciM);
+        if (grossMinutes < 0) grossMinutes += 1440; // overnight shift
+
+        const breakMinutes = record.total_break_duration_minutes || 0;
+        const netMinutes = Math.max(0, grossMinutes - breakMinutes);
+        const expectedMinutes = 540; // 9 hours
+        const overtimeMinutes = Math.max(0, netMinutes - expectedMinutes);
+        const overtimeHours = Math.round((overtimeMinutes / 60) * 100) / 100;
+
+        updateFields.push('gross_working_time_minutes = ?');
+        updateValues.push(grossMinutes);
+        updateFields.push('net_working_time_minutes = ?');
+        updateValues.push(netMinutes);
+        updateFields.push('overtime_minutes = ?');
+        updateValues.push(overtimeMinutes);
+        updateFields.push('overtime_hours = ?');
+        updateValues.push(overtimeHours);
+      } catch (e) {
+        console.warn('Could not calculate working hours:', e.message);
+      }
+    }
+
+    // --- Recalculate late_by_minutes & on_time ---
+    const finalCheckInForLate = check_in_time !== undefined ? check_in_time : record.check_in_time;
+    if (finalCheckInForLate) {
+      try {
+        const [h, m] = finalCheckInForLate.split(':').map(Number);
+        const checkInMins = h * 60 + m;
+        const expectedStart = 21 * 60 + 15; // 21:15 (9:15 PM) shift start
+
+        let lateBy = 0;
+        if (checkInMins > expectedStart && checkInMins <= 23 * 60 + 59) {
+          lateBy = checkInMins - expectedStart;
+        } else if (checkInMins >= 0 && checkInMins <= 6 * 60) {
+          // Early morning (after midnight) — still late from 21:15
+          lateBy = (1440 - expectedStart) + checkInMins;
+        }
+
+        updateFields.push('late_by_minutes = ?');
+        updateValues.push(lateBy);
+        updateFields.push('on_time = ?');
+        updateValues.push(lateBy === 0 ? 1 : 0);
+      } catch (e) {
+        console.warn('Could not calculate late_by_minutes:', e.message);
+      }
+    }
+
+    if (updateFields.length === 0) {
+      return res.status(400).json({ success: false, message: 'No fields to update' });
+    }
+
+    updateFields.push('updated_at = NOW()');
+    updateValues.push(id);
+
+    const updateQuery = `UPDATE Employee_Attendance SET ${updateFields.join(', ')} WHERE id = ?`;
+    console.log('🔧 HR Update Query:', updateQuery);
+    console.log('📊 HR Update Values:', updateValues);
+
+    await connection.query(updateQuery, updateValues);
+
+    // Fetch and return updated record
+    const [updated] = await connection.query('SELECT * FROM Employee_Attendance WHERE id = ?', [id]);
+
+    console.log(`✅ HR updated attendance record ${id}`);
+
+    res.status(200).json({
+      success: true,
+      message: 'Attendance updated successfully',
+      data: updated[0]
+    });
+
+  } catch (error) {
+    console.error('❌ HR Update Attendance error:', error);
+    res.status(500).json({ success: false, message: 'Failed to update attendance', error: error.message });
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
+/**
+ * HR Create new attendance record for a date with no existing record (POST /attendance/hr-create)
+ * Used when employee was absent (no DB record) and HR wants to add/correct attendance.
+ */
+exports.hrCreateAttendance = async (req, res) => {
+  let connection;
+  try {
+    const { employee_id, attendance_date, check_in_time, check_out_time, status, remarks } = req.body;
+
+    if (!employee_id || !attendance_date) {
+      return res.status(400).json({
+        success: false,
+        message: 'employee_id and attendance_date are required'
+      });
+    }
+
+    connection = await pool.getConnection();
+
+    // Check if a record already exists for this employee+date
+    const [existing] = await connection.query(
+      'SELECT id FROM Employee_Attendance WHERE employee_id = ? AND attendance_date = ?',
+      [employee_id, attendance_date]
+    );
+
+    if (existing.length > 0) {
+      // Record exists — redirect to update logic
+      return res.status(409).json({
+        success: false,
+        message: 'Attendance record already exists for this date',
+        existingId: existing[0].id
+      });
+    }
+
+    // Get employee info
+    const [empInfo] = await connection.query(
+      'SELECT id, name, email FROM employee_onboarding WHERE id = ?',
+      [employee_id]
+    );
+
+    if (empInfo.length === 0) {
+      return res.status(404).json({ success: false, message: 'Employee not found' });
+    }
+
+    const emp = empInfo[0];
+
+    // Map status
+    const statusMap = {
+      'present': 'Present',
+      'late': 'Late',
+      'absent': 'Absent',
+      'leave': 'Paid Leave',
+      'halfday': 'Half Day',
+      'early-leave': 'Present',
+      'ml': 'ML'
+    };
+    const dbStatus = statusMap[status?.toLowerCase()] || status || 'Present';
+
+    // Calculate working hours
+    let grossMinutes = 0, netMinutes = 0, overtimeMinutes = 0, overtimeHours = 0;
+    let lateBy = 0, onTime = 1;
+
+    if (check_in_time && check_out_time) {
+      const [ciH, ciM] = check_in_time.split(':').map(Number);
+      const [coH, coM] = check_out_time.split(':').map(Number);
+      grossMinutes = (coH * 60 + coM) - (ciH * 60 + ciM);
+      if (grossMinutes < 0) grossMinutes += 1440;
+      netMinutes = grossMinutes;
+      overtimeMinutes = Math.max(0, netMinutes - 540);
+      overtimeHours = Math.round((overtimeMinutes / 60) * 100) / 100;
+    }
+
+    // Calculate late_by_minutes
+    if (check_in_time) {
+      const [h, m] = check_in_time.split(':').map(Number);
+      const checkInMins = h * 60 + m;
+      const expectedStart = 21 * 60 + 15; // 21:15
+
+      if (checkInMins > expectedStart && checkInMins <= 23 * 60 + 59) {
+        lateBy = checkInMins - expectedStart;
+      } else if (checkInMins >= 0 && checkInMins <= 6 * 60) {
+        lateBy = (1440 - expectedStart) + checkInMins;
+      }
+      onTime = lateBy === 0 ? 1 : 0;
+    }
+
+    const hrNote = remarks ? `[HR EDIT - ${new Date().toISOString()}] ${remarks}` : `[HR CREATED - ${new Date().toISOString()}]`;
+
+    const [result] = await connection.query(
+      `INSERT INTO Employee_Attendance
+        (employee_id, email, name, attendance_date, check_in_time, check_out_time,
+         status, gross_working_time_minutes, net_working_time_minutes,
+         expected_working_time_minutes, overtime_minutes, overtime_hours,
+         late_by_minutes, on_time, remarks)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 540, ?, ?, ?, ?, ?)`,
+      [
+        employee_id, emp.email, emp.name, attendance_date,
+        check_in_time || null, check_out_time || null,
+        dbStatus, grossMinutes, netMinutes, overtimeMinutes, overtimeHours,
+        lateBy, onTime, hrNote
+      ]
+    );
+
+    // Remove from Employee_Absent if exists
+    try {
+      await connection.query(
+        'DELETE FROM Employee_Absent WHERE employee_id = ? AND absent_date = ?',
+        [employee_id, attendance_date]
+      );
+    } catch (e) {
+      // Table may not exist; ignore
+    }
+
+    // Fetch the newly created record
+    const [newRecord] = await connection.query(
+      'SELECT * FROM Employee_Attendance WHERE id = ?', [result.insertId]
+    );
+
+    console.log(`✅ HR created attendance record for employee ${employee_id} on ${attendance_date}`);
+
+    res.status(201).json({
+      success: true,
+      message: 'Attendance record created successfully',
+      data: newRecord[0]
+    });
+
+  } catch (error) {
+    console.error('❌ HR Create Attendance error:', error);
+    res.status(500).json({ success: false, message: 'Failed to create attendance', error: error.message });
+  } finally {
+    if (connection) connection.release();
   }
 };

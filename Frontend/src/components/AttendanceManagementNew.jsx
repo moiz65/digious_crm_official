@@ -219,7 +219,9 @@ const AttendanceManagement = () => {
     let matchesStatus = selectedStatus === "All";
     if (selectedStatus !== "All") {
       if (selectedStatus === "Late") {
-        matchesStatus = record.late_by_minutes > 0;
+        matchesStatus = record.status === "Late";
+      } else if (selectedStatus === "ML") {
+        matchesStatus = record.status === "ML";
       } else if (selectedStatus === "Leave") {
         matchesStatus =
           record.status === "Leave" || record.status === "On Leave";
@@ -764,6 +766,7 @@ const AttendanceManagement = () => {
                     <option>Present</option>
                     <option>Absent</option>
                     <option>Late</option>
+                    <option>ML</option>
                     <option>Leave</option>
                   </select>
                 </div>
@@ -1082,7 +1085,9 @@ const AttendanceTable = ({
                                 ? "bg-rose-100 text-rose-700"
                                 : record.status === "Late"
                                   ? "bg-amber-100 text-amber-700"
-                                  : "bg-slate-100 text-slate-700"
+                                  : record.status === "ML"
+                                    ? "bg-blue-900 text-white"
+                                    : "bg-slate-100 text-slate-700"
                           }`}
                         >
                           {record.status || "Unknown"}
