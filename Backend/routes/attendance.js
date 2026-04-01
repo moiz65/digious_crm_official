@@ -37,5 +37,7 @@ router.post('/auto-fix-working-hours', attendanceController.autoFixMissingWorkin
 router.post('/auto-checkout', attendanceController.autoCheckoutExpiredSessions); // Auto-checkout for expired sessions at 9 AM
 router.post('/fix-status/:id', attendanceController.fixStatusById); // Admin: fix status and late_by_minutes for early check-ins
 router.post('/fix-checkout/:id', attendanceController.fixCheckoutById); // Admin: fix a single attendance by id
+router.put('/:id', authMiddleware, attendanceController.hrUpdateAttendance); // HR: direct update attendance without approval
+router.post('/hr-create', authMiddleware, attendanceController.hrCreateAttendance); // HR: create attendance for absent days
 
 module.exports = router;

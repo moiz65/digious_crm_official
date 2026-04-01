@@ -69,6 +69,10 @@ export const endpoints = {
     ongoingBreaks: (employeeId) => `${config.FULL_API_URL}/attendance/ongoing-breaks/${employeeId}`,
     todayBreaks: (employeeId) => `${config.FULL_API_URL}/attendance/today-breaks/${employeeId}`,
     breakSummary: `${config.FULL_API_URL}/attendance/break-summary`,
+    
+    // HR Direct Update (no approval required)
+    update: (id) => `${config.FULL_API_URL}/attendance/${id}`,
+    hrCreate: `${config.FULL_API_URL}/attendance/hr-create`,
   },
 
   // Rules endpoints

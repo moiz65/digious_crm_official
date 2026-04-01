@@ -1649,14 +1649,74 @@ const EmployeeDetailView = ({
   employeeLeaves, 
   onMarkAsExplained,
   onUpdateAttendanceNotes,
-  onOpenExplanationModal
+  onOpenExplanationModal,
+  onHrUpdateAttendance,
+  onHrCreateAttendance
 }) => {
   const [isEditingAttendance, setIsEditingAttendance] = useState(null);
   const [selectedDateBreaks, setSelectedDateBreaks] = useState([]);
   const [isBreakModalOpen, setIsBreakModalOpen] = useState(false);
   const [selectedBreakDate, setSelectedBreakDate] = useState('');
   const [editingNotes, setEditingNotes] = useState('');
+  
+  // HR Edit Modal State
+  const [isHrEditModalOpen, setIsHrEditModalOpen] = useState(false);
+  const [hrEditRecord, setHrEditRecord] = useState(null);
+  const [hrEditForm, setHrEditForm] = useState({
+    check_in_time: '',
+    check_out_time: '',
+    status: '',
+    remarks: ''
+  });
+  const [hrEditSaving, setHrEditSaving] = useState(false);
 
+  // Open HR Edit Modal (works for both existing records and absent/no-record days)
+  const handleOpenHrEditModal = (record, dateStr) => {
+    console.log('📋 Opening HR edit modal:', { record, dateStr });
+    // If record is null (no DB record for this date), create a placeholder
+    const editRecord = record ? { ...record, dateStr } : { 
+      id: null, 
+      dateStr, 
+      status: 'absent',
+      checkIn: '',
+      checkOut: '',
+      notes: '',
+      remarks: '',
+      isNewRecord: true 
+    };
+    setHrEditRecord(editRecord);
+    setHrEditForm({
+      check_in_time: record?.checkIn && record.checkIn !== '-' ? record.checkIn : '',
+      check_out_time: record?.checkOut && record.checkOut !== '-' ? record.checkOut : '',
+      status: record?.status || 'absent',
+      remarks: record?.notes || record?.remarks || ''
+    });
+    setIsHrEditModalOpen(true);
+  };
+
+  // Save HR Edit (handles both UPDATE existing records and CREATE new records)
+  const handleSaveHrEdit = async () => {
+    if (!hrEditRecord) return;
+    
+    setHrEditSaving(true);
+    try {
+      if (hrEditRecord.id && !hrEditRecord.isNewRecord) {
+        // UPDATE existing record
+        console.log('💾 Updating existing record:', hrEditRecord.id);
+        await onHrUpdateAttendance(hrEditRecord.id, hrEditForm);
+      } else {
+        // CREATE new record (absent day with no DB record)
+        console.log('➕ Creating new attendance record for date:', hrEditRecord.dateStr);
+        await onHrCreateAttendance(hrEditRecord.dateStr, hrEditForm);
+      }
+      setIsHrEditModalOpen(false);
+      setHrEditRecord(null);
+    } catch (error) {
+      console.error('❌ Failed to save HR edit:', error.message);
+    } finally {
+      setHrEditSaving(false);
+    }
+  };
   // Get employee's breaks for a specific date from attendance data
   // IMPORTANT: Only show breaks if the employee status for that date is 'Present'
   const getEmployeeBreaksForDate = (employeeId, date) => {
@@ -2444,17 +2504,13 @@ const EmployeeDetailView = ({
                         <td className="px-4 py-3 text-center text-gray-700">{record && record.late && record.late !== '-' ? record.late : '—'}</td>
                         <td className="px-4 py-3 text-center text-gray-700">{record && record.overtime && record.overtime !== '0.0' && record.overtime !== '0' ? `${record.overtime}h` : '—'}</td>
                         <td className="px-4 py-3 text-center">
-                          {record ? (
-                            <button
-                              onClick={() => handleEditNotes(record)}
-                              className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition duration-300"
-                              title="Edit Notes"
-                            >
-                              <Edit3 className="h-4 w-4" />
-                            </button>
-                          ) : (
-                            <span className="text-gray-400">&mdash;</span>
-                          )}
+                          <button
+                            onClick={() => handleOpenHrEditModal(record, dateStr)}
+                            className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition duration-300"
+                            title={record ? "Edit Attendance" : "Add Attendance"}
+                          >
+                            <Edit3 className="h-4 w-4" />
+                          </button>
                         </td>
                       </tr>
                     );
@@ -2464,6 +2520,106 @@ const EmployeeDetailView = ({
             </table>
           </div>
         </div>
+
+        {/* HR Edit Attendance Modal */}
+        {isHrEditModalOpen && hrEditRecord && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-bold text-gray-900">{hrEditRecord.isNewRecord ? 'Add Attendance' : 'Edit Attendance'}</h3>
+                  <button
+                    onClick={() => setIsHrEditModalOpen(false)}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition"
+                  >
+                    <X className="h-5 w-5 text-gray-500" />
+                  </button>
+                </div>
+                <p className="text-sm text-gray-500 mt-1">
+                  {hrEditRecord.dateStr && new Date(hrEditRecord.dateStr).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+                </p>
+              </div>
+              
+              <div className="p-6 space-y-4">
+                {/* Status */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                  <select
+                    value={hrEditForm.status}
+                    onChange={(e) => setHrEditForm(prev => ({ ...prev, status: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="present">Present</option>
+                    <option value="late">Late</option>
+                    <option value="absent">Absent</option>
+                    <option value="leave">Paid Leave</option>
+                    <option value="halfday">Half Day</option>
+                    <option value="early-leave">Early Leave</option>
+                  </select>
+                </div>
+
+                {/* Check In Time */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Check In Time</label>
+                  <input
+                    type="time"
+                    step="1"
+                    value={hrEditForm.check_in_time}
+                    onChange={(e) => setHrEditForm(prev => ({ ...prev, check_in_time: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
+                {/* Check Out Time */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Check Out Time</label>
+                  <input
+                    type="time"
+                    step="1"
+                    value={hrEditForm.check_out_time}
+                    onChange={(e) => setHrEditForm(prev => ({ ...prev, check_out_time: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
+                {/* Remarks */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Remarks / Notes</label>
+                  <textarea
+                    value={hrEditForm.remarks}
+                    onChange={(e) => setHrEditForm(prev => ({ ...prev, remarks: e.target.value }))}
+                    rows={3}
+                    placeholder="Add any notes..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                  />
+                </div>
+              </div>
+
+              <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+                <button
+                  onClick={() => setIsHrEditModalOpen(false)}
+                  className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveHrEdit}
+                  disabled={hrEditSaving}
+                  className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition font-medium flex items-center gap-2 disabled:opacity-50"
+                >
+                  {hrEditSaving ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    'Save Changes'
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -3825,6 +3981,167 @@ export function HrAttendancePage() {
     addNotification('Notes updated successfully', 'success');
   };
 
+  // HR Direct Update Attendance (no approval required)
+  const handleHrUpdateAttendance = async (attendanceId, updateData) => {
+    try {
+      console.log('🔍 Starting HR update for attendance:', attendanceId, updateData);
+      
+      const token = localStorage.getItem('token');
+      if (!token) {
+        const errMsg = 'No authentication token found. Please log in again.';
+        console.error('❌ Auth Error:', errMsg);
+        addNotification(errMsg, 'error');
+        throw new Error(errMsg);
+      }
+
+      const body = {
+        check_in_time: updateData.check_in_time && updateData.check_in_time.trim() ? updateData.check_in_time : null,
+        check_out_time: updateData.check_out_time && updateData.check_out_time.trim() ? updateData.check_out_time : null,
+        status: updateData.status || 'absent',
+        remarks: updateData.remarks ? updateData.remarks.trim() : ''
+      };
+
+      console.log('📤 Sending request with body:', body);
+      
+      const endpoint = endpoints.attendance.update(attendanceId);
+      console.log('🔗 API Endpoint:', endpoint);
+
+      const response = await fetch(endpoint, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(body)
+      });
+
+      console.log('📥 Response status:', response.status);
+
+      let result;
+      try {
+        result = await response.json();
+        console.log('📥 Response data:', result);
+      } catch (parseError) {
+        console.error('Failed to parse response as JSON:', parseError);
+        const errMsg = 'Invalid response from server';
+        addNotification(errMsg, 'error');
+        throw new Error(errMsg);
+      }
+
+      if (!response.ok) {
+        const errorMsg = result?.message || result?.error || 'Failed to update attendance';
+        console.error('❌ API Error:', errorMsg);
+        addNotification(errorMsg, 'error');
+        throw new Error(errorMsg);
+      }
+
+      // Update local attendance data
+      setAttendanceData(prev => prev.map(att => {
+        if (att.id === attendanceId) {
+          return {
+            ...att,
+            checkIn: updateData.check_in_time || att.checkIn,
+            checkOut: updateData.check_out_time || att.checkOut,
+            status: updateData.status,
+            notes: updateData.remarks,
+            remarks: updateData.remarks
+          };
+        }
+        return att;
+      }));
+
+      console.log('✅ Attendance updated successfully');
+      addNotification('Attendance updated successfully', 'success');
+    } catch (error) {
+      console.error('❌ Error updating attendance:', error.message);
+      addNotification(`Failed to update attendance: ${error.message}`, 'error');
+      throw error;
+    }
+  };
+
+  // HR Create Attendance for absent/no-record days
+  const handleHrCreateAttendance = async (dateStr, formData) => {
+    try {
+      if (!selectedEmployee?.id) {
+        throw new Error('No employee selected');
+      }
+
+      const token = localStorage.getItem('token');
+      if (!token) {
+        addNotification('No authentication token found. Please log in again.', 'error');
+        throw new Error('No authentication token');
+      }
+
+      const body = {
+        employee_id: selectedEmployee.id,
+        attendance_date: dateStr,
+        check_in_time: formData.check_in_time?.trim() || null,
+        check_out_time: formData.check_out_time?.trim() || null,
+        status: formData.status || 'absent',
+        remarks: formData.remarks?.trim() || ''
+      };
+
+      console.log('➕ Creating attendance record:', body);
+
+      const response = await fetch(endpoints.attendance.hrCreate, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(body)
+      });
+
+      let result;
+      try {
+        result = await response.json();
+      } catch (e) {
+        throw new Error('Invalid response from server');
+      }
+
+      if (!response.ok) {
+        throw new Error(result?.message || 'Failed to create attendance');
+      }
+
+      // Add the new record to local state
+      const newAtt = result.data;
+      if (newAtt) {
+        // Calculate hours for display
+        let hours = '-';
+        if (newAtt.gross_working_time_minutes > 0) {
+          const h = Math.floor(newAtt.gross_working_time_minutes / 60);
+          const m = newAtt.gross_working_time_minutes % 60;
+          hours = h > 0 ? `${h}h ${m}m` : `${m}m`;
+        }
+
+        setAttendanceData(prev => [...prev, {
+          id: newAtt.id,
+          employeeId: newAtt.employee_id,
+          name: newAtt.name,
+          email: newAtt.email,
+          date: dateStr,
+          status: newAtt.status?.toLowerCase() || formData.status,
+          checkIn: newAtt.check_in_time || '-',
+          checkOut: newAtt.check_out_time || '-',
+          hours,
+          breaks: 0,
+          breakDuration: 0,
+          overtime: newAtt.overtime_hours || '0.0',
+          late: newAtt.late_by_minutes ? `${newAtt.late_by_minutes}m` : '-',
+          remarks: newAtt.remarks || '',
+          notes: newAtt.remarks || ''
+        }]);
+      }
+
+      console.log('✅ Attendance record created successfully');
+      addNotification('Attendance record created successfully', 'success');
+    } catch (error) {
+      console.error('❌ Error creating attendance:', error.message);
+      addNotification(`Failed to create attendance: ${error.message}`, 'error');
+      throw error;
+    }
+  };
+
   useEffect(() => {
     setPageLoading(true);
 
@@ -4858,6 +5175,8 @@ export function HrAttendancePage() {
             employeeLeaves={employeeLeaves}
             onMarkAsExplained={handleMarkAsExplained}
             onUpdateAttendanceNotes={handleUpdateAttendanceNotes}
+            onHrUpdateAttendance={handleHrUpdateAttendance}
+            onHrCreateAttendance={handleHrCreateAttendance}
             onOpenExplanationModal={(employeeId, date) => {
               setExplanationData({ employeeId, date, explanation: '' });
               setIsExplanationModalOpen(true);
