@@ -1,6 +1,7 @@
 // RoleTemplatesManagement.jsx
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
+import { confirmDialog } from '../utils/confirm';
 
 const RoleTemplatesManagement = () => {
   // Default role templates
@@ -307,7 +308,7 @@ const RoleTemplatesManagement = () => {
   };
 
   // Delete role
-  const handleDeleteRole = (roleId) => {
+  const handleDeleteRole = async (roleId) => {
     const role = roleTemplates.find(t => t.id === roleId);
     
     if (role.type === 'Default') {
@@ -321,7 +322,7 @@ const RoleTemplatesManagement = () => {
       return;
     }
 
-    if (window.confirm('Are you sure you want to delete this role? This action cannot be undone.')) {
+    if (await confirmDialog('Are you sure you want to delete this role? This action cannot be undone.')) {
       setRoleTemplates(roleTemplates.filter(role => role.id !== roleId));
       toast.success('Role deleted successfully!');
     }

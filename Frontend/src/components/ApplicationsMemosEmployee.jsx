@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
+import { confirmDialog } from '../utils/confirm';
 import {
   Calendar, MapPin, Briefcase,
   FileCheck, ClipboardList, Plus, Search,
@@ -1754,7 +1755,7 @@ const ApplicationDetailModal = ({ application, onClose, employee, onEdit }) => {
   };
 
   const handleWithdrawApplication = async () => {
-    if (!window.confirm('Are you sure you want to withdraw this application? This action cannot be undone.')) {
+    if (!await confirmDialog('Are you sure you want to withdraw this application? This action cannot be undone.', { confirmText: 'Withdraw' })) {
       return;
     }
     

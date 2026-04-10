@@ -68,6 +68,7 @@ import {
   Target as TargetIcon,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import { confirmDialog } from '../utils/confirm';
 import { endpoints } from "../config/api";
 import { format } from "date-fns";
 import { Copy } from "lucide-react";
@@ -557,8 +558,8 @@ const EmployeeProfile = () => {
     setEditingEmployee((prev) => ({ ...prev, ...employeeData }));
   };
 
-  const handleDeleteEmployee = (id) => {
-    if (window.confirm("Are you sure you want to delete this employee?")) {
+  const handleDeleteEmployee = async (id) => {
+    if (await confirmDialog('Are you sure you want to delete this employee?')) {
       setEmployees((prev) => prev.filter((emp) => emp.id !== id));
       const newSelected = new Set(selectedEmployees);
       newSelected.delete(id);
@@ -631,14 +632,16 @@ const EmployeeProfile = () => {
         );
         break;
       case "delete":
-        if (
-          window.confirm(`Delete ${selectedEmployees.size} selected employees?`)
-        ) {
-          setEmployees((prev) =>
-            prev.filter((emp) => !selectedEmployees.has(emp.id)),
-          );
-          setSelectedEmployees(new Set());
-        }
+        confirmDialog(`Delete ${selectedEmployees.size} selected employees?`).then(
+          (confirmed) => {
+            if (confirmed) {
+              setEmployees((prev) =>
+                prev.filter((emp) => !selectedEmployees.has(emp.id)),
+              );
+              setSelectedEmployees(new Set());
+            }
+          }
+        );
         break;
       case "export":
         handleExportSelected();

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import Sidebar from '../../components/Sidebar';
+import { confirmDialog } from '../../utils/confirm';
 import {
   DollarSign, Search, Filter, Plus, Edit, Trash2, Eye, X,
   RefreshCw, Receipt, TrendingUp, TrendingDown, Calendar, Tag,
@@ -76,6 +77,8 @@ const AdminExpense = () => {
 
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [dateRange, setDateRange]               = useState({ from: "", to: "" });
+  const [selectedMonth, setSelectedMonth]       = useState(() => new Date().getMonth());
+  const [selectedYear, setSelectedYear]         = useState(() => new Date().getFullYear());
 
   const [showExpenseModal, setShowExpenseModal]   = useState(false);
   const [showViewModal, setShowViewModal]         = useState(false);
@@ -185,7 +188,7 @@ const AdminExpense = () => {
   };
 
   const handleDeleteExpense = async (id) => {
-    if (!window.confirm("Delete this expense?")) return;
+    if (!await confirmDialog('Delete this expense?')) return;
     const data = await apiFetch(`${API_BASE}/expenses/${id}`, { method: "DELETE" });
     if (data.success) { setExpenses(prev => prev.filter(e => e.id !== id)); fetchMonthlySummary(); }
     else setError(data.message || "Failed to delete");
@@ -221,7 +224,7 @@ const AdminExpense = () => {
 
   const handleDeleteCategory = async (id) => {
     const cat = categories.find(c => c.id === id);
-    if (!window.confirm(`Permanently delete "${cat.name}"? This cannot be undone.`)) return;
+    if (!await confirmDialog(`Permanently delete "${cat.name}"? This cannot be undone.`)) return;
     setCatError(null);
     setCatSuccess(null);
     const data = await apiFetch(`${API_BASE}/expenses/categories/${id}`, { method: "DELETE" });
@@ -269,6 +272,27 @@ const AdminExpense = () => {
   // ─── Whether a custom date range is active ──────────────────────────────
   const isRangeSet = !!(dateRange.from || dateRange.to);
 
+  // ─── Month/year navigator ─────────────────────────────────────────────
+  const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const MONTH_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const selectedMonthPfx   = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}`;
+  const selectedMonthTotal = expenses.filter(e => e.expense_date?.startsWith(selectedMonthPfx)).reduce((s, e) => s + parseFloat(e.amount || 0), 0);
+  const prevMonthD = new Date(selectedYear, selectedMonth - 1, 1);
+  const prevMonthPfx = `${prevMonthD.getFullYear()}-${String(prevMonthD.getMonth() + 1).padStart(2, '0')}`;
+  const prevMonthTotal = expenses.filter(e => e.expense_date?.startsWith(prevMonthPfx)).reduce((s, e) => s + parseFloat(e.amount || 0), 0);
+  const selMonthChange = prevMonthTotal > 0 ? ((selectedMonthTotal - prevMonthTotal) / prevMonthTotal * 100).toFixed(1) : selectedMonthTotal > 0 ? 100 : 0;
+
+  const yearOptions = Array.from({ length: 6 }, (_, i) => now.getFullYear() - 2 + i);
+
+  const goPrevMonth = () => {
+    if (selectedMonth === 0) { setSelectedMonth(11); setSelectedYear(y => y - 1); }
+    else setSelectedMonth(m => m - 1);
+  };
+  const goNextMonth = () => {
+    if (selectedMonth === 11) { setSelectedMonth(0); setSelectedYear(y => y + 1); }
+    else setSelectedMonth(m => m + 1);
+  };
+
   // ─── Client-side filter ──────────────────────────────────────────────────
   const filteredExpenses = expenses.filter((expense) => {
     const q = searchQuery.toLowerCase().replace(/^#?exp-?/i, "").trim();
@@ -280,8 +304,8 @@ const AdminExpense = () => {
       expense.category_name?.toLowerCase().includes(q) ||
       expense.note?.toLowerCase().includes(q);
     const matchCat = selectedCategory === "All" || expense.category_name === selectedCategory;
-    // Default to current month when no date range is set; skip date filter when searching
-    const matchDate = (q || isRangeSet) ? true : expense.expense_date?.startsWith(thisMonthPfx);
+    // Use selected month when no custom range; skip date filter when searching
+    const matchDate = (q || isRangeSet) ? true : expense.expense_date?.startsWith(selectedMonthPfx);
     return matchSearch && matchCat && matchDate;
   });
   const filteredTotal  = filteredExpenses.reduce((s, e) => s + parseFloat(e.amount || 0), 0);
@@ -370,35 +394,70 @@ const AdminExpense = () => {
               <>
                 {/* Summary Boxes – always 2 at 50/50 width */}
                 <div className="mb-6">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Calendar className="h-5 w-5 text-blue-600" />
-                    <h3 className="font-bold text-slate-800">
-                      {isRangeSet ? "Selected Range Summary" : "Monthly Expense Summary"}
-                    </h3>
-                    {isRangeSet && (
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-5 w-5 text-blue-600" />
+                      <h3 className="font-bold text-slate-800">
+                        {isRangeSet ? "Selected Range Summary" : "Monthly Expense Summary"}
+                      </h3>
+                      {isRangeSet && (
+                        <button
+                          onClick={() => setDateRange({ from: "", to: "" })}
+                          className="ml-2 flex items-center gap-1 text-xs font-semibold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-3 py-1.5 rounded-lg transition"
+                        >
+                          <X className="h-3 w-3" /> Clear Range
+                        </button>
+                      )}
+                    </div>
+                    {/* Month / Year Navigator */}
+                    <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-2 shadow-sm w-fit">
                       <button
-                        onClick={() => setDateRange({ from: "", to: "" })}
-                        className="ml-auto flex items-center gap-1 text-xs font-semibold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-3 py-1.5 rounded-lg transition"
+                        onClick={goPrevMonth}
+                        className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition"
                       >
-                        <X className="h-3 w-3" /> Clear Range
+                        ← Prev
                       </button>
-                    )}
+                      <select
+                        value={selectedMonth}
+                        onChange={(e) => setSelectedMonth(Number(e.target.value))}
+                        className="border border-slate-200 rounded-lg px-2 py-1.5 text-sm font-semibold text-slate-700 bg-white focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                      >
+                        {MONTH_SHORT.map((m, i) => (
+                          <option key={i} value={i}>{m}</option>
+                        ))}
+                      </select>
+                      <select
+                        value={selectedYear}
+                        onChange={(e) => setSelectedYear(Number(e.target.value))}
+                        className="border border-slate-200 rounded-lg px-2 py-1.5 text-sm font-semibold text-slate-700 bg-white focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                      >
+                        {yearOptions.map(y => (
+                          <option key={y} value={y}>{y}</option>
+                        ))}
+                      </select>
+                      <button
+                        onClick={goNextMonth}
+                        className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition"
+                      >
+                        Next →
+                      </button>
+                    </div>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {/* Box 1 */}
                     <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-5 text-white shadow-lg hover:scale-[1.02] transition-all cursor-pointer"
                       onClick={() => { if (isRangeSet) setDateRange({ from: "", to: "" }); }}>
                       <div className="text-xs font-medium text-blue-100 mb-1">
-                        {isRangeSet ? "Selected Range Total" : "This Month"}
+                        {isRangeSet ? "Selected Range Total" : `${MONTH_NAMES[selectedMonth]} ${selectedYear}`}
                       </div>
                       <div className="text-2xl font-bold">
-                        {isRangeSet ? formatCurrency(filteredTotal) : formatCurrency(thisMonthTotal)}
+                        {isRangeSet ? formatCurrency(filteredTotal) : formatCurrency(selectedMonthTotal)}
                       </div>
                       <div className="flex items-center gap-1 text-blue-100 text-xs mt-2">
                         {isRangeSet ? (
                           <><Receipt className="h-3 w-3" /> {filteredExpenses.length} records</>
                         ) : (
-                          <>{monthlyChange >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />} {Math.abs(monthlyChange)}% vs last month</>
+                          <>{selMonthChange >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />} {Math.abs(selMonthChange)}% vs prev month</>
                         )}
                       </div>
                     </div>
@@ -406,22 +465,21 @@ const AdminExpense = () => {
                     <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl p-5 text-white shadow-lg hover:scale-[1.02] transition-all cursor-pointer"
                       onClick={() => {
                         if (!isRangeSet) {
-                          const lm = new Date(now); lm.setMonth(lm.getMonth()-1);
-                          const lmStart = `${lastMonthPfx}-01`;
-                          const lmEnd = new Date(lm.getFullYear(), lm.getMonth()+1, 0).toISOString().slice(0,10);
+                          const lmStart = `${prevMonthPfx}-01`;
+                          const lmEnd = new Date(prevMonthD.getFullYear(), prevMonthD.getMonth() + 1, 0).toISOString().slice(0, 10);
                           setDateRange({ from: lmStart, to: lmEnd });
                         }
                       }}>
                       <div className="text-xs font-medium text-emerald-100 mb-1">
-                        {isRangeSet ? "Records Found" : "Last Month"}
+                        {isRangeSet ? "Records Found" : `${MONTH_NAMES[prevMonthD.getMonth()]} ${prevMonthD.getFullYear()}`}
                       </div>
                       <div className="text-2xl font-bold">
-                        {isRangeSet ? filteredExpenses.length : formatCurrency(lastMonthTotal)}
+                        {isRangeSet ? filteredExpenses.length : formatCurrency(prevMonthTotal)}
                       </div>
                       <div className="text-emerald-100 text-xs mt-2">
                         {isRangeSet
                           ? `${dateRange.from || "Start"} → ${dateRange.to || "End"}`
-                          : `${expenses.filter(e => e.expense_date?.startsWith(lastMonthPfx)).length} records`
+                          : `${expenses.filter(e => e.expense_date?.startsWith(prevMonthPfx)).length} records`
                         }
                       </div>
                     </div>

@@ -6,8 +6,9 @@ import { endpoints } from '../../config/api';
 import { getPakistanDate } from '../../utils/timezone';
 import HrSidebar from '../../components/HrSidebar';
 import PagePreloader from '../../components/PagePreloader';
+import AttendanceCorrectionModal from '../../components/AttendanceCorrectionModal';
 import {
-  CheckCircle,Clock,LogIn,LogOut,User,Activity,AlertCircle,Timer,PauseCircle,Utensils,Cigarette,Table,Shield
+  CheckCircle,Clock,LogIn,LogOut,User,Activity,AlertCircle,Timer,PauseCircle,Utensils,Cigarette,Table,Shield,Edit3
 } from 'lucide-react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,PieChart,Pie,Cell
@@ -43,6 +44,8 @@ const HRMyAttendance = () => {
   const [isOverlapWindow, setIsOverlapWindow] = useState(false); // NEW: Track if in overlap window (9 AM - 9 PM)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [sidebarActiveItem, setSidebarActiveItem] = useState('my-attendance');
+  const [correctionModalOpen, setCorrectionModalOpen] = useState(false);
+  const [correctionRecord, setCorrectionRecord] = useState(null);
 
   // Leave summary state (defaults — replace with API data when available)
   const [leaveSummary, setLeaveSummary] = useState({
@@ -1608,6 +1611,7 @@ const HRMyAttendance = () => {
                         <th className="px-4 py-3 text-left text-sm font-semibold">Breaks</th>
                         <th className="px-4 py-3 text-left text-sm font-semibold">Late By</th>
                         <th className="px-4 py-3 text-left text-sm font-semibold">Overtime</th>
+                        <th className="px-4 py-3 text-center text-sm font-semibold">Action</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1615,7 +1619,7 @@ const HRMyAttendance = () => {
                         statusFilter === 'All Status' || r.status === statusFilter
                       ).length === 0 ? (
                         <tr>
-                          <td colSpan="8" className="px-4 py-8 text-center text-gray-500">
+                          <td colSpan="9" className="px-4 py-8 text-center text-gray-500">
                             No attendance records found for the selected filters
                           </td>
                         </tr>
@@ -1703,6 +1707,19 @@ const HRMyAttendance = () => {
                                 )
                               )}
                             </td>
+                            <td className="px-4 py-3 text-sm text-center">
+                              <button
+                                onClick={() => {
+                                  setCorrectionRecord(record);
+                                  setCorrectionModalOpen(true);
+                                }}
+                                className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 hover:border-blue-300 transition-all"
+                                title="Request attendance correction"
+                              >
+                                <Edit3 className="w-3.5 h-3.5" />
+                                Correct
+                              </button>
+                            </td>
                           </tr>
                         ));
                       })()}
@@ -1773,6 +1790,14 @@ const HRMyAttendance = () => {
         </>
         )}
       </div>
+
+      {/* Attendance Correction Modal */}
+      <AttendanceCorrectionModal
+        isOpen={correctionModalOpen}
+        onClose={() => { setCorrectionModalOpen(false); setCorrectionRecord(null); }}
+        record={correctionRecord}
+        onSubmitted={() => fetchMonthlyAttendance()}
+      />
     </div>
   );
 };

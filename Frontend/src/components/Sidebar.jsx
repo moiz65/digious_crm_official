@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { confirmDialog } from '../utils/confirm';
 import { 
   FileText,
   ClipboardList,
@@ -217,7 +218,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) => 
   };
 
   const handleLogout = async () => {
-    if (!window.confirm('Are you sure you want to logout?')) return;
+    if (!await confirmDialog('Are you sure you want to logout?', { confirmText: 'Logout', type: 'warning' })) return;
 
     try {
       await logoutNoCheckout(true);
