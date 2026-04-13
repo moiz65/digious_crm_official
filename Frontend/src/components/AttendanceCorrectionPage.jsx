@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
-import { DashboardHeader } from './DashboardComponents';
+import { DashboardHeader, RoleBasedNav } from './DashboardComponents';
 import { useAuth } from '../context/AuthContext';
 import { endpoints, getAuthHeaders } from '../config/api';
 import EmployeeSidebar from './EmployeeSidebar';
@@ -1365,6 +1365,7 @@ const AttendanceCorrectionPage = () => {
               title="Attendance Corrections"
               subtitle="Ticket Detail"
             />
+            <RoleBasedNav role={role} />
             <div className="flex-1 overflow-y-auto">
               <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
                 <h3 className="text-sm font-semibold text-gray-700">Quick Actions</h3>
@@ -1411,6 +1412,7 @@ const AttendanceCorrectionPage = () => {
         {renderSidebar()}
         <div className="flex-1 flex flex-col overflow-hidden">
           <DashboardHeader title="Managed Leave" subtitle="Ticket Detail" />
+          <RoleBasedNav role={role} />
           <div className="flex-1 overflow-y-auto">
             <LeaveTicketDetailView
               ticket={mlSelectedTicket}
@@ -1438,6 +1440,7 @@ const AttendanceCorrectionPage = () => {
         {renderSidebar()}
         <div className="flex-1 flex flex-col overflow-hidden">
           <DashboardHeader title="Managed Leave" subtitle="New Leave Request" />
+          <RoleBasedNav role={role} />
           <div className="flex-1 overflow-y-auto p-6">
             <CreateLeaveTicketForm
               onSubmit={handleCreateLeave}
@@ -1478,9 +1481,10 @@ const AttendanceCorrectionPage = () => {
           title={moduleTab === 'corrections' ? 'Attendance Corrections' : 'Managed Leave'}
           subtitle={moduleTab === 'corrections' ? 'Review and manage attendance correction requests' : 'Manage leave requests and balances'}
         />
+        <RoleBasedNav role={role} />
 
         {/* Module‑level Tabs */}
-        <div className="bg-white border-b border-gray-200 px-6">
+        <div className="bg-transparent border-b border-gray-200 px-6 pt-[20px]">
           <div className="flex gap-2">
             <button
               onClick={() => setModuleTab('corrections')}
@@ -1515,7 +1519,7 @@ const AttendanceCorrectionPage = () => {
         {moduleTab === 'corrections' ? (
         <>
         {/* Corrections Sub‑Tabs */}
-        <div className="bg-white border-b border-gray-200 px-6">
+        <div className="bg-transparent border-b border-gray-200 px-6">
           <div className="flex gap-1">
             <button
               onClick={() => { setActiveTab('my'); setStatusFilter('all'); }}
@@ -1560,7 +1564,7 @@ const AttendanceCorrectionPage = () => {
 
         <main className="flex-1 overflow-y-auto p-6">
           {/* Filters */}
-          <div className="flex items-center justify-between flex-wrap gap-3 mb-5">
+          <div className="flex items-center justify-between flex-wrap gap-3 py-5">
             <div className="flex items-center gap-2 flex-wrap">
               <Filter className="w-4 h-4 text-gray-400" />
               {['all', 'open', 'tagged_approved', 'tagged_rejected', 'hr_approved', 'hr_rejected', 'applied'].map(s => (
@@ -1714,7 +1718,7 @@ const AttendanceCorrectionPage = () => {
         ) : (
         <>
         {/* ─── Managed Leave Sub‑Tabs ─── */}
-        <div className="bg-white border-b border-gray-200 px-6">
+        <div className="bg-transparent border-b border-gray-200 px-6">
           <div className="flex gap-1">
             <button
               onClick={() => { setMlActiveTab('my'); setMlStatusFilter('all'); }}

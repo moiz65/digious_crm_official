@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import toast from 'react-hot-toast';
-import { DashboardHeader } from './DashboardComponents';
+import { DashboardHeader, RoleBasedNav } from './DashboardComponents';
 import { useAuth } from '../context/AuthContext';
 import { endpoints, getAuthHeaders } from '../config/api';
 import EmployeeSidebar from './EmployeeSidebar';
@@ -1080,6 +1080,7 @@ const ApplicationsPage = () => {
         {renderSidebar()}
         <div className="flex-1 flex flex-col overflow-hidden">
           <DashboardHeader title="Applications" subtitle="Application Detail" />
+          <RoleBasedNav role={role} />
           <div className="flex-1 overflow-y-auto">
             <ApplicationDetailView
               application={selectedApp}
@@ -1109,6 +1110,7 @@ const ApplicationsPage = () => {
         {renderSidebar()}
         <div className="flex-1 flex flex-col overflow-hidden">
           <DashboardHeader title="Applications" subtitle="New Application" />
+          <RoleBasedNav role={role} />
           <div className="flex-1 overflow-y-auto">
             <CreateApplicationForm
               onSubmit={handleCreate}
@@ -1138,9 +1140,10 @@ const ApplicationsPage = () => {
           title="Applications"
           subtitle="Submit and track your applications"
         />
+        <RoleBasedNav role={role} />
 
         {/* Sub‑Tabs */}
-        <div className="bg-white border-b border-gray-200 px-6">
+        <div className="bg-transparent border-b border-gray-200 px-6 py-6">
           <div className="flex gap-1">
             <button
               onClick={() => { setActiveTab('my'); setStatusFilter('all'); }}

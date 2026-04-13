@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import toast from 'react-hot-toast';
-import { 
-  Search, 
-  Filter, 
+import React, { useState, useEffect, useCallback } from "react";
+import toast from "react-hot-toast";
+import {
+  Search,
+  Filter,
   ChevronDown,
   Download,
   MoreVertical,
@@ -41,22 +41,26 @@ import {
   Flag,
   Loader2,
   Trash2,
-  RefreshCw
-} from 'lucide-react';
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+  RefreshCw,
+} from "lucide-react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
   PieChart as RePieChart,
   Pie,
   Cell,
   LineChart,
-  Line
-} from 'recharts';
+  Line,
+} from "recharts";
+import {
+  DashboardHeader,
+  RoleBasedNav,
+} from "../components/DashboardComponents";
 import {
   getMySales,
   getAllSales,
@@ -64,23 +68,23 @@ import {
   updateSale,
   deleteSale,
   getSalesCategories,
-} from '../services/salesService';
+} from "../services/salesService";
 
 const EmployeeSalesPage = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterMerchant, setFilterMerchant] = useState('all');
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [filterCategory, setFilterCategory] = useState('all');
-  const [sortField, setSortField] = useState('name');
-  const [sortDirection, setSortDirection] = useState('asc');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterMerchant, setFilterMerchant] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterCategory, setFilterCategory] = useState("all");
+  const [sortField, setSortField] = useState("name");
+  const [sortDirection, setSortDirection] = useState("asc");
   const [showAddSaleModal, setShowAddSaleModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [editFormData, setEditFormData] = useState({});
-  const [chartView, setChartView] = useState('monthly');
-  const [dateRange, setDateRange] = useState('monthly'); // 'daily', 'monthly', 'custom'
+  const [chartView, setChartView] = useState("monthly");
+  const [dateRange, setDateRange] = useState("monthly"); // 'daily', 'monthly', 'custom'
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [customStartDate, setCustomStartDate] = useState('');
-  const [customEndDate, setCustomEndDate] = useState('');
+  const [customStartDate, setCustomStartDate] = useState("");
+  const [customEndDate, setCustomEndDate] = useState("");
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -92,36 +96,36 @@ const EmployeeSalesPage = () => {
   const [error, setError] = useState(null);
 
   // Get user info from localStorage
-  const user = JSON.parse(localStorage.getItem('userInfo') || '{}');
-  const role = user?.role || 'employee';
+  const user = JSON.parse(localStorage.getItem("userInfo") || "{}");
+  const role = user?.role || "employee";
 
   // Role configuration
   const roleInfo = {
     admin: {
-      label: 'Administrator',
-      color: 'text-purple-600'
+      label: "Administrator",
+      color: "text-purple-600",
     },
     manager: {
-      label: 'Manager',
-      color: 'text-blue-600'
+      label: "Manager",
+      color: "text-blue-600",
     },
     employee: {
-      label: 'Sales Employee',
-      color: 'text-green-600'
-    }
+      label: "Sales Employee",
+      color: "text-green-600",
+    },
   };
 
   // Category options with icons (fallback if API categories fail)
   const [categories, setCategories] = useState([
-    { id: 'all', name: 'All Categories', icon: null },
-    { id: 'website-design', name: 'Website Design', icon: Globe },
-    { id: 'logo-design', name: 'Logo Design', icon: Palette },
-    { id: 'branding', name: 'Branding', icon: PenTool },
-    { id: 'marketing', name: 'Marketing', icon: Megaphone },
-    { id: 'development', name: 'Development', icon: Code },
-    { id: 'ecommerce', name: 'E-commerce', icon: ShoppingCart },
-    { id: 'photography', name: 'Photography', icon: Camera },
-    { id: 'graphic-design', name: 'Graphic Design', icon: Layout }
+    { id: "all", name: "All Categories", icon: null },
+    { id: "website-design", name: "Website Design", icon: Globe },
+    { id: "logo-design", name: "Logo Design", icon: Palette },
+    { id: "branding", name: "Branding", icon: PenTool },
+    { id: "marketing", name: "Marketing", icon: Megaphone },
+    { id: "development", name: "Development", icon: Code },
+    { id: "ecommerce", name: "E-commerce", icon: ShoppingCart },
+    { id: "photography", name: "Photography", icon: Camera },
+    { id: "graphic-design", name: "Graphic Design", icon: Layout },
   ]);
 
   // Fetch categories from API
@@ -130,18 +134,30 @@ const EmployeeSalesPage = () => {
       try {
         const data = await getSalesCategories();
         if (data && data.length > 0) {
-          const iconMap = { Globe, Palette, PenTool, Megaphone, Code, ShoppingCart, Camera, Layout };
-          const mapped = data.map(cat => ({
+          const iconMap = {
+            Globe,
+            Palette,
+            PenTool,
+            Megaphone,
+            Code,
+            ShoppingCart,
+            Camera,
+            Layout,
+          };
+          const mapped = data.map((cat) => ({
             id: cat.slug,
             dbId: cat.id,
             name: cat.name,
             icon: iconMap[cat.icon] || Globe,
             color: cat.color,
           }));
-          setCategories([{ id: 'all', name: 'All Categories', icon: null }, ...mapped]);
+          setCategories([
+            { id: "all", name: "All Categories", icon: null },
+            ...mapped,
+          ]);
         }
       } catch (err) {
-        console.error('Failed to load sales categories:', err);
+        console.error("Failed to load sales categories:", err);
       }
     };
     fetchCategories();
@@ -155,55 +171,57 @@ const EmployeeSalesPage = () => {
       const filters = {};
 
       // Build date filters
-      if (dateRange === 'daily') {
+      if (dateRange === "daily") {
         const d = selectedDate.toISOString().slice(0, 10);
         filters.from = d;
         filters.to = d;
-      } else if (dateRange === 'monthly') {
+      } else if (dateRange === "monthly") {
         const y = selectedDate.getFullYear();
         const m = selectedDate.getMonth();
-        filters.from = `${y}-${String(m + 1).padStart(2, '0')}-01`;
+        filters.from = `${y}-${String(m + 1).padStart(2, "0")}-01`;
         const lastDay = new Date(y, m + 1, 0).getDate();
-        filters.to = `${y}-${String(m + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
-      } else if (dateRange === 'custom' && customStartDate && customEndDate) {
+        filters.to = `${y}-${String(m + 1).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+      } else if (dateRange === "custom" && customStartDate && customEndDate) {
         filters.from = customStartDate;
         filters.to = customEndDate;
       }
 
       // Use role-appropriate endpoint
-      const isAdmin = role === 'admin' || role === 'hr';
-      const response = isAdmin ? await getAllSales(filters) : await getMySales(filters);
+      const isAdmin = role === "admin" || role === "hr";
+      const response = isAdmin
+        ? await getAllSales(filters)
+        : await getMySales(filters);
 
       // Map API fields to component fields
-      const mapped = (response.data || []).map(s => ({
+      const mapped = (response.data || []).map((s) => ({
         id: s.id,
         name: s.client_name,
-        email: s.client_email || '',
-        phone: s.client_phone || '',
-        about: s.project_description || '',
-        category: s.category_slug || s.cat_slug || 'website-design',
+        email: s.client_email || "",
+        phone: s.client_phone || "",
+        about: s.project_description || "",
+        category: s.category_slug || s.cat_slug || "website-design",
         categoryId: s.category_id,
         totalSales: parseFloat(s.total_amount) || 0,
         upfrontPayment: parseFloat(s.upfront_payment) || 0,
         remainingPayment: parseFloat(s.remaining_balance) || 0,
-        merchant: s.merchant || '',
-        status: s.status || 'pending',
-        date: s.sale_date ? s.sale_date.slice(0, 10) : '',
-        deadline: s.deadline ? s.deadline.slice(0, 10) : '',
-        notes: s.notes || '',
-        employeeName: s.employee_name || '',
-        accountName: s.account_name || '',
-        paymentMethod: s.payment_method || '',
-        categoryName: s.category_name || '',
-        categoryIcon: s.category_icon || 'Globe',
-        categoryColor: s.category_color || '#3B82F6',
+        merchant: s.merchant || "",
+        status: s.status || "pending",
+        date: s.sale_date ? s.sale_date.slice(0, 10) : "",
+        deadline: s.deadline ? s.deadline.slice(0, 10) : "",
+        notes: s.notes || "",
+        employeeName: s.employee_name || "",
+        accountName: s.account_name || "",
+        paymentMethod: s.payment_method || "",
+        categoryName: s.category_name || "",
+        categoryIcon: s.category_icon || "Globe",
+        categoryColor: s.category_color || "#3B82F6",
       }));
 
       setSalesData(mapped);
       if (response.totals) setApiTotals(response.totals);
     } catch (err) {
-      console.error('Failed to fetch sales:', err);
-      setError(err.message || 'Failed to load sales data');
+      console.error("Failed to fetch sales:", err);
+      setError(err.message || "Failed to load sales data");
     } finally {
       setLoading(false);
     }
@@ -214,109 +232,120 @@ const EmployeeSalesPage = () => {
   }, [fetchSales]);
 
   // Status options
-  const statuses = ['completed', 'in-progress', 'pending', 'cancelled'];
-  
+  const statuses = ["completed", "in-progress", "pending", "cancelled"];
+
   // Merchant options
-  const merchants = ['PayPal', 'Stripe', 'CashApp', 'Venmo'];
+  const merchants = [
+    "Ziffs PayPal",
+    "Stripe",
+    "Digious PayPal",
+    "Innovative PayPal",
+    "Crypto",
+  ];
 
   // Handle logout
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('userInfo');
-    window.location.href = '/login';
+    localStorage.removeItem("token");
+    localStorage.removeItem("userInfo");
+    window.location.href = "/login";
   };
 
   // Get category icon and color
   const getCategoryDetails = (categoryId) => {
     const categoryMap = {
-      'website-design': {
+      "website-design": {
         icon: Globe,
-        color: 'text-blue-600 bg-blue-50',
-        name: 'Website Design'
+        color: "text-blue-600 bg-blue-50",
+        name: "Website Design",
       },
-      'logo-design': {
+      "logo-design": {
         icon: Palette,
-        color: 'text-purple-600 bg-purple-50',
-        name: 'Logo Design'
+        color: "text-purple-600 bg-purple-50",
+        name: "Logo Design",
       },
-      'branding': {
+      branding: {
         icon: PenTool,
-        color: 'text-indigo-600 bg-indigo-50',
-        name: 'Branding'
+        color: "text-indigo-600 bg-indigo-50",
+        name: "Branding",
       },
-      'marketing': {
+      marketing: {
         icon: Megaphone,
-        color: 'text-orange-600 bg-orange-50',
-        name: 'Marketing'
+        color: "text-orange-600 bg-orange-50",
+        name: "Marketing",
       },
-      'development': {
+      development: {
         icon: Code,
-        color: 'text-green-600 bg-green-50',
-        name: 'Development'
+        color: "text-green-600 bg-green-50",
+        name: "Development",
       },
-      'ecommerce': {
+      ecommerce: {
         icon: ShoppingCart,
-        color: 'text-pink-600 bg-pink-50',
-        name: 'E-commerce'
+        color: "text-pink-600 bg-pink-50",
+        name: "E-commerce",
       },
-      'photography': {
+      photography: {
         icon: Camera,
-        color: 'text-yellow-600 bg-yellow-50',
-        name: 'Photography'
+        color: "text-yellow-600 bg-yellow-50",
+        name: "Photography",
       },
-      'graphic-design': {
+      "graphic-design": {
         icon: Layout,
-        color: 'text-red-600 bg-red-50',
-        name: 'Graphic Design'
+        color: "text-red-600 bg-red-50",
+        name: "Graphic Design",
+      },
+    };
+    return (
+      categoryMap[categoryId] || {
+        icon: AlertCircle,
+        color: "text-gray-600 bg-gray-50",
+        name: categoryId,
       }
-    };
-    return categoryMap[categoryId] || {
-      icon: AlertCircle,
-      color: 'text-gray-600 bg-gray-50',
-      name: categoryId
-    };
+    );
   };
 
   // Get status color and icon
   const getStatusDetails = (status) => {
     const statusMap = {
-      'completed': {
-        color: 'text-green-600 bg-green-50',
+      completed: {
+        color: "text-green-600 bg-green-50",
         icon: CheckCircle,
-        label: 'Completed'
+        label: "Completed",
       },
-      'in-progress': {
-        color: 'text-blue-600 bg-blue-50',
+      "in-progress": {
+        color: "text-blue-600 bg-blue-50",
         icon: TrendingUp,
-        label: 'In Progress'
+        label: "In Progress",
       },
-      'pending': {
-        color: 'text-yellow-600 bg-yellow-50',
+      pending: {
+        color: "text-yellow-600 bg-yellow-50",
         icon: Clock,
-        label: 'Pending'
+        label: "Pending",
       },
-      'cancelled': {
-        color: 'text-red-600 bg-red-50',
+      cancelled: {
+        color: "text-red-600 bg-red-50",
         icon: XCircle,
-        label: 'Cancelled'
+        label: "Cancelled",
+      },
+    };
+    return (
+      statusMap[status] || {
+        color: "text-gray-600 bg-gray-50",
+        icon: AlertCircle,
+        label: status,
       }
-    };
-    return statusMap[status] || {
-      color: 'text-gray-600 bg-gray-50',
-      icon: AlertCircle,
-      label: status
-    };
+    );
   };
 
   // Get merchant color
   const getMerchantColor = (merchant) => {
     const colors = {
-      'PayPal': 'text-blue-600 bg-blue-50',
-      'Stripe': 'text-purple-600 bg-purple-50',
-      'CashApp': 'text-green-600 bg-green-50',
-      'Venmo': 'text-cyan-600 bg-cyan-50'
+      "Ziffs PayPal": "text-blue-600 bg-blue-50",
+      Stripe: "text-purple-600 bg-purple-50",
+      "Digious PayPal": "text-green-600 bg-green-50",
+      "Innovative PayPal": "text-cyan-600 bg-cyan-50",
+      Crypto: "text-purple-600 bg-purple-50",
     };
-    return colors[merchant] || 'text-gray-600 bg-gray-50';
+    return colors[merchant] || "text-gray-600 bg-gray-50";
   };
 
   // Get deadline status
@@ -325,23 +354,35 @@ const EmployeeSalesPage = () => {
     const deadlineDate = new Date(deadline);
     const diffTime = deadlineDate - today;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays < 0) {
-      return { color: 'text-red-600 bg-red-50', label: 'Overdue', days: Math.abs(diffDays) };
+      return {
+        color: "text-red-600 bg-red-50",
+        label: "Overdue",
+        days: Math.abs(diffDays),
+      };
     } else if (diffDays <= 7) {
-      return { color: 'text-orange-600 bg-orange-50', label: 'Due Soon', days: diffDays };
+      return {
+        color: "text-orange-600 bg-orange-50",
+        label: "Due Soon",
+        days: diffDays,
+      };
     } else {
-      return { color: 'text-green-600 bg-green-50', label: 'On Track', days: diffDays };
+      return {
+        color: "text-green-600 bg-green-50",
+        label: "On Track",
+        days: diffDays,
+      };
     }
   };
 
   // Handle sorting
   const handleSort = (field) => {
     if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
       setSortField(field);
-      setSortDirection('asc');
+      setSortDirection("asc");
     }
   };
 
@@ -355,7 +396,7 @@ const EmployeeSalesPage = () => {
       totalSales: item.totalSales,
       upfrontPayment: item.upfrontPayment,
       remainingPayment: item.remainingPayment,
-      deadline: item.deadline
+      deadline: item.deadline,
     });
   };
 
@@ -364,7 +405,7 @@ const EmployeeSalesPage = () => {
     setSaving(true);
     try {
       // Find the category dbId from slug
-      const catEntry = categories.find(c => c.id === editFormData.category);
+      const catEntry = categories.find((c) => c.id === editFormData.category);
       await updateSale(id, {
         status: editFormData.status,
         merchant: editFormData.merchant,
@@ -378,8 +419,8 @@ const EmployeeSalesPage = () => {
       setEditFormData({});
       await fetchSales(); // Refresh from API
     } catch (err) {
-      console.error('Failed to update sale:', err);
-      toast.error('Failed to update sale: ' + (err.message || 'Unknown error'));
+      console.error("Failed to update sale:", err);
+      toast.error("Failed to update sale: " + (err.message || "Unknown error"));
     } finally {
       setSaving(false);
     }
@@ -393,16 +434,16 @@ const EmployeeSalesPage = () => {
 
   // Handle input change in edit mode
   const handleEditChange = (field, value) => {
-    setEditFormData(prev => {
+    setEditFormData((prev) => {
       const newData = { ...prev, [field]: value };
-      
+
       // Recalculate remaining payment if totalSales or upfrontPayment changes
-      if (field === 'totalSales' || field === 'upfrontPayment') {
+      if (field === "totalSales" || field === "upfrontPayment") {
         const total = parseFloat(newData.totalSales) || 0;
         const upfront = parseFloat(newData.upfrontPayment) || 0;
         newData.remainingPayment = total - upfront;
       }
-      
+
       return newData;
     });
   };
@@ -420,66 +461,85 @@ const EmployeeSalesPage = () => {
 
   // Filter and sort data
   const filteredData = filterByDateRange(salesData)
-    .filter(item => {
-      const matchesSearch = 
+    .filter((item) => {
+      const matchesSearch =
         item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.phone.includes(searchTerm) ||
         item.about.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      const matchesMerchant = filterMerchant === 'all' || item.merchant === filterMerchant;
-      const matchesStatus = filterStatus === 'all' || item.status === filterStatus;
-      const matchesCategory = filterCategory === 'all' || item.category === filterCategory;
-      
-      return matchesSearch && matchesMerchant && matchesStatus && matchesCategory;
+
+      const matchesMerchant =
+        filterMerchant === "all" || item.merchant === filterMerchant;
+      const matchesStatus =
+        filterStatus === "all" || item.status === filterStatus;
+      const matchesCategory =
+        filterCategory === "all" || item.category === filterCategory;
+
+      return (
+        matchesSearch && matchesMerchant && matchesStatus && matchesCategory
+      );
     })
     .sort((a, b) => {
       let comparison = 0;
-      if (sortField === 'name') {
+      if (sortField === "name") {
         comparison = a.name.localeCompare(b.name);
-      } else if (sortField === 'totalSales') {
+      } else if (sortField === "totalSales") {
         comparison = a.totalSales - b.totalSales;
-      } else if (sortField === 'date') {
+      } else if (sortField === "date") {
         comparison = new Date(a.date) - new Date(b.date);
-      } else if (sortField === 'deadline') {
+      } else if (sortField === "deadline") {
         comparison = new Date(a.deadline) - new Date(b.deadline);
-      } else if (sortField === 'status') {
+      } else if (sortField === "status") {
         comparison = a.status.localeCompare(b.status);
-      } else if (sortField === 'category') {
+      } else if (sortField === "category") {
         comparison = a.category.localeCompare(b.category);
       }
-      return sortDirection === 'asc' ? comparison : -comparison;
+      return sortDirection === "asc" ? comparison : -comparison;
     });
 
   // Pagination
   const RECORDS_PER_PAGE = 10;
   const totalPages = Math.ceil(filteredData.length / RECORDS_PER_PAGE);
   const startIndex = (currentPage - 1) * RECORDS_PER_PAGE;
-  const paginatedData = filteredData.slice(startIndex, startIndex + RECORDS_PER_PAGE);
+  const paginatedData = filteredData.slice(
+    startIndex,
+    startIndex + RECORDS_PER_PAGE,
+  );
 
   // Calculate totals
-  const totals = filteredData.reduce((acc, item) => ({
-    totalSales: acc.totalSales + item.totalSales,
-    upfrontPayment: acc.upfrontPayment + item.upfrontPayment,
-    remainingPayment: acc.remainingPayment + item.remainingPayment,
-    completedSales: acc.completedSales + (item.status === 'completed' ? 1 : 0)
-  }), { totalSales: 0, upfrontPayment: 0, remainingPayment: 0, completedSales: 0 });
+  const totals = filteredData.reduce(
+    (acc, item) => ({
+      totalSales: acc.totalSales + item.totalSales,
+      upfrontPayment: acc.upfrontPayment + item.upfrontPayment,
+      remainingPayment: acc.remainingPayment + item.remainingPayment,
+      completedSales:
+        acc.completedSales + (item.status === "completed" ? 1 : 0),
+    }),
+    {
+      totalSales: 0,
+      upfrontPayment: 0,
+      remainingPayment: 0,
+      completedSales: 0,
+    },
+  );
 
   // Chart data preparation
   const getMonthlyChartData = () => {
     const monthlyData = {};
     const today = new Date();
     const filteredByDate = filterByDateRange(salesData);
-    
-    filteredByDate.forEach(item => {
-      const month = new Date(item.date).toLocaleDateString('en-US', { month: 'short' });
+
+    filteredByDate.forEach((item) => {
+      const month = new Date(item.date).toLocaleDateString("en-US", {
+        month: "short",
+      });
       if (!monthlyData[month]) {
         monthlyData[month] = { month, total: 0, count: 0 };
       }
       monthlyData[month].total += item.totalSales;
       monthlyData[month].count += 1;
     });
-    
+
     return Object.values(monthlyData);
   };
 
@@ -487,85 +547,98 @@ const EmployeeSalesPage = () => {
     const dailyData = {};
     const today = new Date();
     const last7Days = [];
-    
+
     // Create last 7 days
     for (let i = 6; i >= 0; i--) {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
-      const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const dateStr = date.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      });
       last7Days.push(dateStr);
       dailyData[dateStr] = { date: dateStr, total: 0 };
     }
-    
+
     // Fill with actual data
     const filteredByDate = filterByDateRange(salesData);
-    filteredByDate.forEach(item => {
+    filteredByDate.forEach((item) => {
       const itemDate = new Date(item.date);
-      const dateStr = itemDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const dateStr = itemDate.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      });
       if (dailyData[dateStr]) {
         dailyData[dateStr].total += item.totalSales;
       }
     });
-    
+
     return Object.values(dailyData);
   };
 
   const getCategoryDistribution = () => {
     const categoryData = {};
     const filteredByDate = filterByDateRange(salesData);
-    
-    filteredByDate.forEach(item => {
+
+    filteredByDate.forEach((item) => {
       const category = getCategoryDetails(item.category).name;
       if (!categoryData[category]) {
         categoryData[category] = { name: category, value: 0 };
       }
       categoryData[category].value += item.totalSales;
     });
-    
+
     return Object.values(categoryData);
   };
 
-  const CHART_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+  const CHART_COLORS = [
+    "#3b82f6",
+    "#10b981",
+    "#f59e0b",
+    "#ef4444",
+    "#8b5cf6",
+    "#ec4899",
+  ];
 
   // Date navigation functions
   const goToPreviousDay = () => {
     const newDate = new Date(selectedDate);
     newDate.setDate(newDate.getDate() - 1);
     setSelectedDate(newDate);
-    setDateRange('daily');
+    setDateRange("daily");
   };
 
   const goToNextDay = () => {
     const newDate = new Date(selectedDate);
     newDate.setDate(newDate.getDate() + 1);
     setSelectedDate(newDate);
-    setDateRange('daily');
+    setDateRange("daily");
   };
 
   const goToPreviousMonth = () => {
     const newDate = new Date(selectedDate);
     newDate.setMonth(newDate.getMonth() - 1);
     setSelectedDate(newDate);
-    setDateRange('monthly');
+    setDateRange("monthly");
   };
 
   const goToNextMonth = () => {
     const newDate = new Date(selectedDate);
     newDate.setMonth(newDate.getMonth() + 1);
     setSelectedDate(newDate);
-    setDateRange('monthly');
+    setDateRange("monthly");
   };
 
   const applyCustomDateRange = () => {
     if (customStartDate && customEndDate) {
-      setDateRange('custom');
+      setDateRange("custom");
       setShowDatePicker(false);
     }
   };
 
   // Custom CSS to hide number input arrows
   useEffect(() => {
-    const style = document.createElement('style');
+    const style = document.createElement("style");
     style.innerHTML = `
       /* Hide number input arrows for all browsers */
       input[type=number]::-webkit-inner-spin-button, 
@@ -587,17 +660,19 @@ const EmployeeSalesPage = () => {
   // Add Sale Modal Component
   const AddSaleModal = () => {
     const [formData, setFormData] = useState({
-      name: '',
-      email: '',
-      phone: '',
-      about: '',
-      category: 'website-design',
-      totalSales: '',
-      upfrontPayment: '',
-      merchant: 'PayPal',
-      status: 'pending',
-      date: new Date().toISOString().split('T')[0],
-      deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // 30 days from now
+      name: "",
+      email: "",
+      phone: "",
+      about: "",
+      category: "website-design",
+      totalSales: "",
+      upfrontPayment: "",
+      merchant: "PayPal",
+      status: "pending",
+      date: new Date().toISOString().split("T")[0],
+      deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .split("T")[0], // 30 days from now
     });
 
     const handleSubmit = async (e) => {
@@ -605,7 +680,7 @@ const EmployeeSalesPage = () => {
       setSaving(true);
       try {
         // Resolve category DB id from slug
-        const catEntry = categories.find(c => c.id === formData.category);
+        const catEntry = categories.find((c) => c.id === formData.category);
         await createSale({
           client_name: formData.name,
           client_email: formData.email,
@@ -623,8 +698,10 @@ const EmployeeSalesPage = () => {
         setShowAddSaleModal(false);
         await fetchSales(); // Refresh from API
       } catch (err) {
-        console.error('Failed to create sale:', err);
-        toast.error('Failed to create sale: ' + (err.message || 'Unknown error'));
+        console.error("Failed to create sale:", err);
+        toast.error(
+          "Failed to create sale: " + (err.message || "Unknown error"),
+        );
       } finally {
         setSaving(false);
       }
@@ -637,8 +714,10 @@ const EmployeeSalesPage = () => {
         <div className="bg-white rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
           <div className="p-6 border-b border-gray-200">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-gray-900">Add New Sale</h2>
-              <button 
+              <h2 className="text-xl font-semibold text-gray-900">
+                Add New Sale
+              </h2>
+              <button
                 onClick={() => setShowAddSaleModal(false)}
                 className="text-gray-400 hover:text-gray-600"
               >
@@ -659,7 +738,9 @@ const EmployeeSalesPage = () => {
                   required
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
                 />
               </div>
 
@@ -673,7 +754,9 @@ const EmployeeSalesPage = () => {
                   required
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   value={formData.email}
-                  onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
                 />
               </div>
 
@@ -687,7 +770,9 @@ const EmployeeSalesPage = () => {
                   required
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   value={formData.phone}
-                  onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                  onChange={(e) =>
+                    setFormData({ ...formData, phone: e.target.value })
+                  }
                 />
               </div>
 
@@ -701,7 +786,9 @@ const EmployeeSalesPage = () => {
                   rows="3"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   value={formData.about}
-                  onChange={(e) => setFormData({...formData, about: e.target.value})}
+                  onChange={(e) =>
+                    setFormData({ ...formData, about: e.target.value })
+                  }
                 />
               </div>
 
@@ -714,9 +801,11 @@ const EmployeeSalesPage = () => {
                   required
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   value={formData.category}
-                  onChange={(e) => setFormData({...formData, category: e.target.value})}
+                  onChange={(e) =>
+                    setFormData({ ...formData, category: e.target.value })
+                  }
                 >
-                  {categories.slice(1).map(category => (
+                  {categories.slice(1).map((category) => (
                     <option key={category.id} value={category.id}>
                       {category.name}
                     </option>
@@ -734,7 +823,9 @@ const EmployeeSalesPage = () => {
                   required
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   value={formData.date}
-                  onChange={(e) => setFormData({...formData, date: e.target.value})}
+                  onChange={(e) =>
+                    setFormData({ ...formData, date: e.target.value })
+                  }
                 />
               </div>
 
@@ -748,7 +839,9 @@ const EmployeeSalesPage = () => {
                   required
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   value={formData.deadline}
-                  onChange={(e) => setFormData({...formData, deadline: e.target.value})}
+                  onChange={(e) =>
+                    setFormData({ ...formData, deadline: e.target.value })
+                  }
                 />
               </div>
 
@@ -764,7 +857,9 @@ const EmployeeSalesPage = () => {
                   step="0.01"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   value={formData.totalSales}
-                  onChange={(e) => setFormData({...formData, totalSales: e.target.value})}
+                  onChange={(e) =>
+                    setFormData({ ...formData, totalSales: e.target.value })
+                  }
                   onWheel={(e) => e.target.blur()}
                 />
               </div>
@@ -781,7 +876,9 @@ const EmployeeSalesPage = () => {
                   step="0.01"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   value={formData.upfrontPayment}
-                  onChange={(e) => setFormData({...formData, upfrontPayment: e.target.value})}
+                  onChange={(e) =>
+                    setFormData({ ...formData, upfrontPayment: e.target.value })
+                  }
                   onWheel={(e) => e.target.blur()}
                 />
               </div>
@@ -795,8 +892,14 @@ const EmployeeSalesPage = () => {
                   type="number"
                   disabled
                   className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                  value={formData.totalSales && formData.upfrontPayment ? 
-                    (parseFloat(formData.totalSales) - parseFloat(formData.upfrontPayment)).toFixed(2) : '0.00'}
+                  value={
+                    formData.totalSales && formData.upfrontPayment
+                      ? (
+                          parseFloat(formData.totalSales) -
+                          parseFloat(formData.upfrontPayment)
+                        ).toFixed(2)
+                      : "0.00"
+                  }
                 />
               </div>
 
@@ -809,10 +912,14 @@ const EmployeeSalesPage = () => {
                   required
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   value={formData.merchant}
-                  onChange={(e) => setFormData({...formData, merchant: e.target.value})}
+                  onChange={(e) =>
+                    setFormData({ ...formData, merchant: e.target.value })
+                  }
                 >
-                  {merchants.map(merchant => (
-                    <option key={merchant} value={merchant}>{merchant}</option>
+                  {merchants.map((merchant) => (
+                    <option key={merchant} value={merchant}>
+                      {merchant}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -826,11 +933,14 @@ const EmployeeSalesPage = () => {
                   required
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   value={formData.status}
-                  onChange={(e) => setFormData({...formData, status: e.target.value})}
+                  onChange={(e) =>
+                    setFormData({ ...formData, status: e.target.value })
+                  }
                 >
-                  {statuses.map(status => (
+                  {statuses.map((status) => (
                     <option key={status} value={status}>
-                      {status.charAt(0).toUpperCase() + status.slice(1).replace('-', ' ')}
+                      {status.charAt(0).toUpperCase() +
+                        status.slice(1).replace("-", " ")}
                     </option>
                   ))}
                 </select>
@@ -851,7 +961,7 @@ const EmployeeSalesPage = () => {
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-                {saving ? 'Saving...' : 'Add Sale'}
+                {saving ? "Saving..." : "Add Sale"}
               </button>
             </div>
           </form>
@@ -863,41 +973,14 @@ const EmployeeSalesPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-cyan-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-8 py-5">
-        <div className="max-w-full mx-auto">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Sales Dashboard</h1>
-              <p className="text-gray-500 mt-1">Manage and track all customer sales</p>
-            </div>
-
-            <div className="flex items-center space-x-4">
-              <div className="text-right pr-4 border-r border-gray-200">
-                <p className="text-sm font-semibold text-gray-900">{user?.name || user?.email || 'Muhammad Hamza'}</p>
-                <p className={`text-xs font-medium ${roleInfo[role]?.color} mt-0.5`}>
-                  {roleInfo[role]?.label}
-                </p>
-              </div>
-
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-full flex items-center justify-center text-white font-semibold text-sm shadow-sm">
-                {String(user?.name || user?.email || 'U').charAt(0).toUpperCase()}
-              </div>
-
-              <button
-                onClick={handleLogout}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                title="Logout"
-              >
-                <LogOut className="w-5 h-5 text-gray-600" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <DashboardHeader
+        title="Sales Dashboard"
+        subtitle="Manage and track all customer sales"
+      />
+      <RoleBasedNav role={role} />
 
       {/* Main Content */}
       <div className="p-6">
-        
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {/* Total Sales */}
@@ -908,7 +991,9 @@ const EmployeeSalesPage = () => {
                   <DollarSign className="w-6 h-6 text-blue-600" />
                 </div>
                 <div className="ml-4">
-                  <h3 className="text-sm font-medium text-blue-800">Total Sales</h3>
+                  <h3 className="text-sm font-medium text-blue-800">
+                    Total Sales
+                  </h3>
                   <p className="text-xl font-bold text-blue-600">
                     ${totals.totalSales.toLocaleString()}
                   </p>
@@ -916,9 +1001,11 @@ const EmployeeSalesPage = () => {
               </div>
             </div>
             <p className="text-sm text-gray-500">
-              {dateRange === 'daily' ? "Today's revenue" : 
-               dateRange === 'monthly' ? "This month's revenue" : 
-               "Selected period revenue"}
+              {dateRange === "daily"
+                ? "Today's revenue"
+                : dateRange === "monthly"
+                  ? "This month's revenue"
+                  : "Selected period revenue"}
             </p>
           </div>
 
@@ -930,16 +1017,16 @@ const EmployeeSalesPage = () => {
                   <CreditCard className="w-6 h-6 text-green-600" />
                 </div>
                 <div className="ml-4">
-                  <h3 className="text-sm font-medium text-green-800">Paid Amount</h3>
+                  <h3 className="text-sm font-medium text-green-800">
+                    Paid Amount
+                  </h3>
                   <p className="text-xl font-bold text-green-600">
                     ${totals.upfrontPayment.toLocaleString()}
                   </p>
                 </div>
               </div>
             </div>
-            <p className="text-sm text-gray-500">
-              Received amount
-            </p>
+            <p className="text-sm text-gray-500">Received amount</p>
           </div>
 
           {/* Remaining Payment */}
@@ -950,16 +1037,16 @@ const EmployeeSalesPage = () => {
                   <Calendar className="w-6 h-6 text-orange-600" />
                 </div>
                 <div className="ml-4">
-                  <h3 className="text-sm font-medium text-orange-800">Remaining Payment</h3>
+                  <h3 className="text-sm font-medium text-orange-800">
+                    Remaining Payment
+                  </h3>
                   <p className="text-xl font-bold text-orange-600">
                     ${totals.remainingPayment.toLocaleString()}
                   </p>
                 </div>
               </div>
             </div>
-            <p className="text-sm text-gray-500">
-              Pending collection
-            </p>
+            <p className="text-sm text-gray-500">Pending collection</p>
           </div>
 
           {/* Completed Sales */}
@@ -970,20 +1057,18 @@ const EmployeeSalesPage = () => {
                   <CheckCircle className="w-6 h-6 text-purple-600" />
                 </div>
                 <div className="ml-4">
-                  <h3 className="text-sm font-medium text-purple-800">Completed</h3>
+                  <h3 className="text-sm font-medium text-purple-800">
+                    Completed
+                  </h3>
                   <p className="text-xl font-bold text-purple-600">
                     {totals.completedSales}
                   </p>
                 </div>
               </div>
             </div>
-            <p className="text-sm text-gray-500">
-              Successful projects
-            </p>
+            <p className="text-sm text-gray-500">Successful projects</p>
           </div>
         </div>
-
-       
 
         {/* Filters and Actions */}
         <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm mb-6">
@@ -1008,7 +1093,7 @@ const EmployeeSalesPage = () => {
                   value={filterCategory}
                   onChange={(e) => setFilterCategory(e.target.value)}
                 >
-                  {categories.map(category => (
+                  {categories.map((category) => (
                     <option key={category.id} value={category.id}>
                       {category.name}
                     </option>
@@ -1025,9 +1110,10 @@ const EmployeeSalesPage = () => {
                   onChange={(e) => setFilterStatus(e.target.value)}
                 >
                   <option value="all">All Statuses</option>
-                  {statuses.map(status => (
+                  {statuses.map((status) => (
                     <option key={status} value={status}>
-                      {status.charAt(0).toUpperCase() + status.slice(1).replace('-', ' ')}
+                      {status.charAt(0).toUpperCase() +
+                        status.slice(1).replace("-", " ")}
                     </option>
                   ))}
                 </select>
@@ -1042,8 +1128,10 @@ const EmployeeSalesPage = () => {
                   onChange={(e) => setFilterMerchant(e.target.value)}
                 >
                   <option value="all">All Merchants</option>
-                  {merchants.map(merchant => (
-                    <option key={merchant} value={merchant}>{merchant}</option>
+                  {merchants.map((merchant) => (
+                    <option key={merchant} value={merchant}>
+                      {merchant}
+                    </option>
                   ))}
                 </select>
                 <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
@@ -1057,32 +1145,34 @@ const EmployeeSalesPage = () => {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <CalendarIcon className="w-5 h-5 text-gray-400" />
-              <span className="text-sm font-medium text-gray-700">Date Range:</span>
-              
+              <span className="text-sm font-medium text-gray-700">
+                Date Range:
+              </span>
+
               {/* Simple Segmented Control */}
               <div className="flex items-center bg-gray-100 rounded-lg p-1 ml-2">
                 <button
                   onClick={() => {
-                    setDateRange('daily');
+                    setDateRange("daily");
                     setSelectedDate(new Date());
                   }}
                   className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-                    dateRange === 'daily' 
-                      ? 'bg-white text-blue-600 shadow-sm' 
-                      : 'text-gray-600 hover:text-gray-900'
+                    dateRange === "daily"
+                      ? "bg-white text-blue-600 shadow-sm"
+                      : "text-gray-600 hover:text-gray-900"
                   }`}
                 >
                   Daily
                 </button>
                 <button
                   onClick={() => {
-                    setDateRange('monthly');
+                    setDateRange("monthly");
                     setSelectedDate(new Date());
                   }}
                   className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-                    dateRange === 'monthly' 
-                      ? 'bg-white text-blue-600 shadow-sm' 
-                      : 'text-gray-600 hover:text-gray-900'
+                    dateRange === "monthly"
+                      ? "bg-white text-blue-600 shadow-sm"
+                      : "text-gray-600 hover:text-gray-900"
                   }`}
                 >
                   Monthly
@@ -1090,9 +1180,9 @@ const EmployeeSalesPage = () => {
                 <button
                   onClick={() => setShowDatePicker(!showDatePicker)}
                   className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-                    dateRange === 'custom' 
-                      ? 'bg-white text-blue-600 shadow-sm' 
-                      : 'text-gray-600 hover:text-gray-900'
+                    dateRange === "custom"
+                      ? "bg-white text-blue-600 shadow-sm"
+                      : "text-gray-600 hover:text-gray-900"
                   }`}
                 >
                   Custom
@@ -1101,7 +1191,7 @@ const EmployeeSalesPage = () => {
             </div>
 
             {/* Date Display - Clean and Simple */}
-            {dateRange === 'daily' && (
+            {dateRange === "daily" && (
               <div className="flex items-center gap-1 bg-gray-50 rounded-lg px-3 py-1.5">
                 <button
                   onClick={goToPreviousDay}
@@ -1110,11 +1200,11 @@ const EmployeeSalesPage = () => {
                   <ChevronLeft className="w-4 h-4 text-gray-500" />
                 </button>
                 <span className="text-sm font-medium text-gray-700 px-3 min-w-[200px] text-center">
-                  {selectedDate.toLocaleDateString('en-US', { 
-                    weekday: 'short',
-                    month: 'short', 
-                    day: 'numeric',
-                    year: 'numeric'
+                  {selectedDate.toLocaleDateString("en-US", {
+                    weekday: "short",
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
                   })}
                 </span>
                 <button
@@ -1126,7 +1216,7 @@ const EmployeeSalesPage = () => {
               </div>
             )}
 
-            {dateRange === 'monthly' && (
+            {dateRange === "monthly" && (
               <div className="flex items-center gap-1 bg-gray-50 rounded-lg px-3 py-1.5">
                 <button
                   onClick={goToPreviousMonth}
@@ -1135,7 +1225,10 @@ const EmployeeSalesPage = () => {
                   <ChevronLeft className="w-4 h-4 text-gray-500" />
                 </button>
                 <span className="text-sm font-medium text-gray-700 px-3 min-w-[140px] text-center">
-                  {selectedDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                  {selectedDate.toLocaleDateString("en-US", {
+                    month: "long",
+                    year: "numeric",
+                  })}
                 </span>
                 <button
                   onClick={goToNextMonth}
@@ -1161,7 +1254,9 @@ const EmployeeSalesPage = () => {
             <div className="mt-4 pt-4 border-t border-gray-100">
               <div className="flex flex-wrap items-end gap-3">
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Start Date</label>
+                  <label className="block text-xs text-gray-500 mb-1">
+                    Start Date
+                  </label>
                   <input
                     type="date"
                     value={customStartDate}
@@ -1170,7 +1265,9 @@ const EmployeeSalesPage = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">End Date</label>
+                  <label className="block text-xs text-gray-500 mb-1">
+                    End Date
+                  </label>
                   <input
                     type="date"
                     value={customEndDate}
@@ -1203,7 +1300,10 @@ const EmployeeSalesPage = () => {
               <AlertCircle className="w-5 h-5 text-red-500" />
               <span className="text-sm text-red-700">{error}</span>
             </div>
-            <button onClick={fetchSales} className="flex items-center gap-1 text-sm text-red-600 hover:text-red-800 font-medium">
+            <button
+              onClick={fetchSales}
+              className="flex items-center gap-1 text-sm text-red-600 hover:text-red-800 font-medium"
+            >
               <RefreshCw className="w-4 h-4" /> Retry
             </button>
           </div>
@@ -1216,9 +1316,9 @@ const EmployeeSalesPage = () => {
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
                   <th className="px-4 py-3 text-left">
-                    <button 
+                    <button
                       className="flex items-center gap-1 text-xs font-medium text-gray-600 uppercase tracking-wider hover:text-blue-600"
-                      onClick={() => handleSort('name')}
+                      onClick={() => handleSort("name")}
                     >
                       Customer
                       <ArrowUpDown className="w-3 h-3" />
@@ -1231,18 +1331,18 @@ const EmployeeSalesPage = () => {
                     Project
                   </th>
                   <th className="px-4 py-3 text-left">
-                    <button 
+                    <button
                       className="flex items-center gap-1 text-xs font-medium text-gray-600 uppercase tracking-wider hover:text-blue-600"
-                      onClick={() => handleSort('category')}
+                      onClick={() => handleSort("category")}
                     >
                       Category
                       <ArrowUpDown className="w-3 h-3" />
                     </button>
                   </th>
                   <th className="px-4 py-3 text-right">
-                    <button 
+                    <button
                       className="flex items-center gap-1 text-xs font-medium text-gray-600 uppercase tracking-wider hover:text-blue-600 ml-auto"
-                      onClick={() => handleSort('totalSales')}
+                      onClick={() => handleSort("totalSales")}
                     >
                       Total
                       <ArrowUpDown className="w-3 h-3" />
@@ -1258,18 +1358,18 @@ const EmployeeSalesPage = () => {
                     Merchant
                   </th>
                   <th className="px-4 py-3 text-left">
-                    <button 
+                    <button
                       className="flex items-center gap-1 text-xs font-medium text-gray-600 uppercase tracking-wider hover:text-blue-600"
-                      onClick={() => handleSort('status')}
+                      onClick={() => handleSort("status")}
                     >
                       Status
                       <ArrowUpDown className="w-3 h-3" />
                     </button>
                   </th>
                   <th className="px-4 py-3 text-left">
-                    <button 
+                    <button
                       className="flex items-center gap-1 text-xs font-medium text-gray-600 uppercase tracking-wider hover:text-blue-600"
-                      onClick={() => handleSort('deadline')}
+                      onClick={() => handleSort("deadline")}
                     >
                       Deadline
                       <ArrowUpDown className="w-3 h-3" />
@@ -1291,13 +1391,18 @@ const EmployeeSalesPage = () => {
                   const isEditing = editingId === item.id;
 
                   return (
-                    <tr key={item.id} className="hover:bg-gray-50 transition-colors">
+                    <tr
+                      key={item.id}
+                      className="hover:bg-gray-50 transition-colors"
+                    >
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
                           <div className="w-7 h-7 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
                             <User className="w-3.5 h-3.5 text-white" />
                           </div>
-                          <span className="text-sm font-medium text-gray-900">{item.name}</span>
+                          <span className="text-sm font-medium text-gray-900">
+                            {item.name}
+                          </span>
                         </div>
                       </td>
                       <td className="px-4 py-3">
@@ -1313,23 +1418,29 @@ const EmployeeSalesPage = () => {
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <p className="text-xs text-gray-600 max-w-[200px] truncate">{item.about}</p>
+                        <p className="text-xs text-gray-600 max-w-[200px] truncate">
+                          {item.about}
+                        </p>
                       </td>
                       <td className="px-4 py-3">
                         {isEditing ? (
                           <select
                             className="px-2 py-1 border border-gray-300 rounded text-xs"
                             value={editFormData.category}
-                            onChange={(e) => handleEditChange('category', e.target.value)}
+                            onChange={(e) =>
+                              handleEditChange("category", e.target.value)
+                            }
                           >
-                            {categories.slice(1).map(category => (
+                            {categories.slice(1).map((category) => (
                               <option key={category.id} value={category.id}>
                                 {category.name}
                               </option>
                             ))}
                           </select>
                         ) : (
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 w-fit ${getCategoryDetails(item.category).color}`}>
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 w-fit ${getCategoryDetails(item.category).color}`}
+                          >
                             <CategoryIcon className="w-3 h-3" />
                             {getCategoryDetails(item.category).name}
                           </span>
@@ -1341,7 +1452,9 @@ const EmployeeSalesPage = () => {
                             type="number"
                             className="w-20 px-2 py-1 border border-gray-300 rounded text-right text-xs [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                             value={editFormData.totalSales}
-                            onChange={(e) => handleEditChange('totalSales', e.target.value)}
+                            onChange={(e) =>
+                              handleEditChange("totalSales", e.target.value)
+                            }
                             step="0.01"
                             min="0"
                             onWheel={(e) => e.target.blur()}
@@ -1358,7 +1471,9 @@ const EmployeeSalesPage = () => {
                             type="number"
                             className="w-20 px-2 py-1 border border-gray-300 rounded text-right text-xs [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                             value={editFormData.upfrontPayment}
-                            onChange={(e) => handleEditChange('upfrontPayment', e.target.value)}
+                            onChange={(e) =>
+                              handleEditChange("upfrontPayment", e.target.value)
+                            }
                             step="0.01"
                             min="0"
                             onWheel={(e) => e.target.blur()}
@@ -1374,7 +1489,10 @@ const EmployeeSalesPage = () => {
                           <input
                             type="number"
                             className="w-20 px-2 py-1 border border-gray-300 rounded text-right text-xs bg-gray-50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                            value={editFormData.remainingPayment?.toFixed(2) || '0.00'}
+                            value={
+                              editFormData.remainingPayment?.toFixed(2) ||
+                              "0.00"
+                            }
                             disabled
                           />
                         ) : (
@@ -1388,14 +1506,20 @@ const EmployeeSalesPage = () => {
                           <select
                             className="px-2 py-1 border border-gray-300 rounded text-xs"
                             value={editFormData.merchant}
-                            onChange={(e) => handleEditChange('merchant', e.target.value)}
+                            onChange={(e) =>
+                              handleEditChange("merchant", e.target.value)
+                            }
                           >
-                            {merchants.map(merchant => (
-                              <option key={merchant} value={merchant}>{merchant}</option>
+                            {merchants.map((merchant) => (
+                              <option key={merchant} value={merchant}>
+                                {merchant}
+                              </option>
                             ))}
                           </select>
                         ) : (
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getMerchantColor(item.merchant)}`}>
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-medium ${getMerchantColor(item.merchant)}`}
+                          >
                             {item.merchant}
                           </span>
                         )}
@@ -1405,16 +1529,21 @@ const EmployeeSalesPage = () => {
                           <select
                             className="px-2 py-1 border border-gray-300 rounded text-xs"
                             value={editFormData.status}
-                            onChange={(e) => handleEditChange('status', e.target.value)}
+                            onChange={(e) =>
+                              handleEditChange("status", e.target.value)
+                            }
                           >
-                            {statuses.map(status => (
+                            {statuses.map((status) => (
                               <option key={status} value={status}>
-                                {status.charAt(0).toUpperCase() + status.slice(1).replace('-', ' ')}
+                                {status.charAt(0).toUpperCase() +
+                                  status.slice(1).replace("-", " ")}
                               </option>
                             ))}
                           </select>
                         ) : (
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 w-fit ${getStatusDetails(item.status).color}`}>
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 w-fit ${getStatusDetails(item.status).color}`}
+                          >
                             <StatusIcon className="w-3 h-3" />
                             {getStatusDetails(item.status).label}
                           </span>
@@ -1426,30 +1555,39 @@ const EmployeeSalesPage = () => {
                             type="date"
                             className="px-2 py-1 border border-gray-300 rounded text-xs"
                             value={editFormData.deadline}
-                            onChange={(e) => handleEditChange('deadline', e.target.value)}
+                            onChange={(e) =>
+                              handleEditChange("deadline", e.target.value)
+                            }
                           />
                         ) : (
                           <div className="flex flex-col gap-1">
                             <span className="text-xs text-gray-500">
-                              {new Date(item.deadline).toLocaleDateString('en-US', {
-                                month: 'short',
-                                day: 'numeric',
-                                year: 'numeric'
-                              })}
+                              {new Date(item.deadline).toLocaleDateString(
+                                "en-US",
+                                {
+                                  month: "short",
+                                  day: "numeric",
+                                  year: "numeric",
+                                },
+                              )}
                             </span>
-                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium inline-block w-fit ${deadlineStatus.color}`}>
+                            <span
+                              className={`px-2 py-0.5 rounded-full text-xs font-medium inline-block w-fit ${deadlineStatus.color}`}
+                            >
                               <Flag className="w-3 h-3 inline mr-1" />
-                              {deadlineStatus.label} {deadlineStatus.days && `(${deadlineStatus.days}d)`}
+                              {deadlineStatus.label}{" "}
+                              {deadlineStatus.days &&
+                                `(${deadlineStatus.days}d)`}
                             </span>
                           </div>
                         )}
                       </td>
                       <td className="px-4 py-3">
                         <span className="text-xs text-gray-500">
-                          {new Date(item.date).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric'
+                          {new Date(item.date).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
                           })}
                         </span>
                       </td>
@@ -1457,14 +1595,14 @@ const EmployeeSalesPage = () => {
                         <div className="flex items-center justify-center gap-1">
                           {isEditing ? (
                             <>
-                              <button 
+                              <button
                                 onClick={() => handleSaveEdit(item.id)}
                                 className="p-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
                                 title="Save"
                               >
                                 <Save className="w-3.5 h-3.5 text-gray-700" />
                               </button>
-                              <button 
+                              <button
                                 onClick={handleCancelEdit}
                                 className="p-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
                                 title="Cancel"
@@ -1474,20 +1612,20 @@ const EmployeeSalesPage = () => {
                             </>
                           ) : (
                             <>
-                              <button 
+                              <button
                                 onClick={() => handleView(item)}
                                 className="p-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
                                 title="View Details"
                               >
                                 <Eye className="w-3.5 h-3.5 text-gray-700" />
                               </button>
-                              {/* <button 
+                              <button
                                 onClick={() => handleEdit(item)}
                                 className="p-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
                                 title="Edit"
                               >
                                 <Edit className="w-3.5 h-3.5 text-gray-700" />
-                              </button> */}
+                              </button>
                             </>
                           )}
                         </div>
@@ -1512,7 +1650,9 @@ const EmployeeSalesPage = () => {
             <div className="text-center py-12">
               <User className="w-12 h-12 text-gray-400 mx-auto mb-3" />
               <p className="text-gray-600 font-medium">No sales data found</p>
-              <p className="text-xs text-gray-500 mt-1">Try adjusting your search, filter, or date range</p>
+              <p className="text-xs text-gray-500 mt-1">
+                Try adjusting your search, filter, or date range
+              </p>
               <button
                 onClick={() => setShowAddSaleModal(true)}
                 className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium inline-flex items-center gap-2"
@@ -1527,7 +1667,9 @@ const EmployeeSalesPage = () => {
           {filteredData.length > 0 && totalPages > 1 && (
             <div className="border-t border-gray-200 px-6 py-3 flex items-center justify-between">
               <p className="text-xs text-gray-600">
-                Showing {startIndex + 1} to {Math.min(startIndex + RECORDS_PER_PAGE, filteredData.length)} of {filteredData.length} entries
+                Showing {startIndex + 1} to{" "}
+                {Math.min(startIndex + RECORDS_PER_PAGE, filteredData.length)}{" "}
+                of {filteredData.length} entries
               </p>
               <div className="flex gap-2">
                 <button
@@ -1537,23 +1679,27 @@ const EmployeeSalesPage = () => {
                 >
                   Previous
                 </button>
-                
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                  <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-                      currentPage === page
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-white border border-gray-200 hover:bg-gray-50'
-                    }`}
-                  >
-                    {page}
-                  </button>
-                ))}
-                
+
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                  (page) => (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                        currentPage === page
+                          ? "bg-blue-600 text-white"
+                          : "bg-white border border-gray-200 hover:bg-gray-50"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ),
+                )}
+
                 <button
-                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  onClick={() =>
+                    setCurrentPage(Math.min(totalPages, currentPage + 1))
+                  }
                   disabled={currentPage === totalPages}
                   className="px-3 py-1.5 text-xs font-medium bg-white border border-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
                 >

@@ -1,11 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import { DashboardHeader } from './DashboardComponents';
+// import { DashboardHeader } from './DashboardComponents';
 import AttendanceCorrectionModal from './AttendanceCorrectionModal';
-import { useAuth } from '../context/AuthContext';
+// import { useAuth } from '../context/AuthContext';
 import { endpoints } from '../config/api';
 import { getPakistanDate } from '../utils/timezone';
 import EmployeeSidebar from './EmployeeSidebar';
+import {
+  DashboardHeader,
+  RoleBasedNav,
+} from "./DashboardComponents";
+import { useAuth } from "../context/AuthContext";
 import {
   CheckCircle,
   Clock,
@@ -742,6 +747,7 @@ const EmployeeAttendanceDashboard = () => {
           role={role}
           currentTime={currentTime}
         />
+        <RoleBasedNav role={role} />
 
         <main className="flex-1 overflow-y-auto p-6">
           {/* Status Cards */}
