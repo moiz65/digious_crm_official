@@ -201,8 +201,10 @@ const TicketDetailView = ({ ticket, onBack, onAction, userRole, currentEmployeeI
       const res = await fetch(endpoints.attendanceCorrections.logs(ticket.id), { headers: getAuthHeaders() });
       const data = await res.json();
       if (data.success) setLogs(data.data || []);
+      else toast.error('Failed to load activity logs');
     } catch (err) {
       console.error('Failed to fetch logs:', err);
+      toast.error('Failed to load activity logs');
     }
   };
 
@@ -210,7 +212,11 @@ const TicketDetailView = ({ ticket, onBack, onAction, userRole, currentEmployeeI
     setActionLoading(true);
     try {
       await onAction(ticket.id, action, remarks);
+      toast.success(`Correction ticket ${action === 'approved' ? 'approved' : 'rejected'} successfully!`);
       onBack();
+    } catch (err) {
+      console.error('Action failed:', err);
+      toast.error(`Failed to ${action} ticket`);
     } finally {
       setActionLoading(false);
     }
@@ -225,31 +231,52 @@ const TicketDetailView = ({ ticket, onBack, onAction, userRole, currentEmployeeI
 
   return (
     <div>
-      {/* Header bar with back button — same pattern as HrAttendancePage EmployeeDetailView */}
-      <div className="p-6 border-b border-gray-200">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
+      {/* Header bar with back button — redesigned with highlight */}
+      <div className="p-6 bg-gradient-to-r from-indigo-50 via-blue-50 to-purple-50 border-b-2 border-indigo-200">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start gap-4">
             <button
               onClick={onBack}
-              className="p-2.5 rounded-lg border border-gray-300 hover:bg-gray-100 transition duration-300"
+              className="p-2.5 rounded-lg border border-gray-300 hover:bg-white transition duration-300 flex-shrink-0"
             >
               <ArrowLeft className="h-5 w-5 text-gray-600" />
             </button>
-            <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-2xl flex items-center justify-center text-white font-bold text-lg shadow-md">
+            
+            {/* Large Avatar */}
+            <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-2xl flex items-center justify-center text-white font-bold text-2xl shadow-lg ring-2 ring-white flex-shrink-0">
               {ticket.employee_name?.charAt(0)?.toUpperCase() || 'A'}
             </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-                {ticket.ticket_number}
+
+            {/* Info Container */}
+            <div className="flex-1">
+              {/* Ticket Number */}
+              <div className="flex items-center gap-3 mb-2">
+                <h1 className="text-3xl font-bold text-gray-900">
+                  {ticket.ticket_number}
+                </h1>
                 <StatusBadge status={ticket.overall_status} />
-              </h1>
-              <p className="text-gray-500 text-sm mt-0.5">
-                {ticket.employee_name} &bull;{' '}
+              </div>
+
+              {/* Employee Name - Highlighted */}
+              <p className="text-lg font-bold text-indigo-900 mb-1">
+                {ticket.employee_name}
+              </p>
+
+              {/* Date */}
+              <p className="text-sm text-gray-600 flex items-center gap-2">
+                <CalendarDays className="w-4 h-4 text-indigo-600" />
                 {parseDate(ticket.attendance_date).toLocaleDateString('en-US', {
                   weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
                 })}
               </p>
             </div>
+          </div>
+
+          {/* Quick Actions - Right Side */}
+          <div className="flex items-center gap-2 pt-2">
+            <button className="p-2 rounded-lg hover:bg-white transition duration-300 text-gray-600" title="View Files">
+              <Eye className="w-5 h-5" />
+            </button>
           </div>
         </div>
       </div>
@@ -258,15 +285,15 @@ const TicketDetailView = ({ ticket, onBack, onAction, userRole, currentEmployeeI
         {/* ── Before / After Comparison Table ── */}
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
           <div className="px-5 py-3 bg-gray-50 border-b border-gray-200">
-            <h3 className="text-sm font-semibold text-gray-700">Original vs Corrected</h3>
+            <h3 className="text-sm font-semibold text-gray-700">Current vs Requested</h3>
           </div>
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100">
                 <th className="text-left px-5 py-3 text-gray-500 font-medium">Field</th>
-                <th className="text-left px-5 py-3 text-red-600 font-medium">Original</th>
+                <th className="text-left px-5 py-3 text-red-600 font-medium">Current</th>
                 <th className="text-center px-2 py-3"></th>
-                <th className="text-left px-5 py-3 text-green-600 font-medium">Corrected</th>
+                <th className="text-left px-5 py-3 text-green-600 font-medium">Requested</th>
               </tr>
             </thead>
             <tbody>
@@ -567,6 +594,7 @@ const CreateLeaveTicketForm = ({ balance, onSubmit, onCancel, submitting }) => {
         }
       } catch (err) {
         console.error('Failed to fetch employees:', err);
+        toast.error('Failed to load employees');
       }
     };
     fetchEmployees();
@@ -835,8 +863,10 @@ const LeaveTicketDetailView = ({ ticket, onBack, onAction, userRole, currentEmpl
       const res = await fetch(endpoints.managedLeaves.logs(ticket.id), { headers: getAuthHeaders() });
       const data = await res.json();
       if (data.success) setLogs(data.data || []);
+      else toast.error('Failed to load leave activity logs');
     } catch (err) {
       console.error('Failed to fetch leave logs:', err);
+      toast.error('Failed to load leave activity logs');
     }
   };
 
@@ -844,7 +874,11 @@ const LeaveTicketDetailView = ({ ticket, onBack, onAction, userRole, currentEmpl
     setActionLoading(true);
     try {
       await onAction(ticket.id, action, remarks);
+      toast.success(`Leave ticket ${action === 'approved' ? 'approved' : 'rejected'} successfully!`);
       onBack();
+    } catch (err) {
+      console.error('Action failed:', err);
+      toast.error(`Failed to ${action} ticket`);
     } finally {
       setActionLoading(false);
     }
@@ -1138,6 +1172,7 @@ const AttendanceCorrectionPage = () => {
       if (data.success) setCounts(data.data);
     } catch (err) {
       console.error('Failed to fetch counts:', err);
+      toast.error('Failed to load correction counts');
     }
   }, []);
 
@@ -1218,6 +1253,7 @@ const AttendanceCorrectionPage = () => {
       if (data.success) setMlCounts(data.data);
     } catch (err) {
       console.error('Failed to fetch managed leave counts:', err);
+      toast.error('Failed to load managed leave counts');
     }
   }, []);
 
@@ -1250,6 +1286,7 @@ const AttendanceCorrectionPage = () => {
       if (data.success) setLeaveBalance(data.data);
     } catch (err) {
       console.error('Failed to fetch leave balance:', err);
+      toast.error('Failed to load leave balance');
     }
   }, []);
 
@@ -1370,7 +1407,7 @@ const AttendanceCorrectionPage = () => {
                 <h3 className="text-sm font-semibold text-gray-700">Quick Actions</h3>
                 <button
                   onClick={() => {
-                    console.log('Opening files slider...');
+                    toast.success('Loading attachments...');
                     setIsFileSliderOpen(true);
                   }}
                   className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white border-0 rounded-lg hover:bg-indigo-700 active:bg-indigo-800 transition-colors text-sm font-semibold shadow-sm hover:shadow-md"
@@ -1613,9 +1650,9 @@ const AttendanceCorrectionPage = () => {
                         <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Employee</th>
                       )}
                       <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Original</th>
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Current</th>
                       <th className="text-center px-2 py-3"></th>
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Corrected</th>
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Requested</th>
                       <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Reviewer</th>
                       <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">HR</th>
                       <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>

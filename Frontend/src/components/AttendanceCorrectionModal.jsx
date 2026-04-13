@@ -95,7 +95,7 @@ const AttendanceCorrectionModal = ({ isOpen, onClose, record, onSubmitted }) => 
     try {
       const payload = {
         attendance_id: record.id || null,
-        attendance_date: record.attendance_date,
+        attendance_date: normAttendanceDate(record.attendance_date),
         original_check_in: record.check_in_time || null,
         original_check_out: record.check_out_time || null,
         original_status: record.status || null,
@@ -138,10 +138,25 @@ const AttendanceCorrectionModal = ({ isOpen, onClose, record, onSubmitted }) => 
 
   const parseDate = (dateStr) => {
     if (typeof dateStr === 'string' && dateStr.includes('-')) {
-      const [year, month, day] = dateStr.split('-').map(Number);
+      // Strip the time portion (e.g. 'T19:00:00.000Z') before splitting
+      const [year, month, day] = dateStr.split('T')[0].split('-').map(Number);
       return new Date(year, month - 1, day);
     }
     return new Date(dateStr);
+  };
+
+  // Produces a clean 'YYYY-MM-DD' string from an attendance_date that may
+  // arrive as a full ISO timestamp ('2026-03-25T19:00:00.000Z' on UTC+5).
+  const normAttendanceDate = (dateStr) => {
+    if (!dateStr) return dateStr;
+    if (typeof dateStr === 'string' && dateStr.includes('-')) {
+      return dateStr.split('T')[0]; // keep only the local-date portion
+    }
+    const d = new Date(dateStr);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
   };
 
   const statusOptions = ['Present', 'Late', 'Absent', 'On Leave', 'Half Day', 'Paid Leave'];

@@ -1,6 +1,25 @@
 const pool = require('../../config/database');
 
 // ──────────────────────────────────────────────────────────────
+// Helper: normalize attendance_date to plain YYYY-MM-DD string
+// mysql2 returns DATE columns as JS Date objects; serialising them
+// via res.json() produces "2026-03-25T19:00:00.000Z" on a UTC+5
+// server, causing the front-end to display a date one day early.
+// ──────────────────────────────────────────────────────────────
+const normalizeCorrectionRows = (rows) => {
+  rows.forEach((row) => {
+    if (row.attendance_date && !(typeof row.attendance_date === 'string')) {
+      const d = row.attendance_date;
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      row.attendance_date = `${y}-${m}-${day}`;
+    }
+  });
+  return rows;
+};
+
+// ──────────────────────────────────────────────────────────────
 // Helper: generate ticket number  AC-20260327-XXXX
 // ──────────────────────────────────────────────────────────────
 const generateTicketNumber = () => {
@@ -123,6 +142,7 @@ const getMyCorrections = async (req, res) => {
     query += ` ORDER BY created_at DESC`;
 
     const [rows] = await pool.query(query, params);
+    normalizeCorrectionRows(rows);
 
     res.status(200).json({ success: true, data: rows, count: rows.length });
   } catch (error) {
@@ -151,6 +171,7 @@ const getTaggedToMe = async (req, res) => {
     query += ` ORDER BY created_at DESC`;
 
     const [rows] = await pool.query(query, params);
+    normalizeCorrectionRows(rows);
 
     res.status(200).json({ success: true, data: rows, count: rows.length });
   } catch (error) {
@@ -241,6 +262,7 @@ const getAllCorrections = async (req, res) => {
     query += ` ORDER BY created_at DESC`;
 
     const [rows] = await pool.query(query, params);
+    normalizeCorrectionRows(rows);
 
     res.status(200).json({ success: true, data: rows, count: rows.length });
   } catch (error) {
@@ -473,6 +495,8 @@ const getCorrectionById = async (req, res) => {
     if (rows.length === 0) {
       return res.status(404).json({ success: false, message: 'Correction ticket not found' });
     }
+
+    normalizeCorrectionRows(rows);
 
     // Also get logs
     const [logs] = await pool.query(

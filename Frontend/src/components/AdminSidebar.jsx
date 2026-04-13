@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { confirmDialog } from '../utils/confirm';
 import { 
   LayoutDashboard, 
   Users, 
@@ -31,7 +32,7 @@ const AdminSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }
   };
 
   const handleLogout = async () => {
-    if (!window.confirm('Are you sure you want to logout?')) return;
+    if (!await confirmDialog('Are you sure you want to logout?', { confirmText: 'Logout', type: 'warning' })) return;
 
     try {
       const token = localStorage.getItem('token') || localStorage.getItem('authToken');

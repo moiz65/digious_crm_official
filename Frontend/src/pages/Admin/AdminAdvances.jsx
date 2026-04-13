@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Sidebar from "../../components/Sidebar";
+import { confirmDialog } from '../../utils/confirm';
 import {
   DollarSign, Search, Filter, Plus, Edit, Trash2, Eye, X,
   RefreshCw, TrendingUp, TrendingDown, Calendar, Check,
@@ -225,7 +226,7 @@ const AdminAdvances = () => {
   };
 
   const handleCancel = async (id) => {
-    if (!window.confirm("Cancel this advance/loan? Remaining installments will be skipped.")) return;
+    if (!await confirmDialog('Cancel this advance/loan? Remaining installments will be skipped.', { confirmText: 'Cancel Advance', type: 'warning' })) return;
     const data = await apiFetch(`${API_BASE}/advances/${id}`, { method: "PUT", body: JSON.stringify({ status: "cancelled" }) });
     if (data.success) { fetchAdvances(); fetchSummary(); }
     else setError(data.message);
@@ -236,14 +237,14 @@ const AdminAdvances = () => {
     const msg = newStatus === 'on_hold'
       ? "Put this advance on hold? Deductions will be paused."
       : "Resume this advance? Deductions will restart.";
-    if (!window.confirm(msg)) return;
+    if (!await confirmDialog(msg, { type: 'warning' })) return;
     const data = await apiFetch(`${API_BASE}/advances/${adv.id}`, { method: "PUT", body: JSON.stringify({ status: newStatus }) });
     if (data.success) { fetchAdvances(); fetchSummary(); }
     else setError(data.message);
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Delete this advance/loan? This cannot be undone.")) return;
+    if (!await confirmDialog('Delete this advance/loan? This cannot be undone.')) return;
     const data = await apiFetch(`${API_BASE}/advances/${id}`, { method: "DELETE" });
     if (data.success) { fetchAdvances(); fetchSummary(); }
     else setError(data.message);

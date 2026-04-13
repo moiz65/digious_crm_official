@@ -1,6 +1,7 @@
 // UserManagementDashboard.jsx
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
+import { confirmDialog } from '../utils/confirm';
 
 const UserManagementDashboard = () => {
   const [selectedUser, setSelectedUser] = useState('john-doe');
@@ -444,8 +445,8 @@ const UserManagementDashboard = () => {
   };
 
   // Handle delete user
-  const handleDeleteUser = (userId) => {
-    if (window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+  const handleDeleteUser = async (userId) => {
+    if (await confirmDialog('Are you sure you want to delete this user? This action cannot be undone.')) {
       const updatedUsers = users.filter(user => user.id !== userId);
       setUsers(updatedUsers);
       if (selectedUser === userId && updatedUsers.length > 0) {
@@ -482,7 +483,7 @@ const UserManagementDashboard = () => {
   };
 
   // Handle role change for selected user - Updated with new role templates
-  const handleRoleChange = (newRoleId) => {
+  const handleRoleChange = async (newRoleId) => {
     const roleTemplate = {
       'super-admin': {
         dashboard: ['view', 'export'],
@@ -558,7 +559,7 @@ const UserManagementDashboard = () => {
       }
     };
 
-    if (window.confirm('Change user role? This will reset custom permissions to the role template.')) {
+    if (await confirmDialog('Change user role? This will reset custom permissions to the role template.', { type: 'warning', confirmText: 'Change Role' })) {
       setUsers(users.map(user => {
         if (user.id === selectedUser) {
           return {

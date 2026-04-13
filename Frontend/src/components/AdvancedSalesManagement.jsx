@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
+import { confirmDialog } from '../utils/confirm';
 import {
   DollarSign, TrendingUp, Clock, CheckCircle,
   AlertCircle, Calendar, CreditCard,
@@ -207,7 +208,7 @@ const AdvancedSalesManagement = () => {
 
   // ── Delete ───────────────────────────────────────────────────────────────
   const handleDelete = async (id) => {
-    if (!window.confirm('Delete this sale? This cannot be undone.')) return;
+    if (!await confirmDialog('Delete this sale? This cannot be undone.')) return;
     try {
       await deleteSaleApi(id);
       fetchSales();
