@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LogOut, LayoutDashboard, Briefcase, Users, FileText, Activity, Calendar, User, ChartBar, ClipboardList, LogOut as LogOutIcon } from 'lucide-react';
-
-// Placeholder image URL
-const PLACEHOLDER_IMAGE = 'https://res.cloudinary.com/dmxf2mega/image/upload/q_auto/f_auto/v1775678503/Portrait_Placeholder_wg1pzs.png';
+import { confirmDialog } from '../utils/confirm';
+import { LogOut } from 'lucide-react';
 
 export const DashboardHeader = ({ title, subtitle }) => {
   const { user, role, logoutNoCheckout } = useAuth();
@@ -71,7 +69,7 @@ export const DashboardHeader = ({ title, subtitle }) => {
   }, [user]);
 
   const handleLogout = async () => {
-    if (!window.confirm('Are you sure you want to logout?')) return;
+    if (!await confirmDialog('Are you sure you want to logout?', { confirmText: 'Logout', type: 'warning' })) return;
 
     try {
       const token = localStorage.getItem('token') || localStorage.getItem('authToken');

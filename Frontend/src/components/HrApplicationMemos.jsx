@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import toast from 'react-hot-toast';
+import { confirmDialog } from '../utils/confirm';
 import {
   Calendar,
   Download,
@@ -2443,7 +2444,7 @@ const ApplicationDetailModal = ({ application, onClose, onMarkAsRead, isMemo, cu
   };
 
   const handleWithdrawAssignment = async () => {
-    if (!window.confirm('Are you sure you want to withdraw your assignment from this application?')) {
+    if (!await confirmDialog('Are you sure you want to withdraw your assignment from this application?', { confirmText: 'Withdraw' })) {
       return;
     }
 

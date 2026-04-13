@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import React, { useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
 import { DashboardHeader, RoleBasedNav } from "../../components/DashboardComponents";
@@ -33,6 +34,23 @@ import {
   Pie,
   Cell,
 } from "recharts";
+=======
+import React, { useState, useEffect, useCallback } from 'react';
+import toast from 'react-hot-toast';
+import { DashboardHeader } from '../../components/DashboardComponents';
+import { useAuth } from '../../context/AuthContext';
+import { endpoints } from '../../config/api';
+import { getPakistanDate } from '../../utils/timezone';
+import HrSidebar from '../../components/HrSidebar';
+import PagePreloader from '../../components/PagePreloader';
+import AttendanceCorrectionModal from '../../components/AttendanceCorrectionModal';
+import {
+  CheckCircle,Clock,LogIn,LogOut,User,Activity,AlertCircle,Timer,PauseCircle,Utensils,Cigarette,Table,Shield,Edit3
+} from 'lucide-react';
+import { 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,PieChart,Pie,Cell
+} from 'recharts';
+>>>>>>> d22280a2ba958a0314efd28da450894783519cd8
 
 // Helper function to parse YYYY-MM-DD string correctly without timezone shift
 const parseAttendanceDate = (dateStr) => {
@@ -63,7 +81,13 @@ const HRMyAttendance = () => {
   const [pendingCheckout, setPendingCheckout] = useState(null); // NEW: Track pending checkout from previous shift
   const [isOverlapWindow, setIsOverlapWindow] = useState(false); // NEW: Track if in overlap window (9 AM - 9 PM)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+<<<<<<< HEAD
   const [sidebarActiveItem, setSidebarActiveItem] = useState("my-attendance");
+=======
+  const [sidebarActiveItem, setSidebarActiveItem] = useState('my-attendance');
+  const [correctionModalOpen, setCorrectionModalOpen] = useState(false);
+  const [correctionRecord, setCorrectionRecord] = useState(null);
+>>>>>>> d22280a2ba958a0314efd28da450894783519cd8
 
   // Leave summary state (defaults — replace with API data when available)
   const [leaveSummary, setLeaveSummary] = useState({
@@ -1123,6 +1147,7 @@ const HRMyAttendance = () => {
               </div>
             </div>
 
+<<<<<<< HEAD
             <main className="flex-1 overflow-y-auto p-6">
               {activeTab === "dashboard" && (
                 <>
@@ -1140,6 +1165,569 @@ const HRMyAttendance = () => {
                                 : attendanceData?.check_out_time
                                   ? "bg-blue-100"
                                   : "bg-white"
+=======
+            {/* Break Management */}
+            <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-200">
+              <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                <PauseCircle className="w-6 h-6 text-purple-600" />
+                Break Management
+              </h2>
+              
+              {/* Break Type Cards Grid */}
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                {breakTypes.map((breakType) => {
+                  const Icon = breakType.icon;
+                  const isActive = activeBreaks.some(b => b.break_type === breakType.type);
+                  
+                  return (
+                    <button
+                      key={breakType.type}
+                      onClick={() => handleBreakStart(breakType.type)}
+                      disabled={!isCheckedIn || isActive || attendanceData?.check_out_time}
+                      className={`p-5 rounded-xl text-center transition-all duration-300 border ${
+                        !isCheckedIn || isActive || attendanceData?.check_out_time
+                          ? 'bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed'
+                          : 'bg-white border-gray-200 hover:border-purple-300 hover:shadow-md text-gray-900'
+                      }`}
+                    >
+                      <Icon className="w-6 h-6 mx-auto mb-2 opacity-70" />
+                      <div className="text-sm font-semibold">{breakType.label}</div>
+                      <div className="text-xs text-gray-500 mt-1">{breakType.duration}m</div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Active Breaks Alert */}
+              {activeBreaks.length > 0 && (
+                <div className="mb-6 bg-amber-50 border border-amber-200 rounded-lg p-4">
+                  <h3 className="text-sm font-semibold text-amber-900 mb-3 flex items-center gap-2">
+                    <Timer className="w-4 h-4" />
+                    Active Breaks
+                  </h3>
+                  <div className="space-y-2">
+                    {activeBreaks.map((breakItem) => (
+                      <div key={breakItem.id} className="flex items-center justify-between bg-white rounded-lg p-3 border border-amber-100">
+                        <div className="flex-1">
+                          <span className="text-sm font-medium text-gray-700">
+                            {breakItem.break_type.charAt(0).toUpperCase() + breakItem.break_type.slice(1)} Break
+                          </span>
+                          <div className="mt-1 flex items-center gap-2">
+                            <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                              <div 
+                                className="h-full bg-gradient-to-r from-amber-400 to-amber-500 transition-all"
+                                style={{
+                                  width: `${Math.min(100, (breakTimers[breakItem.id] || 0) / (breakItem.break_type === 'Dinner' ? 60 : breakItem.break_type === 'Smoke' ? 5 : 10) * 100)}%`
+                                }}
+                              />
+                            </div>
+                            <span className="text-xs font-mono font-bold text-amber-700 min-w-[50px]">
+                              {formatElapsedTime(breakTimers[breakItem.id] || 0)}
+                            </span>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleBreakEnd(breakItem.id)}
+                          className="ml-3 text-xs bg-red-500 text-white px-3 py-1 rounded-full hover:bg-red-600 transition-colors whitespace-nowrap"
+                        >
+                          End Break
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Today's Break Summary */}
+              {attendanceData && (
+                <div className="pt-6 border-t border-gray-200">
+                  <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-4">Today's Breaks</h3>
+                  
+                  {/* Main Stats */}
+                  <div className="space-y-3 mb-4">
+                    <div className="flex justify-between items-center">
+                      <p className="text-gray-700 font-medium">Total Breaks:</p>
+                      <p className="text-2xl font-bold text-purple-600">{attendanceData.total_breaks_taken || 0}</p>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <p className="text-gray-700 font-medium">Total Time:</p>
+                      <p className="text-2xl font-bold text-purple-600">{formatTimeDisplay(attendanceData.total_break_duration_minutes || 0)}</p>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <p className="text-gray-700 font-medium">Active:</p>
+                      <p className="text-2xl font-bold text-purple-600">{activeBreaks.length}</p>
+                    </div>
+                  </div>
+                  
+                  {/* Break Details by Type - Always Show */}
+                  <div className="pt-4 border-t border-purple-200">
+                    <h4 className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-3">Break Details</h4>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div className="flex justify-between items-center bg-gray-50 p-2 rounded">
+                        <span className="text-gray-700">Smoke Break:</span>
+                        <span className="font-semibold text-purple-600">0x</span>
+                      </div>
+                      <div className="flex justify-between items-center bg-gray-50 p-2 rounded">
+                        <span className="text-gray-700">Dinner Break:</span>
+                        <span className="font-semibold text-purple-600">0x</span>
+                      </div>
+                      <div className="flex justify-between items-center bg-gray-50 p-2 rounded">
+                        <span className="text-gray-700">Washroom Break:</span>
+                        <span className="font-semibold text-purple-600">0x</span>
+                      </div>
+                      <div className="flex justify-between items-center bg-gray-50 p-2 rounded">
+                        <span className="text-gray-700">Prayer Break:</span>
+                        <span className="font-semibold text-purple-600">0x</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Charts Section */}
+          <div className="space-y-6 mt-8">
+            {/* Chart View Filter */}
+            <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-bold text-gray-900">Working Hours Trend</h3>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setChartView('monthly')}
+                    className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${
+                      chartView === 'monthly'
+                        ? 'bg-blue-500 text-white shadow-lg'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    Monthly
+                  </button>
+
+
+                </div>
+              </div>
+
+              {/* Working Hours Chart */}
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={
+                  chartView === 'monthly' ? getMonthlyChartData() :
+                  getWeeklyData()
+                }>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" />
+                  <YAxis label={{ value: 'Hours', angle: -90, position: 'insideLeft' }} />
+                  <Tooltip 
+                    formatter={(value) => `${value}h`}
+                    labelFormatter={(label) => `${label}`}
+                  />
+                  <Bar dataKey="hours" fill="#3b82f6" name="Working Hours" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Status Distribution Chart */}
+            <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
+              <h3 className="text-lg font-bold text-gray-900 mb-6">Attendance Status Distribution</h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={getStatusDistribution()}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={(entry) => `${entry.name}: ${entry.value}`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {getStatusDistribution().map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+        </>
+          )}
+
+          {activeTab === 'sheet' && (
+            <div className="space-y-6">
+              {/* Header Section */}
+              <div className="bg-white rounded-lg p-6 text-black/90 shadow-md">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                  <div>
+                    <h2 className="text-2xl font-bold mb-1">Attendance Records</h2>
+                    <p className="text-black/70 text-sm">
+                      <span className="font-semibold">{
+                        monthlyAttendance.filter(r => 
+                          statusFilter === 'All Status' || r.status === statusFilter
+                        ).length
+                      }</span> records in <span className="font-semibold">{
+                        new Date(2026, selectedMonth - 1).toLocaleDateString('en-US', { month: 'long' })
+                      } {selectedYear}</span>
+                    </p>
+                  </div>
+                  
+                  {/* Month/Year Navigation */}
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        if (selectedMonth === 1) {
+                          setSelectedMonth(12);
+                          setSelectedYear(selectedYear - 1);
+                        } else {
+                          setSelectedMonth(selectedMonth - 1);
+                        }
+                      }}
+                      className="px-3 py-2 bg-blue-500 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 font-semibold text-sm"
+                      title="Previous month"
+                    >
+                      ← Prev
+                    </button>
+
+                    <select
+                      value={selectedMonth}
+                      onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                      className="px-3 py-2 rounded-lg bg-white text-gray-700 font-semibold cursor-pointer border border-gray-300 hover:border-blue-400 transition-colors"
+                    >
+                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(m => (
+                        <option key={m} value={m}>
+                          {new Date(2026, m - 1).toLocaleDateString('en-US', { month: 'short' })}
+                        </option>
+                      ))}
+                    </select>
+                    
+                    <select
+                      value={selectedYear}
+                      onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                      className="px-3 py-2 rounded-lg bg-white text-gray-700 font-semibold cursor-pointer border border-gray-300 hover:border-blue-400 transition-colors"
+                    >
+                      {[2024, 2025, 2026, 2027].map(y => (
+                        <option key={y} value={y}>{y}</option>
+                      ))}
+                    </select>
+
+                    <button
+                      onClick={() => {
+                        if (selectedMonth === 12) {
+                          setSelectedMonth(1);
+                          setSelectedYear(selectedYear + 1);
+                        } else {
+                          setSelectedMonth(selectedMonth + 1);
+                        }
+                      }}
+                      className="px-3 py-2 bg-blue-500 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 font-semibold text-sm"
+                      title="Next month"
+                    >
+                      Next →
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Monthly Statistics Section */}
+              <div className="mt-8">
+                <h3 className="text-2xl font-bold text-gray-900 mb-6">Monthly Overview</h3>
+                
+                {/* Monthly Stats Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                  {/* Total Working Hours */}
+                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-2xl p-6">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-sm font-medium text-blue-800">Total Hours</h4>
+                      <Clock className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <p className="text-3xl font-bold text-blue-600">{getMonthlyStats().totalHours}h {getMonthlyStats().totalMinutes}m</p>
+                    <p className="text-xs text-blue-600 mt-1">total this month</p>
+                  </div>
+
+                  {/* Average Daily Hours */}
+                  <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-2xl p-6">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-sm font-medium text-purple-800">Average Daily</h4>
+                      <Activity className="w-5 h-5 text-purple-600" />
+                    </div>
+                    <p className="text-3xl font-bold text-purple-600">{getMonthlyStats().averageHours}h {Math.round(getMonthlyStats().averageMinutes)}m</p>
+                    <p className="text-xs text-purple-600 mt-1">per work day</p>
+                  </div>
+
+                  {/* Work Days */}
+                  <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-2xl p-6">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-sm font-medium text-green-800">Work Days</h4>
+                      <CheckCircle className="w-5 h-5 text-green-600" />
+                    </div>
+                    <p className="text-3xl font-bold text-green-600">{getMonthlyStats().workDays}</p>
+                    <p className="text-xs text-green-600 mt-1">days present/late</p>
+                  </div>
+
+                  {/* Total Break Time */}
+                  <div className="bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 rounded-2xl p-6">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-sm font-medium text-orange-800">Break Time</h4>
+                      <PauseCircle className="w-5 h-5 text-orange-600" />
+                    </div>
+                    <p className="text-3xl font-bold text-orange-600">{Math.floor(getMonthlyStats().totalBreakMinutes / 60)}h {getMonthlyStats().totalBreakMinutes % 60}m</p>
+                    <p className="text-xs text-orange-600 mt-1">total break time</p>
+                  </div>
+                </div>
+
+
+              </div>
+
+
+              {/* Filter Buttons */}
+              <div className="space-y-3">
+                <p className="text-gray-700 font-bold text-sm uppercase tracking-wide">Filter by Status</p>
+                <div className="flex flex-wrap gap-2">
+                  {/* All Status Button */}
+                  <button
+                    onClick={() => setStatusFilter('All Status')}
+                    className={`px-6 py-3 rounded-full font-semibold transition-all text-sm shadow-md ${
+                      statusFilter === 'All Status'
+                        ? 'bg-[#349DFF] text-white shadow-lg scale-105'
+                        : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-blue-400'
+                    }`}
+                  >
+                    All ({monthlyAttendance.length})
+                  </button>
+
+                  {/* Present Button */}
+                  <button
+                    onClick={() => setStatusFilter('Present')}
+                    className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${
+                      statusFilter === 'Present'
+                        ? 'bg-green-600 text-white'
+                        : 'bg-white text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    Present ({monthlyAttendance.filter(r => r.status === 'Present').length})
+                  </button>
+
+                  <button
+                    onClick={() => setStatusFilter('Late')}
+                    className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${
+                      statusFilter === 'Late'
+                        ? 'bg-orange-600 text-white'
+                        : 'bg-white text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    Late ({monthlyAttendance.filter(r => r.status === 'Late').length})
+                  </button>
+
+                  <button
+                    onClick={() => setStatusFilter('ML')}
+                    className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${
+                      statusFilter === 'ML'
+                        ? 'bg-blue-900 text-white'
+                        : 'bg-white text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    ML ({monthlyAttendance.filter(r => r.status === 'ML').length})
+                  </button>
+
+                  <button
+                    onClick={() => setStatusFilter('Absent')}
+                    className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${
+                      statusFilter === 'Absent'
+                        ? 'bg-red-600 text-white'
+                        : 'bg-white text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    Absent ({monthlyAttendance.filter(r => r.status === 'Absent').length})
+                  </button>
+
+                  <button
+                    onClick={() => setStatusFilter('Leave')}
+                    className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${
+                      statusFilter === 'Leave'
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-white text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    Leave ({monthlyAttendance.filter(r => r.status === 'Leave').length})
+                    </button>
+                </div>
+              </div>
+
+              {/* Attendance Table */}
+              <div className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden relative z-10">
+                <div className="px-6 py-4 border-b border-gray-200 bg-white text-black/90">
+                  <h2 className="text-lg font-bold">Detailed Attendance</h2>
+                </div>
+                
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-[#349DFF] text-white">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-sm font-semibold">Date</th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold">Check In</th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold">Check Out</th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold">Status</th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold">Working Hours</th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold">Breaks</th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold">Late By</th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold">Overtime</th>
+                        <th className="px-4 py-3 text-center text-sm font-semibold">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {monthlyAttendance.filter(r => 
+                        statusFilter === 'All Status' || r.status === statusFilter
+                      ).length === 0 ? (
+                        <tr>
+                          <td colSpan="9" className="px-4 py-8 text-center text-gray-500">
+                            No attendance records found for the selected filters
+                          </td>
+                        </tr>
+                      ) : (() => {
+                        const filteredRecords = monthlyAttendance.filter(r => 
+                          statusFilter === 'All Status' || r.status === statusFilter
+                        );
+                        
+                        // Sort by date in descending order (latest first)
+                        const sortedRecords = [...filteredRecords].sort((a, b) => {
+                          const dateA = new Date(a.attendance_date);
+                          const dateB = new Date(b.attendance_date);
+                          return dateB - dateA; // Latest dates first
+                        });
+                        
+                        const totalPages = Math.ceil(sortedRecords.length / RECORDS_PER_PAGE);
+                        const startIndex = (currentPage - 1) * RECORDS_PER_PAGE;
+                        const endIndex = startIndex + RECORDS_PER_PAGE;
+                        const paginatedRecords = sortedRecords.slice(startIndex, endIndex);
+
+                        return paginatedRecords.map((record, index) => (
+                          <tr key={record.id || `absent-${record.attendance_date}`} className={`${
+                            record.is_absent ? 'bg-red-50 hover:bg-red-100' :
+                            record.status === 'ML' ? 'bg-blue-50 hover:bg-blue-100' :
+                            index % 2 === 0 ? 'bg-gray-50 hover:bg-gray-100' : 'bg-white hover:bg-gray-50'
+                          } transition-colors`}>
+                            <td className="px-4 py-3 text-sm text-gray-700">
+                              {parseAttendanceDate(record.attendance_date).toLocaleDateString('en-US', {
+                                weekday: 'short',
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric'
+                              })}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-700">
+                              {!record.check_in_time ? <span className="text-red-600 font-semibold">No Check-in</span> : record.check_in_time}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-700">
+                              {!record.check_in_time ? <span className="text-red-600 font-semibold">—</span> : (record.check_out_time || '-')}
+                            </td>
+                            <td className="px-4 py-3 text-sm">
+                              <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                                record.status === 'Present' ? 'bg-green-100 text-green-700' :
+                                record.status === 'Late' ? 'bg-orange-100 text-orange-700' :
+                                record.status === 'ML' ? 'bg-blue-900 text-white' :
+                                record.status === 'Absent' ? 'bg-red-100 text-red-700' :
+                                record.status === 'Paid Leave' ? 'bg-teal-100 text-teal-700' :
+                                record.status === 'Uninformed Absent' ? 'bg-red-200 text-red-800' :
+                                'bg-purple-100 text-purple-700'
+                              }`}>
+                                {record.status === 'Paid Leave' ? 'PL' :
+                                 record.status === 'Uninformed Absent' ? 'UA' :
+                                 record.status === 'Present' ? 'P' :
+                                 record.status === 'Late' ? 'L' :
+                                 record.status === 'ML' ? 'ML' :
+                                 record.status === 'Absent' ? 'A' :
+                                 record.status}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-700">
+                              {record.is_absent ? <span className="text-red-600 font-semibold">—</span> : (
+                                record.net_working_time_minutes 
+                                  ? `${Math.floor(record.net_working_time_minutes / 60)}h ${record.net_working_time_minutes % 60}m`
+                                  : '-'
+                              )}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-700">
+                              {record.is_absent ? <span className="text-red-600 font-semibold">—</span> : (
+                                (record.total_breaks_taken || 0) + ' (' + (record.total_break_duration_minutes || 0) + 'm)'
+                              )}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-700">
+                              {record.is_absent ? <span className="text-red-600 font-semibold">—</span> : (record.late_by_minutes ? `${record.late_by_minutes}m` : '-')}
+                            </td>
+                            <td className="px-4 py-3 text-sm">
+                              {record.is_absent ? (
+                                <span className="text-red-600 font-semibold">—</span>
+                              ) : (
+                                record.overtime_minutes > 0 ? (
+                                  <span className="px-2 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
+                                    {Math.floor(record.overtime_minutes / 60)}h {record.overtime_minutes % 60}m
+                                  </span>
+                                ) : (
+                                  <span className="text-gray-500">-</span>
+                                )
+                              )}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-center">
+                              <button
+                                onClick={() => {
+                                  setCorrectionRecord(record);
+                                  setCorrectionModalOpen(true);
+                                }}
+                                className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 hover:border-blue-300 transition-all"
+                                title="Request attendance correction"
+                              >
+                                <Edit3 className="w-3.5 h-3.5" />
+                                Correct
+                              </button>
+                            </td>
+                          </tr>
+                        ));
+                      })()}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Pagination Controls */}
+                {(() => {
+                  const filteredRecords = monthlyAttendance.filter(r => 
+                    statusFilter === 'All Status' || r.status === statusFilter
+                  );
+                  
+                  // Sort by date in descending order (latest first)
+                  const sortedRecords = [...filteredRecords].sort((a, b) => {
+                    const dateA = new Date(a.attendance_date);
+                    const dateB = new Date(b.attendance_date);
+                    return dateB - dateA; // Latest dates first
+                  });
+                  
+                  const totalPages = Math.ceil(sortedRecords.length / RECORDS_PER_PAGE);
+                  
+                  return totalPages > 1 ? (
+                    <div className="border-t border-gray-200 p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                      <div className="text-sm text-gray-600">
+                        Showing page <span className="font-semibold text-gray-900">{currentPage}</span> of <span className="font-semibold text-gray-900">{totalPages}</span>
+                        <span className="ml-4">Total: <span className="font-semibold text-gray-900">{filteredRecords.length}</span> records <span className="text-gray-500 text-xs">(showing {RECORDS_PER_PAGE} per page)</span></span>
+                      </div>
+                      
+                      <div className="flex gap-2 flex-wrap">
+                        <button
+                          onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                          disabled={currentPage === 1}
+                          className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200 transition-colors font-semibold text-sm"
+                        >
+                          ← Previous
+                        </button>
+                        
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                          <button
+                            key={page}
+                            onClick={() => setCurrentPage(page)}
+                            className={`px-3 py-2 rounded-lg font-semibold transition-colors text-sm ${
+                              currentPage === page
+                                ? 'bg-blue-500 text-white'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+>>>>>>> d22280a2ba958a0314efd28da450894783519cd8
                             }`}
                           >
                             <CheckCircle
@@ -2254,6 +2842,14 @@ const HRMyAttendance = () => {
           </>
         )}
       </div>
+
+      {/* Attendance Correction Modal */}
+      <AttendanceCorrectionModal
+        isOpen={correctionModalOpen}
+        onClose={() => { setCorrectionModalOpen(false); setCorrectionRecord(null); }}
+        record={correctionRecord}
+        onSubmitted={() => fetchMonthlyAttendance()}
+      />
     </div>
   );
 };

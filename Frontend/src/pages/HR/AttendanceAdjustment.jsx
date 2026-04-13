@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import HrSidebar from '../../components/HrSidebar';
 import PagePreloader from '../../components/PagePreloader';
+import { confirmDialog } from '../../utils/confirm';
 import { endpoints, getAuthHeaders } from '../../config/api';
 import {
   Search, FileText, User, Calendar, Clock, CheckCircle, XCircle,
@@ -1015,7 +1016,7 @@ const AbsentsTab = ({ data, employeeId, showToast, onRefresh }) => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Delete this absent record?')) return;
+    if (!await confirmDialog('Delete this absent record?')) return;
     try {
       const res = await fetch(endpoints.adjustments.deleteAbsent(id), {
         method: 'DELETE',

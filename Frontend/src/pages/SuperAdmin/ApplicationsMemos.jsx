@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import AdminSidebar from '../../components/AdminSidebar';
+import { confirmDialog } from '../../utils/confirm';
 import { 
   FileText, Search, Plus, Eye, Check, X, Clock, 
   Download, User, Mail, Calendar, MessageSquare,
@@ -250,8 +251,8 @@ const AdminApplicationsMemos = () => {
     resetMemoForm();
   };
 
-  const handleDeleteMemo = (id) => {
-    if (window.confirm('Are you sure you want to delete this memo?')) {
+  const handleDeleteMemo = async (id) => {
+    if (await confirmDialog('Are you sure you want to delete this memo?')) {
       setMemos(memos.filter(memo => memo.id !== id));
     }
   };

@@ -1,31 +1,15 @@
 // Frontend/src/pages/HR/EmployeeManagement.jsx
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import HrSidebar from "../../components/HrSidebar";
-import { config } from "../../config/api";
-import {
-  Users,
-  Search,
-  Plus,
-  Edit,
-  Trash2,
-  Eye,
-  Download,
-  Mail,
-  Phone,
-  MapPin,
-  Calendar,
-  Briefcase,
-  X,
-  Loader,
-} from "lucide-react";
-import { generateTablePDF, exportToCSV } from "../../utils/pdfExport";
-import toast from "react-hot-toast";
-import {
-  DashboardHeader,
-  RoleBasedNav,
-} from "../../components/DashboardComponents";
-import { useAuth } from "../../context/AuthContext";
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import HrSidebar from '../../components/HrSidebar';
+import { confirmDialog } from '../../utils/confirm';
+import { config } from '../../config/api';
+import { 
+  Users, Search, Plus, Edit, Trash2, Eye, Download,
+  Mail, Phone, MapPin, Calendar, Briefcase, X, Loader
+} from 'lucide-react';
+import { generateTablePDF, exportToCSV } from '../../utils/pdfExport';
+import toast from 'react-hot-toast';
 
 const API_URL = config.FULL_API_URL;
 
@@ -101,7 +85,7 @@ const EmployeeManagement = () => {
   const paginatedEmployees = filteredEmployees.slice(startIndex, endIndex);
 
   const handleDeleteEmployee = async (id) => {
-    if (window.confirm("Are you sure you want to delete this employee?")) {
+    if (await confirmDialog('Are you sure you want to delete this employee?')) {
       try {
         const response = await fetch(`${API_URL}/employees/${id}`, {
           method: "DELETE",
