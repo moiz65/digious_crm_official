@@ -94,6 +94,8 @@ const EmployeeSalesPage = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+  const [salesTarget, setSalesTarget] = useState(null);
+  const [targetLoading, setTargetLoading] = useState(false);
 
   // Get user info from localStorage
   const user = JSON.parse(localStorage.getItem("userInfo") || "{}");
@@ -200,6 +202,7 @@ const EmployeeSalesPage = () => {
         phone: s.client_phone || "",
         about: s.project_description || "",
         category: s.category_slug || s.cat_slug || "website-design",
+        categoryName: s.category_name || s.custom_category_name, // Add this field
         categoryId: s.category_id,
         totalSales: parseFloat(s.total_amount) || 0,
         upfrontPayment: parseFloat(s.upfront_payment) || 0,
@@ -212,7 +215,6 @@ const EmployeeSalesPage = () => {
         employeeName: s.employee_name || "",
         accountName: s.account_name || "",
         paymentMethod: s.payment_method || "",
-        categoryName: s.category_name || "",
         categoryIcon: s.category_icon || "Globe",
         categoryColor: s.category_color || "#3B82F6",
       }));
@@ -230,6 +232,53 @@ const EmployeeSalesPage = () => {
   useEffect(() => {
     fetchSales();
   }, [fetchSales]);
+
+  // Fetch sales target for current employee and selected month/year
+  const fetchSalesTarget = useCallback(async () => {
+    setTargetLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const userInfo = JSON.parse(localStorage.getItem("user") || "{}");
+      const employeeId = userInfo.employeeId || userInfo.id;
+
+      if (!employeeId) {
+        console.warn("No employee ID found");
+        return;
+      }
+
+      // Get current month and year based on selectedDate
+      const targetYear = selectedDate.getFullYear();
+      const targetMonth = selectedDate.getMonth() + 1;
+
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL || "http://100.126.74.55:5000"}/api/v1/sales-targets/${employeeId}?month=${targetMonth}&year=${targetYear}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        },
+      );
+
+      const result = await response.json();
+      if (result.success && result.data) {
+        setSalesTarget(result.data);
+      } else {
+        setSalesTarget(null);
+      }
+    } catch (err) {
+      console.error("Failed to fetch sales target:", err);
+      setSalesTarget(null);
+    } finally {
+      setTargetLoading(false);
+    }
+  }, [selectedDate]); // Re-fetch when date changes
+
+  // Call fetchSalesTarget in useEffect
+  useEffect(() => {
+    fetchSales();
+    fetchSalesTarget(); // Add this
+  }, [fetchSales, fetchSalesTarget, selectedDate, dateRange]);
 
   // Status options
   const statuses = ["completed", "in-progress", "pending", "cancelled"];
@@ -251,7 +300,38 @@ const EmployeeSalesPage = () => {
   };
 
   // Get category icon and color
-  const getCategoryDetails = (categoryId) => {
+  const getCategoryDetails = (categorySlug, customName = null) => {
+    if (customName) {
+      return {
+        icon: Globe,
+        color: "text-blue-600 bg-blue-50",
+        name: customName,
+      };
+    }
+
+    // If categorySlug is not in predefined list, format it nicely
+    if (
+      categorySlug &&
+      ![
+        "website-design",
+        "logo-design",
+        "branding",
+        "marketing",
+        "development",
+        "ecommerce",
+        "photography",
+        "graphic-design",
+      ].includes(categorySlug)
+    ) {
+      return {
+        icon: Globe,
+        color: "text-blue-600 bg-blue-50",
+        name: categorySlug
+          .replace(/-/g, " ")
+          .replace(/\b\w/g, (l) => l.toUpperCase()),
+      };
+    }
+
     const categoryMap = {
       "website-design": {
         icon: Globe,
@@ -294,11 +374,12 @@ const EmployeeSalesPage = () => {
         name: "Graphic Design",
       },
     };
+
     return (
-      categoryMap[categoryId] || {
-        icon: AlertCircle,
+      categoryMap[categorySlug] || {
+        icon: Globe,
         color: "text-gray-600 bg-gray-50",
-        name: categoryId,
+        name: categorySlug || "Other",
       }
     );
   };
@@ -507,10 +588,11 @@ const EmployeeSalesPage = () => {
   );
 
   // Calculate totals
+  // Calculate totals - already using upfrontPayment
   const totals = filteredData.reduce(
     (acc, item) => ({
       totalSales: acc.totalSales + item.totalSales,
-      upfrontPayment: acc.upfrontPayment + item.upfrontPayment,
+      upfrontPayment: acc.upfrontPayment + item.upfrontPayment, // This is paid amount
       remainingPayment: acc.remainingPayment + item.remainingPayment,
       completedSales:
         acc.completedSales + (item.status === "completed" ? 1 : 0),
@@ -665,38 +747,132 @@ const EmployeeSalesPage = () => {
       phone: "",
       about: "",
       category: "website-design",
+      otherCategoryName: "", // New field for custom category
       totalSales: "",
       upfrontPayment: "",
-      merchant: "PayPal",
+      merchant: "Ziffs PayPal",
       status: "pending",
       date: new Date().toISOString().split("T")[0],
       deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
         .toISOString()
-        .split("T")[0], // 30 days from now
+        .split("T")[0],
     });
 
+    const [isCreatingNewCategory, setIsCreatingNewCategory] = useState(false);
+    const [newCategorySaving, setNewCategorySaving] = useState(false);
+
+    // In AddSaleModal, update the handleSubmit function
     const handleSubmit = async (e) => {
       e.preventDefault();
       setSaving(true);
       try {
-        // Resolve category DB id from slug
-        const catEntry = categories.find((c) => c.id === formData.category);
-        await createSale({
+        let categoryId = null;
+        let categorySlug = formData.category;
+        let categoryName = "";
+
+        // If "other" is selected and custom name provided
+        if (
+          formData.category === "other" &&
+          formData.otherCategoryName.trim()
+        ) {
+          // IMPORTANT: Use the user's input as the slug, not "other"
+          categorySlug = formData.otherCategoryName
+            .trim()
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-"); // Convert to URL-friendly slug
+
+          categoryName = formData.otherCategoryName.trim();
+
+          // Optional: Create category in categories table (if you want)
+          try {
+            const newCategoryResponse = await fetch(
+              `${process.env.REACT_APP_API_URL || "http://100.126.74.55:5000"}/api/v1/sales-categories`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${localStorage.getItem("token")}`,
+                },
+                body: JSON.stringify({
+                  name: categoryName,
+                  slug: categorySlug,
+                  icon: "Globe",
+                  color: "#3B82F6",
+                }),
+              },
+            );
+
+            const newCategoryResult = await newCategoryResponse.json();
+            if (newCategoryResult.success && newCategoryResult.data) {
+              categoryId = newCategoryResult.data.id;
+
+              // Add to local categories
+              const iconMap = { Globe };
+              const newCategory = {
+                id: newCategoryResult.data.slug,
+                dbId: newCategoryResult.data.id,
+                name: newCategoryResult.data.name,
+                icon: iconMap[newCategoryResult.data.icon] || Globe,
+                color: newCategoryResult.data.color,
+              };
+              setCategories((prev) => [...prev, newCategory]);
+            }
+          } catch (err) {
+            console.error(
+              "Failed to create category in categories table:",
+              err,
+            );
+            // Continue anyway - sale will still be created with the slug
+          }
+        } else {
+          // Normal category selection
+          const catEntry = categories.find((c) => c.id === formData.category);
+          categoryId = catEntry?.dbId || null;
+          categoryName = catEntry?.name || "";
+        }
+
+        // Prepare sale data
+        const saleData = {
           client_name: formData.name,
           client_email: formData.email,
           client_phone: formData.phone,
           project_description: formData.about,
-          category_id: catEntry?.dbId || null,
-          category_slug: formData.category,
+          category_id: categoryId,
+          category_slug: categorySlug, // This will be the user's input value, not "other"
+          category_name: categoryName,
           total_amount: parseFloat(formData.totalSales) || 0,
           upfront_payment: parseFloat(formData.upfrontPayment) || 0,
           merchant: formData.merchant,
           status: formData.status,
           sale_date: formData.date,
           deadline: formData.deadline,
-        });
+        };
+
+        console.log("Sending sale data:", saleData); // Debug log
+
+        await createSale(saleData);
+
         setShowAddSaleModal(false);
+        // Reset form
+        setFormData({
+          name: "",
+          email: "",
+          phone: "",
+          about: "",
+          category: "website-design",
+          otherCategoryName: "",
+          totalSales: "",
+          upfrontPayment: "",
+          merchant: "Ziffs PayPal",
+          status: "pending",
+          date: new Date().toISOString().split("T")[0],
+          deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+            .toISOString()
+            .split("T")[0],
+        });
+        setIsCreatingNewCategory(false);
         await fetchSales(); // Refresh from API
+        toast.success("Sale added successfully!");
       } catch (err) {
         console.error("Failed to create sale:", err);
         toast.error(
@@ -707,18 +883,48 @@ const EmployeeSalesPage = () => {
       }
     };
 
+    // Reset other category field when category changes from "other"
+    const handleCategoryChange = (value) => {
+      setFormData({ ...formData, category: value });
+      if (value !== "other") {
+        setIsCreatingNewCategory(false);
+        setFormData((prev) => ({ ...prev, otherCategoryName: "" }));
+      } else {
+        setIsCreatingNewCategory(true);
+      }
+    };
+
     if (!showAddSaleModal) return null;
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
         <div className="bg-white rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
-          <div className="p-6 border-b border-gray-200">
+          <div className="p-6 border-b border-gray-200 sticky top-0 bg-white z-10">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold text-gray-900">
                 Add New Sale
               </h2>
               <button
-                onClick={() => setShowAddSaleModal(false)}
+                onClick={() => {
+                  setShowAddSaleModal(false);
+                  setIsCreatingNewCategory(false);
+                  setFormData({
+                    name: "",
+                    email: "",
+                    phone: "",
+                    about: "",
+                    category: "website-design",
+                    otherCategoryName: "",
+                    totalSales: "",
+                    upfrontPayment: "",
+                    merchant: "Ziffs PayPal",
+                    status: "pending",
+                    date: new Date().toISOString().split("T")[0],
+                    deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+                      .toISOString()
+                      .split("T")[0],
+                  });
+                }}
                 className="text-gray-400 hover:text-gray-600"
               >
                 <X className="w-5 h-5" />
@@ -763,11 +969,10 @@ const EmployeeSalesPage = () => {
               {/* Phone */}
               <div className="col-span-2 sm:col-span-1">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Phone Number *
+                  Phone Number
                 </label>
                 <input
                   type="tel"
-                  required
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   value={formData.phone}
                   onChange={(e) =>
@@ -792,7 +997,7 @@ const EmployeeSalesPage = () => {
                 />
               </div>
 
-              {/* Category */}
+              {/* Category with Other Option */}
               <div className="col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Project Category *
@@ -801,17 +1006,38 @@ const EmployeeSalesPage = () => {
                   required
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   value={formData.category}
-                  onChange={(e) =>
-                    setFormData({ ...formData, category: e.target.value })
-                  }
+                  onChange={(e) => handleCategoryChange(e.target.value)}
                 >
                   {categories.slice(1).map((category) => (
                     <option key={category.id} value={category.id}>
                       {category.name}
                     </option>
                   ))}
+                  <option value="other">Other</option>
                 </select>
               </div>
+
+              {/* New Category Input - Shows only when "Other" is selected */}
+              {isCreatingNewCategory && (
+                <div className="col-span-2 animate-in fade-in duration-200">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Category Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g., Mobile App Development, SEO Services, etc."
+                    className="w-full px-3 py-2 border border-blue-300 bg-blue-50 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    value={formData.otherCategoryName}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        otherCategoryName: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+              )}
 
               {/* Sale Date */}
               <div className="col-span-2 sm:col-span-1">
@@ -845,7 +1071,7 @@ const EmployeeSalesPage = () => {
                 />
               </div>
 
-              {/* Total Sales - Without arrows */}
+              {/* Total Sales */}
               <div className="col-span-2 sm:col-span-1">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Total Sales ($) *
@@ -864,7 +1090,7 @@ const EmployeeSalesPage = () => {
                 />
               </div>
 
-              {/* Paid Amount - Without arrows */}
+              {/* Paid Amount */}
               <div className="col-span-2 sm:col-span-1">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Paid Amount ($) *
@@ -883,7 +1109,7 @@ const EmployeeSalesPage = () => {
                 />
               </div>
 
-              {/* Remaining Payment (Auto-calculated) - Without arrows */}
+              {/* Remaining Payment (Auto-calculated) */}
               <div className="col-span-2 sm:col-span-1">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Remaining Payment
@@ -950,18 +1176,31 @@ const EmployeeSalesPage = () => {
             <div className="mt-6 flex justify-end gap-3">
               <button
                 type="button"
-                onClick={() => setShowAddSaleModal(false)}
+                onClick={() => {
+                  setShowAddSaleModal(false);
+                  setIsCreatingNewCategory(false);
+                }}
                 className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-gray-700"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                disabled={saving}
+                disabled={
+                  saving ||
+                  newCategorySaving ||
+                  (isCreatingNewCategory && !formData.otherCategoryName.trim())
+                }
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
-                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-                {saving ? "Saving..." : "Add Sale"}
+                {(saving || newCategorySaving) && (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                )}
+                {newCategorySaving
+                  ? "Creating Category..."
+                  : saving
+                    ? "Saving..."
+                    : "Add Sale"}
               </button>
             </div>
           </form>
@@ -983,7 +1222,7 @@ const EmployeeSalesPage = () => {
       <div className="p-6">
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {/* Total Sales */}
+          {/* Total Sales Card with Target */}
           <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-2xl p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center">
@@ -992,21 +1231,103 @@ const EmployeeSalesPage = () => {
                 </div>
                 <div className="ml-4">
                   <h3 className="text-sm font-medium text-blue-800">
-                    Total Sales
+                    Total Collection
                   </h3>
-                  <p className="text-xl font-bold text-blue-600">
-                    ${totals.totalSales.toLocaleString()}
-                  </p>
+                  <div className="flex items-baseline gap-2 flex-wrap">
+                    <p className="text-xl font-bold text-blue-600">
+                      ${totals.upfrontPayment.toLocaleString()}
+                    </p>
+                    {salesTarget && salesTarget.monthly_target > 0 && (
+                      <>
+                        <span className="text-blue-400 text-lg">/</span>
+                        <p className="text-lg font-semibold text-blue-400">
+                          ${salesTarget.monthly_target.toLocaleString()}
+                        </p>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
-            <p className="text-sm text-gray-500">
-              {dateRange === "daily"
-                ? "Today's revenue"
-                : dateRange === "monthly"
-                  ? "This month's revenue"
-                  : "Selected period revenue"}
-            </p>
+
+            {/* Progress Section */}
+            {salesTarget && salesTarget.monthly_target > 0 ? (
+              <div className="mt-2">
+                <div className="flex justify-between text-xs text-blue-700 mb-1">
+                  <span>
+                    {dateRange === "daily"
+                      ? "Daily Progress"
+                      : dateRange === "monthly"
+                        ? "Monthly Progress"
+                        : "Period Progress"}
+                  </span>
+                  <span>
+                    {Math.min(
+                      100,
+                      Math.round(
+                        (totals.upfrontPayment / salesTarget.monthly_target) *
+                          100,
+                      ),
+                    )}
+                    %
+                  </span>
+                </div>
+                <div className="w-full bg-blue-200 rounded-full h-2.5">
+                  <div
+                    className="bg-blue-600 h-2.5 rounded-full transition-all duration-500"
+                    style={{
+                      width: `${Math.min(100, (totals.upfrontPayment / salesTarget.monthly_target) * 100)}%`,
+                    }}
+                  />
+                </div>
+
+                {/* Additional Stats */}
+                {/* <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                  <div className="bg-blue-50 rounded-lg p-2">
+                    <span className="text-blue-600 block">Achieved</span>
+                    <span className="font-bold text-blue-700">
+                      ${salesTarget.achieved?.toLocaleString() || 0}
+                    </span>
+                  </div>
+                  <div className="bg-blue-50 rounded-lg p-2">
+                    <span className="text-blue-600 block">Remaining</span>
+                    <span className="font-bold text-blue-700">
+                      $
+                      {Math.max(0, salesTarget.remaining || 0).toLocaleString()}
+                    </span>
+                  </div>
+                </div> */}
+
+                {salesTarget.exceeded && (
+                  <p className="text-xs text-green-600 mt-2 font-medium">
+                    🎉 Target exceeded by $
+                    {Math.abs(salesTarget.remaining).toLocaleString()}!
+                  </p>
+                )}
+
+                <p className="text-xs text-blue-600 mt-2">
+                  {dateRange === "daily"
+                    ? `Today's collection / ${selectedDate.toLocaleDateString("en-US", { month: "long" })} target`
+                    : dateRange === "monthly"
+                      ? `${Math.round((totals.upfrontPayment / salesTarget.monthly_target) * 100)}% of ${selectedDate.toLocaleDateString("en-US", { month: "long" })} target achieved`
+                      : `${Math.round((totals.upfrontPayment / salesTarget.monthly_target) * 100)}% of monthly target`}
+                </p>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500 mt-2">
+                {dateRange === "daily"
+                  ? "Today's collection"
+                  : dateRange === "monthly"
+                    ? `Collection for ${selectedDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}`
+                    : "Selected period collection"}
+              </p>
+            )}
+
+            {targetLoading && (
+              <div className="mt-2 flex justify-center">
+                <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />
+              </div>
+            )}
           </div>
 
           {/* Paid Amount */}
@@ -1424,25 +1745,37 @@ const EmployeeSalesPage = () => {
                       </td>
                       <td className="px-4 py-3">
                         {isEditing ? (
-                          <select
-                            className="px-2 py-1 border border-gray-300 rounded text-xs"
-                            value={editFormData.category}
-                            onChange={(e) =>
-                              handleEditChange("category", e.target.value)
-                            }
-                          >
-                            {categories.slice(1).map((category) => (
-                              <option key={category.id} value={category.id}>
-                                {category.name}
+                          // Show category as disabled/read-only in edit mode
+                          <div className="relative">
+                            <select
+                              className="px-2 py-1 border border-gray-300 rounded text-xs bg-gray-100 cursor-not-allowed"
+                              value={editFormData.category || item.category}
+                              disabled
+                            >
+                              <option value={item.category}>
+                                {item.categoryName ||
+                                  getCategoryDetails(item.category).name}
                               </option>
-                            ))}
-                          </select>
+                            </select>
+                            <div className="absolute inset-0 bg-gray-50/20 cursor-not-allowed"></div>
+                          </div>
                         ) : (
+                          // Normal view mode
                           <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 w-fit ${getCategoryDetails(item.category).color}`}
+                            className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 w-fit ${
+                              getCategoryDetails(
+                                item.category,
+                                item.categoryName,
+                              ).color
+                            }`}
                           >
                             <CategoryIcon className="w-3 h-3" />
-                            {getCategoryDetails(item.category).name}
+                            {item.categoryName ||
+                              (item.category !== "other"
+                                ? getCategoryDetails(item.category).name
+                                : item.category
+                                    ?.replace(/-/g, " ")
+                                    .replace(/\b\w/g, (l) => l.toUpperCase()))}
                           </span>
                         )}
                       </td>

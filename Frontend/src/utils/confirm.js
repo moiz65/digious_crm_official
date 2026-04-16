@@ -1,5 +1,5 @@
-import React from 'react';
-import toast from 'react-hot-toast';
+import React from "react";
+import toast from "react-hot-toast";
 
 /**
  * Shows a styled toast-based confirmation dialog.
@@ -13,25 +13,25 @@ import toast from 'react-hot-toast';
  */
 export const confirmDialog = (
   message,
-  { confirmText = 'Confirm', cancelText = 'Cancel', type = 'danger' } = {}
+  { confirmText = "Confirm", cancelText = "Cancel", type = "danger" } = {},
 ) => {
   return new Promise((resolve) => {
     toast.custom(
       (t) => (
         <div
           className={`${
-            t.visible ? 'animate-enter' : 'animate-leave'
+            t.visible ? "animate-enter" : "animate-leave"
           } max-w-sm w-full bg-white shadow-2xl rounded-2xl border border-slate-200 overflow-hidden pointer-events-auto`}
           style={{ minWidth: 300 }}
         >
           {/* Top accent bar */}
           <div
             className={`h-1 w-full ${
-              type === 'danger'
-                ? 'bg-gradient-to-r from-red-400 to-rose-500'
-                : type === 'warning'
-                ? 'bg-gradient-to-r from-amber-400 to-orange-500'
-                : 'bg-gradient-to-r from-blue-400 to-indigo-500'
+              type === "danger"
+                ? "bg-gradient-to-r from-red-400 to-rose-500"
+                : type === "warning"
+                  ? "bg-gradient-to-r from-amber-400 to-orange-500"
+                  : "bg-gradient-to-r from-blue-400 to-indigo-500"
             }`}
           />
 
@@ -40,14 +40,14 @@ export const confirmDialog = (
             <div className="flex items-start gap-3">
               <div
                 className={`flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center ${
-                  type === 'danger'
-                    ? 'bg-red-50 text-red-500'
-                    : type === 'warning'
-                    ? 'bg-amber-50 text-amber-500'
-                    : 'bg-blue-50 text-blue-500'
+                  type === "danger"
+                    ? "bg-red-50 text-red-500"
+                    : type === "warning"
+                      ? "bg-amber-50 text-amber-500"
+                      : "bg-blue-50 text-blue-500"
                 }`}
               >
-                {type === 'danger' ? (
+                {type === "danger" ? (
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     className="w-5 h-5"
@@ -62,7 +62,7 @@ export const confirmDialog = (
                       d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
                     />
                   </svg>
-                ) : type === 'warning' ? (
+                ) : type === "warning" ? (
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     className="w-5 h-5"
@@ -103,26 +103,26 @@ export const confirmDialog = (
               <button
                 onClick={() => {
                   toast.dismiss(t.id);
+                  resolve(true);
+                }}
+                className={`px-4 py-2 text-sm font-semibold text-white rounded-xl transition-all duration-200 shadow-sm ${
+                  type === "danger"
+                    ? "bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600"
+                    : type === "warning"
+                      ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+                      : "bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600"
+                }`}
+              >
+                {confirmText}
+              </button>
+              <button
+                onClick={() => {
+                  toast.dismiss(t.id);
                   resolve(false);
                 }}
                 className="px-4 py-2 text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all duration-200"
               >
                 {cancelText}
-              </button>
-              <button
-                onClick={() => {
-                  toast.dismiss(t.id);
-                  resolve(true);
-                }}
-                className={`px-4 py-2 text-sm font-semibold text-white rounded-xl transition-all duration-200 shadow-sm ${
-                  type === 'danger'
-                    ? 'bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600'
-                    : type === 'warning'
-                    ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600'
-                    : 'bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600'
-                }`}
-              >
-                {confirmText}
               </button>
             </div>
           </div>
@@ -130,8 +130,8 @@ export const confirmDialog = (
       ),
       {
         duration: Infinity,
-        position: 'top-center',
-      }
+        position: "top-center",
+      },
     );
   });
 };

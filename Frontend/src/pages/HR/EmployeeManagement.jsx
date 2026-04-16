@@ -4,6 +4,11 @@ import { useNavigate } from 'react-router-dom';
 import HrSidebar from '../../components/HrSidebar';
 import { confirmDialog } from '../../utils/confirm';
 import { config } from '../../config/api';
+import { useAuth } from "../../context/AuthContext";
+import {
+  DashboardHeader,
+  RoleBasedNav,
+} from "../../components/DashboardComponents";
 import { 
   Users, Search, Plus, Edit, Trash2, Eye, Download,
   Mail, Phone, MapPin, Calendar, Briefcase, X, Loader

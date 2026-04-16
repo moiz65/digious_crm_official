@@ -1,21 +1,66 @@
 // components/HrAttendancePage.jsx
 
-import { useState, useEffect } from 'react';
-import { endpoints } from '../config/api';
-import { confirmDialog } from '../utils/confirm';
-import BreakSummary from './BreakSummary';
-import TodayBreaksSummary from './TodayBreaksSummary';
-import PagePreloader from './PagePreloader';
-import { getPakistanDate } from '../utils/timezone';
-import { 
-  Calendar, Users, CheckCircle, XCircle, Clock, FileText, Download, 
-  Filter, Plus, Search, AlertCircle, ChevronDown, Settings, Eye, 
-  Edit3, Trash2, MoreVertical, UserPlus, RotateCcw, BarChart3,
-  Send, Mail, Bell, Shield, Zap, Crown, Coffee, Sun, Moon,
-  ArrowLeft, ArrowRight, User, Target, PieChart, ChevronUp,
-  Building, Grid, List, X, MessageCircle, UserCheck, UserX,
-  Utensils,Sparkle, Cigarette, Wifi, Activity
-} from 'lucide-react';
+import { useState, useEffect } from "react";
+import { endpoints } from "../config/api";
+import { confirmDialog } from "../utils/confirm";
+import BreakSummary from "./BreakSummary";
+import TodayBreaksSummary from "./TodayBreaksSummary";
+import PagePreloader from "./PagePreloader";
+import { getPakistanDate } from "../utils/timezone";
+import {
+  DashboardHeader,
+  RoleBasedNav,
+} from "./DashboardComponents";
+import { useAuth } from "../context/AuthContext";
+import {
+  Calendar,
+  Users,
+  CheckCircle,
+  XCircle,
+  Clock,
+  FileText,
+  Download,
+  Filter,
+  Plus,
+  Search,
+  AlertCircle,
+  ChevronDown,
+  Settings,
+  Eye,
+  Edit3,
+  Trash2,
+  MoreVertical,
+  UserPlus,
+  RotateCcw,
+  BarChart3,
+  Send,
+  Mail,
+  Bell,
+  Shield,
+  Zap,
+  Crown,
+  Coffee,
+  Sun,
+  Moon,
+  ArrowLeft,
+  ArrowRight,
+  User,
+  Target,
+  PieChart,
+  ChevronUp,
+  Building,
+  Grid,
+  List,
+  X,
+  MessageCircle,
+  UserCheck,
+  UserX,
+  Utensils,
+  Sparkle,
+  Cigarette,
+  Wifi,
+  Activity,
+} from "lucide-react";
 
 // Import Chart.js
 import {
@@ -5520,10 +5565,12 @@ export function HrAttendancePage() {
   };
 
   const handleDeleteEmployee = async (employeeId) => {
-    if (await confirmDialog('Are you sure you want to delete this employee?')) {
-      setEmployees(prev => prev.filter(emp => emp.id !== employeeId));
-      setAttendanceData(prev => prev.filter(att => att.employeeId !== employeeId));
-      addNotification('Employee deleted successfully', 'success');
+    if (await confirmDialog("Are you sure you want to delete this employee?")) {
+      setEmployees((prev) => prev.filter((emp) => emp.id !== employeeId));
+      setAttendanceData((prev) =>
+        prev.filter((att) => att.employeeId !== employeeId),
+      );
+      addNotification("Employee deleted successfully", "success");
     }
   };
 
@@ -5538,9 +5585,9 @@ export function HrAttendancePage() {
   };
 
   const handleDeleteHoliday = async (holidayId) => {
-    if (await confirmDialog('Are you sure you want to delete this holiday?')) {
-      setHolidays(prev => prev.filter(h => h.id !== holidayId));
-      addNotification('Holiday deleted successfully', 'success');
+    if (await confirmDialog("Are you sure you want to delete this holiday?")) {
+      setHolidays((prev) => prev.filter((h) => h.id !== holidayId));
+      addNotification("Holiday deleted successfully", "success");
     }
   };
 
@@ -5556,9 +5603,9 @@ export function HrAttendancePage() {
   };
 
   const handleDeleteBreak = async (breakId) => {
-    if (await confirmDialog('Are you sure you want to delete this break?')) {
-      setBreaks(prev => prev.filter(b => b.id !== breakId));
-      addNotification('Break deleted successfully', 'success');
+    if (await confirmDialog("Are you sure you want to delete this break?")) {
+      setBreaks((prev) => prev.filter((b) => b.id !== breakId));
+      addNotification("Break deleted successfully", "success");
     }
   };
 
