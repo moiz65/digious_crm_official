@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { endpoints } from '../config/api';
 import { confirmDialog } from '../utils/confirm';
+import { useAuth } from '../context/AuthContext';
+import { DashboardHeader, RoleBasedNav } from './DashboardComponents';
 import BreakSummary from './BreakSummary';
 import TodayBreaksSummary from './TodayBreaksSummary';
 import PagePreloader from './PagePreloader';

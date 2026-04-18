@@ -133,6 +133,18 @@ export const endpoints = {
     assignees: (id) => `${config.FULL_API_URL}/applications/${id}/assignees`
   },
 
+  // Memos endpoints
+  memos: {
+    base: `${config.FULL_API_URL}/memos`,
+    getAll: `${config.FULL_API_URL}/memos/all`,
+    getByEmployee: (employeeId) => `${config.FULL_API_URL}/memos/employee/${employeeId}`,
+    getById: (id) => `${config.FULL_API_URL}/memos/${id}`,
+    create: `${config.FULL_API_URL}/memos`,
+    update: (id) => `${config.FULL_API_URL}/memos/${id}`,
+    delete: (id) => `${config.FULL_API_URL}/memos/${id}`,
+    departments: `${config.FULL_API_URL}/memos/departments`,
+  },
+
   // Checkout Missing Management endpoints
   checkoutMissing: `${config.FULL_API_URL}/checkout-missing`,
 

@@ -13,7 +13,7 @@ import {
   LogOut
 } from 'lucide-react';
 
-const AdminSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) => {
+const AdminSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem = () => {} }) => {
   const navigate = useNavigate();
   const { logoutNoCheckout, user } = useAuth();
 
@@ -23,6 +23,7 @@ const AdminSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }
     { id: 'attendance', icon: Calendar, label: 'Attendance', path: '/admin/attendance' },
     { id: 'employees', icon: Users, label: 'Employees', path: '/admin/employees' },
     { id: 'applications', icon: FileText, label: 'Applications', path: '/admin/applications' },
+    { id: 'memos', icon: FileText, label: 'Memos', path: '/admin/memos' },
     { id: 'activity', icon: Activity, label: 'Activity', path: '/admin/activity' }
   ];
 
