@@ -3,10 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import HrSidebar from '../../components/HrSidebar';
 import { useAuth } from '../../context/AuthContext';
-import { DashboardHeader, RoleBasedNav } from '../../components/DashboardComponents';
 import { confirmDialog } from '../../utils/confirm';
 import { config } from '../../config/api';
-import { useAuth } from "../../context/AuthContext";
 import {
   DashboardHeader,
   RoleBasedNav,

@@ -69,6 +69,9 @@ import {
   deleteSale,
   getSalesCategories,
 } from "../services/salesService";
+import {
+  EyeOff, // Add this
+} from "lucide-react";
 
 const EmployeeSalesPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -96,6 +99,7 @@ const EmployeeSalesPage = () => {
   const [error, setError] = useState(null);
   const [salesTarget, setSalesTarget] = useState(null);
   const [targetLoading, setTargetLoading] = useState(false);
+  const [showStats, setShowStats] = useState(false);
 
   // Get user info from localStorage
   const user = JSON.parse(localStorage.getItem("userInfo") || "{}");
@@ -209,8 +213,8 @@ const EmployeeSalesPage = () => {
         remainingPayment: parseFloat(s.remaining_balance) || 0,
         merchant: s.merchant || "",
         status: s.status || "pending",
-        date: s.sale_date ? s.sale_date.slice(0, 10) : "",
-        deadline: s.deadline ? s.deadline.slice(0, 10) : "",
+        date: s.sale_date ? formatDateForFrontend(s.sale_date) : "",
+        deadline: s.deadline ? formatDateForDeadline(s.deadline) : "",
         notes: s.notes || "",
         employeeName: s.employee_name || "",
         accountName: s.account_name || "",
@@ -290,6 +294,7 @@ const EmployeeSalesPage = () => {
     "Digious PayPal",
     "Innovative PayPal",
     "Crypto",
+    "Invoice",
   ];
 
   // Handle logout
@@ -430,9 +435,22 @@ const EmployeeSalesPage = () => {
   };
 
   // Get deadline status
+  // Replace the getDeadlineStatus function:
   const getDeadlineStatus = (deadline) => {
+    if (!deadline) return null;
+
+    // Parse deadline as local date (YYYY-MM-DD format)
+    const [year, month, day] = deadline.split("-");
+    const deadlineDate = new Date(
+      parseInt(year),
+      parseInt(month) - 1,
+      parseInt(day),
+    );
+
+    // Set today to start of day for accurate comparison
     const today = new Date();
-    const deadlineDate = new Date(deadline);
+    today.setHours(0, 0, 0, 0);
+
     const diffTime = deadlineDate - today;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
@@ -470,6 +488,26 @@ const EmployeeSalesPage = () => {
   // Handle edit button click
   const handleEdit = (item) => {
     setEditingId(item.id);
+
+    // Format deadline properly for input[type="date"]
+    let formattedDeadline = "";
+    if (item.deadline) {
+      // If deadline is already in YYYY-MM-DD format from API
+      if (typeof item.deadline === "string" && item.deadline.includes("-")) {
+        const [year, month, day] = item.deadline.split("-");
+        formattedDeadline = `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+      } else {
+        // Convert from other formats
+        const date = new Date(item.deadline);
+        if (!isNaN(date.getTime())) {
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, "0");
+          const day = String(date.getDate()).padStart(2, "0");
+          formattedDeadline = `${year}-${month}-${day}`;
+        }
+      }
+    }
+
     setEditFormData({
       status: item.status,
       merchant: item.merchant,
@@ -477,7 +515,7 @@ const EmployeeSalesPage = () => {
       totalSales: item.totalSales,
       upfrontPayment: item.upfrontPayment,
       remainingPayment: item.remainingPayment,
-      deadline: item.deadline,
+      deadline: formattedDeadline, // Use properly formatted date // Format as YYYY-MM-DD
     });
   };
 
@@ -526,6 +564,26 @@ const EmployeeSalesPage = () => {
       }
 
       return newData;
+    });
+  };
+
+  // After - Add this helper function at the top of component:
+  const formatDateForFrontend = (dateString) => {
+    if (!dateString) return "-";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+  const formatDateForDeadline = (dateString) => {
+    if (!dateString) return "-";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
@@ -831,6 +889,7 @@ const EmployeeSalesPage = () => {
           categoryName = catEntry?.name || "";
         }
 
+        const saleDate = formData.date;
         // Prepare sale data
         const saleData = {
           client_name: formData.name,
@@ -844,7 +903,7 @@ const EmployeeSalesPage = () => {
           upfront_payment: parseFloat(formData.upfrontPayment) || 0,
           merchant: formData.merchant,
           status: formData.status,
-          sale_date: formData.date,
+          sale_date: saleDate,
           deadline: formData.deadline,
         };
 
@@ -1220,175 +1279,193 @@ const EmployeeSalesPage = () => {
 
       {/* Main Content */}
       <div className="p-6">
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {/* Total Sales Card with Target */}
-          <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-2xl p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center">
-                <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center">
-                  <DollarSign className="w-6 h-6 text-blue-600" />
-                </div>
-                <div className="ml-4">
-                  <h3 className="text-sm font-medium text-blue-800">
-                    Total Collection
-                  </h3>
-                  <div className="flex items-baseline gap-2 flex-wrap">
-                    <p className="text-xl font-bold text-blue-600">
-                      ${totals.upfrontPayment.toLocaleString()}
-                    </p>
-                    {salesTarget && salesTarget.monthly_target > 0 && (
-                      <>
-                        <span className="text-blue-400 text-lg">/</span>
-                        <p className="text-lg font-semibold text-blue-400">
-                          ${salesTarget.monthly_target.toLocaleString()}
+        {/* Summary Cards with Toggle */}
+        <div className="mb-4">
+          {/* Toggle Button */}
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => setShowStats(!showStats)}
+              className="flex items-center gap-2 mb-4 px-4 py-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-all duration-200 shadow-sm"
+            >
+              {showStats ? (
+                <>
+                  <Eye className="w-4 h-4 text-blue-600" />
+                  <span className="text-sm font-medium text-gray-700">
+                    Hide Stats
+                  </span>
+                </>
+              ) : (
+                <>
+                  <EyeOff className="w-4 h-4 text-gray-500" />
+                  <span className="text-sm font-medium text-gray-700">
+                    Show Stats
+                  </span>
+                </>
+              )}
+            </button>
+            {showStats && (
+              <span className="text-xs text-gray-100 bg-green-600 px-2 py-1 rounded-full">
+                Confidential
+              </span>
+            )}
+          </div>
+
+          {/* Stats Cards - Only show when toggle is ON */}
+          {showStats && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-fadeIn">
+              {/* Total Sales Card with Target */}
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-2xl p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center">
+                    <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center">
+                      <DollarSign className="w-6 h-6 text-blue-600" />
+                    </div>
+                    <div className="ml-4">
+                      <h3 className="text-sm font-medium text-blue-800">
+                        Total Collection
+                      </h3>
+                      <div className="flex items-baseline gap-2 flex-wrap">
+                        <p className="text-xl font-bold text-blue-600">
+                          ${totals.upfrontPayment.toLocaleString()}
                         </p>
-                      </>
-                    )}
+                        {salesTarget && salesTarget.monthly_target > 0 && (
+                          <>
+                            <span className="text-blue-400 text-lg">/</span>
+                            <p className="text-lg font-semibold text-blue-400">
+                              ${salesTarget.monthly_target.toLocaleString()}
+                            </p>
+                          </>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
 
-            {/* Progress Section */}
-            {salesTarget && salesTarget.monthly_target > 0 ? (
-              <div className="mt-2">
-                <div className="flex justify-between text-xs text-blue-700 mb-1">
-                  <span>
-                    {dateRange === "daily"
-                      ? "Daily Progress"
-                      : dateRange === "monthly"
-                        ? "Monthly Progress"
-                        : "Period Progress"}
-                  </span>
-                  <span>
-                    {Math.min(
-                      100,
-                      Math.round(
-                        (totals.upfrontPayment / salesTarget.monthly_target) *
+                {/* Progress Section */}
+                {salesTarget && salesTarget.monthly_target > 0 ? (
+                  <div className="mt-2">
+                    <div className="flex justify-between text-xs text-blue-700 mb-1">
+                      <span>
+                        {dateRange === "daily"
+                          ? "Daily Progress"
+                          : dateRange === "monthly"
+                            ? "Monthly Progress"
+                            : "Period Progress"}
+                      </span>
+                      <span>
+                        {Math.min(
                           100,
-                      ),
+                          Math.round(
+                            (totals.upfrontPayment /
+                              salesTarget.monthly_target) *
+                              100,
+                          ),
+                        )}
+                        %
+                      </span>
+                    </div>
+                    <div className="w-full bg-blue-200 rounded-full h-2.5">
+                      <div
+                        className="bg-blue-600 h-2.5 rounded-full transition-all duration-500"
+                        style={{
+                          width: `${Math.min(100, (totals.upfrontPayment / salesTarget.monthly_target) * 100)}%`,
+                        }}
+                      />
+                    </div>
+
+                    {salesTarget.exceeded && (
+                      <p className="text-xs text-green-600 mt-2 font-medium">
+                        🎉 Target exceeded by $
+                        {Math.abs(salesTarget.remaining).toLocaleString()}!
+                      </p>
                     )}
-                    %
-                  </span>
-                </div>
-                <div className="w-full bg-blue-200 rounded-full h-2.5">
-                  <div
-                    className="bg-blue-600 h-2.5 rounded-full transition-all duration-500"
-                    style={{
-                      width: `${Math.min(100, (totals.upfrontPayment / salesTarget.monthly_target) * 100)}%`,
-                    }}
-                  />
-                </div>
 
-                {/* Additional Stats */}
-                {/* <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                  <div className="bg-blue-50 rounded-lg p-2">
-                    <span className="text-blue-600 block">Achieved</span>
-                    <span className="font-bold text-blue-700">
-                      ${salesTarget.achieved?.toLocaleString() || 0}
-                    </span>
+                    <p className="text-xs text-blue-600 mt-2">
+                      {dateRange === "daily"
+                        ? `Today's collection / ${selectedDate.toLocaleDateString("en-US", { month: "long" })} target`
+                        : dateRange === "monthly"
+                          ? `${Math.round((totals.upfrontPayment / salesTarget.monthly_target) * 100)}% of ${selectedDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })} target achieved`
+                          : `${Math.round((totals.upfrontPayment / salesTarget.monthly_target) * 100)}% of monthly target`}
+                    </p>
                   </div>
-                  <div className="bg-blue-50 rounded-lg p-2">
-                    <span className="text-blue-600 block">Remaining</span>
-                    <span className="font-bold text-blue-700">
-                      $
-                      {Math.max(0, salesTarget.remaining || 0).toLocaleString()}
-                    </span>
-                  </div>
-                </div> */}
-
-                {salesTarget.exceeded && (
-                  <p className="text-xs text-green-600 mt-2 font-medium">
-                    🎉 Target exceeded by $
-                    {Math.abs(salesTarget.remaining).toLocaleString()}!
+                ) : (
+                  <p className="text-sm text-gray-500 mt-2">
+                    {dateRange === "daily"
+                      ? "Today's collection"
+                      : dateRange === "monthly"
+                        ? `Collection for ${selectedDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}`
+                        : "Selected period collection"}
                   </p>
                 )}
 
-                <p className="text-xs text-blue-600 mt-2">
-                  {dateRange === "daily"
-                    ? `Today's collection / ${selectedDate.toLocaleDateString("en-US", { month: "long" })} target`
-                    : dateRange === "monthly"
-                      ? `${Math.round((totals.upfrontPayment / salesTarget.monthly_target) * 100)}% of ${selectedDate.toLocaleDateString("en-US", { month: "long" })} target achieved`
-                      : `${Math.round((totals.upfrontPayment / salesTarget.monthly_target) * 100)}% of monthly target`}
-                </p>
+                {targetLoading && (
+                  <div className="mt-2 flex justify-center">
+                    <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />
+                  </div>
+                )}
               </div>
-            ) : (
-              <p className="text-sm text-gray-500 mt-2">
-                {dateRange === "daily"
-                  ? "Today's collection"
-                  : dateRange === "monthly"
-                    ? `Collection for ${selectedDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}`
-                    : "Selected period collection"}
-              </p>
-            )}
 
-            {targetLoading && (
-              <div className="mt-2 flex justify-center">
-                <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />
+              {/* Paid Amount */}
+              <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-2xl p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center">
+                    <div className="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center">
+                      <CreditCard className="w-6 h-6 text-green-600" />
+                    </div>
+                    <div className="ml-4">
+                      <h3 className="text-sm font-medium text-green-800">
+                        Paid Amount
+                      </h3>
+                      <p className="text-xl font-bold text-green-600">
+                        ${totals.upfrontPayment.toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-500">Received amount</p>
               </div>
-            )}
-          </div>
 
-          {/* Paid Amount */}
-          <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-2xl p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center">
-                <div className="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center">
-                  <CreditCard className="w-6 h-6 text-green-600" />
+              {/* Remaining Payment */}
+              <div className="bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 rounded-2xl p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center">
+                    <div className="w-12 h-12 bg-orange-100 rounded-2xl flex items-center justify-center">
+                      <Calendar className="w-6 h-6 text-orange-600" />
+                    </div>
+                    <div className="ml-4">
+                      <h3 className="text-sm font-medium text-orange-800">
+                        Remaining Payment
+                      </h3>
+                      <p className="text-xl font-bold text-orange-600">
+                        ${totals.remainingPayment.toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <div className="ml-4">
-                  <h3 className="text-sm font-medium text-green-800">
-                    Paid Amount
-                  </h3>
-                  <p className="text-xl font-bold text-green-600">
-                    ${totals.upfrontPayment.toLocaleString()}
-                  </p>
+                <p className="text-sm text-gray-500">Pending collection</p>
+              </div>
+
+              {/* Completed Sales */}
+              <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-2xl p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center">
+                    <div className="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center">
+                      <CheckCircle className="w-6 h-6 text-purple-600" />
+                    </div>
+                    <div className="ml-4">
+                      <h3 className="text-sm font-medium text-purple-800">
+                        Completed
+                      </h3>
+                      <p className="text-xl font-bold text-purple-600">
+                        {totals.completedSales}
+                      </p>
+                    </div>
+                  </div>
                 </div>
+                <p className="text-sm text-gray-500">Successful projects</p>
               </div>
             </div>
-            <p className="text-sm text-gray-500">Received amount</p>
-          </div>
-
-          {/* Remaining Payment */}
-          <div className="bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 rounded-2xl p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center">
-                <div className="w-12 h-12 bg-orange-100 rounded-2xl flex items-center justify-center">
-                  <Calendar className="w-6 h-6 text-orange-600" />
-                </div>
-                <div className="ml-4">
-                  <h3 className="text-sm font-medium text-orange-800">
-                    Remaining Payment
-                  </h3>
-                  <p className="text-xl font-bold text-orange-600">
-                    ${totals.remainingPayment.toLocaleString()}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <p className="text-sm text-gray-500">Pending collection</p>
-          </div>
-
-          {/* Completed Sales */}
-          <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-2xl p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center">
-                <div className="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center">
-                  <CheckCircle className="w-6 h-6 text-purple-600" />
-                </div>
-                <div className="ml-4">
-                  <h3 className="text-sm font-medium text-purple-800">
-                    Completed
-                  </h3>
-                  <p className="text-xl font-bold text-purple-600">
-                    {totals.completedSales}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <p className="text-sm text-gray-500">Successful projects</p>
-          </div>
+          )}
         </div>
 
         {/* Filters and Actions */}
@@ -1895,33 +1972,22 @@ const EmployeeSalesPage = () => {
                         ) : (
                           <div className="flex flex-col gap-1">
                             <span className="text-xs text-gray-500">
-                              {new Date(item.deadline).toLocaleDateString(
-                                "en-US",
-                                {
-                                  month: "short",
-                                  day: "numeric",
-                                  year: "numeric",
-                                },
-                              )}
+                              {formatDateForFrontend(item.deadline)}
                             </span>
-                            <span
+                            {/* <span
                               className={`px-2 py-0.5 rounded-full text-xs font-medium inline-block w-fit ${deadlineStatus.color}`}
                             >
                               <Flag className="w-3 h-3 inline mr-1" />
                               {deadlineStatus.label}{" "}
                               {deadlineStatus.days &&
                                 `(${deadlineStatus.days}d)`}
-                            </span>
+                            </span> */}
                           </div>
                         )}
                       </td>
                       <td className="px-4 py-3">
                         <span className="text-xs text-gray-500">
-                          {new Date(item.date).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          })}
+                          {formatDateForFrontend(item.date)}
                         </span>
                       </td>
                       <td className="px-4 py-3">

@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import toast from "react-hot-toast";
 import { confirmDialog } from "../utils/confirm";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   DollarSign,
   TrendingUp,
@@ -65,6 +66,7 @@ const DEFAULT_CATEGORIES = [
   { id: "development", name: "Development", icon: Code },
   { id: "ecommerce", name: "E-commerce", icon: ShoppingCart },
   { id: "graphic-design", name: "Graphic Design", icon: Layout },
+  { id: "other", name: "Other", icon: Globe },
 ];
 
 const ALL_STATUSES = [
@@ -80,6 +82,7 @@ const MERCHANTS = [
   "Digious PayPal",
   " Innovative PayPal",
   "Crypto",
+  "Invoice",
 ];
 
 const formatCurrency = (amount) =>
@@ -107,8 +110,8 @@ const CAT_STYLE = {
   marketing: { color: "text-orange-600 bg-orange-50", Icon: Megaphone },
   development: { color: "text-green-600 bg-green-50", Icon: Code },
   ecommerce: { color: "text-pink-600 bg-pink-50", Icon: ShoppingCart },
-
   "graphic-design": { color: "text-red-600 bg-red-50", Icon: Layout },
+  other: { color: "text-gray-600 bg-gray-50", Icon: Globe },
 };
 
 const getCatStyle = (slug) =>
@@ -158,6 +161,12 @@ const AdvancedSalesManagement = () => {
   const [page, setPage] = useState(1);
   const PER_PAGE = 15;
 
+  const [dateRange, setDateRange] = useState("monthly"); // 'daily', 'monthly', 'custom'
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [customStartDate, setCustomStartDate] = useState("");
+  const [customEndDate, setCustomEndDate] = useState("");
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
   // ── Load categories ──────────────────────────────────────────────────────
   useEffect(() => {
     getSalesCategories()
@@ -194,13 +203,62 @@ const AdvancedSalesManagement = () => {
       })
       .catch(console.error);
   }, []);
+  // Add these navigation functions
+  const goToPreviousMonth = () => {
+    const newDate = new Date(selectedDate);
+    newDate.setMonth(newDate.getMonth() - 1);
+    setSelectedDate(newDate);
+  };
+
+  const goToNextMonth = () => {
+    const newDate = new Date(selectedDate);
+    newDate.setMonth(newDate.getMonth() + 1);
+    setSelectedDate(newDate);
+  };
+
+  const goToPreviousDay = () => {
+    const newDate = new Date(selectedDate);
+    newDate.setDate(newDate.getDate() - 1);
+    setSelectedDate(newDate);
+  };
+
+  const goToNextDay = () => {
+    const newDate = new Date(selectedDate);
+    newDate.setDate(newDate.getDate() + 1);
+    setSelectedDate(newDate);
+  };
+
+  const applyCustomDateRange = () => {
+    if (customStartDate && customEndDate) {
+      setDateRange("custom");
+      setShowDatePicker(false);
+    }
+  };
 
   // ── Fetch sales ──────────────────────────────────────────────────────────
   const fetchSales = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await getAllSales();
+      const filters = {};
+
+      // Build date filters based on selected range
+      if (dateRange === "daily") {
+        const d = selectedDate.toISOString().slice(0, 10);
+        filters.from = d;
+        filters.to = d;
+      } else if (dateRange === "monthly") {
+        const y = selectedDate.getFullYear();
+        const m = selectedDate.getMonth();
+        filters.from = `${y}-${String(m + 1).padStart(2, "0")}-01`;
+        const lastDay = new Date(y, m + 1, 0).getDate();
+        filters.to = `${y}-${String(m + 1).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+      } else if (dateRange === "custom" && customStartDate && customEndDate) {
+        filters.from = customStartDate;
+        filters.to = customEndDate;
+      }
+
+      const res = await getAllSales(filters);
       setSales(
         (res.data || []).map((s) => ({
           id: s.id,
@@ -219,7 +277,8 @@ const AdvancedSalesManagement = () => {
           paymentMethod: s.payment_method || "",
           accountName: s.account_name || "",
           status: s.status || "pending",
-          saleDate: s.sale_date ? s.sale_date.slice(0, 10) : "",
+          saleDate: s.sale_date ? s.sale_date.slice(0, 10) : "", // Store raw date string
+          date: s.sale_date ? formatDateForFrontend(s.sale_date) : "", // Add formatted date for display
           deadline: s.deadline ? s.deadline.slice(0, 10) : "",
           notes: s.notes || "",
           projectDescription: s.project_description || "",
@@ -230,11 +289,41 @@ const AdvancedSalesManagement = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [dateRange, selectedDate, customStartDate, customEndDate]);
 
+  // Add this useEffect to fetch when date changes
   useEffect(() => {
     fetchSales();
-  }, [fetchSales]);
+  }, [fetchSales, dateRange, selectedDate, customStartDate, customEndDate]);
+
+  // Get month/year display text
+  const getMonthYearDisplay = () => {
+    return selectedDate.toLocaleDateString("en-US", {
+      month: "long",
+      year: "numeric",
+    });
+  };
+
+  const getDateDisplay = () => {
+    if (dateRange === "daily") {
+      return selectedDate.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+    }
+    return getMonthYearDisplay();
+  };
+
+  const formatDateForFrontend = (dateString) => {
+    if (!dateString) return "-";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
 
   // ── Derived totals ───────────────────────────────────────────────────────
   const totalAmount = sales.reduce((s, r) => s + r.totalAmount, 0);
@@ -440,12 +529,12 @@ const AdvancedSalesManagement = () => {
           >
             <RefreshCw className="h-4 w-4" /> Refresh
           </button>
-          <button
+          {/* <button
             onClick={() => setShowForm(true)}
             className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition flex items-center gap-2 text-sm shadow-md"
           >
             <PlusCircle className="h-4 w-4" /> Add New Sale
-          </button>
+          </button> */}
         </div>
       </div>
 
@@ -470,6 +559,149 @@ const AdvancedSalesManagement = () => {
             <p className="text-xs text-slate-500">{c.sub}</p>
           </div>
         ))}
+      </div>
+
+      {/* Date Range Filter */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <Calendar className="h-5 w-5 text-blue-600" />
+            <span className="text-sm font-medium text-gray-700">
+              Date Range:
+            </span>
+
+            {/* Segmented Control */}
+            <div className="flex items-center bg-gray-100 rounded-lg p-1 ml-2">
+              <button
+                onClick={() => {
+                  setDateRange("daily");
+                  setSelectedDate(new Date());
+                }}
+                className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all ${
+                  dateRange === "daily"
+                    ? "bg-white text-blue-600 shadow-sm"
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                Daily
+              </button>
+              <button
+                onClick={() => {
+                  setDateRange("monthly");
+                  setSelectedDate(new Date());
+                }}
+                className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all ${
+                  dateRange === "monthly"
+                    ? "bg-white text-blue-600 shadow-sm"
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                Monthly
+              </button>
+              <button
+                onClick={() => setShowDatePicker(!showDatePicker)}
+                className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all ${
+                  dateRange === "custom"
+                    ? "bg-white text-blue-600 shadow-sm"
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                Custom
+              </button>
+            </div>
+            {/* Date Navigation */}
+            {dateRange === "daily" && (
+              <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-3 py-1.5">
+                <button
+                  onClick={goToPreviousDay}
+                  className="p-1 hover:bg-gray-200 rounded-md transition-colors"
+                >
+                  <ChevronLeft className="h-4 w-4 text-gray-500" />
+                </button>
+                <span className="text-sm font-medium text-gray-700 px-3 min-w-[160px] text-center">
+                  {getDateDisplay()}
+                </span>
+                <button
+                  onClick={goToNextDay}
+                  className="p-1 hover:bg-gray-200 rounded-md transition-colors"
+                >
+                  <ChevronRight className="h-4 w-4 text-gray-500" />
+                </button>
+              </div>
+            )}
+
+            {dateRange === "monthly" && (
+              <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-3 py-1.5">
+                <button
+                  onClick={goToPreviousMonth}
+                  className="p-1 hover:bg-gray-200 rounded-md transition-colors"
+                >
+                  <ChevronLeft className="h-4 w-4 text-gray-500" />
+                </button>
+                <span className="text-sm font-medium text-gray-700 px-3 min-w-[140px] text-center">
+                  {getMonthYearDisplay()}
+                </span>
+                <button
+                  onClick={goToNextMonth}
+                  className="p-1 hover:bg-gray-200 rounded-md transition-colors"
+                >
+                  <ChevronRight className="h-4 w-4 text-gray-500" />
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Add Sale Button */}
+          <button
+            onClick={() => setShowForm(true)}
+            className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition flex items-center gap-2 text-sm shadow-md"
+          >
+            <PlusCircle className="h-4 w-4" /> Add New Sale
+          </button>
+        </div>
+
+        {/* Custom Date Picker */}
+        {showDatePicker && (
+          <div className="mt-4 pt-4 border-t border-gray-100">
+            <div className="flex flex-wrap items-end gap-3">
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">
+                  Start Date
+                </label>
+                <input
+                  type="date"
+                  value={customStartDate}
+                  onChange={(e) => setCustomStartDate(e.target.value)}
+                  className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">
+                  End Date
+                </label>
+                <input
+                  type="date"
+                  value={customEndDate}
+                  onChange={(e) => setCustomEndDate(e.target.value)}
+                  className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <button
+                onClick={applyCustomDateRange}
+                disabled={!customStartDate || !customEndDate}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
+              >
+                Apply
+              </button>
+              <button
+                onClick={() => setShowDatePicker(false)}
+                className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Filters */}
@@ -567,10 +799,8 @@ const AdvancedSalesManagement = () => {
                   { label: "Category", field: null },
                   { label: "Total", field: "amount" },
                   { label: "Upfront", field: null },
-
                   { label: "Merchant", field: null },
-
-                  { label: "Date", field: "date" },
+                  { label: "Sale Date", field: "date" },
                   { label: "Actions", field: null },
                 ].map((col) => (
                   <th key={col.label} className="px-4 py-3 text-left">
@@ -616,7 +846,7 @@ const AdvancedSalesManagement = () => {
                               : "?"}
                           </span>
                         </div>
-                        <span className="font-medium text-gray-900 truncate max-w-[110px]">
+                        <span className="font-medium text-gray-900 truncate max-w-[165px]">
                           {sale.employeeName || "\u2014"}
                         </span>
                       </div>
@@ -747,7 +977,7 @@ const AdvancedSalesManagement = () => {
                     {/* Sale Date */}
                     <td className="px-4 py-3">
                       <span className="text-xs text-gray-500">
-                        {fmtDate(sale.saleDate)}
+                        {sale.date || formatDateForFrontend(sale.saleDate)}
                       </span>
                     </td>
 
@@ -914,6 +1144,37 @@ const AddSaleModal = ({ categories, employees, saving, onSubmit, onClose }) => {
     notes: "",
   });
   const [errs, setErrs] = useState({});
+  // Add these ref and states
+  const employeeDropdownRef = useRef(null);
+  const [employeeSearchTerm, setEmployeeSearchTerm] = useState("");
+  const [showEmployeeDropdown, setShowEmployeeDropdown] = useState(false);
+
+  const filteredEmployees = employees.filter(
+    (emp) =>
+      emp.name?.toLowerCase().includes(employeeSearchTerm.toLowerCase()) ||
+      emp.email?.toLowerCase().includes(employeeSearchTerm.toLowerCase()),
+  );
+
+  const getSelectedEmployeeName = () => {
+    const selected = employees.find(
+      (emp) => String(emp.id) === String(form.employeeId),
+    );
+    return selected ? selected.name : "";
+  };
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        employeeDropdownRef.current &&
+        !employeeDropdownRef.current.contains(event.target)
+      ) {
+        setShowEmployeeDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const set = (field, value) => {
     setForm((p) => ({ ...p, [field]: value }));
@@ -979,20 +1240,61 @@ const AddSaleModal = ({ categories, employees, saving, onSubmit, onClose }) => {
             <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2 text-sm">
               <Users className="h-4 w-4 text-blue-600" /> Assign to Employee *
             </h4>
-            <div className="relative">
-              <select
-                value={form.employeeId}
-                onChange={(e) => pickEmployee(e.target.value)}
-                className={`w-full px-4 py-3 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white ${errs.employeeId ? "border-red-400" : "border-gray-300"}`}
-              >
-                <option value="">— Select Sales Employee —</option>
-                {employees.map((emp) => (
-                  <option key={emp.id} value={emp.id}>
-                    {emp.name}
-                  </option>
-                ))}
-              </select>
+            <div className="relative" ref={employeeDropdownRef}>
+              {/* Search Input */}
+              <input
+                type="text"
+                placeholder="Search employee by name or email..."
+                value={employeeSearchTerm || getSelectedEmployeeName()}
+                onChange={(e) => {
+                  setEmployeeSearchTerm(e.target.value);
+                  setShowEmployeeDropdown(true);
+                  if (e.target.value === "") {
+                    pickEmployee("");
+                  }
+                }}
+                onFocus={() => setShowEmployeeDropdown(true)}
+                className={`w-full px-4 py-3 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white ${errs.employeeId ? "border-red-400" : "border-gray-300"}`}
+              />
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+
+              {/* Dropdown List */}
+              {showEmployeeDropdown && (
+                <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                  {filteredEmployees.length > 0 ? (
+                    filteredEmployees.map((emp) => (
+                      <button
+                        key={emp.id}
+                        type="button"
+                        onClick={() => {
+                          pickEmployee(emp.id);
+                          setEmployeeSearchTerm("");
+                          setShowEmployeeDropdown(false);
+                        }}
+                        className={`w-full px-4 py-3 text-left text-sm hover:bg-blue-50 transition-colors flex items-center justify-between border-b border-gray-100 last:border-0 ${
+                          String(form.employeeId) === String(emp.id)
+                            ? "bg-blue-50 text-blue-600"
+                            : "text-gray-700"
+                        }`}
+                      >
+                        <div className="flex-1">
+                          <div className="font-medium">{emp.name}</div>
+                          <div className="text-xs text-gray-500">
+                            {emp.email || emp.employee_id}
+                          </div>
+                        </div>
+                        {String(form.employeeId) === String(emp.id) && (
+                          <CheckCircle className="h-4 w-4 text-blue-500" />
+                        )}
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                      No employees found
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             {errs.employeeId && (
               <p className="text-red-500 text-xs mt-1">{errs.employeeId}</p>
@@ -1007,7 +1309,7 @@ const AddSaleModal = ({ categories, employees, saving, onSubmit, onClose }) => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">
-                  Client / Company Name *
+                  Client Name *
                 </label>
                 <input
                   type="text"

@@ -102,6 +102,10 @@ export const DashboardHeader = ({ title, subtitle }) => {
   const getUserEmail = () => {
     return user?.email || employeeData?.email || '';
   };
+  // Get user designation
+  const getUserDesignation = () => {
+    return user?.designation || employeeData?.designation || '';
+  };
 
   // Handle image load error
   const handleImageError = () => {
@@ -156,7 +160,7 @@ export const DashboardHeader = ({ title, subtitle }) => {
                 <p className="text-sm font-semibold text-gray-900">{getUserName()}</p>
                 <p className="text-xs text-gray-500 mt-0.5">{getUserEmail()}</p>
                 <span className={`inline-block px-2 py-0.5 text-xs font-bold rounded-full mt-1 ${roleInfo[role]?.badgeColor}`}>
-                  {roleInfo[role]?.label}
+                  {getUserDesignation()}
                 </span>
               </div>
             </div>

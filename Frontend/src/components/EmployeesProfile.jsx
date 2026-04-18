@@ -2140,12 +2140,15 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
 
   const designations = [
     "Internee",
+    "Operations Manager",
     "Sr. Sales Executive",
+    "HR Intern",
+    "HR Manager",
     "Jr. sales executive",
     "Bidder",
     "Team Lead Sales",
     "Team Lead Development",
-    "Prodction Manager",
+    "Production Manager",
     "Sr. Graphics Designer",
     "Jr. Graphics Designer",
     "Animation Artist",
