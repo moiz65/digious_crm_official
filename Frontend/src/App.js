@@ -26,6 +26,7 @@ import AdminSalesManagement from './pages/SuperAdmin/AdminSalesManagement';
 import PayrollManagement from './pages/SuperAdmin/PayrollManagement';
 import AdminExpense from './pages/Admin/AdminExpense';
 import AdminAdvances from './pages/Admin/AdminAdvances';
+import AdminMemos from './pages/Admin/AdminMemos';
 import Customer from './pages/SuperAdmin/Customer';
 
 
@@ -40,6 +41,7 @@ import EmployeeOnboarding from './pages/HR/EmployeeOnboarding';
 import UserRoles_and_Permissions from './pages/HR/UserRoles_and_Permissions';
 import RoleTemplates from './pages/HR/RoleTemplates';
 import Applications_and_Memos from './pages/HR/Applications_and_Memos';
+import HrMemos from './pages/HR/HrMemos';
 import HrReportsManagement from './pages/HR/HrReportsManagement';
 import HrSettings from './pages/HR/HrSettings';
 import AttendanceAdjustment from './pages/HR/AttendanceAdjustment';
@@ -49,6 +51,7 @@ import ProductionDashboard from './pages/Employees/ProductionDashboard';
 import EmployeeAttendance from './pages/Employees/EmployeeAtt';
 import EmployeeDetails from './pages/Employees/EmployeeDetails';
 import ApplicationandMemoEmployees from './pages/Employees/ApplicationandMemoEmployees';
+import EmployeeMemos from './pages/Employees/EmployeeMemos';
 import EmployeesSettings from './pages/Employees/EmployeeSettings';
 import EmployeePayroll from './pages/Employees/EmployeePayroll';
 import Sales from './pages/Employees/Sales';
@@ -149,6 +152,14 @@ function AppContent() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/admin/memos"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <AdminMemos />
+                </ProtectedRoute>
+              }
+            />
             
             {/* HR Routes */}
             <Route
@@ -208,6 +219,14 @@ function AppContent() {
               element={
                 <ProtectedRoute requiredRole="hr">
                   <Applications_and_Memos />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/hr/memos"
+              element={
+                <ProtectedRoute requiredRole="hr">
+                  <HrMemos />
                 </ProtectedRoute>
               }
             />
@@ -299,6 +318,14 @@ function AppContent() {
               element={
                 <ProtectedRoute requiredRole="employee">
                   <ApplicationandMemoEmployees />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/employee/memos"
+              element={
+                <ProtectedRoute requiredRole="employee">
+                  <EmployeeMemos />
                 </ProtectedRoute>
               }
             />

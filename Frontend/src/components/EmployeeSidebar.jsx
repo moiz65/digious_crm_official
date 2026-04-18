@@ -18,7 +18,7 @@ import {
   ClipboardCheck
 } from 'lucide-react';
 
-const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) => {
+const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem = () => {} }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const sidebarRef = useRef(null);
@@ -33,6 +33,7 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveIte
     ...(user?.department === 'Sales' ? [{ id: 'sales', icon: DollarSign, label: 'Sales', path: '/employee/sales' }] : []),
     { id: 'corrections', icon: ClipboardCheck, label: 'Attendance Corrections', path: '/employee/attendance-corrections' },
     { id: 'applications', icon: FileText, label: 'Applications', path: '/employee/applications' },
+    { id: 'memos', icon: FileText, label: 'Memos', path: '/employee/memos' },
     { id: 'payroll', icon: Wallet, label: 'My Payroll', path: '/employee/payroll' },
     { id: 'settings', icon: FileText, label: 'Settings', path: '/employee/settings' }
   ];
