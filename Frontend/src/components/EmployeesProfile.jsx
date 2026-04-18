@@ -68,17 +68,28 @@ import {
   Target as TargetIcon,
 } from "lucide-react";
 import toast from "react-hot-toast";
-import { confirmDialog } from '../utils/confirm';
+import { confirmDialog } from "../utils/confirm";
 import { endpoints } from "../config/api";
 import { format } from "date-fns";
 import { Copy } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+// import {
+//   Phone,
+//   Copy,
+//   Edit,
+//   RefreshCw,
+//   Trash2,
+//   DollarSign,
+//   X,
+// } from "lucide-react";
+import { useCallback } from "react";
 
 // Utility function to format sales amounts (thousands/millions)
 const formatSalesAmount = (val) => {
-  if (!val || val === 0) return '$0';
-  if (val >= 1000000) return `$${(val / 1000000).toFixed(1).replace(/\.0$/, '')}M`;
-  if (val >= 1000) return `$${(val / 1000).toFixed(1).replace(/\.0$/, '')}K`;
+  if (!val || val === 0) return "$0";
+  if (val >= 1000000)
+    return `$${(val / 1000000).toFixed(1).replace(/\.0$/, "")}M`;
+  if (val >= 1000) return `$${(val / 1000).toFixed(1).replace(/\.0$/, "")}K`;
   return `$${Math.round(val).toLocaleString()}`;
 };
 
@@ -215,36 +226,83 @@ const EmployeeProfile = () => {
     };
   }, [showExportDropdown, showMenuDropdown]);
 
+  // Add state for sales target
+  const [salesTarget, setSalesTarget] = useState(null);
+
+  // Add this function inside your component
+  const fetchEmployeeSalesTarget = useCallback(async (employeeId) => {
+    try {
+      const token = localStorage.getItem("token");
+      const currentDate = new Date();
+      const currentYear = currentDate.getFullYear();
+      const currentMonth = currentDate.getMonth() + 1;
+
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL || "http://100.126.74.55:5000"}/api/v1/sales-targets/${employeeId}?month=${currentMonth}&year=${currentYear}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        },
+      );
+
+      const result = await response.json();
+      if (result.success && result.data) {
+        return result.data;
+      }
+      return null;
+    } catch (error) {
+      console.error("Error fetching sales target:", error);
+      return null;
+    }
+  }, []);
+
+  // Fetch target when modal opens
+  useEffect(() => {
+    if (
+      employees &&
+      (employees.department === "Sales" ||
+        employees.role?.toLowerCase().includes("sales"))
+    ) {
+      fetchEmployeeSalesTarget(employees.id).then((target) => {
+        setSalesTarget(target);
+      });
+    }
+  }, [employees, fetchEmployeeSalesTarget]);
+
   // Stats for dashboard
   const stats = [
     {
       title: "Total Employees",
       value: employees.length.toString(),
       badgeColor: "bg-blue-100 text-blue-800 border border-blue-200",
-      trend: `${employees.length > 0 ? '+' : ''}${employees.length}`,
+      trend: `${employees.length > 0 ? "+" : ""}${employees.length}`,
       icon: Users,
     },
     {
       title: "Active",
       value: employees.filter((e) => e.status === "active").length.toString(),
       badgeColor: "bg-green-100 text-green-800 border border-green-200",
-      trend: employees.length > 0 
-        ? `${Math.round((employees.filter((e) => e.status === "active").length / employees.length) * 100)}%` 
-        : "0%",
+      trend:
+        employees.length > 0
+          ? `${Math.round((employees.filter((e) => e.status === "active").length / employees.length) * 100)}%`
+          : "0%",
       icon: CheckCircle,
     },
     {
       title: "Inactive",
       value: employees.filter((e) => e.status === "inactive").length.toString(),
       badgeColor: "bg-red-100 text-red-800 border border-red-200",
-      trend: employees.length > 0 
-        ? `${Math.round((employees.filter((e) => e.status === "inactive").length / employees.length) * 100)}%` 
-        : "0%",
+      trend:
+        employees.length > 0
+          ? `${Math.round((employees.filter((e) => e.status === "inactive").length / employees.length) * 100)}%`
+          : "0%",
       icon: XCircle,
     },
     {
       title: "Departments",
-      value: [...new Set(employees.map(e => e.department))].length.toString(),
+      value: [...new Set(employees.map((e) => e.department))].length.toString(),
       badgeColor: "bg-purple-100 text-purple-800 border border-purple-200",
       trend: "Active",
       icon: Building,
@@ -423,10 +481,9 @@ const EmployeeProfile = () => {
   // CRUD Operations
   const handleAddEmployee = (employeeData) => {
     // Find the maximum ID, default to 0 if no employees
-    const maxId = employees.length > 0 
-      ? Math.max(...employees.map((e) => e.id)) 
-      : 0;
-      
+    const maxId =
+      employees.length > 0 ? Math.max(...employees.map((e) => e.id)) : 0;
+
     const newEmployee = {
       id: maxId + 1,
       ...employeeData,
@@ -559,7 +616,7 @@ const EmployeeProfile = () => {
   };
 
   const handleDeleteEmployee = async (id) => {
-    if (await confirmDialog('Are you sure you want to delete this employee?')) {
+    if (await confirmDialog("Are you sure you want to delete this employee?")) {
       setEmployees((prev) => prev.filter((emp) => emp.id !== id));
       const newSelected = new Set(selectedEmployees);
       newSelected.delete(id);
@@ -632,16 +689,16 @@ const EmployeeProfile = () => {
         );
         break;
       case "delete":
-        confirmDialog(`Delete ${selectedEmployees.size} selected employees?`).then(
-          (confirmed) => {
-            if (confirmed) {
-              setEmployees((prev) =>
-                prev.filter((emp) => !selectedEmployees.has(emp.id)),
-              );
-              setSelectedEmployees(new Set());
-            }
+        confirmDialog(
+          `Delete ${selectedEmployees.size} selected employees?`,
+        ).then((confirmed) => {
+          if (confirmed) {
+            setEmployees((prev) =>
+              prev.filter((emp) => !selectedEmployees.has(emp.id)),
+            );
+            setSelectedEmployees(new Set());
           }
-        );
+        });
         break;
       case "export":
         handleExportSelected();
@@ -992,13 +1049,19 @@ const EmployeeProfile = () => {
               {/* Department Filter */}
               <select
                 value={filters.department}
-                onChange={(e) => handleFilterChange("department", e.target.value)}
+                onChange={(e) =>
+                  handleFilterChange("department", e.target.value)
+                }
                 className="px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#349dff] text-sm"
               >
                 <option value="all">All Departments</option>
-                {[...new Set(employees.map(e => e.department))].sort().map(dept => (
-                  <option key={dept} value={dept}>{dept}</option>
-                ))}
+                {[...new Set(employees.map((e) => e.department))]
+                  .sort()
+                  .map((dept) => (
+                    <option key={dept} value={dept}>
+                      {dept}
+                    </option>
+                  ))}
               </select>
 
               {/* Status Filter */}
@@ -1053,21 +1116,38 @@ const EmployeeProfile = () => {
                 <tr className="bg-gray-50 border-b border-gray-200">
                   <th className="px-4 py-3 text-left">
                     <button onClick={handleSelectAll} className="p-1">
-                      {selectedEmployees.size === filteredEmployees.length && filteredEmployees.length > 0 ? (
+                      {selectedEmployees.size === filteredEmployees.length &&
+                      filteredEmployees.length > 0 ? (
                         <CheckSquare className="h-4 w-4 text-[#349dff]" />
                       ) : (
                         <Square className="h-4 w-4 text-gray-400" />
                       )}
                     </button>
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Employee</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">ID</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Designation</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Department</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Contact</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Joining Date</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    Employee
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    ID
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    Designation
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    Department
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    Contact
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    Joining Date
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -1076,8 +1156,12 @@ const EmployeeProfile = () => {
                     <td colSpan="9" className="px-4 py-12 text-center">
                       <div className="flex flex-col items-center gap-2">
                         <Users className="h-10 w-10 text-gray-300" />
-                        <p className="text-gray-500 font-medium">No employees found</p>
-                        <p className="text-gray-400 text-sm">Try adjusting your filters</p>
+                        <p className="text-gray-500 font-medium">
+                          No employees found
+                        </p>
+                        <p className="text-gray-400 text-sm">
+                          Try adjusting your filters
+                        </p>
                       </div>
                     </td>
                   </tr>
@@ -1086,12 +1170,17 @@ const EmployeeProfile = () => {
                     <tr
                       key={employee.id}
                       className={`hover:bg-blue-50/40 transition-colors duration-150 ${
-                        selectedEmployees.has(employee.id) ? 'bg-blue-50/60' : ''
+                        selectedEmployees.has(employee.id)
+                          ? "bg-blue-50/60"
+                          : ""
                       }`}
                     >
                       {/* Checkbox */}
                       <td className="px-4 py-3">
-                        <button onClick={() => handleSelectEmployee(employee.id)} className="p-1">
+                        <button
+                          onClick={() => handleSelectEmployee(employee.id)}
+                          className="p-1"
+                        >
                           {selectedEmployees.has(employee.id) ? (
                             <CheckSquare className="h-4 w-4 text-[#349dff]" />
                           ) : (
@@ -1113,18 +1202,23 @@ const EmployeeProfile = () => {
                                 alt={employee.name}
                                 className="w-full h-full rounded-full object-cover"
                                 onError={(e) => {
-                                  e.target.style.display = 'none';
-                                  e.target.nextSibling && (e.target.nextSibling.style.display = 'flex');
+                                  e.target.style.display = "none";
+                                  e.target.nextSibling &&
+                                    (e.target.nextSibling.style.display =
+                                      "flex");
                                 }}
                               />
                             ) : null}
                             <div
                               className={`w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 rounded-full items-center justify-center ${
-                                employee.profile_picture ? 'hidden' : 'flex'
+                                employee.profile_picture ? "hidden" : "flex"
                               }`}
                             >
                               <span className="text-gray-700 text-sm font-bold">
-                                {employee.name.split(' ').map(n => n[0]).join('')}
+                                {employee.name
+                                  .split(" ")
+                                  .map((n) => n[0])
+                                  .join("")}
                               </span>
                             </div>
                           </div>
@@ -1135,30 +1229,40 @@ const EmployeeProfile = () => {
                             >
                               {employee.name}
                             </button>
-                            <p className="text-xs text-gray-500 truncate">{employee.email}</p>
+                            <p className="text-xs text-gray-500 truncate">
+                              {employee.email}
+                            </p>
                           </div>
                         </div>
                       </td>
 
                       {/* Employee ID */}
                       <td className="px-4 py-3">
-                        <span className="text-sm text-gray-700 font-mono">{employee.username || employee.id}</span>
+                        <span className="text-sm text-gray-700 font-mono">
+                          {employee.username || employee.id}
+                        </span>
                       </td>
 
                       {/* Designation */}
                       <td className="px-4 py-3">
-                        <span className="text-sm text-gray-700">{employee.designation || employee.role || 'N/A'}</span>
+                        <span className="text-sm text-gray-700">
+                          {employee.designation || employee.role || "N/A"}
+                        </span>
                       </td>
 
                       {/* Department */}
                       <td className="px-4 py-3">
                         <span
                           className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${
-                            employee.department === 'Development' ? 'bg-orange-100 text-orange-800' :
-                            employee.department === 'Sales' ? 'bg-green-100 text-green-800' :
-                            employee.department === 'Human Resources' ? 'bg-blue-100 text-blue-800' :
-                            employee.department === 'Design' ? 'bg-purple-100 text-purple-800' :
-                            'bg-gray-100 text-gray-800'
+                            employee.department === "Development"
+                              ? "bg-orange-100 text-orange-800"
+                              : employee.department === "Sales"
+                                ? "bg-green-100 text-green-800"
+                                : employee.department === "Human Resources"
+                                  ? "bg-blue-100 text-blue-800"
+                                  : employee.department === "Design"
+                                    ? "bg-purple-100 text-purple-800"
+                                    : "bg-gray-100 text-gray-800"
                           }`}
                         >
                           {getRoleIcon(employee.role, employee.department)}
@@ -1193,7 +1297,16 @@ const EmployeeProfile = () => {
                       {/* Joining Date */}
                       <td className="px-4 py-3">
                         <span className="text-sm text-gray-600">
-                          {employee.joiningDate ? new Date(employee.joiningDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}
+                          {employee.joiningDate
+                            ? new Date(employee.joiningDate).toLocaleDateString(
+                                "en-GB",
+                                {
+                                  day: "2-digit",
+                                  month: "short",
+                                  year: "numeric",
+                                },
+                              )
+                            : "N/A"}
                         </span>
                       </td>
 
@@ -1202,15 +1315,19 @@ const EmployeeProfile = () => {
                         <button
                           onClick={() => handleToggleStatus(employee.id)}
                           className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full cursor-pointer transition duration-200 ${
-                            employee.status === 'active'
-                              ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                              : 'bg-red-100 text-red-700 hover:bg-red-200'
+                            employee.status === "active"
+                              ? "bg-green-100 text-green-700 hover:bg-green-200"
+                              : "bg-red-100 text-red-700 hover:bg-red-200"
                           }`}
                         >
-                          <span className={`w-1.5 h-1.5 rounded-full ${
-                            employee.status === 'active' ? 'bg-green-500' : 'bg-red-500'
-                          }`}></span>
-                          {employee.status === 'active' ? 'Active' : 'Inactive'}
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full ${
+                              employee.status === "active"
+                                ? "bg-green-500"
+                                : "bg-red-500"
+                            }`}
+                          ></span>
+                          {employee.status === "active" ? "Active" : "Inactive"}
                         </button>
                       </td>
 
@@ -1259,21 +1376,35 @@ const EmployeeProfile = () => {
                 <div className="flex items-center gap-2">
                   <Users className="h-5 w-5 text-blue-500" />
                   <span className="text-sm text-gray-600">
-                    Showing <span className="font-semibold text-gray-900">{sortedEmployees.length}</span> of <span className="font-semibold text-gray-900">{employees.length}</span> employees
+                    Showing{" "}
+                    <span className="font-semibold text-gray-900">
+                      {sortedEmployees.length}
+                    </span>{" "}
+                    of{" "}
+                    <span className="font-semibold text-gray-900">
+                      {employees.length}
+                    </span>{" "}
+                    employees
                   </span>
                 </div>
                 <div className="h-4 w-px bg-gray-300"></div>
                 <div className="flex items-center gap-2">
                   <CheckCircle className="h-5 w-5 text-green-500" />
                   <span className="text-sm text-gray-600">
-                    Active: <span className="font-semibold text-green-600">{employees.filter(e => e.status === "active").length}</span>
+                    Active:{" "}
+                    <span className="font-semibold text-green-600">
+                      {employees.filter((e) => e.status === "active").length}
+                    </span>
                   </span>
                 </div>
                 <div className="h-4 w-px bg-gray-300"></div>
                 <div className="flex items-center gap-2">
                   <XCircle className="h-5 w-5 text-red-500" />
                   <span className="text-sm text-gray-600">
-                    Inactive: <span className="font-semibold text-red-600">{employees.filter(e => e.status === "inactive").length}</span>
+                    Inactive:{" "}
+                    <span className="font-semibold text-red-600">
+                      {employees.filter((e) => e.status === "inactive").length}
+                    </span>
                   </span>
                 </div>
               </div>
@@ -1767,14 +1898,18 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
   // Sales history state
   const [salesHistory, setSalesHistory] = useState([]);
   const [salesHistoryLoading, setSalesHistoryLoading] = useState(false);
-  const [selectedHistoryYear, setSelectedHistoryYear] = useState(new Date().getFullYear());
+  const [selectedHistoryYear, setSelectedHistoryYear] = useState(
+    new Date().getFullYear(),
+  );
 
   const fetchSalesHistory = async (year) => {
     setSalesHistoryLoading(true);
     try {
       const response = await fetch(
         endpoints.salesTargets.history(employee.id, year),
-        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } },
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        },
       );
       const data = await response.json();
       if (data.success) setSalesHistory(data.data || []);
@@ -1903,8 +2038,6 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
     }
   };
 
-
-
   const uploadProfileImage = async (employeeId, file) => {
     const formData = new FormData();
     formData.append("profile_picture", file);
@@ -2006,11 +2139,11 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
   ];
 
   const designations = [
-    "Internee", 
+    "Internee",
     "Sr. Sales Executive",
-    "Jr. sales executive", 
+    "Jr. sales executive",
     "Bidder",
-    "Team Lead Sales", 
+    "Team Lead Sales",
     "Team Lead Development",
     "Prodction Manager",
     "Sr. Graphics Designer",
@@ -2546,22 +2679,19 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
     setSalesTargetLoading(true);
     try {
       const now = new Date();
-      const response = await fetch(
-        endpoints.salesTargets.set(employee.id),
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-          body: JSON.stringify({
-            month: now.getMonth() + 1,
-            year: now.getFullYear(),
-            monthly_target: parseFloat(salesTarget.monthly_target) || 0,
-            notes: salesTarget.notes || "",
-          }),
+      const response = await fetch(endpoints.salesTargets.set(employee.id), {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-      );
+        body: JSON.stringify({
+          month: now.getMonth() + 1,
+          year: now.getFullYear(),
+          monthly_target: parseFloat(salesTarget.monthly_target) || 0,
+          notes: salesTarget.notes || "",
+        }),
+      });
       const data = await response.json();
       if (data.success) {
         setSalesTargetSaved(true);
@@ -2576,7 +2706,9 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
           });
         }
       } else {
-        toast.error("Failed to save target: " + (data.message || "Unknown error"));
+        toast.error(
+          "Failed to save target: " + (data.message || "Unknown error"),
+        );
       }
     } catch (error) {
       console.error("Error saving sales target:", error);
@@ -2590,7 +2722,8 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
     const achieved = parseFloat(employee.achieved) || 0;
     const target = parseFloat(salesTarget.monthly_target) || 0;
     const remaining = target - achieved;
-    const progressPercent = target > 0 ? Math.min((achieved / target) * 100, 100) : 0;
+    const progressPercent =
+      target > 0 ? Math.min((achieved / target) * 100, 100) : 0;
 
     return (
       <>
@@ -2599,22 +2732,44 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
             {/* Target Overview Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-center">
-                <p className="text-xs text-blue-600 font-medium mb-1">Monthly Target</p>
+                <p className="text-xs text-blue-600 font-medium mb-1">
+                  Monthly Target
+                </p>
                 <p className="text-2xl font-bold text-blue-700">
-                  ${target > 0 ? target.toLocaleString() : '0'}
+                  ${target > 0 ? target.toLocaleString() : "0"}
                 </p>
               </div>
-              <div className={`border rounded-xl p-4 text-center ${achieved >= target && target > 0 ? 'bg-green-50 border-green-200' : 'bg-orange-50 border-orange-200'}`}>
-                <p className={`text-xs font-medium mb-1 ${achieved >= target && target > 0 ? 'text-green-600' : 'text-orange-600'}`}>Achieved</p>
-                <p className={`text-2xl font-bold ${achieved >= target && target > 0 ? 'text-green-700' : 'text-orange-700'}`}>
+              <div
+                className={`border rounded-xl p-4 text-center ${achieved >= target && target > 0 ? "bg-green-50 border-green-200" : "bg-orange-50 border-orange-200"}`}
+              >
+                <p
+                  className={`text-xs font-medium mb-1 ${achieved >= target && target > 0 ? "text-green-600" : "text-orange-600"}`}
+                >
+                  Achieved
+                </p>
+                <p
+                  className={`text-2xl font-bold ${achieved >= target && target > 0 ? "text-green-700" : "text-orange-700"}`}
+                >
                   ${achieved.toLocaleString()}
                 </p>
-                <p className="text-xs text-gray-500 mt-1">From {employee.sales_count || 0} sales</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  From {employee.sales_count || 0} sales
+                </p>
               </div>
-              <div className={`border rounded-xl p-4 text-center ${remaining <= 0 ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'}`}>
-                <p className={`text-xs font-medium mb-1 ${remaining <= 0 ? 'text-green-600' : 'text-gray-600'}`}>Remaining</p>
-                <p className={`text-2xl font-bold ${remaining <= 0 ? 'text-green-700' : 'text-gray-700'}`}>
-                  {remaining <= 0 ? 'Target Met!' : `$${remaining.toLocaleString()}`}
+              <div
+                className={`border rounded-xl p-4 text-center ${remaining <= 0 ? "bg-green-50 border-green-200" : "bg-gray-50 border-gray-200"}`}
+              >
+                <p
+                  className={`text-xs font-medium mb-1 ${remaining <= 0 ? "text-green-600" : "text-gray-600"}`}
+                >
+                  Remaining
+                </p>
+                <p
+                  className={`text-2xl font-bold ${remaining <= 0 ? "text-green-700" : "text-gray-700"}`}
+                >
+                  {remaining <= 0
+                    ? "Target Met!"
+                    : `$${remaining.toLocaleString()}`}
                 </p>
               </div>
             </div>
@@ -2628,7 +2783,7 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-3">
                   <div
-                    className={`h-3 rounded-full transition-all duration-500 ${progressPercent >= 100 ? 'bg-green-500' : progressPercent >= 50 ? 'bg-blue-500' : 'bg-orange-500'}`}
+                    className={`h-3 rounded-full transition-all duration-500 ${progressPercent >= 100 ? "bg-green-500" : progressPercent >= 50 ? "bg-blue-500" : "bg-orange-500"}`}
                     style={{ width: `${Math.min(progressPercent, 100)}%` }}
                   ></div>
                 </div>
@@ -2645,15 +2800,23 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => { const y = selectedHistoryYear - 1; setSelectedHistoryYear(y); }}
+                    onClick={() => {
+                      const y = selectedHistoryYear - 1;
+                      setSelectedHistoryYear(y);
+                    }}
                     className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500"
                   >
                     &#8249;
                   </button>
-                  <span className="text-sm font-semibold text-gray-700 min-w-[3rem] text-center">{selectedHistoryYear}</span>
+                  <span className="text-sm font-semibold text-gray-700 min-w-[3rem] text-center">
+                    {selectedHistoryYear}
+                  </span>
                   <button
                     type="button"
-                    onClick={() => { const y = selectedHistoryYear + 1; setSelectedHistoryYear(y); }}
+                    onClick={() => {
+                      const y = selectedHistoryYear + 1;
+                      setSelectedHistoryYear(y);
+                    }}
                     disabled={selectedHistoryYear >= new Date().getFullYear()}
                     className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 disabled:opacity-30"
                   >
@@ -2664,19 +2827,32 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
 
               {salesHistoryLoading ? (
                 <div className="flex items-center justify-center py-6 text-gray-400">
-                  <RefreshCw className="h-5 w-5 animate-spin mr-2" /> Loading history...
+                  <RefreshCw className="h-5 w-5 animate-spin mr-2" /> Loading
+                  history...
                 </div>
               ) : (
                 <div className="overflow-x-auto rounded-xl border border-gray-200">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="bg-gray-50 border-b border-gray-200">
-                        <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Month</th>
-                        <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Target</th>
-                        <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Achieved</th>
-                        <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Remaining</th>
-                        <th className="px-4 py-2.5 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">Sales</th>
-                        <th className="px-4 py-2.5 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
+                        <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                          Month
+                        </th>
+                        <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                          Target
+                        </th>
+                        <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                          Achieved
+                        </th>
+                        <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                          Remaining
+                        </th>
+                        <th className="px-4 py-2.5 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                          Sales
+                        </th>
+                        <th className="px-4 py-2.5 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                          Status
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
@@ -2684,50 +2860,86 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
                         <tr
                           key={row.month}
                           className={`${
-                            row.is_current ? "bg-blue-50/60" : row.is_future ? "bg-gray-50/40" : "bg-white"
+                            row.is_current
+                              ? "bg-blue-50/60"
+                              : row.is_future
+                                ? "bg-gray-50/40"
+                                : "bg-white"
                           } hover:bg-gray-50 transition-colors`}
                         >
                           <td className="px-4 py-2.5 font-medium text-gray-800">
                             {row.month_name}
                             {row.is_current && (
-                              <span className="ml-1.5 text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full font-semibold">Now</span>
+                              <span className="ml-1.5 text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full font-semibold">
+                                Now
+                              </span>
                             )}
                           </td>
                           <td className="px-4 py-2.5 text-right">
-                            {row.target_set
-                              ? <span className="text-gray-800 font-medium">{formatSalesAmount(row.monthly_target)}</span>
-                              : <span className="text-gray-400 text-xs">Not Set</span>
-                            }
+                            {row.target_set ? (
+                              <span className="text-gray-800 font-medium">
+                                {formatSalesAmount(row.monthly_target)}
+                              </span>
+                            ) : (
+                              <span className="text-gray-400 text-xs">
+                                Not Set
+                              </span>
+                            )}
                           </td>
                           <td className="px-4 py-2.5 text-right">
-                            {row.is_future
-                              ? <span className="text-gray-300 text-xs">—</span>
-                              : <span className={row.achieved > 0 ? "font-medium text-gray-800" : "text-gray-400"}>{formatSalesAmount(row.achieved ?? 0)}</span>
-                            }
+                            {row.is_future ? (
+                              <span className="text-gray-300 text-xs">—</span>
+                            ) : (
+                              <span
+                                className={
+                                  row.achieved > 0
+                                    ? "font-medium text-gray-800"
+                                    : "text-gray-400"
+                                }
+                              >
+                                {formatSalesAmount(row.achieved ?? 0)}
+                              </span>
+                            )}
                           </td>
                           <td className="px-4 py-2.5 text-right">
-                            {row.is_future || !row.target_set
-                              ? <span className="text-gray-300 text-xs">—</span>
-                              : row.remaining <= 0
-                              ? <span className="text-green-600 font-medium text-xs">Met ✓</span>
-                              : <span className="text-orange-600 font-medium">{formatSalesAmount(row.remaining)}</span>
-                            }
-                          </td>
-                          <td className="px-4 py-2.5 text-center">
-                            {row.is_future
-                              ? <span className="text-gray-300">—</span>
-                              : <span className="text-gray-600">{row.sales_count ?? 0}</span>
-                            }
+                            {row.is_future || !row.target_set ? (
+                              <span className="text-gray-300 text-xs">—</span>
+                            ) : row.remaining <= 0 ? (
+                              <span className="text-green-600 font-medium text-xs">
+                                Met ✓
+                              </span>
+                            ) : (
+                              <span className="text-orange-600 font-medium">
+                                {formatSalesAmount(row.remaining)}
+                              </span>
+                            )}
                           </td>
                           <td className="px-4 py-2.5 text-center">
                             {row.is_future ? (
-                              <span className="text-xs text-gray-400">Upcoming</span>
-                            ) : row.hit_target ? (
-                              <span className="inline-flex items-center gap-1 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">✓ Hit</span>
-                            ) : row.target_set ? (
-                              <span className="inline-flex items-center gap-1 text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-medium">In Progress</span>
+                              <span className="text-gray-300">—</span>
                             ) : (
-                              <span className="text-xs text-gray-400">No Target</span>
+                              <span className="text-gray-600">
+                                {row.sales_count ?? 0}
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-4 py-2.5 text-center">
+                            {row.is_future ? (
+                              <span className="text-xs text-gray-400">
+                                Upcoming
+                              </span>
+                            ) : row.hit_target ? (
+                              <span className="inline-flex items-center gap-1 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">
+                                ✓ Hit
+                              </span>
+                            ) : row.target_set ? (
+                              <span className="inline-flex items-center gap-1 text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-medium">
+                                In Progress
+                              </span>
+                            ) : (
+                              <span className="text-xs text-gray-400">
+                                No Target
+                              </span>
                             )}
                           </td>
                         </tr>
@@ -2945,6 +3157,60 @@ const ProfileDetailModal = ({
   onCopyEmail,
   onCopyPhone,
 }) => {
+  // ========== ADD THESE MISSING STATES ==========
+  const [salesTarget, setSalesTarget] = useState(null);
+  const [loadingTarget, setLoadingTarget] = useState(false);
+  // ==============================================
+
+  // Add this function to fetch sales target
+  const fetchEmployeeSalesTarget = useCallback(async (employeeId) => {
+    if (!employeeId) return null;
+
+    setLoadingTarget(true);
+    try {
+      const token = localStorage.getItem("token");
+      const currentDate = new Date();
+      const currentYear = currentDate.getFullYear();
+      const currentMonth = currentDate.getMonth() + 1;
+
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL || "http://100.126.74.55:5000"}/api/v1/sales-targets/${employeeId}?month=${currentMonth}&year=${currentYear}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        },
+      );
+
+      const result = await response.json();
+      if (result.success && result.data) {
+        return result.data;
+      }
+      return null;
+    } catch (error) {
+      console.error("Error fetching sales target:", error);
+      return null;
+    } finally {
+      setLoadingTarget(false);
+    }
+  }, []);
+
+  // Fetch target when employee changes
+  useEffect(() => {
+    if (
+      employee &&
+      (employee.department === "Sales" ||
+        employee.role?.toLowerCase().includes("sales"))
+    ) {
+      fetchEmployeeSalesTarget(employee.id).then((target) => {
+        setSalesTarget(target);
+      });
+    } else {
+      setSalesTarget(null);
+    }
+  }, [employee, fetchEmployeeSalesTarget]);
+
   // Status badge function
   const getStatusBadge = (status) => {
     switch (status) {
@@ -3226,15 +3492,15 @@ const ProfileDetailModal = ({
                         e.target.style.display = "none";
                         const initialsDiv = e.target.parentElement;
                         initialsDiv.innerHTML = `
-                          <div class="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center">
-                            <span class="text-gray-700 text-xl font-bold">
-                              ${employee.name
-                                .split(" ")
-                                .map((n) => n[0])
-                                .join("")}
-                            </span>
-                          </div>
-                        `;
+                      <div class="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center">
+                        <span class="text-gray-700 text-xl font-bold">
+                          ${employee.name
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")}
+                        </span>
+                      </div>
+                    `;
                       }}
                     />
                   ) : (
@@ -3256,7 +3522,6 @@ const ProfileDetailModal = ({
                     {employee.name}
                   </h2>
                   {getStatusBadge(employee.status)}
-                  {/* {getPerformanceBadge(employee.performance)} */}
                 </div>
                 <div className="flex flex-wrap gap-3 mb-3">
                   <span className="flex items-center gap-2 text-gray-600">
@@ -3391,7 +3656,9 @@ const ProfileDetailModal = ({
                   </div>
                   <div>
                     <div className="text-sm text-gray-500 mb-1">Status</div>
-                    <div className="font-medium capitalize">{employee.status}</div>
+                    <div className="font-medium capitalize">
+                      {employee.status}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -3525,6 +3792,93 @@ const ProfileDetailModal = ({
               </div>
             </div>
           </div>
+
+          {/* Sales Target Stats Card - Only for Sales employees */}
+          {(employee.department === "Sales" ||
+            employee.role?.toLowerCase().includes("sales")) &&
+            salesTarget && (
+              <div className="my-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-5 border border-blue-200">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                    <Target className="h-5 w-5 text-blue-600" />
+                    Sales Target -{" "}
+                    {new Date().toLocaleDateString("en-US", {
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </h4>
+                  {salesTarget.exceeded && (
+                    <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
+                      🎉 Target Exceeded!
+                    </span>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                  <div className="bg-white rounded-xl p-4 shadow-sm">
+                    <div className="text-sm text-gray-500 mb-1">
+                      Monthly Target
+                    </div>
+                    <div className="text-2xl font-bold text-blue-600">
+                      ${salesTarget.monthly_target?.toLocaleString() || "0"}
+                    </div>
+                  </div>
+                  <div className="bg-white rounded-xl p-4 shadow-sm">
+                    <div className="text-sm text-gray-500 mb-1">Achieved</div>
+                    <div className="text-2xl font-bold text-green-600">
+                      ${salesTarget.achieved?.toLocaleString() || "0"}
+                    </div>
+                  </div>
+                  <div className="bg-white rounded-xl p-4 shadow-sm">
+                    <div className="text-sm text-gray-500 mb-1">Remaining</div>
+                    <div className="text-2xl font-bold text-orange-600">
+                      $
+                      {Math.max(0, salesTarget.remaining || 0).toLocaleString()}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Progress Bar */}
+                <div className="mt-2">
+                  <div className="flex justify-between text-sm text-gray-600 mb-1">
+                    <span>Progress</span>
+                    <span>
+                      {Math.min(
+                        100,
+                        Math.round(
+                          (salesTarget.achieved / salesTarget.monthly_target) *
+                            100,
+                        ),
+                      )}
+                      %
+                    </span>
+                  </div>
+                  <div className="w-full bg-blue-200 rounded-full h-2.5">
+                    <div
+                      className="bg-blue-600 h-2.5 rounded-full transition-all duration-500"
+                      style={{
+                        width: `${Math.min(100, (salesTarget.achieved / salesTarget.monthly_target) * 100)}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Sales Count */}
+                {salesTarget.sales_count > 0 && (
+                  <div className="mt-3 text-sm text-gray-600">
+                    📊 {salesTarget.sales_count} sale
+                    {salesTarget.sales_count !== 1 ? "s" : ""} this month
+                  </div>
+                )}
+
+                {/* Notes if any */}
+                {salesTarget.notes && (
+                  <div className="mt-3 p-2 bg-yellow-50 rounded-lg text-sm text-yellow-700">
+                    📝 Note: {salesTarget.notes}
+                  </div>
+                )}
+              </div>
+            )}
         </div>
       </div>
     </div>
