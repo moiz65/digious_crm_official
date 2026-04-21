@@ -38,6 +38,8 @@ import {
   Layout,
   ShoppingBag,
   XCircle,
+  CheckSquare,
+  Square,
 } from "lucide-react";
 import {
   getAllSales,
@@ -166,6 +168,50 @@ const AdvancedSalesManagement = () => {
   const [customStartDate, setCustomStartDate] = useState("");
   const [customEndDate, setCustomEndDate] = useState("");
   const [showDatePicker, setShowDatePicker] = useState(false);
+
+  const [filterMerchants, setFilterMerchants] = useState([]); // Array of selected merchants
+  const [showMerchantDropdown, setShowMerchantDropdown] = useState(false);
+  const merchantDropdownRef = useRef(null);
+
+  const [selectedSalesIds, setSelectedSalesIds] = useState(new Set()); // Track selected sales
+  const [selectAll, setSelectAll] = useState(false);
+
+  const toggleMerchant = (merchant) => {
+    setFilterMerchants((prev) => {
+      if (prev.includes(merchant)) {
+        return prev.filter((m) => m !== merchant);
+      } else {
+        return [...prev, merchant];
+      }
+    });
+    setPage(1);
+  };
+
+  // Select all merchants
+  const selectAllMerchants = () => {
+    setFilterMerchants([...MERCHANTS]);
+    setPage(1);
+  };
+
+  // Clear all merchants
+  const clearAllMerchants = () => {
+    setFilterMerchants([]);
+    setPage(1);
+  };
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        merchantDropdownRef.current &&
+        !merchantDropdownRef.current.contains(event.target)
+      ) {
+        setShowMerchantDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // ── Load categories ──────────────────────────────────────────────────────
   useEffect(() => {
@@ -337,6 +383,10 @@ const AdvancedSalesManagement = () => {
       if (filterStatus !== "all" && s.status !== filterStatus) return false;
       if (filterCategory !== "all" && s.category !== filterCategory)
         return false;
+      // Multiple merchant filter
+      if (filterMerchants.length > 0 && !filterMerchants.includes(s.merchant))
+        return false;
+
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
         if (
@@ -374,8 +424,58 @@ const AdvancedSalesManagement = () => {
       return sortDir === "asc" ? cmp : -cmp;
     });
 
-  const totalPages = Math.ceil(filtered.length / PER_PAGE);
-  const pageData = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+  // Add these functions
+  const toggleSelectSale = (id) => {
+    setSelectedSalesIds((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectAll) {
+      setSelectedSalesIds(new Set());
+    } else {
+      setSelectedSalesIds(new Set(filtered.map((s) => s.id)));
+    }
+    setSelectAll(!selectAll);
+  };
+
+  const clearSelection = () => {
+    setSelectedSalesIds(new Set());
+    setSelectAll(false);
+  };
+
+  // Calculate selected sales totals
+  const selectedTotals = {
+    totalAmount: filtered
+      .filter((s) => selectedSalesIds.has(s.id))
+      .reduce((sum, s) => sum + s.totalAmount, 0),
+    totalUpfront: filtered
+      .filter((s) => selectedSalesIds.has(s.id))
+      .reduce((sum, s) => sum + s.upfrontPayment, 0),
+    totalRemaining: filtered
+      .filter((s) => selectedSalesIds.has(s.id))
+      .reduce((sum, s) => sum + s.remainingBalance, 0),
+    completedCount: filtered.filter(
+      (s) => selectedSalesIds.has(s.id) && s.status === "completed",
+    ).length,
+    count: selectedSalesIds.size,
+  };
+
+  // Update selectAll when selection changes
+  useEffect(() => {
+    if (selectedSalesIds.size === filtered.length && filtered.length > 0) {
+      setSelectAll(true);
+    } else {
+      setSelectAll(false);
+    }
+  }, [selectedSalesIds, filtered]);
 
   const handleSort = (field) => {
     if (sortField === field) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -480,27 +580,26 @@ const AdvancedSalesManagement = () => {
 
   // ── Summary cards ────────────────────────────────────────────────────────
   const cards = [
-    // { title: 'Total Sales',       value: formatCurrency(totalAmount),    Icon: DollarSign,  grad: 'from-blue-500 to-blue-600',     sub: `${sales.length} sale${sales.length !== 1 ? 's' : ''}` },
     {
       title: "Total Paid Amount",
       value: formatCurrency(totalUpfront),
       Icon: Wallet,
       grad: "from-green-500 to-emerald-600",
-      sub: `${totalAmount > 0 ? Math.round((totalUpfront / totalAmount) * 100) : 0}% collected`,
+      sub: `${filtered.length > 0 && totalAmount > 0 ? Math.round((totalUpfront / filtered.reduce((s, r) => s + r.totalAmount, 0)) * 100) : 0}% of total`,
     },
     {
       title: "Remaining Balance",
       value: formatCurrency(totalRemaining),
       Icon: Clock,
       grad: "from-orange-500 to-amber-600",
-      sub: "Pending collection",
+      sub: "From filtered sales",
     },
     {
       title: "Completed",
       value: completedCount,
       Icon: CheckCircle,
       grad: "from-purple-500 to-violet-600",
-      sub: `${sales.length > 0 ? Math.round((completedCount / sales.length) * 100) : 0}% rate`,
+      sub: `${filtered.length > 0 ? Math.round((completedCount / filtered.length) * 100) : 0}% rate`,
     },
   ];
 
@@ -539,27 +638,113 @@ const AdvancedSalesManagement = () => {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-        {cards.map((c, i) => (
-          <div
-            key={i}
-            className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition p-5"
-          >
-            <div
-              className={`w-12 h-12 rounded-xl bg-gradient-to-br ${c.grad} flex items-center justify-center mb-4`}
-            >
-              <c.Icon className="h-6 w-6 text-white" />
+      <div
+        className={`grid gap-4 mb-6 ${
+          selectedSalesIds.size > 0
+            ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
+            : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+        }`}
+      >
+        {/* Selected Sales Summary Card */}
+
+        {/* Total Paid Amount Card - Using filtered totals */}
+        <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl p-5 text-white shadow-xl">
+          <div className="flex items-center justify-between mb-3">
+            <div className="p-2 bg-white/20 rounded-lg">
+              <Wallet className="h-6 w-6" />
             </div>
-            <p className="text-2xl font-bold text-slate-800 mb-0.5">
-              {c.value}
-            </p>
-            <p className="text-sm font-medium text-slate-700 mb-0.5">
-              {c.title}
-            </p>
-            <p className="text-xs text-slate-500">{c.sub}</p>
+            <div className="text-right">
+              <div className="text-2xl font-bold">
+                {selectedSalesIds.size > 0
+                  ? formatCurrency(selectedTotals.totalUpfront)
+                  : formatCurrency(
+                      filtered.reduce((sum, s) => sum + s.upfrontPayment, 0),
+                    )}
+              </div>
+              <div className="text-green-100 text-xs">Paid Amount</div>
+            </div>
           </div>
-        ))}
+          {selectedSalesIds.size > 0 && (
+            <div className="text-xs text-green-100">
+              From {selectedSalesIds.size} selected sale(s)
+            </div>
+          )}
+        </div>
+
+        {/* Remaining Balance Card - Using filtered totals */}
+        <div className="bg-gradient-to-br from-orange-500 to-amber-600 rounded-2xl p-5 text-white shadow-xl">
+          <div className="flex items-center justify-between mb-3">
+            <div className="p-2 bg-white/20 rounded-lg">
+              <Clock className="h-6 w-6" />
+            </div>
+            <div className="text-right">
+              <div className="text-2xl font-bold">
+                {selectedSalesIds.size > 0
+                  ? formatCurrency(selectedTotals.totalRemaining)
+                  : formatCurrency(
+                      filtered.reduce((sum, s) => sum + s.remainingBalance, 0),
+                    )}
+              </div>
+              <div className="text-orange-100 text-xs">Remaining</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Completed Sales Card - Using filtered totals */}
+        <div className="bg-gradient-to-br from-purple-500 to-violet-600 rounded-2xl p-5 text-white shadow-xl">
+          <div className="flex items-center justify-between mb-3">
+            <div className="p-2 bg-white/20 rounded-lg">
+              <CheckCircle className="h-6 w-6" />
+            </div>
+            <div className="text-right">
+              <div className="text-2xl font-bold">
+                {selectedSalesIds.size > 0
+                  ? selectedTotals.completedCount
+                  : filtered.filter((s) => s.status === "completed").length}
+              </div>
+              <div className="text-purple-100 text-xs">Completed</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Selected Sales Card - Using filtered totals */}
+        {selectedSalesIds.size > 0 && (
+          <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl p-5 text-white shadow-xl">
+            <div className="flex items-center justify-between mb-3">
+              <div className="p-2 bg-white/20 rounded-lg">
+                <CheckSquare className="h-6 w-6" />
+              </div>
+              <div className="text-right">
+                <div className="text-2xl font-bold">
+                  {selectedSalesIds.size}
+                </div>
+                <div className="text-blue-100 text-xs">Selected</div>
+              </div>
+            </div>
+            <div className="text-xs text-blue-100">Click Clear to reset</div>
+          </div>
+        )}
       </div>
+
+      {/* Selection Actions Bar */}
+      {selectedSalesIds.size > 0 && (
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium text-blue-800">
+              {selectedSalesIds.size} sale(s) selected
+            </span>
+            <button
+              onClick={clearSelection}
+              className="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
+            >
+              <X className="h-3 w-3" /> Clear Selection
+            </button>
+          </div>
+          <div className="text-xs text-blue-600">
+            Stats updated for selected items
+          </div>
+        </div>
+      )}
 
       {/* Date Range Filter */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 mb-6">
@@ -762,6 +947,94 @@ const AdvancedSalesManagement = () => {
               </select>
               <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
             </div>
+
+            <div className="relative" ref={merchantDropdownRef}>
+              <button
+                type="button"
+                onClick={() => setShowMerchantDropdown(!showMerchantDropdown)}
+                className="flex items-center justify-between gap-2 px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white min-w-[180px]"
+              >
+                <div className="flex items-center gap-2">
+                  <Filter className="h-4 w-4 text-gray-400" />
+                  <span className="text-gray-700">
+                    {filterMerchants.length === 0
+                      ? "All Merchants"
+                      : filterMerchants.length === 1
+                        ? filterMerchants[0]
+                        : `${filterMerchants.length} Merchants Selected`}
+                  </span>
+                </div>
+                <ChevronDown
+                  className={`h-4 w-4 text-gray-400 transition-transform ${showMerchantDropdown ? "rotate-180" : ""}`}
+                />
+              </button>
+
+              {showMerchantDropdown && (
+                <div className="absolute z-50 mt-2 w-64 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+                  <div className="p-2 border-b border-gray-100 bg-gray-50">
+                    <div className="flex items-center justify-between">
+                      <button
+                        onClick={selectAllMerchants}
+                        className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                      >
+                        Select All
+                      </button>
+                      <button
+                        onClick={clearAllMerchants}
+                        className="text-xs text-gray-500 hover:text-gray-700 font-medium"
+                      >
+                        Clear All
+                      </button>
+                    </div>
+                  </div>
+                  <div className="max-h-60 overflow-y-auto">
+                    {MERCHANTS.map((merchant) => (
+                      <label
+                        key={merchant}
+                        className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 cursor-pointer transition-colors"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={filterMerchants.includes(merchant)}
+                          onChange={() => toggleMerchant(merchant)}
+                          className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        />
+                        <span className="text-sm text-gray-700">
+                          {merchant}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                  {filterMerchants.length > 0 && (
+                    <div className="p-2 border-t border-gray-100 bg-gray-50">
+                      <div className="flex flex-wrap gap-1">
+                        {filterMerchants.slice(0, 3).map((merchant) => (
+                          <span
+                            key={merchant}
+                            className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs"
+                          >
+                            {merchant.length > 15
+                              ? merchant.slice(0, 12) + "..."
+                              : merchant}
+                            <button
+                              onClick={() => toggleMerchant(merchant)}
+                              className="hover:text-blue-900"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </span>
+                        ))}
+                        {filterMerchants.length > 3 && (
+                          <span className="inline-flex items-center px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full text-xs">
+                            +{filterMerchants.length - 3} more
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
           <p className="text-sm text-gray-500">
             {filtered.length} result{filtered.length !== 1 ? "s" : ""}
@@ -792,6 +1065,19 @@ const AdvancedSalesManagement = () => {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
+                <th className="px-4 py-3 text-left">
+                  <button
+                    onClick={toggleSelectAll}
+                    className="p-1 hover:bg-gray-200 rounded"
+                    title={selectAll ? "Deselect All" : "Select All"}
+                  >
+                    {selectAll ? (
+                      <CheckSquare className="h-4 w-4 text-blue-600" />
+                    ) : (
+                      <Square className="h-4 w-4 text-gray-400" />
+                    )}
+                  </button>
+                </th>
                 {[
                   { label: "Employee", field: "employee" },
                   { label: "Client", field: "client" },
@@ -821,7 +1107,7 @@ const AdvancedSalesManagement = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {pageData.map((sale) => {
+              {filtered.map((sale) => {
                 const { bg: statusBg, Icon: StatusIcon } = getStatusCfg(
                   sale.status,
                 );
@@ -830,12 +1116,27 @@ const AdvancedSalesManagement = () => {
                 );
                 const dlInfo = getDeadlineInfo(sale.deadline);
                 const isEdit = editingId === sale.id;
+                const isSelected = selectedSalesIds.has(sale.id);
 
                 return (
                   <tr
                     key={sale.id}
-                    className="hover:bg-gray-50 transition-colors"
+                    className={`hover:bg-gray-50 transition-colors ${isSelected ? "bg-blue-50/30" : ""}`}
                   >
+                    {/* Checkbox */}
+                    <td className="px-4 py-3">
+                      <button
+                        onClick={() => toggleSelectSale(sale.id)}
+                        className="p-1 hover:bg-gray-200 rounded"
+                      >
+                        {isSelected ? (
+                          <CheckSquare className="h-4 w-4 text-blue-600" />
+                        ) : (
+                          <Square className="h-4 w-4 text-gray-400" />
+                        )}
+                      </button>
+                    </td>
+
                     {/* Employee */}
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
@@ -1061,51 +1362,6 @@ const AdvancedSalesManagement = () => {
             </button>
           </div>
         )}
-
-        {/* Pagination */}
-        {!loading && totalPages > 1 && (
-          <div className="border-t border-gray-200 px-6 py-3 flex items-center justify-between">
-            <p className="text-xs text-gray-500">
-              Showing {(page - 1) * PER_PAGE + 1}–
-              {Math.min(page * PER_PAGE, filtered.length)} of {filtered.length}
-            </p>
-            <div className="flex gap-1.5">
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="px-3 py-1.5 text-xs border border-gray-200 rounded-lg disabled:opacity-40 hover:bg-gray-50"
-              >
-                Prev
-              </button>
-              {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
-                const p =
-                  totalPages <= 7
-                    ? i + 1
-                    : page <= 4
-                      ? i + 1
-                      : page >= totalPages - 3
-                        ? totalPages - 6 + i
-                        : page - 3 + i;
-                return (
-                  <button
-                    key={p}
-                    onClick={() => setPage(p)}
-                    className={`px-3 py-1.5 text-xs rounded-lg ${page === p ? "bg-blue-600 text-white" : "border border-gray-200 hover:bg-gray-50"}`}
-                  >
-                    {p}
-                  </button>
-                );
-              })}
-              <button
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
-                className="px-3 py-1.5 text-xs border border-gray-200 rounded-lg disabled:opacity-40 hover:bg-gray-50"
-              >
-                Next
-              </button>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Add Sale Modal */}
@@ -1143,6 +1399,7 @@ const AddSaleModal = ({ categories, employees, saving, onSubmit, onClose }) => {
     status: "pending",
     notes: "",
   });
+
   const [errs, setErrs] = useState({});
   // Add these ref and states
   const employeeDropdownRef = useRef(null);

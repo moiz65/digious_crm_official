@@ -143,17 +143,34 @@ export function SuperAdminDashboard() {
 
       // Fetch sales for current month
       const salesRes = await fetch(
-        `${process.env.REACT_APP_API_URL || "http://100.126.74.55:5000"}/api/v1/sales/all?from=${currentYear}-${String(currentMonth).padStart(2, "0")}-01&to=${currentYear}-${String(currentMonth).padStart(2, "0")}-${new Date(currentYear, currentMonth, 0).getDate()}`,
+        `${process.env.REACT_APP_API_URL || "http://100.126.74.55:5000"}/api/v1/sales`,
         { headers },
       );
       const salesDataRes = await salesRes.json();
 
       // Fetch expenses
       const expensesRes = await fetch(
-        `${process.env.REACT_APP_API_URL || "http://100.126.74.55:5000"}/api/v1/expenses?month=${currentMonth}&year=${currentYear}`,
+        `${process.env.REACT_APP_API_URL || "http://100.126.74.55:5000"}/api/v1/expenses?limit=10000`,
         { headers },
       );
       const expensesData = await expensesRes.json();
+
+      // Filter for current month only
+      const currentMonthExpenses = (expensesData.data || []).filter((exp) => {
+        const expDateStr = exp.expense_date || exp.date || exp.created_at;
+        if (!expDateStr) return false;
+        const expDate = new Date(expDateStr);
+        return (
+          expDate.getMonth() + 1 === currentMonth &&
+          expDate.getFullYear() === currentYear
+        );
+      });
+
+      // Calculate total expenses for current month ONLY
+      const monthlyExpenses = currentMonthExpenses.reduce(
+        (sum, exp) => sum + (parseFloat(exp.amount) || 0),
+        0,
+      );
 
       // Process data
       const activeEmployees = (employeesData.data || []).filter(
@@ -168,12 +185,6 @@ export function SuperAdminDashboard() {
       // Calculate total upfront payments for current month
       const monthlyRevenue = (salesDataRes.data || []).reduce(
         (sum, sale) => sum + (parseFloat(sale.upfront_payment) || 0),
-        0,
-      );
-
-      // Calculate total expenses for current month
-      const monthlyExpenses = (expensesData.data || []).reduce(
-        (sum, exp) => sum + (parseFloat(exp.amount) || 0),
         0,
       );
 
@@ -210,9 +221,9 @@ export function SuperAdminDashboard() {
         totalActiveEmployees: activeEmployees.length,
         monthlySalesRevenue: monthlyRevenue,
         absentToday: absentCount,
-        monthlyExpenses: monthlyExpenses,
+        monthlyExpenses: monthlyExpenses, // Now this is current month only
         salesTarget: salesTargetsData.reduce((sum, t) => sum + t.target, 0),
-        expenseTarget: 250000, // Default expense target
+        expenseTarget: 250000,
       });
 
       // Set employees with sales data
@@ -233,7 +244,7 @@ export function SuperAdminDashboard() {
           : "absent",
         salesAchieved: salesTargetMap[emp.id]?.achieved || 0,
         salesTarget: salesTargetMap[emp.id]?.target || 0,
-        projects: [], // Will be populated from projects API
+        projects: [],
       }));
 
       setEmployees(enrichedEmployees);
@@ -505,21 +516,16 @@ export function SuperAdminDashboard() {
                   <DollarSign className="h-6 w-6 text-emerald-600" />
                 </div>
                 <span className="text-3xl font-bold text-slate-800">
-                  ${(dashboardData.monthlySalesRevenue / 1000).toFixed(0)}K
+                  {dashboardData.monthlySalesRevenue >= 1000000
+                    ? `$${(dashboardData.monthlySalesRevenue / 1000000).toFixed(1)}M`
+                    : dashboardData.monthlySalesRevenue >= 10000
+                      ? `$${(dashboardData.monthlySalesRevenue / 1000).toFixed(1)}K`
+                      : `$${dashboardData.monthlySalesRevenue.toLocaleString()}`}
                 </span>
               </div>
               <h3 className="text-slate-600 font-medium">
                 Monthly Sales Revenue
               </h3>
-              {/* <div className="mt-3">
-                <div className="flex justify-between text-xs text-slate-500 mb-1">
-                  <span>Target: ${(dashboardData.salesTarget / 1000).toFixed(0)}K</span>
-                  <span className="font-medium">{Math.round(salesProgress)}%</span>
-                </div>
-                <div className="w-full bg-slate-100 rounded-full h-2">
-                  <div className="bg-emerald-500 h-2 rounded-full transition-all duration-500" style={{ width: `${Math.min(salesProgress, 100)}%` }}></div>
-                </div>
-              </div> */}
             </div>
             {/* <div className="h-1 bg-gradient-to-r from-emerald-500 to-emerald-600 w-0 group-hover:w-full transition-all duration-500"></div> */}
           </div>
@@ -549,21 +555,17 @@ export function SuperAdminDashboard() {
                   <Wallet className="h-6 w-6 text-amber-600" />
                 </div>
                 <span className="text-3xl font-bold text-slate-800">
-                  ${(dashboardData.monthlyExpenses / 1000).toFixed(0)}K
+                  Rs {dashboardData.monthlyExpenses.toLocaleString()}
                 </span>
               </div>
               <h3 className="text-slate-600 font-medium">Monthly Expenses</h3>
-              {/* <div className="mt-3">
-                <div className="flex justify-between text-xs text-slate-500 mb-1">
-                  <span>Budget: ${(dashboardData.expenseTarget / 1000).toFixed(0)}K</span>
-                  <span className="font-medium">{Math.round(expenseProgress)}%</span>
-                </div>
-                <div className="w-full bg-slate-100 rounded-full h-2">
-                  <div className="bg-amber-500 h-2 rounded-full transition-all duration-500" style={{ width: `${Math.min(expenseProgress, 100)}%` }}></div>
-                </div>
-              </div> */}
+              <p className="text-xs text-slate-400 mt-1">
+                {new Date().toLocaleDateString("en-US", {
+                  month: "long",
+                  year: "numeric",
+                })}
+              </p>
             </div>
-            {/* <div className="h-1 bg-gradient-to-r from-amber-500 to-amber-600 w-0 group-hover:w-full transition-all duration-500"></div> */}
           </div>
         </div>
 
@@ -608,10 +610,10 @@ export function SuperAdminDashboard() {
                           {emp.department} • {emp.position}
                         </p>
                       </div>
-                      <div className="flex items-center gap-1 text-rose-600 bg-rose-50 px-2 py-1 rounded-full">
+                      {/* <div className="flex items-center gap-1 text-rose-600 bg-rose-50 px-2 py-1 rounded-full">
                         <XCircle className="h-3 w-3" />
                         <span className="text-xs font-medium">Absent</span>
-                      </div>
+                      </div> */}
                     </div>
                   </div>
                 ))
@@ -707,7 +709,7 @@ export function SuperAdminDashboard() {
             </div>
           </div>
 
-          {/* Column 3: Sales Performance */}
+          {/* Column 3: Sales Performance - Sorted Descending */}
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
             <div className="px-5 py-4 border-b border-slate-100 bg-gradient-to-r from-emerald-50 to-white">
               <div className="flex items-center justify-between">
@@ -729,6 +731,7 @@ export function SuperAdminDashboard() {
                 .filter(
                   (e) => e.department === "Sales" && e.status === "active",
                 )
+                .sort((a, b) => b.salesAchieved - a.salesAchieved) // Sort descending by achieved
                 .map((emp) => {
                   const progress =
                     emp.salesTarget > 0
