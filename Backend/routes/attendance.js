@@ -3,6 +3,13 @@ const router = express.Router();
 const attendanceController = require('./controllers/attendanceController');
 const authMiddleware = require('../middleware/auth');
 
+// DEBUG: Check if controllers are properly imported
+console.log('=== ATTENDANCE CONTROLLER DEBUG ===');
+console.log('recordBreakEnd:', typeof attendanceController.recordBreakEnd);
+console.log('getTodayAttendance:', typeof attendanceController.getTodayAttendance);
+console.log('All keys:', Object.keys(attendanceController));
+console.log('===================================');
+
 // Employee Routes (Protected)
 router.post('/check-in', authMiddleware, attendanceController.checkIn);
 router.post('/check-out', authMiddleware, attendanceController.checkOut);

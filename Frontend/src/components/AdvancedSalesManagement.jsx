@@ -82,7 +82,7 @@ const MERCHANTS = [
   "Stripe",
   "Ziffs PayPal",
   "Digious PayPal",
-  " Innovative PayPal",
+  "Innovative PayPal",
   "Crypto",
   "Invoice",
 ];
