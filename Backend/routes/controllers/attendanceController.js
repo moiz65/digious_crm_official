@@ -1339,16 +1339,17 @@ exports.recordBreakEnd = async (req, res) => {
 
     // Break type configurations
     const BREAK_CONFIG = {
-      Smoke: { allowedMinutes: 5, maxMinutes: 30 },
-      Dinner: { allowedMinutes: 60, maxMinutes: 90 },
-      Washroom: { allowedMinutes: 10, maxMinutes: 20 },
-      Prayer: { allowedMinutes: 10, maxMinutes: 15 },
-      Other: { allowedMinutes: 10, maxMinutes: 30 },
+      Smoke: { allowedMinutes: 5, maxMinutes: 30, maxPerDay: 9 },
+      Dinner: { allowedMinutes: 45, maxMinutes: 90, maxPerDay: 1 },
+      Washroom: { allowedMinutes: 10, maxMinutes: 20, maxPerDay: null },
+      Prayer: { allowedMinutes: 10, maxMinutes: 15, maxPerDay: null },
+      Other: { allowedMinutes: 10, maxMinutes: 30, maxPerDay: null },
     };
 
     const config = BREAK_CONFIG[break_type] || {
       allowedMinutes: 10,
       maxMinutes: 30,
+      maxPerDay: null,
     };
     const allowedMinutes = config.allowedMinutes;
 
@@ -1377,7 +1378,6 @@ exports.recordBreakEnd = async (req, res) => {
     console.log("   - Duration:", break_duration_minutes, "min");
     console.log("   - Allowed:", allowedMinutes, "min");
     console.log("   - Inactivity:", inactivityMinutes, "min");
-    console.log("   - Is Inactive:", isInactive);
 
     if (!employee_id || !break_type) {
       return res.status(400).json({
@@ -1399,7 +1399,7 @@ exports.recordBreakEnd = async (req, res) => {
     try {
       // Get today's attendance record
       const [attendanceRecord] = await connection.query(
-        `SELECT id FROM Employee_Attendance 
+        `SELECT id, dinner_break_taken, smoke_break_count FROM Employee_Attendance 
          WHERE employee_id = ? AND attendance_date = ? AND check_out_time IS NULL`,
         [employee_id, attendanceDate],
       );
@@ -1413,6 +1413,8 @@ exports.recordBreakEnd = async (req, res) => {
       }
 
       attendanceId = attendanceRecord[0].id;
+      const currentDinnerBreakTaken = attendanceRecord[0].dinner_break_taken;
+      const currentSmokeCount = attendanceRecord[0].smoke_break_count;
 
       const breakEnd = break_end_time || getPakistanTimeString();
 
@@ -1435,7 +1437,7 @@ exports.recordBreakEnd = async (req, res) => {
       const breakDurationMinutes = Math.floor(break_duration_minutes || 0);
 
       // Update break record with end time, duration, and inactivity
-      const [updateBreakResult] = await connection.query(
+      await connection.query(
         `UPDATE Employee_Breaks 
          SET break_end_time = ?, 
              break_duration_minutes = ?,
@@ -1453,11 +1455,8 @@ exports.recordBreakEnd = async (req, res) => {
           breakId,
         ],
       );
-      console.log(
-        `🔧 Employee_Breaks UPDATE: breakId=${breakId}, inactivity=${inactivityMinutes}min`,
-      );
 
-      // Update attendance record with break statistics (including inactivity)
+      // Update attendance record with break statistics
       const fieldMap = {
         Smoke: {
           count: "smoke_break_count",
@@ -1507,16 +1506,38 @@ exports.recordBreakEnd = async (req, res) => {
             attendanceId,
           ],
         );
-      } else {
-        await connection.query(
-          `UPDATE Employee_Attendance 
-           SET total_breaks_taken = total_breaks_taken + 1,
-               total_break_duration_minutes = total_break_duration_minutes + ?,
-               total_inactivity_minutes = total_inactivity_minutes + ?,
-               updated_at = NOW()
-           WHERE id = ?`,
-          [breakDurationMinutes, inactivityMinutes, attendanceId],
+      }
+
+      // Set dinner_break_taken flag ONLY when dinner break duration >= 45 minutes
+      if (break_type === "Dinner" && !currentDinnerBreakTaken) {
+        if (breakDurationMinutes >= 45) {
+          await connection.query(
+            `UPDATE Employee_Attendance 
+             SET dinner_break_taken = 1 
+             WHERE id = ?`,
+            [attendanceId],
+          );
+          console.log(
+            `🍽️ Dinner break completed (${breakDurationMinutes}min) - marked as taken`,
+          );
+        } else {
+          console.log(
+            `🍽️ Dinner break not yet complete (${breakDurationMinutes}/45min)`,
+          );
+        }
+      }
+
+      // Check smoke break limit (only when smoke break count reaches 9)
+      if (break_type === "Smoke") {
+        const [newSmokeCount] = await connection.query(
+          `SELECT smoke_break_count FROM Employee_Attendance WHERE id = ?`,
+          [attendanceId],
         );
+        if (newSmokeCount[0]?.smoke_break_count >= 9) {
+          console.log(
+            `🚬 Smoke break limit reached: ${newSmokeCount[0]?.smoke_break_count}/9`,
+          );
+        }
       }
 
       // Recalculate net_working_time_minutes
@@ -1546,6 +1567,8 @@ exports.recordBreakEnd = async (req, res) => {
           allowed_duration_minutes: allowedMinutes,
           inactivity_minutes: inactivityMinutes,
           is_inactive: isInactive,
+          dinner_break_completed:
+            break_type === "Dinner" && breakDurationMinutes >= 45,
           status: "completed",
         },
       });

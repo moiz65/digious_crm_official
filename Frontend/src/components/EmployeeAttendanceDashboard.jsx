@@ -800,6 +800,7 @@ const EmployeeAttendanceDashboard = () => {
       label: "Smoke Break",
       icon: Cigarette,
       color: "bg-gray-500",
+      maxPerDay: 9,
       duration: 5,
     },
     {
@@ -807,13 +808,15 @@ const EmployeeAttendanceDashboard = () => {
       label: "Dinner Break",
       icon: Utensils,
       color: "bg-orange-500",
-      duration: 60,
+      maxPerDay: 1,
+      duration: 45,
     },
     {
       type: "Washroom",
       label: "Washroom Break",
       icon: User,
       color: "bg-blue-500",
+      maxPerDay: null,
       duration: 10,
     },
     {
@@ -821,6 +824,7 @@ const EmployeeAttendanceDashboard = () => {
       label: "Prayer Break",
       icon: Activity,
       color: "bg-purple-500",
+      maxPerDay: null,
       duration: 10,
     },
   ];
@@ -1189,7 +1193,7 @@ const EmployeeAttendanceDashboard = () => {
               </div>
 
               <div className="p-6 space-y-6">
-                {/* Today's Summary - Moved to TOP */}
+                {/* Today's Summary */}
                 {attendanceData && (
                   <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-4 border border-gray-100">
                     <div className="flex items-center justify-between mb-4">
@@ -1231,69 +1235,157 @@ const EmployeeAttendanceDashboard = () => {
                       </div>
                     </div>
 
-                    {/* Break Type Details */}
+                    {/* Break Type Details with Limits */}
                     <div className="grid grid-cols-2 gap-2">
-                      {[
-                        {
-                          key: "smoke",
-                          label: "Smoke",
-                          icon: Cigarette,
-                          count: attendanceData?.smoke_break_count,
-                          duration:
-                            attendanceData?.smoke_break_duration_minutes,
-                        },
-                        {
-                          key: "dinner",
-                          label: "Dinner",
-                          icon: Utensils,
-                          count: attendanceData?.dinner_break_count,
-                          duration:
-                            attendanceData?.dinner_break_duration_minutes,
-                        },
-                        {
-                          key: "washroom",
-                          label: "Washroom",
-                          icon: User,
-                          count: attendanceData?.washroom_break_count,
-                          duration:
-                            attendanceData?.washroom_break_duration_minutes,
-                        },
-                        {
-                          key: "prayer",
-                          label: "Prayer",
-                          icon: Activity,
-                          count: attendanceData?.prayer_break_count,
-                          duration:
-                            attendanceData?.prayer_break_duration_minutes,
-                        },
-                      ].map((item) => (
-                        <div
-                          key={item.key}
-                          className="flex items-center justify-between p-2 rounded-lg bg-white border border-gray-100"
-                        >
+                      {/* Smoke Break - ONLY show count, NO time */}
+                      <div className="bg-white rounded-lg p-3 border border-gray-100">
+                        <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-2">
-                            <item.icon className="w-3.5 h-3.5 text-gray-500" />
-                            <span className="text-xs text-gray-600">
-                              {item.label}
+                            <Cigarette className="w-4 h-4 text-gray-500" />
+                            <span className="text-xs font-medium text-gray-700">
+                              Smoke Break
                             </span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="text-sm font-semibold text-gray-800">
-                              {item.count || 0}x
+                            <span className="text-sm font-bold text-purple-600">
+                              {attendanceData?.smoke_break_count || 0}/9
                             </span>
-                            {item.duration > 0 && (
-                              <span className="text-[10px] text-gray-400">
-                                {formatTimeDisplay(item.duration)}
-                              </span>
-                            )}
+                            <span className="text-[10px] text-gray-400">
+                              {formatTimeDisplay(
+                                attendanceData?.smoke_break_duration_minutes ||
+                                  0,
+                              )}{" "}
+                            </span>
                           </div>
                         </div>
-                      ))}
+                        <div className="w-full bg-gray-200 rounded-full h-1.5">
+                          <div
+                            className="bg-purple-500 h-1.5 rounded-full transition-all"
+                            style={{
+                              width: `${Math.min(((attendanceData?.smoke_break_count || 0) / 9) * 100, 100)}%`,
+                            }}
+                          />
+                        </div>
+                        <p className="text-[10px] text-gray-400 mt-1.5">
+                          {9 - (attendanceData?.smoke_break_count || 0)} breaks
+                          remaining
+                        </p>
+                      </div>
+
+                      {/* Dinner Break - Show remaining time and completion status */}
+                      <div className="bg-white rounded-lg p-3 border border-gray-100">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <Utensils className="w-4 h-4 text-gray-500" />
+                            <span className="text-xs font-medium text-gray-700">
+                              Dinner Break
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-bold text-purple-600">
+                              {attendanceData?.dinner_break_taken ||
+                              (attendanceData?.dinner_break_duration_minutes ||
+                                0) >= 45
+                                ? "1/1"
+                                : "0/1"}
+                            </span>
+                            <span className="text-[10px] text-gray-400">
+                              {formatTimeDisplay(
+                                attendanceData?.dinner_break_duration_minutes ||
+                                  0,
+                              )}{" "}
+                              / 45m
+                            </span>
+                          </div>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-1.5">
+                          <div
+                            className="bg-orange-500 h-1.5 rounded-full transition-all"
+                            style={{
+                              width: `${Math.min(((attendanceData?.dinner_break_duration_minutes || 0) / 45) * 100, 100)}%`,
+                            }}
+                          />
+                        </div>
+                        {attendanceData?.dinner_break_taken ||
+                        (attendanceData?.dinner_break_duration_minutes || 0) >=
+                          45 ? (
+                          <p className="text-[10px] text-green-600 mt-1.5 flex items-center gap-1">
+                            <CheckCircle className="w-3 h-3" />
+                            Dinner break completed
+                          </p>
+                        ) : (
+                          <p className="text-[10px] text-gray-400 mt-1.5">
+                            {Math.max(
+                              0,
+                              45 -
+                                (attendanceData?.dinner_break_duration_minutes ||
+                                  0),
+                            )}{" "}
+                            minutes remaining
+                          </p>
+                        )}
+                        {/* Show inactivity warning for dinner break */}
+                        {attendanceData?.dinner_inactivity_minutes > 0 && (
+                          <p className="text-[9px] text-red-500 mt-1.5 flex items-center gap-1">
+                            <AlertCircle className="w-2.5 h-2.5" />
+                            {formatTimeDisplay(
+                              attendanceData.dinner_inactivity_minutes,
+                            )}{" "}
+                            inactivity (exceeded limit)
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Washroom Break - No limit */}
+                      <div className="bg-white rounded-lg p-3 border border-gray-100">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <User className="w-4 h-4 text-gray-500" />
+                            <span className="text-xs font-medium text-gray-700">
+                              Washroom
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-bold text-purple-600">
+                              {attendanceData?.washroom_break_count || 0}x
+                            </span>
+                            <span className="text-[10px] text-gray-400">
+                              {formatTimeDisplay(
+                                attendanceData?.washroom_break_duration_minutes ||
+                                  0,
+                              )}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Prayer Break - No limit */}
+                      <div className="bg-white rounded-lg p-3 border border-gray-100">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <Activity className="w-4 h-4 text-gray-500" />
+                            <span className="text-xs font-medium text-gray-700">
+                              Prayer
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-bold text-purple-600">
+                              {attendanceData?.prayer_break_count || 0}x
+                            </span>
+                            <span className="text-[10px] text-gray-400">
+                              {formatTimeDisplay(
+                                attendanceData?.prayer_break_duration_minutes ||
+                                  0,
+                              )}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
 
-                {/* Break Type Cards - Only show if no active break */}
+                {/* Break Type Cards - With Limit Checks */}
                 <div>
                   <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
                     Start New Break
@@ -1304,11 +1396,36 @@ const EmployeeAttendanceDashboard = () => {
                       const isActive = activeBreaks.some(
                         (b) => b.break_type === breakType.type,
                       );
-                      // Disable if: not checked in, OR any break is active, OR checked out
+
+                      // Check break limits
+                      let isLimitReached = false;
+                      let limitMessage = "";
+
+                      if (breakType.type === "Smoke") {
+                        const smokeCount =
+                          attendanceData?.smoke_break_count || 0;
+                        isLimitReached = smokeCount >= 9;
+                        limitMessage = isLimitReached
+                          ? "Daily limit reached (9/9)"
+                          : "";
+                      } else if (breakType.type === "Dinner") {
+                        // Check if dinner break is already taken OR duration completed 45 minutes
+                        const dinnerDuration =
+                          attendanceData?.dinner_break_duration_minutes || 0;
+                        isLimitReached =
+                          attendanceData?.dinner_break_taken === true ||
+                          dinnerDuration >= 45;
+                        limitMessage = isLimitReached
+                          ? "Dinner break already taken today"
+                          : "";
+                      }
+
+                      // Also disable if currently in an active break
                       const isDisabled =
                         !isCheckedIn ||
-                        activeBreaks.length > 0 ||
-                        attendanceData?.check_out_time;
+                        isActive ||
+                        attendanceData?.check_out_time ||
+                        isLimitReached;
 
                       return (
                         <button
@@ -1341,7 +1458,15 @@ const EmployeeAttendanceDashboard = () => {
                             <div className="text-[10px] text-gray-400 mt-0.5">
                               {breakType.duration}m
                             </div>
+                            {limitMessage && (
+                              <div className="text-[9px] text-red-500 mt-1">
+                                {limitMessage}
+                              </div>
+                            )}
                           </div>
+                          {isActive && (
+                            <div className="absolute top-1 right-1 w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
+                          )}
                         </button>
                       );
                     })}
@@ -1364,16 +1489,40 @@ const EmployeeAttendanceDashboard = () => {
                     <div className="space-y-2">
                       {activeBreaks.map((breakItem) => {
                         const elapsedSeconds = breakTimers[breakItem.id] || 0;
-                        const maxDuration =
-                          breakItem.break_type === "Dinner"
-                            ? 60
-                            : breakItem.break_type === "Smoke"
-                              ? 5
-                              : 10;
+                        let maxDuration = 10;
+                        let remainingSeconds = 0;
+
+                        if (breakItem.break_type === "Dinner") {
+                          maxDuration = 45;
+                          const elapsedMinutes = elapsedSeconds / 60;
+                          remainingSeconds = Math.max(
+                            0,
+                            (maxDuration - elapsedMinutes) * 60,
+                          );
+                        } else if (breakItem.break_type === "Smoke") {
+                          maxDuration = 5;
+                          const elapsedMinutes = elapsedSeconds / 60;
+                          remainingSeconds = Math.max(
+                            0,
+                            (maxDuration - elapsedMinutes) * 60,
+                          );
+                        } else {
+                          maxDuration = 10;
+                          const elapsedMinutes = elapsedSeconds / 60;
+                          remainingSeconds = Math.max(
+                            0,
+                            (maxDuration - elapsedMinutes) * 60,
+                          );
+                        }
+
                         const progress = Math.min(
                           100,
                           (elapsedSeconds / 60 / maxDuration) * 100,
                         );
+                        const remainingMinutes = Math.floor(
+                          remainingSeconds / 60,
+                        );
+                        const remainingSecs = Math.floor(remainingSeconds % 60);
 
                         return (
                           <div
@@ -1389,16 +1538,41 @@ const EmployeeAttendanceDashboard = () => {
                                     breakItem.break_type.slice(1)}{" "}
                                   Break
                                 </span>
-                                <span className="text-sm font-mono font-semibold text-amber-600">
-                                  {formatElapsedTime(elapsedSeconds)}
-                                </span>
+                                <div className="flex items-center gap-3">
+                                  <span className="text-sm font-mono font-semibold text-amber-600">
+                                    {formatElapsedTime(elapsedSeconds)}
+                                  </span>
+                                  {/* Only show remaining time for Dinner break */}
+                                  {breakItem.break_type === "Dinner" &&
+                                    remainingSeconds > 0 && (
+                                      <span className="text-xs font-mono text-gray-400">
+                                        {remainingMinutes > 0
+                                          ? `${remainingMinutes}m `
+                                          : ""}
+                                        {remainingSecs}s left
+                                      </span>
+                                    )}
+                                </div>
                               </div>
                               <div className="w-full bg-gray-100 rounded-full h-1.5">
                                 <div
-                                  className="h-full rounded-full transition-all duration-300 bg-gradient-to-r from-amber-400 to-amber-500"
-                                  style={{ width: `${progress}%` }}
+                                  className={`h-full rounded-full transition-all duration-300 ${
+                                    progress >= 100
+                                      ? "bg-red-500"
+                                      : "bg-gradient-to-r from-amber-400 to-amber-500"
+                                  }`}
+                                  style={{
+                                    width: `${Math.min(progress, 100)}%`,
+                                  }}
                                 />
                               </div>
+                              {progress >= 100 && (
+                                <p className="text-xs text-red-500 mt-1.5 flex items-center gap-1">
+                                  <AlertCircle className="w-3 h-3" />
+                                  Break time exceeded! Extra time will be marked
+                                  as inactivity.
+                                </p>
+                              )}
                             </div>
                             <button
                               onClick={() => handleBreakEnd(breakItem.id)}
