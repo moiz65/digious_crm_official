@@ -137,6 +137,7 @@ const advanceRoutes = require('./routes/advanceRoutes');
 const attendanceCorrectionRoutes = require('./routes/attendanceCorrectionRoutes');
 const managedLeaveRoutes = require('./routes/managedLeaveRoutes');
 const memoRoutes = require('./routes/memoRoutes');
+const zkTimeRoutes = require('./routes/zkTimeRoutes');
 
 app.use(`/api/${process.env.API_VERSION}`, onboardingRoutes);
 app.use(`/api/${process.env.API_VERSION}/auth`, authRoutes);
@@ -161,6 +162,7 @@ app.use(`/api/${process.env.API_VERSION}/advances`, advanceRoutes);
 app.use(`/api/${process.env.API_VERSION}/attendance-corrections`, attendanceCorrectionRoutes);
 app.use(`/api/${process.env.API_VERSION}/managed-leaves`, managedLeaveRoutes);
 app.use(`/api/${process.env.API_VERSION}/memos`, memoRoutes);
+app.use(`/api/${process.env.API_VERSION}/zkTime`, zkTimeRoutes);
 
 // 404 handler
 app.use((req, res) => {
