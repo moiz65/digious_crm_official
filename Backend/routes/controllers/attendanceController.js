@@ -4649,6 +4649,103 @@ exports.getAbsentSummaryByEmployee = async (req, res) => {
   }
 };
 
+exports.getAbsentByEmployee = async (req, res) => {
+  let connection;
+  try {
+    const { start_date, end_date, employee_id } = req.query;
+
+    if (!start_date || !end_date || !employee_id) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "employee_id, start_date and end_date are required (YYYY-MM-DD format)",
+      });
+    }
+
+    // ✅ Date validation
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(start_date) || !dateRegex.test(end_date)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid date format. Use YYYY-MM-DD",
+      });
+    }
+
+    connection = await pool.getConnection();
+
+    // MAIN QUERY (employee filter added)
+    const [absenceRecords] = await connection.query(
+      `SELECT 
+        ea.id,
+        ea.employee_id,
+        ea.email,
+        ea.name,
+        ea.absent_date,
+        ea.reason_type,
+        ea.reason,
+        ea.is_approved,
+        ea.approved_by,
+        ea.remarks,
+        ea.created_at,
+        ea.updated_at,
+        eo.department,
+        eo.designation
+       FROM Employee_Absent ea
+       LEFT JOIN employee_onboarding eo ON ea.employee_id = eo.id
+       WHERE ea.employee_id = ?
+       AND ea.absent_date BETWEEN ? AND ?
+       ORDER BY ea.absent_date DESC`,
+      [employee_id, start_date, end_date],
+    );
+
+    // ✅ Group by date (same as before)
+    const groupedByDate = {};
+    absenceRecords.forEach((record) => {
+      const date = record.absent_date;
+      if (!groupedByDate[date]) {
+        groupedByDate[date] = [];
+      }
+      groupedByDate[date].push(record);
+    });
+
+    // ✅ Stats
+    const stats = {
+      total_absent: absenceRecords.length,
+      approved: absenceRecords.filter((a) => a.is_approved === 1).length,
+      pending: absenceRecords.filter((a) => a.is_approved === 0).length,
+      by_reason: {
+        no_check_in: absenceRecords.filter(
+          (a) => a.reason_type === "No Check-in",
+        ).length,
+        leave: absenceRecords.filter((a) => a.reason_type === "Leave").length,
+        medical: absenceRecords.filter((a) => a.reason_type === "Medical")
+          .length,
+        sick: absenceRecords.filter((a) => a.reason_type === "Sick").length,
+        other: absenceRecords.filter((a) => a.reason_type === "Other").length,
+      },
+    };
+
+    return res.status(200).json({
+      success: true,
+      message: `Absent records for employee ${employee_id} from ${start_date} to ${end_date}`,
+      employee_id,
+      date_range: { start_date, end_date },
+      statistics: stats,
+      records_by_date: groupedByDate,
+      absent_records: absenceRecords,
+    });
+  } catch (error) {
+    console.error("❌ Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch absent records",
+      error: error.message,
+    });
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
 // ============================================================
 // AUTO-MARK ABSENT EMPLOYEES FOR DATE RANGE
 // Marks all employees who haven't checked in as absent

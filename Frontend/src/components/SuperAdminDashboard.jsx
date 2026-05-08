@@ -82,6 +82,7 @@ import {
   Gift,
   Sparkles,
   Loader2,
+  EyeOff,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { endpoints } from "../config/api";
@@ -112,6 +113,17 @@ export function SuperAdminDashboard() {
   const [expenses, setExpenses] = useState([]);
   const [salesTargets, setSalesTargets] = useState({});
 
+  const [visibleValues, setVisibleValues] = useState({
+    activeEmployees: true,
+    monthlySales: false,
+    absentToday: true,
+    monthlyExpenses: false,
+  });
+
+  const toggleValue = (key) => {
+    setVisibleValues((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
   // Fetch all dashboard data
   const fetchDashboardData = useCallback(async () => {
     setLoading(true);
@@ -141,21 +153,42 @@ export function SuperAdminDashboard() {
       );
       const attendanceData = await attendanceRes.json();
 
-      // Fetch sales for current month
+      // ============================================================
+      // FIX 1: Fetch and filter sales for current month ONLY
+      // ============================================================
       const salesRes = await fetch(
         `${process.env.REACT_APP_API_URL || "http://100.126.74.55:5000"}/api/v1/sales`,
         { headers },
       );
       const salesDataRes = await salesRes.json();
 
-      // Fetch expenses
+      // Filter sales for current month only
+      const currentMonthSales = (salesDataRes.data || []).filter((sale) => {
+        const saleDateStr = sale.sale_date || sale.created_at || sale.date;
+        if (!saleDateStr) return false;
+        const saleDate = new Date(saleDateStr);
+        return (
+          saleDate.getMonth() + 1 === currentMonth &&
+          saleDate.getFullYear() === currentYear
+        );
+      });
+
+      // Calculate monthly revenue from current month sales only
+      const monthlyRevenue = currentMonthSales.reduce(
+        (sum, sale) => sum + (parseFloat(sale.upfront_payment) || 0),
+        0,
+      );
+
+      // ============================================================
+      // FIX 2: Fetch and filter expenses for current month ONLY
+      // ============================================================
       const expensesRes = await fetch(
         `${process.env.REACT_APP_API_URL || "http://100.126.74.55:5000"}/api/v1/expenses?limit=10000`,
         { headers },
       );
       const expensesData = await expensesRes.json();
 
-      // Filter for current month only
+      // Filter expenses for current month only
       const currentMonthExpenses = (expensesData.data || []).filter((exp) => {
         const expDateStr = exp.expense_date || exp.date || exp.created_at;
         if (!expDateStr) return false;
@@ -172,7 +205,7 @@ export function SuperAdminDashboard() {
         0,
       );
 
-      // Process data
+      // Process employee data
       const activeEmployees = (employeesData.data || []).filter(
         (e) => e.status === "Active",
       );
@@ -181,12 +214,6 @@ export function SuperAdminDashboard() {
       );
       const checkedInEmployees = todayAttendance.filter((a) => a.check_in_time);
       const absentCount = activeEmployees.length - checkedInEmployees.length;
-
-      // Calculate total upfront payments for current month
-      const monthlyRevenue = (salesDataRes.data || []).reduce(
-        (sum, sale) => sum + (parseFloat(sale.upfront_payment) || 0),
-        0,
-      );
 
       // Get sales targets for employees
       const salesTargetPromises = (employeesData.data || [])
@@ -221,7 +248,7 @@ export function SuperAdminDashboard() {
         totalActiveEmployees: activeEmployees.length,
         monthlySalesRevenue: monthlyRevenue,
         absentToday: absentCount,
-        monthlyExpenses: monthlyExpenses, // Now this is current month only
+        monthlyExpenses: monthlyExpenses,
         salesTarget: salesTargetsData.reduce((sum, t) => sum + t.target, 0),
         expenseTarget: 250000,
       });
@@ -491,80 +518,166 @@ export function SuperAdminDashboard() {
 
       <div className="px-8 py-6">
         {/* KPI Cards Row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
-          {/* Active Employees Card */}
-          <div className="group bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden">
-            <div className="p-5">
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-blue-50 rounded-xl group-hover:bg-blue-100 transition">
-                  <Users className="h-6 w-6 text-blue-600" />
+        <div className="relative">
+          {/* Toggle Button for Values */}
+          {/* Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+            {/* Active Employees Card */}
+            <div className="group bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden">
+              <div className="p-5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 bg-blue-50 rounded-xl group-hover:bg-blue-100 transition">
+                      <Users className="h-6 w-6 text-blue-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-slate-600 font-medium">
+                        Active Employees
+                      </h3>
+                      <span className="text-3xl font-bold text-slate-800">
+                        {visibleValues.activeEmployees
+                          ? dashboardData.totalActiveEmployees
+                          : "*****"}
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => toggleValue("activeEmployees")}
+                    className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                    title={
+                      visibleValues.activeEmployees
+                        ? "Hide Value"
+                        : "Show Value"
+                    }
+                  >
+                    {visibleValues.activeEmployees ? (
+                      <EyeOff className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                    )}
+                  </button>
                 </div>
-                <span className="text-3xl font-bold text-slate-800">
-                  {dashboardData.totalActiveEmployees}
-                </span>
               </div>
-              <h3 className="text-slate-600 font-medium">Active Employees</h3>
             </div>
-            {/* <div className="h-1 bg-gradient-to-r from-blue-500 to-blue-600 w-0 group-hover:w-full transition-all duration-500"></div> */}
-          </div>
 
-          {/* Monthly Sales Revenue Card */}
-          <div className="group bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden">
-            <div className="p-5">
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-emerald-50 rounded-xl group-hover:bg-emerald-100 transition">
-                  <DollarSign className="h-6 w-6 text-emerald-600" />
+            {/* Monthly Sales Revenue Card */}
+            <div className="group bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden">
+              <div className="p-5">
+                <div className="flex items-center justify-between ">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 bg-emerald-50 rounded-xl group-hover:bg-emerald-100 transition">
+                      <DollarSign className="h-6 w-6 text-emerald-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-slate-600 font-medium">
+                        Monthly Sales Revenue
+                      </h3>
+                      <span className="text-3xl font-bold text-slate-800">
+                        {visibleValues.monthlySales
+                          ? dashboardData.monthlySalesRevenue >= 1000000
+                            ? `$${(dashboardData.monthlySalesRevenue / 1000000).toFixed(1)}M`
+                            : dashboardData.monthlySalesRevenue >= 10000
+                              ? `$${(dashboardData.monthlySalesRevenue / 1000).toFixed(1)}K`
+                              : `$${dashboardData.monthlySalesRevenue.toLocaleString()}`
+                          : "*****"}
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => toggleValue("monthlySales")}
+                    className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                    title={
+                      visibleValues.monthlySales ? "Hide Value" : "Show Value"
+                    }
+                  >
+                    {visibleValues.monthlySales ? (
+                      <EyeOff className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                    )}
+                  </button>
                 </div>
-                <span className="text-3xl font-bold text-slate-800">
-                  {dashboardData.monthlySalesRevenue >= 1000000
-                    ? `$${(dashboardData.monthlySalesRevenue / 1000000).toFixed(1)}M`
-                    : dashboardData.monthlySalesRevenue >= 10000
-                      ? `$${(dashboardData.monthlySalesRevenue / 1000).toFixed(1)}K`
-                      : `$${dashboardData.monthlySalesRevenue.toLocaleString()}`}
-                </span>
               </div>
-              <h3 className="text-slate-600 font-medium">
-                Monthly Sales Revenue
-              </h3>
             </div>
-            {/* <div className="h-1 bg-gradient-to-r from-emerald-500 to-emerald-600 w-0 group-hover:w-full transition-all duration-500"></div> */}
-          </div>
 
-          {/* Absent Today Card */}
-          <div className="group bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden">
-            <div className="p-5">
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-rose-50 rounded-xl group-hover:bg-rose-100 transition">
-                  <XCircle className="h-6 w-6 text-rose-600" />
+            {/* Absent Today Card */}
+            <div className="group bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden">
+              <div className="p-5">
+                <div className="flex items-center justify-between ">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 bg-rose-50 rounded-xl group-hover:bg-rose-100 transition">
+                      <XCircle className="h-6 w-6 text-rose-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-slate-600 font-medium">
+                        Absent Today
+                      </h3>
+                      <span className="text-3xl font-bold text-slate-800">
+                        {visibleValues.absentToday
+                          ? dashboardData.absentToday
+                          : "*****"}
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => toggleValue("absentToday")}
+                    className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                    title={
+                      visibleValues.absentToday ? "Hide Value" : "Show Value"
+                    }
+                  >
+                    {visibleValues.absentToday ? (
+                      <EyeOff className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                    )}
+                  </button>
                 </div>
-                <span className="text-3xl font-bold text-slate-800">
-                  {dashboardData.absentToday}
-                </span>
               </div>
-              <h3 className="text-slate-600 font-medium">Absent Today</h3>
-              {/* <p className="text-xs text-slate-400 mt-2">Out of {dashboardData.totalActiveEmployees} active employees</p> */}
             </div>
-            {/* <div className="h-1 bg-gradient-to-r from-rose-500 to-rose-600 w-0 group-hover:w-full transition-all duration-500"></div> */}
-          </div>
 
-          {/* Monthly Expenses Card */}
-          <div className="group bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden">
-            <div className="p-5">
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-amber-50 rounded-xl group-hover:bg-amber-100 transition">
-                  <Wallet className="h-6 w-6 text-amber-600" />
+            {/* Monthly Expenses Card */}
+            <div className="group bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden">
+              <div className="p-5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 bg-amber-50 rounded-xl group-hover:bg-amber-100 transition">
+                      <Wallet className="h-6 w-6 text-amber-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-slate-600 font-medium">
+                        Monthly Expenses
+                      </h3>
+                      <span className="text-3xl font-bold text-slate-800">
+                        {visibleValues.monthlyExpenses
+                          ? `Rs ${dashboardData.monthlyExpenses.toLocaleString()}`
+                          : "*****"}
+                      </span>
+                      <p className="text-xs text-slate-400 mt-1">
+                        {new Date().toLocaleDateString("en-US", {
+                          month: "long",
+                          year: "numeric",
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => toggleValue("monthlyExpenses")}
+                    className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                    title={
+                      visibleValues.monthlyExpenses
+                        ? "Hide Value"
+                        : "Show Value"
+                    }
+                  >
+                    {visibleValues.monthlyExpenses ? (
+                      <EyeOff className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                    )}
+                  </button>
                 </div>
-                <span className="text-3xl font-bold text-slate-800">
-                  Rs {dashboardData.monthlyExpenses.toLocaleString()}
-                </span>
               </div>
-              <h3 className="text-slate-600 font-medium">Monthly Expenses</h3>
-              <p className="text-xs text-slate-400 mt-1">
-                {new Date().toLocaleDateString("en-US", {
-                  month: "long",
-                  year: "numeric",
-                })}
-              </p>
             </div>
           </div>
         </div>
@@ -602,10 +715,8 @@ export function SuperAdminDashboard() {
                           .map((n) => n[0])
                           .join("") || "?"}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-slate-800 truncate">
-                          {emp.name}
-                        </p>
+                      <div className="flex-1 min-w-100">
+                        <p className="font-medium text-slate-800">{emp.name}</p>
                         <p className="text-xs text-slate-400">
                           {emp.department} • {emp.position}
                         </p>
@@ -679,7 +790,7 @@ export function SuperAdminDashboard() {
                             .join("") || "?"}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-slate-800 truncate">
+                          <p className="font-medium text-slate-800">
                             {employee?.name || breakItem.employee_name}
                           </p>
                           <p className="text-xs text-slate-400">

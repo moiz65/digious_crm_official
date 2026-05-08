@@ -359,7 +359,6 @@ const HRMyAttendance = () => {
         return;
       }
 
-      // Use selected month and year from filter
       const response = await fetch(
         endpoints.attendance.monthly(employeeId, selectedYear, selectedMonth),
         {
@@ -372,20 +371,53 @@ const HRMyAttendance = () => {
 
       const data = await response.json();
       if (data.success) {
-        console.log("[SUCCESS] Monthly attendance fetched:", data.data);
-        // Log sample record to debug
-        if (data.data && data.data.length > 0) {
-          console.log("[DEBUG] Sample record structure:", data.data[0]);
-          console.log(
-            "[DEBUG] Sample net_working_time_minutes:",
-            data.data[0].net_working_time_minutes,
-          );
-          console.log(
-            "[DEBUG] Sample overtime_hours:",
-            data.data[0].overtime_hours,
-          );
+        let records = data.data || [];
+
+        // FRONTEND FIX: Generate all dates of the month
+        const daysInMonth = new Date(selectedYear, selectedMonth, 0).getDate();
+        const recordsByDate = {};
+
+        // Map existing records by date
+        records.forEach((record) => {
+          if (record.attendance_date) {
+            const dateNum = new Date(record.attendance_date).getDate();
+            recordsByDate[dateNum] = record;
+          }
+        });
+
+        // Generate complete month data
+        const completeMonthData = [];
+        for (let date = 1; date <= daysInMonth; date++) {
+          const dateStr = `${selectedYear}-${String(selectedMonth).padStart(2, "0")}-${String(date).padStart(2, "0")}`;
+          const existingRecord = recordsByDate[date];
+
+          if (existingRecord) {
+            completeMonthData.push(existingRecord);
+          } else {
+            // Create placeholder for missing dates
+            completeMonthData.push({
+              id: null,
+              employee_id: employeeId,
+              attendance_date: dateStr,
+              check_in_time: null,
+              check_out_time: null,
+              status: "Absent",
+              net_working_time_minutes: 0,
+              total_breaks_taken: 0,
+              total_break_duration_minutes: 0,
+              late_by_minutes: null,
+              overtime_minutes: 0,
+              is_absent: true,
+            });
+          }
         }
-        setMonthlyAttendance(data.data || []);
+
+        console.log(
+          "[SUCCESS] Monthly attendance fetched:",
+          completeMonthData.length,
+          "records (all dates)",
+        );
+        setMonthlyAttendance(completeMonthData);
       } else {
         console.warn("[WARNING] Failed to fetch monthly attendance:", data);
       }
@@ -1027,14 +1059,72 @@ const HRMyAttendance = () => {
   };
 
   const getMonthlyData = () => {
-    return monthlyAttendance
-      .map((record) => ({
-        date: parseAttendanceDate(record.attendance_date).getDate(),
-        hours: Math.floor((record.net_working_time_minutes || 0) / 60),
-        minutes: (record.net_working_time_minutes || 0) % 60,
-        status: record.status,
-      }))
-      .sort((a, b) => a.date - b.date);
+    // Get total days in selected month
+    const daysInMonth = new Date(selectedYear, selectedMonth, 0).getDate();
+
+    // Create a map of existing records by date
+    const recordsByDate = {};
+    monthlyAttendance.forEach((record) => {
+      const dateNum = parseAttendanceDate(record.attendance_date).getDate();
+      recordsByDate[dateNum] = record;
+    });
+
+    // Generate all dates from 1 to daysInMonth
+    const allDates = [];
+    for (let date = 1; date <= daysInMonth; date++) {
+      const record = recordsByDate[date];
+
+      // Check if it's weekend
+      const dateObj = new Date(selectedYear, selectedMonth - 1, date);
+      const dayOfWeek = dateObj.getDay();
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+
+      if (record) {
+        // Use existing record - hasAttendance is TRUE, so NO weekend label
+        allDates.push({
+          date: date,
+          hours: record.net_working_time_minutes
+            ? Math.floor(record.net_working_time_minutes / 60)
+            : 0,
+          minutes: record.net_working_time_minutes
+            ? record.net_working_time_minutes % 60
+            : 0,
+          status: record.status || "Absent",
+          check_in_time: record.check_in_time,
+          check_out_time: record.check_out_time,
+          total_breaks_taken: record.total_breaks_taken || 0,
+          total_break_duration_minutes:
+            record.total_break_duration_minutes || 0,
+          late_by_minutes: record.late_by_minutes,
+          overtime_minutes: record.overtime_minutes || 0,
+          id: record.id,
+          is_absent: false,
+          is_weekend: false, // CRITICAL: Working weekend = NO weekend label
+          has_attendance: true, // Mark that attendance exists
+        });
+      } else {
+        // Create placeholder for dates with no record
+        allDates.push({
+          date: date,
+          hours: 0,
+          minutes: 0,
+          status: "Absent",
+          check_in_time: null,
+          check_out_time: null,
+          total_breaks_taken: 0,
+          total_break_duration_minutes: 0,
+          late_by_minutes: null,
+          overtime_minutes: 0,
+          id: null,
+          is_absent: true,
+          is_weekend: isWeekend, // Weekend label ONLY for dates with NO record
+          has_attendance: false,
+        });
+      }
+    }
+
+    // Sort by date descending (latest first)
+    return allDates.sort((a, b) => b.date - a.date);
   };
 
   // Format minutes to "Xh Ym" format (e.g., 120 minutes -> "2h 0m", 90 -> "1h 30m", 45 -> "45m")
@@ -1382,73 +1472,81 @@ const HRMyAttendance = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {monthlyAttendance.filter(
-                      (r) =>
-                        statusFilter === "All Status" ||
-                        r.status === statusFilter,
-                    ).length === 0 ? (
-                      <tr>
-                        <td
-                          colSpan="9"
-                          className="px-4 py-8 text-center text-gray-500"
-                        >
-                          No attendance records found for the selected filters
-                        </td>
-                      </tr>
-                    ) : (
-                      (() => {
-                        const filteredRecords = monthlyAttendance.filter(
-                          (r) =>
-                            statusFilter === "All Status" ||
-                            r.status === statusFilter,
-                        );
+                    {(() => {
+                      const allMonthlyData = getMonthlyData();
 
-                        // Sort by date in descending order (latest first)
-                        const sortedRecords = [...filteredRecords].sort(
-                          (a, b) => {
-                            const dateA = new Date(a.attendance_date);
-                            const dateB = new Date(b.attendance_date);
-                            return dateB - dateA; // Latest dates first
-                          },
+                      // Apply status filter
+                      let filteredRecords = allMonthlyData;
+                      if (statusFilter !== "All Status") {
+                        filteredRecords = allMonthlyData.filter(
+                          (r) => r.status === statusFilter,
                         );
+                      }
 
-                        const totalPages = Math.ceil(
-                          sortedRecords.length / RECORDS_PER_PAGE,
+                      if (filteredRecords.length === 0) {
+                        return (
+                          <tr>
+                            <td
+                              colSpan="9"
+                              className="px-4 py-8 text-center text-gray-500"
+                            >
+                              No attendance records found for the selected
+                              filters
+                            </td>
+                          </tr>
                         );
-                        const startIndex = (currentPage - 1) * RECORDS_PER_PAGE;
-                        const endIndex = startIndex + RECORDS_PER_PAGE;
-                        const paginatedRecords = sortedRecords.slice(
-                          startIndex,
-                          endIndex,
-                        );
+                      }
 
-                        return paginatedRecords.map((record, index) => (
+                      // Pagination
+                      const totalPages = Math.ceil(
+                        filteredRecords.length / RECORDS_PER_PAGE,
+                      );
+                      const startIndex = (currentPage - 1) * RECORDS_PER_PAGE;
+                      const endIndex = startIndex + RECORDS_PER_PAGE;
+                      const paginatedRecords = filteredRecords.slice(
+                        startIndex,
+                        endIndex,
+                      );
+
+                      return paginatedRecords.map((record, index) => {
+                        const isWeekend = record.is_weekend === true;
+
+                        return (
                           <tr
-                            key={
-                              record.id || `absent-${record.attendance_date}`
-                            }
+                            key={record.id || `date-${record.date}`}
                             className={`${
-                              record.is_absent
-                                ? "bg-red-50 hover:bg-red-100"
-                                : record.status === "ML"
-                                  ? "bg-blue-50 hover:bg-blue-100"
-                                  : index % 2 === 0
-                                    ? "bg-gray-50 hover:bg-gray-100"
-                                    : "bg-white hover:bg-gray-50"
+                              isWeekend
+                                ? "bg-gray-100/50 hover:bg-gray-200"
+                                : record.is_absent
+                                  ? "bg-red-50 hover:bg-red-100"
+                                  : record.status === "ML"
+                                    ? "bg-blue-50 hover:bg-blue-100"
+                                    : index % 2 === 0
+                                      ? "bg-gray-50 hover:bg-gray-100"
+                                      : "bg-white hover:bg-gray-50"
                             } transition-colors`}
                           >
                             <td className="px-4 py-3 text-sm text-gray-700">
-                              {parseAttendanceDate(
-                                record.attendance_date,
+                              {new Date(
+                                selectedYear,
+                                selectedMonth - 1,
+                                record.date,
                               ).toLocaleDateString("en-US", {
                                 weekday: "short",
                                 year: "numeric",
                                 month: "short",
                                 day: "numeric",
                               })}
+                              {isWeekend && (
+                                <span className="ml-2 inline-block px-1.5 py-0.5 text-xs font-semibold bg-gray-300 text-gray-700 rounded">
+                                  Weekend
+                                </span>
+                              )}
                             </td>
                             <td className="px-4 py-3 text-sm text-gray-700">
-                              {!record.check_in_time ? (
+                              {isWeekend ? (
+                                <span className="text-gray-400">—</span>
+                              ) : !record.check_in_time ? (
                                 <span className="text-red-600 font-semibold">
                                   No Check-in
                                 </span>
@@ -1457,7 +1555,9 @@ const HRMyAttendance = () => {
                               )}
                             </td>
                             <td className="px-4 py-3 text-sm text-gray-700">
-                              {!record.check_in_time ? (
+                              {isWeekend ? (
+                                <span className="text-gray-400">—</span>
+                              ) : !record.check_in_time ? (
                                 <span className="text-red-600 font-semibold">
                                   —
                                 </span>
@@ -1466,52 +1566,62 @@ const HRMyAttendance = () => {
                               )}
                             </td>
                             <td className="px-4 py-3 text-sm">
-                              <span
-                                className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                                  record.status === "Present"
-                                    ? "bg-green-100 text-green-700"
-                                    : record.status === "Late"
-                                      ? "bg-orange-100 text-orange-700"
-                                      : record.status === "ML"
-                                        ? "bg-blue-900 text-white"
-                                        : record.status === "Absent"
-                                          ? "bg-red-100 text-red-700"
-                                          : record.status === "Paid Leave"
-                                            ? "bg-teal-100 text-teal-700"
-                                            : record.status ===
-                                                "Uninformed Absent"
-                                              ? "bg-red-200 text-red-800"
-                                              : "bg-purple-100 text-purple-700"
-                                }`}
-                              >
-                                {record.status === "Paid Leave"
-                                  ? "PL"
-                                  : record.status === "Uninformed Absent"
-                                    ? "UA"
-                                    : record.status === "Present"
-                                      ? "P"
+                              {isWeekend ? (
+                                <span className="px-2 py-1 rounded-full text-xs font-semibold bg-gray-200 text-gray-600">
+                                  Weekend
+                                </span>
+                              ) : (
+                                <span
+                                  className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                                    record.status === "Present"
+                                      ? "bg-green-100 text-green-700"
                                       : record.status === "Late"
-                                        ? "L"
+                                        ? "bg-orange-100 text-orange-700"
                                         : record.status === "ML"
-                                          ? "ML"
+                                          ? "bg-blue-900 text-white"
                                           : record.status === "Absent"
-                                            ? "A"
-                                            : record.status}
-                              </span>
+                                            ? "bg-red-100 text-red-700"
+                                            : record.status === "Paid Leave"
+                                              ? "bg-teal-100 text-teal-700"
+                                              : record.status ===
+                                                  "Uninformed Absent"
+                                                ? "bg-red-200 text-red-800"
+                                                : "bg-purple-100 text-purple-700"
+                                  }`}
+                                >
+                                  {record.status === "Paid Leave"
+                                    ? "PL"
+                                    : record.status === "Uninformed Absent"
+                                      ? "UA"
+                                      : record.status === "Present"
+                                        ? "P"
+                                        : record.status === "Late"
+                                          ? "L"
+                                          : record.status === "ML"
+                                            ? "ML"
+                                            : record.status === "Absent"
+                                              ? "A"
+                                              : record.status}
+                                </span>
+                              )}
                             </td>
                             <td className="px-4 py-3 text-sm text-gray-700">
-                              {record.is_absent ? (
+                              {isWeekend ? (
+                                <span className="text-gray-400">—</span>
+                              ) : record.is_absent ? (
                                 <span className="text-red-600 font-semibold">
                                   —
                                 </span>
-                              ) : record.net_working_time_minutes ? (
-                                `${Math.floor(record.net_working_time_minutes / 60)}h ${record.net_working_time_minutes % 60}m`
+                              ) : record.hours > 0 || record.minutes > 0 ? (
+                                `${record.hours}h ${record.minutes}m`
                               ) : (
                                 "-"
                               )}
                             </td>
                             <td className="px-4 py-3 text-sm text-gray-700">
-                              {record.is_absent ? (
+                              {isWeekend ? (
+                                <span className="text-gray-400">—</span>
+                              ) : record.is_absent ? (
                                 <span className="text-red-600 font-semibold">
                                   —
                                 </span>
@@ -1523,7 +1633,9 @@ const HRMyAttendance = () => {
                               )}
                             </td>
                             <td className="px-4 py-3 text-sm text-gray-700">
-                              {record.is_absent ? (
+                              {isWeekend ? (
+                                <span className="text-gray-400">—</span>
+                              ) : record.is_absent ? (
                                 <span className="text-red-600 font-semibold">
                                   —
                                 </span>
@@ -1534,7 +1646,9 @@ const HRMyAttendance = () => {
                               )}
                             </td>
                             <td className="px-4 py-3 text-sm">
-                              {record.is_absent ? (
+                              {isWeekend ? (
+                                <span className="text-gray-400">—</span>
+                              ) : record.is_absent ? (
                                 <span className="text-red-600 font-semibold">
                                   —
                                 </span>
@@ -1548,22 +1662,39 @@ const HRMyAttendance = () => {
                               )}
                             </td>
                             <td className="px-4 py-3 text-sm text-center">
-                              <button
-                                onClick={() => {
-                                  setCorrectionRecord(record);
-                                  setCorrectionModalOpen(true);
-                                }}
-                                className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 hover:border-blue-300 transition-all"
-                                title="Request attendance correction"
-                              >
-                                <Edit3 className="w-3.5 h-3.5" />
-                                Correct
-                              </button>
+                              {!isWeekend && (
+                                <button
+                                  onClick={() => {
+                                    // Create a compatible record object for correction modal
+                                    const correctionCompatibleRecord = {
+                                      ...record,
+                                      attendance_date: new Date(
+                                        selectedYear,
+                                        selectedMonth - 1,
+                                        record.date,
+                                      )
+                                        .toISOString()
+                                        .split("T")[0],
+                                      net_working_time_minutes:
+                                        record.hours * 60 + record.minutes,
+                                    };
+                                    setCorrectionRecord(
+                                      correctionCompatibleRecord,
+                                    );
+                                    setCorrectionModalOpen(true);
+                                  }}
+                                  className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 hover:border-blue-300 transition-all"
+                                  title="Request attendance correction"
+                                >
+                                  <Edit3 className="w-3.5 h-3.5" />
+                                  Correct
+                                </button>
+                              )}
                             </td>
                           </tr>
-                        ));
-                      })()
-                    )}
+                        );
+                      });
+                    })()}
                   </tbody>
                 </table>
               </div>

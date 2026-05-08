@@ -13,7 +13,9 @@ router.get("/disconnect", zkTimeController.disconnectDevice);
 // Attendance
 router.get("/attendance-logs", zkTimeController.getAllAttendanceLogs);
 router.get("/attendance/user/:userId", zkTimeController.getAttendanceByUserId);
-router.get("/attendance/today", zkTimeController.getTodayAttendance);
+
+// UPDATED: Today attendance by user ID
+router.get("/attendance/today/:userId", zkTimeController.getTodayAttendance);
 
 // Users
 router.get("/users", zkTimeController.getAllUsers);

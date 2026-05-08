@@ -7,10 +7,7 @@ import BreakSummary from "./BreakSummary";
 import TodayBreaksSummary from "./TodayBreaksSummary";
 import PagePreloader from "./PagePreloader";
 import { getPakistanDate } from "../utils/timezone";
-import {
-  DashboardHeader,
-  RoleBasedNav,
-} from "./DashboardComponents";
+import { DashboardHeader, RoleBasedNav } from "./DashboardComponents";
 import { useAuth } from "../context/AuthContext";
 import {
   Calendar,
@@ -2878,13 +2875,34 @@ const EmployeeDetailView = ({
                   for (let d = daysInMonth; d >= 1; d--) {
                     const dateObj = new Date(year, mIdx, d);
                     const dow = dateObj.getDay();
-                    if (dow === 0 || dow === 6) continue; // skip weekends
-                    if (dateObj > today) continue; // skip future dates
+                    const isWeekend = dow === 0 || dow === 6;
+
+                    // Don't skip weekends anymore - show them all
+                    // But don't show future dates
+                    if (dateObj > today) continue;
 
                     const dateStr = dateObj.toLocaleDateString("en-CA"); // YYYY-MM-DD
                     const record = recordsByDate[dateStr] || null;
 
-                    rows.push({ dateStr, dateObj, record });
+                    // Get day name
+                    const dayNames = [
+                      "Sunday",
+                      "Monday",
+                      "Tuesday",
+                      "Wednesday",
+                      "Thursday",
+                      "Friday",
+                      "Saturday",
+                    ];
+                    const dayName = dayNames[dow];
+
+                    rows.push({
+                      dateStr,
+                      dateObj,
+                      record,
+                      isWeekend,
+                      dayName,
+                    });
                   }
 
                   if (rows.length === 0) {

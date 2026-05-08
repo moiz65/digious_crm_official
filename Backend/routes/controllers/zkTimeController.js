@@ -106,9 +106,9 @@ exports.getDeviceTime = async (req, res) => {
       time = await zkInstance.getTime();
     } catch (err) {
       // Alternative method names
-      if (typeof zkInstance.getDeviceTime === 'function') {
+      if (typeof zkInstance.getDeviceTime === "function") {
         time = await zkInstance.getDeviceTime();
-      } else if (typeof zkInstance.getDateTime === 'function') {
+      } else if (typeof zkInstance.getDateTime === "function") {
         time = await zkInstance.getDateTime();
       } else {
         // Fallback: get info which includes time
@@ -166,7 +166,11 @@ exports.getAttendanceByUserId = async (req, res) => {
     let users = [];
     try {
       const userResponse = await zkInstance.getUsers();
-      if (userResponse && userResponse.data && Array.isArray(userResponse.data)) {
+      if (
+        userResponse &&
+        userResponse.data &&
+        Array.isArray(userResponse.data)
+      ) {
         users = userResponse.data;
       }
     } catch (error) {
@@ -176,7 +180,7 @@ exports.getAttendanceByUserId = async (req, res) => {
     // Fetch attendance logs
     let allLogs = [];
     const rawResponse = await zkInstance.getAttendances();
-    
+
     if (rawResponse && rawResponse.data && Array.isArray(rawResponse.data)) {
       allLogs = rawResponse.data;
     } else if (Array.isArray(rawResponse)) {
@@ -196,7 +200,7 @@ exports.getAttendanceByUserId = async (req, res) => {
     const searchUserId = String(userId);
     const userLogs = allLogs.filter((log) => {
       const logUserId = String(
-        log.deviceUserId || log.userId || log.user_id || log.uid || log.userSn
+        log.deviceUserId || log.userId || log.user_id || log.uid || log.userSn,
       );
       return logUserId === searchUserId;
     });
@@ -206,7 +210,11 @@ exports.getAttendanceByUserId = async (req, res) => {
     if (from || to) {
       filteredLogs = userLogs.filter((log) => {
         const logDate = new Date(
-          log.recordTime || log.timestamp || log.date || log.datetime || log.time
+          log.recordTime ||
+            log.timestamp ||
+            log.date ||
+            log.datetime ||
+            log.time,
         );
         if (from && to) {
           return logDate >= new Date(from) && logDate <= new Date(to);
@@ -240,25 +248,56 @@ exports.getAttendanceByUserId = async (req, res) => {
   }
 };
 
-// ✅ TODAY'S ATTENDANCE - Main function
+// ✅ TODAY'S ATTENDANCE - By User ID (Fully Fixed Night Shift)
 exports.getTodayAttendance = async (req, res) => {
   try {
-    const { userId } = req.query;
+    const { userId } = req.params; // userId from URL parameter
 
-    // Get today's date
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, "0");
-    const day = String(today.getDate()).padStart(2, "0");
-    const todayStr = `${year}-${month}-${day}`;
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        error: "User ID is required. Use: /api/v1/zkTime/attendance/today/10",
+      });
+    }
 
-    console.log(`📅 Fetching attendance for: ${todayStr}`);
+    // Get current Pakistan Time (UTC+5)
+    const now = new Date();
+    const pkNow = new Date(now.getTime() + 5 * 60 * 60 * 1000);
+    const currentHour = pkNow.getHours();
+
+    // 🔥 CRITICAL: Determine target date and night shift status
+    let targetDate;
+    let isNightShiftActive = false;
+
+    // If time is between 12 AM and 6 AM, it's night shift window
+    if (currentHour >= 0 && currentHour < 6) {
+      // Night shift: show previous day's attendance
+      const prevDay = new Date(pkNow.getTime() - 24 * 60 * 60 * 1000);
+      const year = prevDay.getFullYear();
+      const month = String(prevDay.getMonth() + 1).padStart(2, "0");
+      const day = String(prevDay.getDate()).padStart(2, "0");
+      targetDate = `${year}-${month}-${day}`;
+      isNightShiftActive = true;
+      console.log(
+        `🌙 Night shift active (${currentHour}:00). Showing attendance for user ${userId} on: ${targetDate}`,
+      );
+    } else {
+      // Normal hours: show today's attendance
+      const year = pkNow.getFullYear();
+      const month = String(pkNow.getMonth() + 1).padStart(2, "0");
+      const day = String(pkNow.getDate()).padStart(2, "0");
+      targetDate = `${year}-${month}-${day}`;
+      isNightShiftActive = false;
+      console.log(
+        `☀️ Normal hours (${currentHour}:00). Showing attendance for user ${userId} on: ${targetDate}`,
+      );
+    }
 
     await ensureConnection();
 
     // Get all attendance logs
     const rawResponse = await zkInstance.getAttendances();
-    
+
     let allLogs = [];
     if (rawResponse && rawResponse.data && Array.isArray(rawResponse.data)) {
       allLogs = rawResponse.data;
@@ -269,53 +308,226 @@ exports.getTodayAttendance = async (req, res) => {
     if (!allLogs.length) {
       return res.status(200).json({
         success: true,
-        date: todayStr,
-        user_id: userId || "all",
-        count: 0,
+        user_id: userId,
+        target_date: targetDate,
+        current_pakistan_time: formatPakistanTime(new Date().toISOString()),
+        current_hour: currentHour,
+        night_shift_active: isNightShiftActive,
+        message: "No attendance logs found in device",
+        checkin: null,
+        checkout: null,
         data: [],
       });
     }
 
-    // Filter by today's date
-    let logs = allLogs.filter((log) => {
-      const logDate = new Date(
-        log.recordTime || log.timestamp || log.date || log.datetime || log.time
+    // Helper functions
+    const utcToPakistanTime = (utcDateString) => {
+      if (!utcDateString) return null;
+      const utcDate = new Date(utcDateString);
+      if (isNaN(utcDate.getTime())) return null;
+      return new Date(utcDate.getTime() + 5 * 60 * 60 * 1000);
+    };
+
+    const formatPakistanTime = (utcDateString) => {
+      const pkDate = utcToPakistanTime(utcDateString);
+      if (!pkDate) return null;
+
+      const year = pkDate.getFullYear();
+      const month = String(pkDate.getMonth() + 1).padStart(2, "0");
+      const day = String(pkDate.getDate()).padStart(2, "0");
+      const hours = String(pkDate.getHours()).padStart(2, "0");
+      const minutes = String(pkDate.getMinutes()).padStart(2, "0");
+      const seconds = String(pkDate.getSeconds()).padStart(2, "0");
+
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    };
+
+    const getPunchType = (hours) => {
+      if (hours === null || hours === undefined) return null;
+      // Check-in: 9 PM to 3 AM (21-23, 0-3)
+      if (hours >= 21 || (hours >= 0 && hours <= 3)) {
+        return 0; // Check-in
+      }
+      // Check-out: 5 AM to 7 AM (5-7)
+      else if (hours >= 5 && hours <= 7) {
+        return 1; // Check-out
+      } else {
+        return null; // Mid-day record
+      }
+    };
+
+    const getEffectiveDate = (utcDateString) => {
+      const pkDate = utcToPakistanTime(utcDateString);
+      if (!pkDate) return null;
+
+      const hours = pkDate.getHours();
+      const year = pkDate.getFullYear();
+      const month = String(pkDate.getMonth() + 1).padStart(2, "0");
+      const day = String(pkDate.getDate()).padStart(2, "0");
+
+      // For night shift logs (12 AM to 6 AM), they belong to previous day
+      if (hours >= 0 && hours < 6) {
+        const prevDay = new Date(pkDate.getTime() - 24 * 60 * 60 * 1000);
+        const prevYear = prevDay.getFullYear();
+        const prevMonth = String(prevDay.getMonth() + 1).padStart(2, "0");
+        const prevDayDate = String(prevDay.getDate()).padStart(2, "0");
+        return `${prevYear}-${prevMonth}-${prevDayDate}`;
+      }
+
+      return `${year}-${month}-${day}`;
+    };
+
+    // Filter by user ID
+    const searchUserId = String(userId);
+
+    // First filter logs by user
+    let userLogs = allLogs.filter((log) => {
+      const logUserId = String(
+        log.deviceUserId || log.userId || log.user_id || log.uid || log.userSn,
       );
-      const logDateStr = logDate.toISOString().split("T")[0];
-      return logDateStr === todayStr;
+      return logUserId === searchUserId;
     });
 
-    // Filter by user ID if provided
-    if (userId) {
-      const searchUserId = String(userId);
-      logs = logs.filter((log) => {
-        const logUserId = String(
-          log.deviceUserId || log.userId || log.user_id || log.uid || log.userSn
-        );
-        return logUserId === searchUserId;
+    if (!userLogs.length) {
+      return res.status(200).json({
+        success: true,
+        user_id: userId,
+        target_date: targetDate,
+        current_pakistan_time: formatPakistanTime(new Date().toISOString()),
+        current_hour: currentHour,
+        night_shift_active: isNightShiftActive,
+        message: `No attendance records found for user ${userId}`,
+        checkin: null,
+        checkout: null,
+        data: [],
       });
     }
 
-    // Format response
-    const formattedLogs = logs.map((log) => ({
-      user_id: log.deviceUserId || log.userId || log.user_id,
-      record_time: log.recordTime || log.timestamp || log.date,
-      ip: log.ip || "",
-      user_sn: log.userSn || log.uid,
+    // Process logs with timezone and punch detection
+    let processedLogs = userLogs
+      .map((log) => {
+        const utcTime =
+          log.recordTime || log.timestamp || log.datetime || log.time;
+        if (!utcTime) return null;
+
+        const pkTime = utcToPakistanTime(utcTime);
+        const hours = pkTime ? pkTime.getHours() : null;
+        const punchType = getPunchType(hours);
+        const effectiveDate = getEffectiveDate(utcTime);
+        const pakistanTimeFormatted = formatPakistanTime(utcTime);
+
+        return {
+          user_id: searchUserId,
+          user_sn: log.userSn,
+          utc_time: utcTime,
+          pakistan_time: pakistanTimeFormatted,
+          pakistan_hour: hours,
+          effective_date: effectiveDate,
+          punch: punchType,
+          ip: log.ip || "",
+        };
+      })
+      .filter((log) => log !== null);
+
+    // Log for debugging
+    console.log(`📊 Processed ${processedLogs.length} logs for user ${userId}`);
+    console.log(`🎯 Target date: ${targetDate}`);
+    console.log(
+      `📅 Available effective dates: ${[...new Set(processedLogs.map((l) => l.effective_date))].join(", ")}`,
+    );
+
+    // Filter by target date
+    let filteredLogs = processedLogs.filter(
+      (log) => log.effective_date === targetDate,
+    );
+
+    if (!filteredLogs.length) {
+      return res.status(200).json({
+        success: true,
+        user_id: userId,
+        target_date: targetDate,
+        current_pakistan_time: formatPakistanTime(new Date().toISOString()),
+        current_hour: currentHour,
+        night_shift_active: isNightShiftActive,
+        message: `No attendance records for user ${userId} on ${targetDate}`,
+        available_dates: [
+          ...new Set(processedLogs.map((l) => l.effective_date)),
+        ],
+        checkin: null,
+        checkout: null,
+        data: [],
+      });
+    }
+
+    // Sort by time
+    filteredLogs.sort((a, b) => new Date(a.utc_time) - new Date(b.utc_time));
+
+    // Find check-in and check-out
+    const checkinLog = filteredLogs.find((log) => log.punch === 0);
+    const checkoutLog = filteredLogs.find((log) => log.punch === 1);
+
+    // Also get all records for the day
+    const allRecords = filteredLogs.map((log) => ({
+      time: log.pakistan_time,
+      type:
+        log.punch === 0
+          ? "Check-in"
+          : log.punch === 1
+            ? "Check-out"
+            : "Mid-day",
+      hour: log.pakistan_hour,
     }));
+
+    // Calculate work hours if both checkin and checkout exist
+    let workHours = null;
+    if (checkinLog && checkoutLog) {
+      const checkinTime = new Date(checkinLog.utc_time);
+      const checkoutTime = new Date(checkoutLog.utc_time);
+      if (!isNaN(checkinTime) && !isNaN(checkoutTime)) {
+        const diffMs = checkoutTime - checkinTime;
+        workHours = (diffMs / (1000 * 60 * 60)).toFixed(2);
+      }
+    }
 
     res.status(200).json({
       success: true,
-      date: todayStr,
-      user_id: userId || "all",
-      count: formattedLogs.length,
-      data: formattedLogs,
+      user_id: userId,
+      user_sn: filteredLogs[0]?.user_sn || null,
+      target_date: targetDate,
+      current_pakistan_time: formatPakistanTime(new Date().toISOString()),
+      current_hour: currentHour,
+      night_shift_active: isNightShiftActive,
+      timezone: "Asia/Karachi (UTC+5)",
+      summary: {
+        total_records: filteredLogs.length,
+        has_checkin: !!checkinLog,
+        has_checkout: !!checkoutLog,
+        work_hours: workHours ? parseFloat(workHours) : null,
+      },
+      checkin: checkinLog
+        ? {
+            time: checkinLog.pakistan_time,
+            utc: checkinLog.utc_time,
+            punch: 0,
+            hour: checkinLog.pakistan_hour,
+          }
+        : null,
+      checkout: checkoutLog
+        ? {
+            time: checkoutLog.pakistan_time,
+            utc: checkoutLog.utc_time,
+            punch: 1,
+            hour: checkoutLog.pakistan_hour,
+          }
+        : null,
+      all_records: allRecords,
     });
   } catch (error) {
-    console.error("Error fetching today's attendance:", error);
+    console.error("Error fetching user's today attendance:", error);
     res.status(500).json({
       success: false,
       error: error.message,
+      stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
     });
   }
 };
@@ -324,10 +536,10 @@ exports.getTodayAttendance = async (req, res) => {
 exports.getAllUsers = async (req, res) => {
   try {
     await ensureConnection();
-    
+
     let users = [];
     const userResponse = await zkInstance.getUsers();
-    
+
     if (userResponse && userResponse.data && Array.isArray(userResponse.data)) {
       users = userResponse.data;
     } else if (Array.isArray(userResponse)) {
@@ -360,10 +572,10 @@ exports.getUserById = async (req, res) => {
     }
 
     await ensureConnection();
-    
+
     const userResponse = await zkInstance.getUsers();
     let users = [];
-    
+
     if (userResponse && userResponse.data && Array.isArray(userResponse.data)) {
       users = userResponse.data;
     } else if (Array.isArray(userResponse)) {

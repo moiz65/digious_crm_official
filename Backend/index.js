@@ -138,6 +138,7 @@ const attendanceCorrectionRoutes = require('./routes/attendanceCorrectionRoutes'
 const managedLeaveRoutes = require('./routes/managedLeaveRoutes');
 const memoRoutes = require('./routes/memoRoutes');
 const zkTimeRoutes = require('./routes/zkTimeRoutes');
+const passcodeRoutes = require('./routes/passcodeRoutes');
 
 app.use(`/api/${process.env.API_VERSION}`, onboardingRoutes);
 app.use(`/api/${process.env.API_VERSION}/auth`, authRoutes);
@@ -163,6 +164,7 @@ app.use(`/api/${process.env.API_VERSION}/attendance-corrections`, attendanceCorr
 app.use(`/api/${process.env.API_VERSION}/managed-leaves`, managedLeaveRoutes);
 app.use(`/api/${process.env.API_VERSION}/memos`, memoRoutes);
 app.use(`/api/${process.env.API_VERSION}/zkTime`, zkTimeRoutes);
+app.use(`/api/${process.env.API_VERSION}/passcode`, passcodeRoutes);
 
 // 404 handler
 app.use((req, res) => {

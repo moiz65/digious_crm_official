@@ -33,6 +33,7 @@ router.get('/absent-today', attendanceController.getTodayAbsentEmployees); // Ge
 router.get('/absent-by-date', attendanceController.getAbsentEmployeesByDate); // Get absent by specific date
 router.get('/absent-by-range', attendanceController.getAbsentEmployeesByDateRange); // Get absent by date range
 router.get('/absent-summary', attendanceController.getAbsentSummaryByEmployee); // Get absence summary per employee
+router.get('/absent-by-employee', attendanceController.getAbsentByEmployee); // Get absence records for a specific employee
 router.get('/all-with-absent', attendanceController.getAllAttendanceWithAbsent); // New endpoint with absent records
 
 // Admin Routes (Public for HR Dashboard)

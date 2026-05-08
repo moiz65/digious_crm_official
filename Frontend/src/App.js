@@ -1,110 +1,122 @@
 // App.js
 
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
-import { AuthProvider } from './context/AuthContext';
-import ProtectedRoute from './components/ProtectedRoute';
+import React from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import { Toaster } from "react-hot-toast";
+import { AuthProvider } from "./context/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 // Login & Signup
-import LoginPage from './components/LoginPage';
-import SignUpPage from './components/SignUpPage';
-import ChangePasswordPage from './components/ChangePasswordPage';
-import ForgotPasswordPage from './components/ForgotPasswordPage';
-import VerifyOTPPage from './components/VerifyOTPPage';
-import UnauthorizedPage from './pages/UnauthorizedPage';
+import LoginPage from "./components/LoginPage";
+import SignUpPage from "./components/SignUpPage";
+import ChangePasswordPage from "./components/ChangePasswordPage";
+import ForgotPasswordPage from "./components/ForgotPasswordPage";
+import VerifyOTPPage from "./components/VerifyOTPPage";
+import UnauthorizedPage from "./pages/UnauthorizedPage";
 
 // Admin Pages
-import Dashboard from './pages/SuperAdmin/Dashboard';
-import Attendance from './pages/SuperAdmin/Attendance';
-import ActivityTracker from './pages/SuperAdmin/ActivityTracker';
-import Employees from './pages/SuperAdmin/Employee';
+import Dashboard from "./pages/SuperAdmin/Dashboard";
+import Attendance from "./pages/SuperAdmin/Attendance";
+import ActivityTracker from "./pages/SuperAdmin/ActivityTracker";
+import Employees from "./pages/SuperAdmin/Employee";
 // Legacy application imports removed — unified ApplicationsPage used via wrappers
 // import ApplicationandMemos from './pages/SuperAdmin/ApplicationandMemos';
 // import AdminApplicationsMemos from './pages/SuperAdmin/ApplicationsMemos';
-import AdminSalesManagement from './pages/SuperAdmin/AdminSalesManagement';
-import PayrollManagement from './pages/SuperAdmin/PayrollManagement';
-import AdminExpense from './pages/Admin/AdminExpense';
-import AdminAdvances from './pages/Admin/AdminAdvances';
-import AdminMemos from './pages/Admin/AdminMemos';
-import Customer from './pages/SuperAdmin/Customer';
-
+import AdminSalesManagement from "./pages/SuperAdmin/AdminSalesManagement";
+import PayrollManagement from "./pages/SuperAdmin/PayrollManagement";
+import AdminExpense from "./pages/Admin/AdminExpense";
+import AdminAdvances from "./pages/Admin/AdminAdvances";
+import AdminMemos from "./pages/Admin/AdminMemos";
+import Customer from "./pages/SuperAdmin/Customer";
 
 // HR Pages
-import HRDashboard from './pages/HR/HRDashboard';
-import HrAttendance from './pages/HR/HrAttendance';
-import HRMyAttendance from './pages/HR/HRMyAttendance';
-import EmployeeManagement from './pages/HR/EmployeeManagement';
-import EmployeeOnboarding from './pages/HR/EmployeeOnboarding';
+import HRDashboard from "./pages/HR/HRDashboard";
+import HrAttendance from "./pages/HR/HrAttendance";
+import HRMyAttendance from "./pages/HR/HRMyAttendance";
+import EmployeeManagement from "./pages/HR/EmployeeManagement";
+import EmployeeOnboarding from "./pages/HR/EmployeeOnboarding";
 // import ApplicationsMemos from './pages/HR/ApplicationsMemos'; // Legacy — replaced by Applications_and_Memos
 // import LeaveManagement from './pages/HR/Applications_and_Memos';
-import UserRoles_and_Permissions from './pages/HR/UserRoles_and_Permissions';
-import RoleTemplates from './pages/HR/RoleTemplates';
-import Applications_and_Memos from './pages/HR/Applications_and_Memos';
-import HrMemos from './pages/HR/HrMemos';
-import HrReportsManagement from './pages/HR/HrReportsManagement';
-import HrSettings from './pages/HR/HrSettings';
-import AttendanceAdjustment from './pages/HR/AttendanceAdjustment';
+import UserRoles_and_Permissions from "./pages/HR/UserRoles_and_Permissions";
+import RoleTemplates from "./pages/HR/RoleTemplates";
+import Applications_and_Memos from "./pages/HR/Applications_and_Memos";
+import HrMemos from "./pages/HR/HrMemos";
+import HrReportsManagement from "./pages/HR/HrReportsManagement";
+import HrSettings from "./pages/HR/HrSettings";
+import AttendanceAdjustment from "./pages/HR/AttendanceAdjustment";
 
 // Employee Pages
-import ProductionDashboard from './pages/Employees/ProductionDashboard';
-import EmployeeAttendance from './pages/Employees/EmployeeAtt';
-import EmployeeDetails from './pages/Employees/EmployeeDetails';
-import ApplicationandMemoEmployees from './pages/Employees/ApplicationandMemoEmployees';
-import EmployeeMemos from './pages/Employees/EmployeeMemos';
-import EmployeesSettings from './pages/Employees/EmployeeSettings';
-import EmployeePayroll from './pages/Employees/EmployeePayroll';
-import Sales from './pages/Employees/Sales';
-import AttendanceCorrectionPage from './components/AttendanceCorrectionPage';
+import ProductionDashboard from "./pages/Employees/ProductionDashboard";
+import EmployeeAttendance from "./pages/Employees/EmployeeAtt";
+import EmployeeDetails from "./pages/Employees/EmployeeDetails";
+import ApplicationandMemoEmployees from "./pages/Employees/ApplicationandMemoEmployees";
+import EmployeeMemos from "./pages/Employees/EmployeeMemos";
+import EmployeesSettings from "./pages/Employees/EmployeeSettings";
+import EmployeePayroll from "./pages/Employees/EmployeePayroll";
+import Sales from "./pages/Employees/Sales";
+import AttendanceCorrectionPage from "./components/AttendanceCorrectionPage";
+
+import { PasscodeProvider } from "../src/context/PasscodeContext";
 
 function AppContent() {
   return (
     <div className="App">
       <Routes>
-            {/* Public routes */}
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/signup" element={<SignUpPage />} />
-            <Route path="/change-password" element={<ChangePasswordPage />} />
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-            <Route path="/verify-otp" element={<VerifyOTPPage />} />
-            
-            {/* Unauthorized page */}
-            <Route path="/unauthorized" element={<UnauthorizedPage />} />
-            
-            {/* Admin Routes */}
-            <Route
-              path="/admin/dashboard"
-              element={
-                <ProtectedRoute requiredRole="admin">
-                  <Dashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/sales"
-              element={
-                <ProtectedRoute requiredRole="admin">
-                  <AdminSalesManagement />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/expenses"
-              element={
-                <ProtectedRoute requiredRole="admin">
-                  <AdminExpense />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-          path="/admin/payroll"  // This is correct
+        {/* Public routes */}
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignUpPage />} />
+        <Route path="/change-password" element={<ChangePasswordPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/verify-otp" element={<VerifyOTPPage />} />
+
+        {/* Unauthorized page */}
+        <Route path="/unauthorized" element={<UnauthorizedPage />} />
+
+        {/* Admin Routes */}
+        <Route
+          path="/admin/dashboard"
           element={
             <ProtectedRoute requiredRole="admin">
-              <PayrollManagement />
+              <Dashboard />
             </ProtectedRoute>
           }
         />
-            <Route
+        <Route
+          path="/admin/sales"
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <PasscodeProvider>
+                <AdminSalesManagement />
+              </PasscodeProvider>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/expenses"
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <PasscodeProvider>
+                <AdminExpense />
+              </PasscodeProvider>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/payroll" // This is correct
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <PasscodeProvider>
+                <PayrollManagement />
+              </PasscodeProvider>
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/admin/advances"
           element={
             <ProtectedRoute requiredRole="admin">
@@ -112,271 +124,284 @@ function AppContent() {
             </ProtectedRoute>
           }
         />
-            <Route
-          path="/admin/customers"  // This is correct
+        <Route
+          path="/admin/customers" // This is correct
           element={
             <ProtectedRoute requiredRole="admin">
-              <Customer />
+              <PasscodeProvider>
+                <Customer />
+              </PasscodeProvider>
             </ProtectedRoute>
           }
         />
-            <Route
-              path="/admin/attendance"
-              element={
-                <ProtectedRoute requiredRole="admin">
-                  <Attendance />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/employees"
-              element={
-                <ProtectedRoute requiredRole="admin">
-                  <Employees />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/applications"
-              element={
-                <ProtectedRoute requiredRole="admin">
-                  <Applications_and_Memos />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/activity"
-              element={
-                <ProtectedRoute requiredRole="admin">
-                  <ActivityTracker />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/memos"
-              element={
-                <ProtectedRoute requiredRole="admin">
-                  <AdminMemos />
-                </ProtectedRoute>
-              }
-            />
-            
-            {/* HR Routes */}
-            <Route
-              path="/hr/dashboard"
-              element={
-                <ProtectedRoute requiredRole="hr">
-                  <HRDashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/hr/employee-management"
-              element={
-                <ProtectedRoute requiredRole="hr">
-                  <EmployeeManagement />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/hr/onboarding"
-              element={
-                <ProtectedRoute requiredRole="hr">
-                  <EmployeeOnboarding />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/hr/attendance"
-              element={
-                <ProtectedRoute requiredRole="hr">
-                  <HrAttendance />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/hr/my-attendance"
-              element={
-                <ProtectedRoute requiredRole="hr">
-                  <HRMyAttendance />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/hr/attendance-adjustment"
-              element={
-                <ProtectedRoute requiredRole="hr">
-                  <AttendanceAdjustment />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/hr/applications"
-              element={<Navigate to="/hr/applications-memos" replace />}
-            />
-            <Route
-              path="/hr/applications-memos"
-              element={
-                <ProtectedRoute requiredRole="hr">
-                  <Applications_and_Memos />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/hr/memos"
-              element={
-                <ProtectedRoute requiredRole="hr">
-                  <HrMemos />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/hr/reports-management"
-              element={
-                <ProtectedRoute requiredRole="hr">
-                  <HrReportsManagement />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/hr/employees"
-              element={
-                <ProtectedRoute requiredRole="hr">
-                  <EmployeeManagement />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/hr/user-roles"
-              element={
-                <ProtectedRoute requiredRole="hr">
-                  <UserRoles_and_Permissions />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/hr/role-management"
-              element={
-                <ProtectedRoute requiredRole="hr">
-                  <RoleTemplates />
-                  </ProtectedRoute>
-               
-              }
-            />
-            <Route
-              path="/hr/settings"
-              element={
-                <ProtectedRoute requiredRole="hr">
-                  <HrSettings />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/hr/attendance-corrections"
-              element={
-                <ProtectedRoute requiredRole="hr">
-                  <AttendanceCorrectionPage />
-                </ProtectedRoute>
-              }
-            />
-            
-            {/* Employee Routes */}
-            <Route
-              path="/employee/dashboard"
-              element={
-                <ProtectedRoute requiredRole="employee">
-                  <ProductionDashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/employee/attendance"
-              element={
-                <ProtectedRoute requiredRole="employee">
-                  <EmployeeAttendance />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/employee/sales"
-              element={
-                <ProtectedRoute requiredRole="employee">
-                  <Sales />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/employee/profile"
-              element={
-                <ProtectedRoute requiredRole="employee">
-                  <EmployeeDetails />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/employee/applications"
-              element={
-                <ProtectedRoute requiredRole="employee">
-                  <ApplicationandMemoEmployees />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/employee/memos"
-              element={
-                <ProtectedRoute requiredRole="employee">
-                  <EmployeeMemos />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/employee/payroll"
-              element={
-                <ProtectedRoute requiredRole="employee">
-                  <EmployeePayroll />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/employee/settings"
-              element={
-                <ProtectedRoute requiredRole="employee">
-                  <EmployeesSettings />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/employee/attendance-corrections"
-              element={
-                <ProtectedRoute requiredRole="employee">
-                  <AttendanceCorrectionPage />
-                </ProtectedRoute>
-              }
-            />
-            
-            {/* Legacy routes (for backward compatibility) */}
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/attendance" element={<Attendance />} />
-            <Route path="/hrattendance" element={<HrAttendance />} />
-            <Route path="/activity-tracker" element={<ActivityTracker />} />
-            <Route path="/testdashboard" element={<ActivityTracker />} /> 
-            <Route path="/employeeattendance" element={<EmployeeAttendance />} /> 
-            {/* superAdmin */}
-            <Route path="/employees" element={<Employees />} /> 
-            <Route path="/add-employees" element={<EmployeeOnboarding />} />
-              
-            {/* superAdmin */}
-            <Route path="/employeedetails" element={<EmployeeDetails />} />
-            <Route path="/application-memos" element={<Navigate to="/employee/applications" replace />} />
-            <Route path="/applications-memos" element={<Navigate to="/employee/applications" replace />} />
-            <Route path="/sales" element={<AdminSalesManagement />} />
-            
-            {/* Default redirect */}
-            <Route path="/" element={<Navigate to="/login" />} />
-            
-            {/* 404 page */}
-            <Route path="*" element={<Navigate to="/login" />} />
-          </Routes>
+        <Route
+          path="/admin/attendance"
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <Attendance />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/employees"
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <Employees />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/applications"
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <Applications_and_Memos />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/activity"
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <ActivityTracker />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/memos"
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <AdminMemos />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* HR Routes */}
+        <Route
+          path="/hr/dashboard"
+          element={
+            <ProtectedRoute requiredRole="hr">
+              <HRDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/hr/employee-management"
+          element={
+            <ProtectedRoute requiredRole="hr">
+              <EmployeeManagement />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/hr/onboarding"
+          element={
+            <ProtectedRoute requiredRole="hr">
+              <EmployeeOnboarding />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/hr/attendance"
+          element={
+            <ProtectedRoute requiredRole="hr">
+              <HrAttendance />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/hr/my-attendance"
+          element={
+            <ProtectedRoute requiredRole="hr">
+              <HRMyAttendance />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/hr/attendance-adjustment"
+          element={
+            <ProtectedRoute requiredRole="hr">
+              <AttendanceAdjustment />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/hr/applications"
+          element={<Navigate to="/hr/applications-memos" replace />}
+        />
+        <Route
+          path="/hr/applications-memos"
+          element={
+            <ProtectedRoute requiredRole="hr">
+              <Applications_and_Memos />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/hr/memos"
+          element={
+            <ProtectedRoute requiredRole="hr">
+              <HrMemos />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/hr/reports-management"
+          element={
+            <ProtectedRoute requiredRole="hr">
+              <HrReportsManagement />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/hr/employees"
+          element={
+            <ProtectedRoute requiredRole="hr">
+              <EmployeeManagement />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/hr/user-roles"
+          element={
+            <ProtectedRoute requiredRole="hr">
+              <UserRoles_and_Permissions />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/hr/role-management"
+          element={
+            <ProtectedRoute requiredRole="hr">
+              <RoleTemplates />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/hr/settings"
+          element={
+            <ProtectedRoute requiredRole="hr">
+              <HrSettings />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/hr/attendance-corrections"
+          element={
+            <ProtectedRoute requiredRole="hr">
+              <AttendanceCorrectionPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Employee Routes */}
+        <Route
+          path="/employee/dashboard"
+          element={
+            <ProtectedRoute requiredRole="employee">
+              <ProductionDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/employee/attendance"
+          element={
+            <ProtectedRoute requiredRole="employee">
+              <EmployeeAttendance />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/employee/sales"
+          element={
+            <ProtectedRoute requiredRole="employee">
+              <PasscodeProvider>
+                <Sales />
+              </PasscodeProvider>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/employee/profile"
+          element={
+            <ProtectedRoute requiredRole="employee">
+              <PasscodeProvider>
+                <EmployeeDetails />
+              </PasscodeProvider>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/employee/applications"
+          element={
+            <ProtectedRoute requiredRole="employee">
+              <ApplicationandMemoEmployees />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/employee/memos"
+          element={
+            <ProtectedRoute requiredRole="employee">
+              <EmployeeMemos />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/employee/payroll"
+          element={
+            <ProtectedRoute requiredRole="employee">
+              <PasscodeProvider>
+                <EmployeePayroll />
+              </PasscodeProvider>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/employee/settings"
+          element={
+            <ProtectedRoute requiredRole="employee">
+              <EmployeesSettings />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/employee/attendance-corrections"
+          element={
+            <ProtectedRoute requiredRole="employee">
+              <AttendanceCorrectionPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Legacy routes (for backward compatibility) */}
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/attendance" element={<Attendance />} />
+        <Route path="/hrattendance" element={<HrAttendance />} />
+        <Route path="/activity-tracker" element={<ActivityTracker />} />
+        <Route path="/testdashboard" element={<ActivityTracker />} />
+        <Route path="/employeeattendance" element={<EmployeeAttendance />} />
+        {/* superAdmin */}
+        <Route path="/employees" element={<Employees />} />
+        <Route path="/add-employees" element={<EmployeeOnboarding />} />
+
+        {/* superAdmin */}
+        <Route path="/employeedetails" element={<EmployeeDetails />} />
+        <Route
+          path="/application-memos"
+          element={<Navigate to="/employee/applications" replace />}
+        />
+        <Route
+          path="/applications-memos"
+          element={<Navigate to="/employee/applications" replace />}
+        />
+        <Route path="/sales" element={<AdminSalesManagement />} />
+
+        {/* Default redirect */}
+        <Route path="/" element={<Navigate to="/login" />} />
+
+        {/* 404 page */}
+        <Route path="*" element={<Navigate to="/login" />} />
+      </Routes>
     </div>
   );
 }
@@ -390,9 +415,20 @@ function App() {
           position="top-right"
           toastOptions={{
             duration: 3000,
-            style: { background: '#333', color: '#fff', borderRadius: '8px', fontSize: '14px' },
-            success: { style: { background: '#16a34a' }, iconTheme: { primary: '#fff', secondary: '#16a34a' } },
-            error: { style: { background: '#dc2626' }, iconTheme: { primary: '#fff', secondary: '#dc2626' } },
+            style: {
+              background: "#333",
+              color: "#fff",
+              borderRadius: "8px",
+              fontSize: "14px",
+            },
+            success: {
+              style: { background: "#16a34a" },
+              iconTheme: { primary: "#fff", secondary: "#16a34a" },
+            },
+            error: {
+              style: { background: "#dc2626" },
+              iconTheme: { primary: "#fff", secondary: "#dc2626" },
+            },
           }}
         />
       </AuthProvider>

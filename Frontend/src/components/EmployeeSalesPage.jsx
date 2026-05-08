@@ -73,6 +73,9 @@ import {
   EyeOff, // Add this
 } from "lucide-react";
 
+import ProtectedModule from "./ProtectedModule";
+import { usePasscode } from "../context/PasscodeContext";
+
 const EmployeeSalesPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterMerchant, setFilterMerchant] = useState("all");
@@ -1277,704 +1280,714 @@ const EmployeeSalesPage = () => {
       />
       <RoleBasedNav role={role} />
 
-      {/* Main Content */}
-      <div className="p-6">
-        {/* Summary Cards with Toggle */}
-        <div className="mb-4">
-          {/* Toggle Button */}
-          <div className="flex items-center justify-between">
-            <button
-              onClick={() => setShowStats(!showStats)}
-              className="flex items-center gap-2 mb-4 px-4 py-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-all duration-200 shadow-sm"
-            >
-              {showStats ? (
-                <>
-                  <Eye className="w-4 h-4 text-blue-600" />
-                  <span className="text-sm font-medium text-gray-700">
-                    Hide Stats
-                  </span>
-                </>
-              ) : (
-                <>
-                  <EyeOff className="w-4 h-4 text-gray-500" />
-                  <span className="text-sm font-medium text-gray-700">
-                    Show Stats
-                  </span>
-                </>
+      <ProtectedModule
+        moduleName="emp_sales"
+        title="Employee Sales"
+        description="Sensitive employee sales information. Access requires security verification."
+      >
+        {/* Main Content */}
+        <div className="p-6">
+          {/* Summary Cards with Toggle */}
+          <div className="mb-4">
+            {/* Toggle Button */}
+            <div className="flex items-center justify-between">
+              <button
+                onClick={() => setShowStats(!showStats)}
+                className="flex items-center gap-2 mb-4 px-4 py-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-all duration-200 shadow-sm"
+              >
+                {showStats ? (
+                  <>
+                    <Eye className="w-4 h-4 text-blue-600" />
+                    <span className="text-sm font-medium text-gray-700">
+                      Hide Stats
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <EyeOff className="w-4 h-4 text-gray-500" />
+                    <span className="text-sm font-medium text-gray-700">
+                      Show Stats
+                    </span>
+                  </>
+                )}
+              </button>
+              {showStats && (
+                <span className="text-xs text-gray-100 bg-green-600 px-2 py-1 rounded-full">
+                  Confidential
+                </span>
               )}
-            </button>
-            {showStats && (
-              <span className="text-xs text-gray-100 bg-green-600 px-2 py-1 rounded-full">
-                Confidential
-              </span>
-            )}
-          </div>
+            </div>
 
-          {/* Stats Cards - Only show when toggle is ON */}
-          {showStats && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-fadeIn">
-              {/* Total Sales Card with Target */}
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-2xl p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center">
-                    <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center">
-                      <DollarSign className="w-6 h-6 text-blue-600" />
-                    </div>
-                    <div className="ml-4">
-                      <h3 className="text-sm font-medium text-blue-800">
-                        Total Collection
-                      </h3>
-                      <div className="flex items-baseline gap-2 flex-wrap">
-                        <p className="text-xl font-bold text-blue-600">
-                          ${totals.upfrontPayment.toLocaleString()}
-                        </p>
-                        {salesTarget && salesTarget.monthly_target > 0 && (
-                          <>
-                            <span className="text-blue-400 text-lg">/</span>
-                            <p className="text-lg font-semibold text-blue-400">
-                              ${salesTarget.monthly_target.toLocaleString()}
-                            </p>
-                          </>
-                        )}
+            {/* Stats Cards - Only show when toggle is ON */}
+            {showStats && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-fadeIn">
+                {/* Total Sales Card with Target */}
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-2xl p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center">
+                      <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center">
+                        <DollarSign className="w-6 h-6 text-blue-600" />
+                      </div>
+                      <div className="ml-4">
+                        <h3 className="text-sm font-medium text-blue-800">
+                          Total Collection
+                        </h3>
+                        <div className="flex items-baseline gap-2 flex-wrap">
+                          <p className="text-xl font-bold text-blue-600">
+                            ${totals.upfrontPayment.toLocaleString()}
+                          </p>
+                          {salesTarget && salesTarget.monthly_target > 0 && (
+                            <>
+                              <span className="text-blue-400 text-lg">/</span>
+                              <p className="text-lg font-semibold text-blue-400">
+                                ${salesTarget.monthly_target.toLocaleString()}
+                              </p>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Progress Section */}
-                {salesTarget && salesTarget.monthly_target > 0 ? (
-                  <div className="mt-2">
-                    <div className="flex justify-between text-xs text-blue-700 mb-1">
-                      <span>
-                        {dateRange === "daily"
-                          ? "Daily Progress"
-                          : dateRange === "monthly"
-                            ? "Monthly Progress"
-                            : "Period Progress"}
-                      </span>
-                      <span>
-                        {Math.min(
-                          100,
-                          Math.round(
-                            (totals.upfrontPayment /
-                              salesTarget.monthly_target) *
-                              100,
-                          ),
-                        )}
-                        %
-                      </span>
-                    </div>
-                    <div className="w-full bg-blue-200 rounded-full h-2.5">
-                      <div
-                        className="bg-blue-600 h-2.5 rounded-full transition-all duration-500"
-                        style={{
-                          width: `${Math.min(100, (totals.upfrontPayment / salesTarget.monthly_target) * 100)}%`,
-                        }}
-                      />
-                    </div>
+                  {/* Progress Section */}
+                  {salesTarget && salesTarget.monthly_target > 0 ? (
+                    <div className="mt-2">
+                      <div className="flex justify-between text-xs text-blue-700 mb-1">
+                        <span>
+                          {dateRange === "daily"
+                            ? "Daily Progress"
+                            : dateRange === "monthly"
+                              ? "Monthly Progress"
+                              : "Period Progress"}
+                        </span>
+                        <span>
+                          {Math.min(
+                            100,
+                            Math.round(
+                              (totals.upfrontPayment /
+                                salesTarget.monthly_target) *
+                                100,
+                            ),
+                          )}
+                          %
+                        </span>
+                      </div>
+                      <div className="w-full bg-blue-200 rounded-full h-2.5">
+                        <div
+                          className="bg-blue-600 h-2.5 rounded-full transition-all duration-500"
+                          style={{
+                            width: `${Math.min(100, (totals.upfrontPayment / salesTarget.monthly_target) * 100)}%`,
+                          }}
+                        />
+                      </div>
 
-                    {salesTarget.exceeded && (
-                      <p className="text-xs text-green-600 mt-2 font-medium">
-                        🎉 Target exceeded by $
-                        {Math.abs(salesTarget.remaining).toLocaleString()}!
-                      </p>
-                    )}
-
-                    <p className="text-xs text-blue-600 mt-2">
-                      {dateRange === "daily"
-                        ? `Today's collection / ${selectedDate.toLocaleDateString("en-US", { month: "long" })} target`
-                        : dateRange === "monthly"
-                          ? `${Math.round((totals.upfrontPayment / salesTarget.monthly_target) * 100)}% of ${selectedDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })} target achieved`
-                          : `${Math.round((totals.upfrontPayment / salesTarget.monthly_target) * 100)}% of monthly target`}
-                    </p>
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-500 mt-2">
-                    {dateRange === "daily"
-                      ? "Today's collection"
-                      : dateRange === "monthly"
-                        ? `Collection for ${selectedDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}`
-                        : "Selected period collection"}
-                  </p>
-                )}
-
-                {targetLoading && (
-                  <div className="mt-2 flex justify-center">
-                    <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />
-                  </div>
-                )}
-              </div>
-
-              {/* Paid Amount */}
-              <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-2xl p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center">
-                    <div className="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center">
-                      <CreditCard className="w-6 h-6 text-green-600" />
-                    </div>
-                    <div className="ml-4">
-                      <h3 className="text-sm font-medium text-green-800">
-                        Paid Amount
-                      </h3>
-                      <p className="text-xl font-bold text-green-600">
-                        ${totals.upfrontPayment.toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <p className="text-sm text-gray-500">Received amount</p>
-              </div>
-
-              {/* Remaining Payment */}
-              <div className="bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 rounded-2xl p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center">
-                    <div className="w-12 h-12 bg-orange-100 rounded-2xl flex items-center justify-center">
-                      <Calendar className="w-6 h-6 text-orange-600" />
-                    </div>
-                    <div className="ml-4">
-                      <h3 className="text-sm font-medium text-orange-800">
-                        Remaining Payment
-                      </h3>
-                      <p className="text-xl font-bold text-orange-600">
-                        ${totals.remainingPayment.toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <p className="text-sm text-gray-500">Pending collection</p>
-              </div>
-
-              {/* Completed Sales */}
-              <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-2xl p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center">
-                    <div className="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center">
-                      <CheckCircle className="w-6 h-6 text-purple-600" />
-                    </div>
-                    <div className="ml-4">
-                      <h3 className="text-sm font-medium text-purple-800">
-                        Completed
-                      </h3>
-                      <p className="text-xl font-bold text-purple-600">
-                        {totals.completedSales}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <p className="text-sm text-gray-500">Successful projects</p>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Filters and Actions */}
-        <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm mb-6">
-          <div className="flex flex-wrap gap-4 items-center justify-between">
-            <div className="flex flex-wrap gap-4 items-center">
-              {/* Search */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input
-                  type="text"
-                  placeholder="Search customers..."
-                  className="pl-9 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64 text-sm"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-
-              {/* Category Filter */}
-              <div className="relative">
-                <select
-                  className="pl-3 pr-8 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white text-sm"
-                  value={filterCategory}
-                  onChange={(e) => setFilterCategory(e.target.value)}
-                >
-                  {categories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
-              </div>
-
-              {/* Status Filter */}
-              <div className="relative">
-                <select
-                  className="pl-3 pr-8 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white text-sm"
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                >
-                  <option value="all">All Statuses</option>
-                  {statuses.map((status) => (
-                    <option key={status} value={status}>
-                      {status.charAt(0).toUpperCase() +
-                        status.slice(1).replace("-", " ")}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
-              </div>
-
-              {/* Merchant Filter */}
-              <div className="relative">
-                <select
-                  className="pl-3 pr-8 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white text-sm"
-                  value={filterMerchant}
-                  onChange={(e) => setFilterMerchant(e.target.value)}
-                >
-                  <option value="all">All Merchants</option>
-                  {merchants.map((merchant) => (
-                    <option key={merchant} value={merchant}>
-                      {merchant}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Date Range Selector - Redesigned */}
-        <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm mb-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <CalendarIcon className="w-5 h-5 text-gray-400" />
-              <span className="text-sm font-medium text-gray-700">
-                Date Range:
-              </span>
-
-              {/* Simple Segmented Control */}
-              <div className="flex items-center bg-gray-100 rounded-lg p-1 ml-2">
-                <button
-                  onClick={() => {
-                    setDateRange("daily");
-                    setSelectedDate(new Date());
-                  }}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-                    dateRange === "daily"
-                      ? "bg-white text-blue-600 shadow-sm"
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
-                >
-                  Daily
-                </button>
-                <button
-                  onClick={() => {
-                    setDateRange("monthly");
-                    setSelectedDate(new Date());
-                  }}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-                    dateRange === "monthly"
-                      ? "bg-white text-blue-600 shadow-sm"
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
-                >
-                  Monthly
-                </button>
-                <button
-                  onClick={() => setShowDatePicker(!showDatePicker)}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-                    dateRange === "custom"
-                      ? "bg-white text-blue-600 shadow-sm"
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
-                >
-                  Custom
-                </button>
-              </div>
-            </div>
-
-            {/* Date Display - Clean and Simple */}
-            {dateRange === "daily" && (
-              <div className="flex items-center gap-1 bg-gray-50 rounded-lg px-3 py-1.5">
-                <button
-                  onClick={goToPreviousDay}
-                  className="p-1 hover:bg-gray-200 rounded-md transition-colors"
-                >
-                  <ChevronLeft className="w-4 h-4 text-gray-500" />
-                </button>
-                <span className="text-sm font-medium text-gray-700 px-3 min-w-[200px] text-center">
-                  {selectedDate.toLocaleDateString("en-US", {
-                    weekday: "short",
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
-                </span>
-                <button
-                  onClick={goToNextDay}
-                  className="p-1 hover:bg-gray-200 rounded-md transition-colors"
-                >
-                  <ChevronRight className="w-4 h-4 text-gray-500" />
-                </button>
-              </div>
-            )}
-
-            {dateRange === "monthly" && (
-              <div className="flex items-center gap-1 bg-gray-50 rounded-lg px-3 py-1.5">
-                <button
-                  onClick={goToPreviousMonth}
-                  className="p-1 hover:bg-gray-200 rounded-md transition-colors"
-                >
-                  <ChevronLeft className="w-4 h-4 text-gray-500" />
-                </button>
-                <span className="text-sm font-medium text-gray-700 px-3 min-w-[140px] text-center">
-                  {selectedDate.toLocaleDateString("en-US", {
-                    month: "long",
-                    year: "numeric",
-                  })}
-                </span>
-                <button
-                  onClick={goToNextMonth}
-                  className="p-1 hover:bg-gray-200 rounded-md transition-colors"
-                >
-                  <ChevronRight className="w-4 h-4 text-gray-500" />
-                </button>
-              </div>
-            )}
-
-            {/* Add Sale Button - Moved here for better balance */}
-            <button
-              onClick={() => setShowAddSaleModal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium ml-auto"
-            >
-              <Plus className="w-4 h-4" />
-              Add Sale
-            </button>
-          </div>
-
-          {/* Custom Date Picker - Dropdown style */}
-          {showDatePicker && (
-            <div className="mt-4 pt-4 border-t border-gray-100">
-              <div className="flex flex-wrap items-end gap-3">
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1">
-                    Start Date
-                  </label>
-                  <input
-                    type="date"
-                    value={customStartDate}
-                    onChange={(e) => setCustomStartDate(e.target.value)}
-                    className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1">
-                    End Date
-                  </label>
-                  <input
-                    type="date"
-                    value={customEndDate}
-                    onChange={(e) => setCustomEndDate(e.target.value)}
-                    className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-                <button
-                  onClick={applyCustomDateRange}
-                  disabled={!customStartDate || !customEndDate}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Apply
-                </button>
-                <button
-                  onClick={() => setShowDatePicker(false)}
-                  className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Error Banner */}
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="w-5 h-5 text-red-500" />
-              <span className="text-sm text-red-700">{error}</span>
-            </div>
-            <button
-              onClick={fetchSales}
-              className="flex items-center gap-1 text-sm text-red-600 hover:text-red-800 font-medium"
-            >
-              <RefreshCw className="w-4 h-4" /> Retry
-            </button>
-          </div>
-        )}
-
-        {/* Sales Table */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th className="px-4 py-3 text-left">
-                    <button
-                      className="flex items-center gap-1 text-xs font-medium text-gray-600 uppercase tracking-wider hover:text-blue-600"
-                      onClick={() => handleSort("name")}
-                    >
-                      Customer
-                      <ArrowUpDown className="w-3 h-3" />
-                    </button>
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                    Contact
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                    Project
-                  </th>
-                  <th className="px-4 py-3 text-left">
-                    <button
-                      className="flex items-center gap-1 text-xs font-medium text-gray-600 uppercase tracking-wider hover:text-blue-600"
-                      onClick={() => handleSort("category")}
-                    >
-                      Category
-                      <ArrowUpDown className="w-3 h-3" />
-                    </button>
-                  </th>
-                  <th className="px-4 py-3 text-right">
-                    <button
-                      className="flex items-center gap-1 text-xs font-medium text-gray-600 uppercase tracking-wider hover:text-blue-600 ml-auto"
-                      onClick={() => handleSort("totalSales")}
-                    >
-                      Total
-                      <ArrowUpDown className="w-3 h-3" />
-                    </button>
-                  </th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-600 uppercase tracking-wider">
-                    Upfront
-                  </th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-600 uppercase tracking-wider">
-                    Remaining
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                    Merchant
-                  </th>
-                  <th className="px-4 py-3 text-left">
-                    <button
-                      className="flex items-center gap-1 text-xs font-medium text-gray-600 uppercase tracking-wider hover:text-blue-600"
-                      onClick={() => handleSort("status")}
-                    >
-                      Status
-                      <ArrowUpDown className="w-3 h-3" />
-                    </button>
-                  </th>
-                  <th className="px-4 py-3 text-left">
-                    <button
-                      className="flex items-center gap-1 text-xs font-medium text-gray-600 uppercase tracking-wider hover:text-blue-600"
-                      onClick={() => handleSort("deadline")}
-                    >
-                      Deadline
-                      <ArrowUpDown className="w-3 h-3" />
-                    </button>
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                    Sale Date
-                  </th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {paginatedData.map((item, index) => {
-                  const StatusIcon = getStatusDetails(item.status).icon;
-                  const CategoryIcon = getCategoryDetails(item.category).icon;
-                  const deadlineStatus = getDeadlineStatus(item.deadline);
-                  const isEditing = editingId === item.id;
-
-                  return (
-                    <tr
-                      key={item.id}
-                      className="hover:bg-gray-50 transition-colors"
-                    >
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-7 h-7 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
-                            <User className="w-3.5 h-3.5 text-white" />
-                          </div>
-                          <span className="text-sm font-medium text-gray-900">
-                            {item.name}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-1.5 text-xs text-gray-600">
-                            <Mail className="w-3 h-3 text-gray-400" />
-                            {item.email}
-                          </div>
-                          <div className="flex items-center gap-1.5 text-xs text-gray-600">
-                            <Phone className="w-3 h-3 text-gray-400" />
-                            {item.phone}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <p className="text-xs text-gray-600 max-w-[200px] truncate">
-                          {item.about}
+                      {salesTarget.exceeded && (
+                        <p className="text-xs text-green-600 mt-2 font-medium">
+                          🎉 Target exceeded by $
+                          {Math.abs(salesTarget.remaining).toLocaleString()}!
                         </p>
-                      </td>
-                      <td className="px-4 py-3">
-                        {isEditing ? (
-                          // Show category as disabled/read-only in edit mode
-                          <div className="relative">
-                            <select
-                              className="px-2 py-1 border border-gray-300 rounded text-xs bg-gray-100 cursor-not-allowed"
-                              value={editFormData.category || item.category}
-                              disabled
-                            >
-                              <option value={item.category}>
-                                {item.categoryName ||
-                                  getCategoryDetails(item.category).name}
-                              </option>
-                            </select>
-                            <div className="absolute inset-0 bg-gray-50/20 cursor-not-allowed"></div>
-                          </div>
-                        ) : (
-                          // Normal view mode
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 w-fit ${
-                              getCategoryDetails(
-                                item.category,
-                                item.categoryName,
-                              ).color
-                            }`}
-                          >
-                            <CategoryIcon className="w-3 h-3" />
-                            {item.categoryName ||
-                              (item.category !== "other"
-                                ? getCategoryDetails(item.category).name
-                                : item.category
-                                    ?.replace(/-/g, " ")
-                                    .replace(/\b\w/g, (l) => l.toUpperCase()))}
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        {isEditing ? (
-                          <input
-                            type="number"
-                            className="w-20 px-2 py-1 border border-gray-300 rounded text-right text-xs [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                            value={editFormData.totalSales}
-                            onChange={(e) =>
-                              handleEditChange("totalSales", e.target.value)
-                            }
-                            step="0.01"
-                            min="0"
-                            onWheel={(e) => e.target.blur()}
-                          />
-                        ) : (
-                          <span className="text-sm font-medium text-gray-900">
-                            ${item.totalSales.toLocaleString()}
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        {isEditing ? (
-                          <input
-                            type="number"
-                            className="w-20 px-2 py-1 border border-gray-300 rounded text-right text-xs [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                            value={editFormData.upfrontPayment}
-                            onChange={(e) =>
-                              handleEditChange("upfrontPayment", e.target.value)
-                            }
-                            step="0.01"
-                            min="0"
-                            onWheel={(e) => e.target.blur()}
-                          />
-                        ) : (
-                          <span className="text-xs font-medium text-green-600">
-                            ${item.upfrontPayment.toLocaleString()}
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        {isEditing ? (
-                          <input
-                            type="number"
-                            className="w-20 px-2 py-1 border border-gray-300 rounded text-right text-xs bg-gray-50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                            value={
-                              editFormData.remainingPayment?.toFixed(2) ||
-                              "0.00"
-                            }
-                            disabled
-                          />
-                        ) : (
-                          <span className="text-xs font-medium text-orange-600">
-                            ${item.remainingPayment.toLocaleString()}
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        {isEditing ? (
-                          <select
-                            className="px-2 py-1 border border-gray-300 rounded text-xs"
-                            value={editFormData.merchant}
-                            onChange={(e) =>
-                              handleEditChange("merchant", e.target.value)
-                            }
-                          >
-                            {merchants.map((merchant) => (
-                              <option key={merchant} value={merchant}>
-                                {merchant}
-                              </option>
-                            ))}
-                          </select>
-                        ) : (
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium ${getMerchantColor(item.merchant)}`}
-                          >
-                            {item.merchant}
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        {isEditing ? (
-                          <select
-                            className="px-2 py-1 border border-gray-300 rounded text-xs"
-                            value={editFormData.status}
-                            onChange={(e) =>
-                              handleEditChange("status", e.target.value)
-                            }
-                          >
-                            {statuses.map((status) => (
-                              <option key={status} value={status}>
-                                {status.charAt(0).toUpperCase() +
-                                  status.slice(1).replace("-", " ")}
-                              </option>
-                            ))}
-                          </select>
-                        ) : (
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 w-fit ${getStatusDetails(item.status).color}`}
-                          >
-                            <StatusIcon className="w-3 h-3" />
-                            {getStatusDetails(item.status).label}
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        {isEditing ? (
-                          <input
-                            type="date"
-                            className="px-2 py-1 border border-gray-300 rounded text-xs"
-                            value={editFormData.deadline}
-                            onChange={(e) =>
-                              handleEditChange("deadline", e.target.value)
-                            }
-                          />
-                        ) : (
-                          <div className="flex flex-col gap-1">
-                            <span className="text-xs text-gray-500">
-                              {formatDateForFrontend(item.deadline)}
+                      )}
+
+                      <p className="text-xs text-blue-600 mt-2">
+                        {dateRange === "daily"
+                          ? `Today's collection / ${selectedDate.toLocaleDateString("en-US", { month: "long" })} target`
+                          : dateRange === "monthly"
+                            ? `${Math.round((totals.upfrontPayment / salesTarget.monthly_target) * 100)}% of ${selectedDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })} target achieved`
+                            : `${Math.round((totals.upfrontPayment / salesTarget.monthly_target) * 100)}% of monthly target`}
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500 mt-2">
+                      {dateRange === "daily"
+                        ? "Today's collection"
+                        : dateRange === "monthly"
+                          ? `Collection for ${selectedDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}`
+                          : "Selected period collection"}
+                    </p>
+                  )}
+
+                  {targetLoading && (
+                    <div className="mt-2 flex justify-center">
+                      <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />
+                    </div>
+                  )}
+                </div>
+
+                {/* Paid Amount */}
+                <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-2xl p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center">
+                      <div className="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center">
+                        <CreditCard className="w-6 h-6 text-green-600" />
+                      </div>
+                      <div className="ml-4">
+                        <h3 className="text-sm font-medium text-green-800">
+                          Paid Amount
+                        </h3>
+                        <p className="text-xl font-bold text-green-600">
+                          ${totals.upfrontPayment.toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-500">Received amount</p>
+                </div>
+
+                {/* Remaining Payment */}
+                <div className="bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 rounded-2xl p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center">
+                      <div className="w-12 h-12 bg-orange-100 rounded-2xl flex items-center justify-center">
+                        <Calendar className="w-6 h-6 text-orange-600" />
+                      </div>
+                      <div className="ml-4">
+                        <h3 className="text-sm font-medium text-orange-800">
+                          Remaining Payment
+                        </h3>
+                        <p className="text-xl font-bold text-orange-600">
+                          ${totals.remainingPayment.toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-500">Pending collection</p>
+                </div>
+
+                {/* Completed Sales */}
+                <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-2xl p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center">
+                      <div className="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center">
+                        <CheckCircle className="w-6 h-6 text-purple-600" />
+                      </div>
+                      <div className="ml-4">
+                        <h3 className="text-sm font-medium text-purple-800">
+                          Completed
+                        </h3>
+                        <p className="text-xl font-bold text-purple-600">
+                          {totals.completedSales}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-500">Successful projects</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Filters and Actions */}
+          <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm mb-6">
+            <div className="flex flex-wrap gap-4 items-center justify-between">
+              <div className="flex flex-wrap gap-4 items-center">
+                {/* Search */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <input
+                    type="text"
+                    placeholder="Search customers..."
+                    className="pl-9 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64 text-sm"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+
+                {/* Category Filter */}
+                <div className="relative">
+                  <select
+                    className="pl-3 pr-8 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white text-sm"
+                    value={filterCategory}
+                    onChange={(e) => setFilterCategory(e.target.value)}
+                  >
+                    {categories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+                </div>
+
+                {/* Status Filter */}
+                <div className="relative">
+                  <select
+                    className="pl-3 pr-8 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white text-sm"
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                  >
+                    <option value="all">All Statuses</option>
+                    {statuses.map((status) => (
+                      <option key={status} value={status}>
+                        {status.charAt(0).toUpperCase() +
+                          status.slice(1).replace("-", " ")}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+                </div>
+
+                {/* Merchant Filter */}
+                <div className="relative">
+                  <select
+                    className="pl-3 pr-8 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white text-sm"
+                    value={filterMerchant}
+                    onChange={(e) => setFilterMerchant(e.target.value)}
+                  >
+                    <option value="all">All Merchants</option>
+                    {merchants.map((merchant) => (
+                      <option key={merchant} value={merchant}>
+                        {merchant}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Date Range Selector - Redesigned */}
+          <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-2">
+                <CalendarIcon className="w-5 h-5 text-gray-400" />
+                <span className="text-sm font-medium text-gray-700">
+                  Date Range:
+                </span>
+
+                {/* Simple Segmented Control */}
+                <div className="flex items-center bg-gray-100 rounded-lg p-1 ml-2">
+                  <button
+                    onClick={() => {
+                      setDateRange("daily");
+                      setSelectedDate(new Date());
+                    }}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                      dateRange === "daily"
+                        ? "bg-white text-blue-600 shadow-sm"
+                        : "text-gray-600 hover:text-gray-900"
+                    }`}
+                  >
+                    Daily
+                  </button>
+                  <button
+                    onClick={() => {
+                      setDateRange("monthly");
+                      setSelectedDate(new Date());
+                    }}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                      dateRange === "monthly"
+                        ? "bg-white text-blue-600 shadow-sm"
+                        : "text-gray-600 hover:text-gray-900"
+                    }`}
+                  >
+                    Monthly
+                  </button>
+                  <button
+                    onClick={() => setShowDatePicker(!showDatePicker)}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                      dateRange === "custom"
+                        ? "bg-white text-blue-600 shadow-sm"
+                        : "text-gray-600 hover:text-gray-900"
+                    }`}
+                  >
+                    Custom
+                  </button>
+                </div>
+              </div>
+
+              {/* Date Display - Clean and Simple */}
+              {dateRange === "daily" && (
+                <div className="flex items-center gap-1 bg-gray-50 rounded-lg px-3 py-1.5">
+                  <button
+                    onClick={goToPreviousDay}
+                    className="p-1 hover:bg-gray-200 rounded-md transition-colors"
+                  >
+                    <ChevronLeft className="w-4 h-4 text-gray-500" />
+                  </button>
+                  <span className="text-sm font-medium text-gray-700 px-3 min-w-[200px] text-center">
+                    {selectedDate.toLocaleDateString("en-US", {
+                      weekday: "short",
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </span>
+                  <button
+                    onClick={goToNextDay}
+                    className="p-1 hover:bg-gray-200 rounded-md transition-colors"
+                  >
+                    <ChevronRight className="w-4 h-4 text-gray-500" />
+                  </button>
+                </div>
+              )}
+
+              {dateRange === "monthly" && (
+                <div className="flex items-center gap-1 bg-gray-50 rounded-lg px-3 py-1.5">
+                  <button
+                    onClick={goToPreviousMonth}
+                    className="p-1 hover:bg-gray-200 rounded-md transition-colors"
+                  >
+                    <ChevronLeft className="w-4 h-4 text-gray-500" />
+                  </button>
+                  <span className="text-sm font-medium text-gray-700 px-3 min-w-[140px] text-center">
+                    {selectedDate.toLocaleDateString("en-US", {
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </span>
+                  <button
+                    onClick={goToNextMonth}
+                    className="p-1 hover:bg-gray-200 rounded-md transition-colors"
+                  >
+                    <ChevronRight className="w-4 h-4 text-gray-500" />
+                  </button>
+                </div>
+              )}
+
+              {/* Add Sale Button - Moved here for better balance */}
+              <button
+                onClick={() => setShowAddSaleModal(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium ml-auto"
+              >
+                <Plus className="w-4 h-4" />
+                Add Sale
+              </button>
+            </div>
+
+            {/* Custom Date Picker - Dropdown style */}
+            {showDatePicker && (
+              <div className="mt-4 pt-4 border-t border-gray-100">
+                <div className="flex flex-wrap items-end gap-3">
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">
+                      Start Date
+                    </label>
+                    <input
+                      type="date"
+                      value={customStartDate}
+                      onChange={(e) => setCustomStartDate(e.target.value)}
+                      className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">
+                      End Date
+                    </label>
+                    <input
+                      type="date"
+                      value={customEndDate}
+                      onChange={(e) => setCustomEndDate(e.target.value)}
+                      className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                  <button
+                    onClick={applyCustomDateRange}
+                    disabled={!customStartDate || !customEndDate}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Apply
+                  </button>
+                  <button
+                    onClick={() => setShowDatePicker(false)}
+                    className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Error Banner */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="w-5 h-5 text-red-500" />
+                <span className="text-sm text-red-700">{error}</span>
+              </div>
+              <button
+                onClick={fetchSales}
+                className="flex items-center gap-1 text-sm text-red-600 hover:text-red-800 font-medium"
+              >
+                <RefreshCw className="w-4 h-4" /> Retry
+              </button>
+            </div>
+          )}
+
+          {/* Sales Table */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="px-4 py-3 text-left">
+                      <button
+                        className="flex items-center gap-1 text-xs font-medium text-gray-600 uppercase tracking-wider hover:text-blue-600"
+                        onClick={() => handleSort("name")}
+                      >
+                        Customer
+                        <ArrowUpDown className="w-3 h-3" />
+                      </button>
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                      Contact
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                      Project
+                    </th>
+                    <th className="px-4 py-3 text-left">
+                      <button
+                        className="flex items-center gap-1 text-xs font-medium text-gray-600 uppercase tracking-wider hover:text-blue-600"
+                        onClick={() => handleSort("category")}
+                      >
+                        Category
+                        <ArrowUpDown className="w-3 h-3" />
+                      </button>
+                    </th>
+                    <th className="px-4 py-3 text-right">
+                      <button
+                        className="flex items-center gap-1 text-xs font-medium text-gray-600 uppercase tracking-wider hover:text-blue-600 ml-auto"
+                        onClick={() => handleSort("totalSales")}
+                      >
+                        Total
+                        <ArrowUpDown className="w-3 h-3" />
+                      </button>
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-600 uppercase tracking-wider">
+                      Upfront
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-600 uppercase tracking-wider">
+                      Remaining
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                      Merchant
+                    </th>
+                    <th className="px-4 py-3 text-left">
+                      <button
+                        className="flex items-center gap-1 text-xs font-medium text-gray-600 uppercase tracking-wider hover:text-blue-600"
+                        onClick={() => handleSort("status")}
+                      >
+                        Status
+                        <ArrowUpDown className="w-3 h-3" />
+                      </button>
+                    </th>
+                    <th className="px-4 py-3 text-left">
+                      <button
+                        className="flex items-center gap-1 text-xs font-medium text-gray-600 uppercase tracking-wider hover:text-blue-600"
+                        onClick={() => handleSort("deadline")}
+                      >
+                        Deadline
+                        <ArrowUpDown className="w-3 h-3" />
+                      </button>
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                      Sale Date
+                    </th>
+                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {paginatedData.map((item, index) => {
+                    const StatusIcon = getStatusDetails(item.status).icon;
+                    const CategoryIcon = getCategoryDetails(item.category).icon;
+                    const deadlineStatus = getDeadlineStatus(item.deadline);
+                    const isEditing = editingId === item.id;
+
+                    return (
+                      <tr
+                        key={item.id}
+                        className="hover:bg-gray-50 transition-colors"
+                      >
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-7 h-7 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                              <User className="w-3.5 h-3.5 text-white" />
+                            </div>
+                            <span className="text-sm font-medium text-gray-900">
+                              {item.name}
                             </span>
-                            {/* <span
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                              <Mail className="w-3 h-3 text-gray-400" />
+                              {item.email}
+                            </div>
+                            <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                              <Phone className="w-3 h-3 text-gray-400" />
+                              {item.phone}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <p className="text-xs text-gray-600 max-w-[200px] truncate">
+                            {item.about}
+                          </p>
+                        </td>
+                        <td className="px-4 py-3">
+                          {isEditing ? (
+                            // Show category as disabled/read-only in edit mode
+                            <div className="relative">
+                              <select
+                                className="px-2 py-1 border border-gray-300 rounded text-xs bg-gray-100 cursor-not-allowed"
+                                value={editFormData.category || item.category}
+                                disabled
+                              >
+                                <option value={item.category}>
+                                  {item.categoryName ||
+                                    getCategoryDetails(item.category).name}
+                                </option>
+                              </select>
+                              <div className="absolute inset-0 bg-gray-50/20 cursor-not-allowed"></div>
+                            </div>
+                          ) : (
+                            // Normal view mode
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 w-fit ${
+                                getCategoryDetails(
+                                  item.category,
+                                  item.categoryName,
+                                ).color
+                              }`}
+                            >
+                              <CategoryIcon className="w-3 h-3" />
+                              {item.categoryName ||
+                                (item.category !== "other"
+                                  ? getCategoryDetails(item.category).name
+                                  : item.category
+                                      ?.replace(/-/g, " ")
+                                      .replace(/\b\w/g, (l) =>
+                                        l.toUpperCase(),
+                                      ))}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          {isEditing ? (
+                            <input
+                              type="number"
+                              className="w-20 px-2 py-1 border border-gray-300 rounded text-right text-xs [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              value={editFormData.totalSales}
+                              onChange={(e) =>
+                                handleEditChange("totalSales", e.target.value)
+                              }
+                              step="0.01"
+                              min="0"
+                              onWheel={(e) => e.target.blur()}
+                            />
+                          ) : (
+                            <span className="text-sm font-medium text-gray-900">
+                              ${item.totalSales.toLocaleString()}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          {isEditing ? (
+                            <input
+                              type="number"
+                              className="w-20 px-2 py-1 border border-gray-300 rounded text-right text-xs [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              value={editFormData.upfrontPayment}
+                              onChange={(e) =>
+                                handleEditChange(
+                                  "upfrontPayment",
+                                  e.target.value,
+                                )
+                              }
+                              step="0.01"
+                              min="0"
+                              onWheel={(e) => e.target.blur()}
+                            />
+                          ) : (
+                            <span className="text-xs font-medium text-green-600">
+                              ${item.upfrontPayment.toLocaleString()}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          {isEditing ? (
+                            <input
+                              type="number"
+                              className="w-20 px-2 py-1 border border-gray-300 rounded text-right text-xs bg-gray-50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              value={
+                                editFormData.remainingPayment?.toFixed(2) ||
+                                "0.00"
+                              }
+                              disabled
+                            />
+                          ) : (
+                            <span className="text-xs font-medium text-orange-600">
+                              ${item.remainingPayment.toLocaleString()}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          {isEditing ? (
+                            <select
+                              className="px-2 py-1 border border-gray-300 rounded text-xs"
+                              value={editFormData.merchant}
+                              onChange={(e) =>
+                                handleEditChange("merchant", e.target.value)
+                              }
+                            >
+                              {merchants.map((merchant) => (
+                                <option key={merchant} value={merchant}>
+                                  {merchant}
+                                </option>
+                              ))}
+                            </select>
+                          ) : (
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs font-medium ${getMerchantColor(item.merchant)}`}
+                            >
+                              {item.merchant}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          {isEditing ? (
+                            <select
+                              className="px-2 py-1 border border-gray-300 rounded text-xs"
+                              value={editFormData.status}
+                              onChange={(e) =>
+                                handleEditChange("status", e.target.value)
+                              }
+                            >
+                              {statuses.map((status) => (
+                                <option key={status} value={status}>
+                                  {status.charAt(0).toUpperCase() +
+                                    status.slice(1).replace("-", " ")}
+                                </option>
+                              ))}
+                            </select>
+                          ) : (
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 w-fit ${getStatusDetails(item.status).color}`}
+                            >
+                              <StatusIcon className="w-3 h-3" />
+                              {getStatusDetails(item.status).label}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          {isEditing ? (
+                            <input
+                              type="date"
+                              className="px-2 py-1 border border-gray-300 rounded text-xs"
+                              value={editFormData.deadline}
+                              onChange={(e) =>
+                                handleEditChange("deadline", e.target.value)
+                              }
+                            />
+                          ) : (
+                            <div className="flex flex-col gap-1">
+                              <span className="text-xs text-gray-500">
+                                {formatDateForFrontend(item.deadline)}
+                              </span>
+                              {/* <span
                               className={`px-2 py-0.5 rounded-full text-xs font-medium inline-block w-fit ${deadlineStatus.color}`}
                             >
                               <Flag className="w-3 h-3 inline mr-1" />
@@ -1982,133 +1995,137 @@ const EmployeeSalesPage = () => {
                               {deadlineStatus.days &&
                                 `(${deadlineStatus.days}d)`}
                             </span> */}
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="text-xs text-gray-500">
-                          {formatDateForFrontend(item.date)}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center justify-center gap-1">
-                          {isEditing ? (
-                            <>
-                              <button
-                                onClick={() => handleSaveEdit(item.id)}
-                                className="p-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-                                title="Save"
-                              >
-                                <Save className="w-3.5 h-3.5 text-gray-700" />
-                              </button>
-                              <button
-                                onClick={handleCancelEdit}
-                                className="p-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-                                title="Cancel"
-                              >
-                                <X className="w-3.5 h-3.5 text-gray-700" />
-                              </button>
-                            </>
-                          ) : (
-                            <>
-                              <button
-                                onClick={() => handleView(item)}
-                                className="p-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-                                title="View Details"
-                              >
-                                <Eye className="w-3.5 h-3.5 text-gray-700" />
-                              </button>
-                              <button
-                                onClick={() => handleEdit(item)}
-                                className="p-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-                                title="Edit"
-                              >
-                                <Edit className="w-3.5 h-3.5 text-gray-700" />
-                              </button>
-                            </>
+                            </div>
                           )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Loading State */}
-          {loading && (
-            <div className="text-center py-12">
-              <Loader2 className="w-8 h-8 text-blue-500 mx-auto mb-3 animate-spin" />
-              <p className="text-gray-600 font-medium">Loading sales data...</p>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="text-xs text-gray-500">
+                            {formatDateForFrontend(item.date)}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-center gap-1">
+                            {isEditing ? (
+                              <>
+                                <button
+                                  onClick={() => handleSaveEdit(item.id)}
+                                  className="p-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                                  title="Save"
+                                >
+                                  <Save className="w-3.5 h-3.5 text-gray-700" />
+                                </button>
+                                <button
+                                  onClick={handleCancelEdit}
+                                  className="p-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                                  title="Cancel"
+                                >
+                                  <X className="w-3.5 h-3.5 text-gray-700" />
+                                </button>
+                              </>
+                            ) : (
+                              <>
+                                <button
+                                  onClick={() => handleView(item)}
+                                  className="p-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                                  title="View Details"
+                                >
+                                  <Eye className="w-3.5 h-3.5 text-gray-700" />
+                                </button>
+                                <button
+                                  onClick={() => handleEdit(item)}
+                                  className="p-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                                  title="Edit"
+                                >
+                                  <Edit className="w-3.5 h-3.5 text-gray-700" />
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
-          )}
 
-          {/* Empty State */}
-          {!loading && filteredData.length === 0 && (
-            <div className="text-center py-12">
-              <User className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-              <p className="text-gray-600 font-medium">No sales data found</p>
-              <p className="text-xs text-gray-500 mt-1">
-                Try adjusting your search, filter, or date range
-              </p>
-              <button
-                onClick={() => setShowAddSaleModal(true)}
-                className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium inline-flex items-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Add Your First Sale
-              </button>
-            </div>
-          )}
+            {/* Loading State */}
+            {loading && (
+              <div className="text-center py-12">
+                <Loader2 className="w-8 h-8 text-blue-500 mx-auto mb-3 animate-spin" />
+                <p className="text-gray-600 font-medium">
+                  Loading sales data...
+                </p>
+              </div>
+            )}
 
-          {/* Pagination */}
-          {filteredData.length > 0 && totalPages > 1 && (
-            <div className="border-t border-gray-200 px-6 py-3 flex items-center justify-between">
-              <p className="text-xs text-gray-600">
-                Showing {startIndex + 1} to{" "}
-                {Math.min(startIndex + RECORDS_PER_PAGE, filteredData.length)}{" "}
-                of {filteredData.length} entries
-              </p>
-              <div className="flex gap-2">
+            {/* Empty State */}
+            {!loading && filteredData.length === 0 && (
+              <div className="text-center py-12">
+                <User className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                <p className="text-gray-600 font-medium">No sales data found</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Try adjusting your search, filter, or date range
+                </p>
                 <button
-                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                  disabled={currentPage === 1}
-                  className="px-3 py-1.5 text-xs font-medium bg-white border border-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+                  onClick={() => setShowAddSaleModal(true)}
+                  className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium inline-flex items-center gap-2"
                 >
-                  Previous
-                </button>
-
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                  (page) => (
-                    <button
-                      key={page}
-                      onClick={() => setCurrentPage(page)}
-                      className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-                        currentPage === page
-                          ? "bg-blue-600 text-white"
-                          : "bg-white border border-gray-200 hover:bg-gray-50"
-                      }`}
-                    >
-                      {page}
-                    </button>
-                  ),
-                )}
-
-                <button
-                  onClick={() =>
-                    setCurrentPage(Math.min(totalPages, currentPage + 1))
-                  }
-                  disabled={currentPage === totalPages}
-                  className="px-3 py-1.5 text-xs font-medium bg-white border border-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
-                >
-                  Next
+                  <Plus className="w-4 h-4" />
+                  Add Your First Sale
                 </button>
               </div>
-            </div>
-          )}
+            )}
+
+            {/* Pagination */}
+            {filteredData.length > 0 && totalPages > 1 && (
+              <div className="border-t border-gray-200 px-6 py-3 flex items-center justify-between">
+                <p className="text-xs text-gray-600">
+                  Showing {startIndex + 1} to{" "}
+                  {Math.min(startIndex + RECORDS_PER_PAGE, filteredData.length)}{" "}
+                  of {filteredData.length} entries
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1.5 text-xs font-medium bg-white border border-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+                  >
+                    Previous
+                  </button>
+
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                    (page) => (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                          currentPage === page
+                            ? "bg-blue-600 text-white"
+                            : "bg-white border border-gray-200 hover:bg-gray-50"
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ),
+                  )}
+
+                  <button
+                    onClick={() =>
+                      setCurrentPage(Math.min(totalPages, currentPage + 1))
+                    }
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-1.5 text-xs font-medium bg-white border border-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+        
+      </ProtectedModule>
 
       <AddSaleModal />
     </div>
