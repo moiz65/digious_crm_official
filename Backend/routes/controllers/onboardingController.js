@@ -4,9 +4,10 @@ const cloudinary = require("../../config/cloudinary");
 
 // Create new employee onboarding
 exports.createEmployee = async (req, res) => {
+  let connection;
   try {
     const {
-      employeeId,
+      employeeId,  // DG-0010 (for display only)
       name,
       email,
       password,
@@ -42,7 +43,6 @@ exports.createEmployee = async (req, res) => {
       request_password_change,
       profile_photo,
       profile_picture,
-      // Resources
       laptop,
       laptopSerial,
       laptop_serial,
@@ -67,9 +67,9 @@ exports.createEmployee = async (req, res) => {
       resources_note,
     } = req.body;
 
-    // Normalize field names (handle both camelCase and snake_case)
+    // Normalize field names
     const normalizedData = {
-      employeeId,
+      employeeId,  // DG-0010 (display only)
       name,
       email,
       password,
@@ -92,10 +92,7 @@ exports.createEmployee = async (req, res) => {
       cnicIssueDate: cnic_issue_date || cnicIssueDate,
       cnicExpiryDate: cnic_expiry_date || cnicExpiryDate,
       dob: req.body.dob || null,
-      requestPasswordChange:
-        request_password_change !== undefined
-          ? request_password_change
-          : requestPasswordChange,
+      requestPasswordChange: request_password_change !== undefined ? request_password_change : requestPasswordChange,
       laptop,
       laptopSerial: laptop_serial || laptopSerial,
       charger,
@@ -112,75 +109,11 @@ exports.createEmployee = async (req, res) => {
       resourcesNote: resources_note || resourcesNote,
     };
 
-    const {
-      joinDate: finalJoinDate,
-      employmentStatus: finalEmploymentStatus,
-      confirmationDate: finalConfirmationDate,
-      accountTitleName: finalAccountTitleName,
-      bankName: finalBankName,
-      cnicIssueDate: finalCnicIssueDate,
-      cnicExpiryDate: finalCnicExpiryDate,
-      emergencyContact: finalEmergencyContact,
-      bankAccount: finalBankAccount,
-      taxId: finalTaxId,
-    } = normalizedData;
-
-    // Normalize CNIC month-year (YYYY-MM) to full date YYYY-MM-01 for storage
-    const normalizeMonthYearToDate = (val) => {
-      if (!val) return null;
-      // Accept YYYY-MM or YYYY-MM-DD
-      if (/^\d{4}-\d{2}$/.test(val)) {
-        const [y, m] = val.split("-");
-        const mm = Number(m);
-        if (mm >= 1 && mm <= 12) return `${y}-${m}-01`;
-        return null;
-      }
-      if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
-      return null;
-    };
-
-    const normalizedCnicIssueDate =
-      normalizeMonthYearToDate(finalCnicIssueDate);
-    const normalizedCnicExpiryDate =
-      normalizeMonthYearToDate(finalCnicExpiryDate);
-
-    if (finalCnicIssueDate && !normalizedCnicIssueDate) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "CNIC issue date format invalid. Use month and year (YYYY-MM) or full date YYYY-MM-DD",
-      });
-    }
-    if (finalCnicExpiryDate && !normalizedCnicExpiryDate) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "CNIC expiry date format invalid. Use month and year (YYYY-MM) or full date YYYY-MM-DD",
-      });
-    }
-
-    // Ensure expiry is same or after issue month
-    if (normalizedCnicIssueDate && normalizedCnicExpiryDate) {
-      if (
-        new Date(normalizedCnicExpiryDate) < new Date(normalizedCnicIssueDate)
-      ) {
-        return res.status(400).json({
-          success: false,
-          message: "CNIC expiry must be same or after issue month",
-        });
-      }
-    }
-
     // Validation
-    // Email must be @digioussolutions.com
-    if (
-      !normalizedData.email ||
-      !normalizedData.email.endsWith("@digioussolutions.com")
-    ) {
+    if (!normalizedData.email?.endsWith("@digioussolutions.com")) {
       return res.status(400).json({
         success: false,
         message: "Email must be @digioussolutions.com domain",
-        received: { email: normalizedData.email },
       });
     }
 
@@ -194,34 +127,18 @@ exports.createEmployee = async (req, res) => {
       !normalizedData.sub_department ||
       !normalizedData.joinDate ||
       !normalizedData.baseSalary ||
-      !finalEmploymentStatus ||
-      !finalConfirmationDate ||
-      !finalAccountTitleName ||
-      !finalBankName
+      !normalizedData.employmentStatus ||
+      !normalizedData.confirmationDate ||
+      !normalizedData.accountTitleName ||
+      !normalizedData.bankName
     ) {
       return res.status(400).json({
         success: false,
-        message:
-          "Missing required fields. Required: employeeId, name, email, password, phone, department, sub_department, joinDate, baseSalary, employment_status, confirmation_date, account_title_name, bank_name",
-        received: {
-          employeeId: normalizedData.employeeId,
-          name: normalizedData.name,
-          email: normalizedData.email,
-          password: normalizedData.password ? "***" : "missing",
-          phone: normalizedData.phone,
-          department: normalizedData.department,
-          sub_department: normalizedData.sub_department,
-          joinDate: normalizedData.joinDate,
-          baseSalary: normalizedData.baseSalary,
-          employmentStatus: finalEmploymentStatus,
-          confirmationDate: finalConfirmationDate,
-          accountTitleName: finalAccountTitleName,
-          bankName: finalBankName,
-        },
+        message: "Missing required fields",
       });
     }
 
-    const connection = await pool.getConnection();
+    connection = await pool.getConnection();
 
     try {
       await connection.beginTransaction();
@@ -229,13 +146,12 @@ exports.createEmployee = async (req, res) => {
       // Hash password
       const hashedPassword = await bcrypt.hash(normalizedData.password, 10);
 
-      // Handle profile photo upload to Cloudinary if provided
+      // Profile photo upload logic
       let profilePhotoUrl = null;
       const providedProfilePhoto = profile_photo || profile_picture;
       
       if (providedProfilePhoto && providedProfilePhoto.startsWith("data:image")) {
         try {
-          console.log("🖼️ Uploading profile photo to Cloudinary...");
           const uploadResult = await new Promise((resolve, reject) => {
             cloudinary.uploader.upload(
               providedProfilePhoto,
@@ -243,12 +159,6 @@ exports.createEmployee = async (req, res) => {
                 folder: `employee_profiles/${normalizedData.employeeId}`,
                 public_id: `profile_photo_${Date.now()}`,
                 resource_type: 'auto',
-                quality: 'auto:good',
-                fetch_format: 'auto',
-                transformation: [
-                  { width: 400, height: 400, crop: 'fill', gravity: 'face' },
-                  { quality: 'auto:good', fetch_format: 'auto' }
-                ]
               },
               (error, result) => {
                 if (error) reject(error);
@@ -257,14 +167,14 @@ exports.createEmployee = async (req, res) => {
             );
           });
           profilePhotoUrl = uploadResult.secure_url;
-          console.log("✅ Profile photo uploaded successfully:", profilePhotoUrl);
         } catch (uploadError) {
-          console.error("❌ Profile photo upload failed:", uploadError);
-          // Don't fail the employee creation if photo upload fails
+          console.error("Profile photo upload failed:", uploadError);
         }
       }
 
-      // Insert employee onboarding record
+      // ============================================================
+      // STEP 1: Insert employee into CRM database
+      // ============================================================
       const [employeeResult] = await connection.query(
         `INSERT INTO employee_onboarding 
         (employee_id, name, email, password_temp, phone, cnic, department, sub_department, join_date, confirmation_date, address, emergency_contact, request_password_change, account_title_name, bank_name, bank_account, tax_id, designation, employment_status, cnic_issue_date, cnic_expiry_date, dob, profile_photo, status)
@@ -279,57 +189,52 @@ exports.createEmployee = async (req, res) => {
           normalizedData.department,
           normalizedData.sub_department,
           normalizedData.joinDate,
-          finalConfirmationDate,
+          normalizedData.confirmationDate,
           normalizedData.address || null,
-          finalEmergencyContact || null,
+          normalizedData.emergencyContact || null,
           normalizedData.requestPasswordChange ? 1 : 0,
-          finalAccountTitleName,
-          finalBankName,
-          finalBankAccount || null,
-          finalTaxId || null,
+          normalizedData.accountTitleName,
+          normalizedData.bankName,
+          normalizedData.bankAccount || null,
+          normalizedData.taxId || null,
           normalizedData.designation || null,
-          finalEmploymentStatus,
-          normalizedCnicIssueDate || null,
-          normalizedCnicExpiryDate || null,
+          normalizedData.employmentStatus,
+          normalizedData.cnicIssueDate || null,
+          normalizedData.cnicExpiryDate || null,
           normalizedData.dob || null,
           profilePhotoUrl,
           "Active",
         ],
       );
 
-      const newEmployeeId = employeeResult.insertId;
+      // ✅ Get the auto-increment ID (e.g., 44)
+      const crmEmployeeId = employeeResult.insertId;
+      
+      console.log(`✅ Employee created in CRM with ID: ${crmEmployeeId}, Employee Code: ${normalizedData.employeeId}`);
 
       // Insert bank account details
-      if (finalAccountTitleName && finalBankName) {
-        // Generate account number if not provided (use employee_id + timestamp)
-        const generatedAccountNumber =
-          `${normalizedData.employeeId}-${Date.now()}`.substring(0, 50);
+      if (normalizedData.accountTitleName && normalizedData.bankName) {
+        const generatedAccountNumber = `${normalizedData.employeeId}-${Date.now()}`.substring(0, 50);
         await connection.query(
           `INSERT INTO employee_bank_accounts (employee_id, account_number, account_title_name, bank_name, is_primary) VALUES (?, ?, ?, ?, 1)`,
-          [
-            newEmployeeId,
-            generatedAccountNumber,
-            finalAccountTitleName,
-            finalBankName,
-          ],
+          [crmEmployeeId, generatedAccountNumber, normalizedData.accountTitleName, normalizedData.bankName],
         );
       }
 
       // Insert salary record
-      const totalSalary =
-        normalizedData.baseSalary +
+      const totalSalary = normalizedData.baseSalary +
         (normalizedData.allowances?.reduce((sum, a) => sum + a.amount, 0) || 0);
       await connection.query(
         `INSERT INTO employee_salary (employee_id, base_salary, total_salary) VALUES (?, ?, ?)`,
-        [newEmployeeId, normalizedData.baseSalary, totalSalary],
+        [crmEmployeeId, normalizedData.baseSalary, totalSalary],
       );
 
       // Insert allowances
-      if (normalizedData.allowances && normalizedData.allowances.length > 0) {
+      if (normalizedData.allowances?.length > 0) {
         for (const allowance of normalizedData.allowances) {
           await connection.query(
             `INSERT INTO employee_allowances (employee_id, allowance_name, allowance_amount, currency) VALUES (?, ?, ?, ?)`,
-            [newEmployeeId, allowance.name, allowance.amount, "PKR"],
+            [crmEmployeeId, allowance.name, allowance.amount, "PKR"],
           );
         }
       }
@@ -340,7 +245,7 @@ exports.createEmployee = async (req, res) => {
         (employee_id, laptop, laptop_serial, charger, charger_serial, mouse, mouse_serial, mobile, mobile_serial, keyboard, keyboard_serial, monitor, monitor_serial, resources_note)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
-          newEmployeeId,
+          crmEmployeeId,
           normalizedData.laptop || false,
           normalizedData.laptopSerial || null,
           normalizedData.charger || false,
@@ -358,20 +263,12 @@ exports.createEmployee = async (req, res) => {
       );
 
       // Insert dynamic resources
-      if (
-        normalizedData.dynamicResources &&
-        normalizedData.dynamicResources.length > 0
-      ) {
-        console.log(
-          "📦 Inserting dynamic resources:",
-          normalizedData.dynamicResources,
-        );
+      if (normalizedData.dynamicResources?.length > 0) {
         for (const resource of normalizedData.dynamicResources) {
-          const insertResult = await connection.query(
+          await connection.query(
             `INSERT INTO employee_dynamic_resources (employee_id, resource_name, resource_serial) VALUES (?, ?, ?)`,
-            [newEmployeeId, resource.name, resource.serial || null],
+            [crmEmployeeId, resource.name, resource.serial || null],
           );
-          console.log("✅ Dynamic resource inserted:", insertResult);
         }
       }
 
@@ -380,52 +277,104 @@ exports.createEmployee = async (req, res) => {
         `INSERT INTO onboarding_progress 
         (employee_id, step_1_basic_info, step_2_security_setup, step_3_job_details, step_4_allowances, step_5_additional_info, step_6_review_confirm, is_completed, overall_completion_percentage)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [newEmployeeId, 1, 1, 1, 1, 1, 1, 1, 100],
+        [crmEmployeeId, 1, 1, 1, 1, 1, 1, 1, 100],
       );
 
-      // Fetch created dynamic resources to return
-      const [createdDynamicResources] = await connection.query(
-        `SELECT id, resource_name as name, resource_serial as serial FROM employee_dynamic_resources WHERE employee_id = ?`,
-        [newEmployeeId],
-      );
+      // ============================================================
+      // STEP 2: Create user in ZKTeco device using CRM auto-increment ID
+      // ============================================================
+      let deviceUserCreated = false;
+      let deviceError = null;
+
+      try {
+        // ✅ SIMPLE: Use CRM auto-increment ID directly
+        const deviceUserId = String(crmEmployeeId); // "44"
+        
+        console.log(`📱 Creating ZKTeco user with ID: ${deviceUserId} for employee: ${normalizedData.name}`);
+
+        const zkResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/v1/zkTime/users/create`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            user_id: deviceUserId,  // ✅ "44" not "DG-0010"
+            name: normalizedData.name,
+            role: 0,
+            cardno: 0
+          })
+        });
+
+        const zkData = await zkResponse.json();
+
+        if (zkData.success) {
+          deviceUserCreated = true;
+          console.log(`✅ ZKTeco user created successfully with ID: ${deviceUserId}`);
+          
+          await connection.query(
+            `UPDATE employee_onboarding SET device_user_id = ?, device_sync_status = 'synced', device_sync_error = NULL WHERE id = ?`,
+            [deviceUserId, crmEmployeeId]
+          );
+        } else {
+          deviceError = zkData.error;
+          console.error(`❌ ZKTeco user creation failed:`, deviceError);
+          
+          await connection.query(
+            `UPDATE employee_onboarding SET device_sync_status = 'failed', device_sync_error = ? WHERE id = ?`,
+            [deviceError, crmEmployeeId]
+          );
+        }
+      } catch (zkError) {
+        deviceError = zkError.message;
+        console.error(`❌ ZKTeco API call failed:`, zkError);
+        
+        await connection.query(
+          `UPDATE employee_onboarding SET device_sync_status = 'failed', device_sync_error = ? WHERE id = ?`,
+          [deviceError, crmEmployeeId]
+        );
+      }
 
       await connection.commit();
 
+      // Fetch created dynamic resources
+      const [createdDynamicResources] = await connection.query(
+        `SELECT id, resource_name as name, resource_serial as serial FROM employee_dynamic_resources WHERE employee_id = ?`,
+        [crmEmployeeId],
+      );
+
       res.status(201).json({
         success: true,
-        message: "Employee onboarded successfully",
+        message: deviceUserCreated 
+          ? "Employee onboarded successfully and ZKTeco user created"
+          : `Employee onboarded successfully but ZKTeco user creation failed. You can retry later.`,
         data: {
-          id: newEmployeeId,
+          id: crmEmployeeId,
           employeeId: normalizedData.employeeId,
           name: normalizedData.name,
           email: normalizedData.email,
           department: normalizedData.department,
           sub_department: normalizedData.sub_department,
-          employment_status: finalEmploymentStatus,
-          confirmation_date: finalConfirmationDate,
-          account_title_name: finalAccountTitleName,
-          bank_name: finalBankName,
           status: "Active",
+          device_user_created: deviceUserCreated,
+          device_user_id: deviceUserCreated ? String(crmEmployeeId) : null,
+          device_sync_error: deviceError,
           dynamicResourcesCreated: createdDynamicResources,
         },
       });
+
     } catch (error) {
       await connection.rollback();
+      console.error("❌ Transaction failed, rolling back...", error);
       throw error;
     } finally {
       connection.release();
     }
   } catch (error) {
     console.error("❌ Error creating employee:", error);
-    console.error("Error Stack:", error.stack);
-    console.error("Error Code:", error.code);
-    console.error("Error SQL:", error.sql);
     res.status(500).json({
       success: false,
       message: "Error creating employee",
       error: error.message,
-      code: error.code,
-      details: process.env.NODE_ENV === "development" ? error.sql : undefined,
     });
   }
 };

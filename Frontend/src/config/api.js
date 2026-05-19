@@ -1,8 +1,8 @@
 // API Configuration Utility
 // Centralized API endpoint configuration
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-const API_VERSION = process.env.REACT_APP_API_VERSION || 'v1';
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+const API_VERSION = process.env.REACT_APP_API_VERSION || "v1";
 const API_PREFIX = `/api/${API_VERSION}`;
 
 export const config = {
@@ -10,11 +10,11 @@ export const config = {
   API_VERSION,
   API_PREFIX,
   FULL_API_URL: `${API_BASE_URL}${API_PREFIX}`,
-  ENVIRONMENT: process.env.REACT_APP_ENV || 'development',
-  APP_NAME: process.env.REACT_APP_NAME || 'Digious CRM',
-  APP_VERSION: process.env.REACT_APP_VERSION || '1.0.0',
-  ENABLE_ANALYTICS: process.env.REACT_APP_ENABLE_ANALYTICS === 'true',
-  ENABLE_DEBUG: process.env.REACT_APP_ENABLE_DEBUG === 'true',
+  ENVIRONMENT: process.env.REACT_APP_ENV || "development",
+  APP_NAME: process.env.REACT_APP_NAME || "Digious CRM",
+  APP_VERSION: process.env.REACT_APP_VERSION || "1.0.0",
+  ENABLE_ANALYTICS: process.env.REACT_APP_ENABLE_ANALYTICS === "true",
+  ENABLE_DEBUG: process.env.REACT_APP_ENABLE_DEBUG === "true",
 };
 
 // API Endpoints
@@ -40,36 +40,44 @@ export const endpoints = {
     update: (id) => `${config.FULL_API_URL}/employees/${id}`,
     delete: (id) => `${config.FULL_API_URL}/employees/${id}`,
     getNextId: `${config.FULL_API_URL}/next-employee-id`,
-    checkIdAvailability: (numericId) => `${config.FULL_API_URL}/check-employee-id/${numericId}`,
+    checkIdAvailability: (numericId) =>
+      `${config.FULL_API_URL}/check-employee-id/${numericId}`,
   },
 
   // Attendance endpoints
   attendance: {
     checkIn: `${config.FULL_API_URL}/attendance/check-in`,
     checkOut: `${config.FULL_API_URL}/attendance/check-out`,
-    today: (employeeId) => `${config.FULL_API_URL}/attendance/today/${employeeId}`,
-    monthly: (employeeId, year, month) => 
+    today: (employeeId) =>
+      `${config.FULL_API_URL}/attendance/today/${employeeId}`,
+    monthly: (employeeId, year, month) =>
       `${config.FULL_API_URL}/attendance/monthly/${employeeId}?year=${year}&month=${month}`,
     all: `${config.FULL_API_URL}/attendance/all`,
-    status: (employeeId) => `${config.FULL_API_URL}/attendance/status/${employeeId}`,
+    status: (employeeId) =>
+      `${config.FULL_API_URL}/attendance/status/${employeeId}`,
     generateAbsent: `${config.FULL_API_URL}/attendance/generate-absent`,
     base: `${config.FULL_API_URL}/attendance`,
-    
+
     // Absence Management endpoints
     absentToday: `${config.FULL_API_URL}/attendance/absent-today`,
-    absentByDate: (date) => `${config.FULL_API_URL}/attendance/absent-by-date?date=${date}`,
-    absentByRange: (startDate, endDate) => `${config.FULL_API_URL}/attendance/absent-by-range?start_date=${startDate}&end_date=${endDate}`,
-    absentSummary: (startDate, endDate) => `${config.FULL_API_URL}/attendance/absent-summary${startDate && endDate ? `?start_date=${startDate}&end_date=${endDate}` : ''}`,
+    absentByDate: (date) =>
+      `${config.FULL_API_URL}/attendance/absent-by-date?date=${date}`,
+    absentByRange: (startDate, endDate) =>
+      `${config.FULL_API_URL}/attendance/absent-by-range?start_date=${startDate}&end_date=${endDate}`,
+    absentSummary: (startDate, endDate) =>
+      `${config.FULL_API_URL}/attendance/absent-summary${startDate && endDate ? `?start_date=${startDate}&end_date=${endDate}` : ""}`,
     allWithAbsent: `${config.FULL_API_URL}/attendance/all-with-absent`,
-    
+
     // Break endpoints
     breakStart: `${config.FULL_API_URL}/attendance/break-start`,
     breakEnd: `${config.FULL_API_URL}/attendance/break-end`,
     breakProgress: `${config.FULL_API_URL}/attendance/break-progress`,
-    ongoingBreaks: (employeeId) => `${config.FULL_API_URL}/attendance/ongoing-breaks/${employeeId}`,
-    todayBreaks: (employeeId) => `${config.FULL_API_URL}/attendance/today-breaks/${employeeId}`,
+    ongoingBreaks: (employeeId) =>
+      `${config.FULL_API_URL}/attendance/ongoing-breaks/${employeeId}`,
+    todayBreaks: (employeeId) =>
+      `${config.FULL_API_URL}/attendance/today-breaks/${employeeId}`,
     breakSummary: `${config.FULL_API_URL}/attendance/break-summary`,
-    
+
     // HR Direct Update (no approval required)
     update: (id) => `${config.FULL_API_URL}/attendance/${id}`,
     hrCreate: `${config.FULL_API_URL}/attendance/hr-create`,
@@ -102,7 +110,8 @@ export const endpoints = {
     balances: `${config.FULL_API_URL}/leaves/balances`,
     types: `${config.FULL_API_URL}/leaves/types`,
     calendar: `${config.FULL_API_URL}/leaves/calendar`,
-    employeeBalance: (employeeId) => `${config.FULL_API_URL}/leaves/employee/${employeeId}/leaveBalance`,
+    employeeBalance: (employeeId) =>
+      `${config.FULL_API_URL}/leaves/employee/${employeeId}/leaveBalance`,
     all: `${config.FULL_API_URL}/leaves/all`,
     statistics: `${config.FULL_API_URL}/leaves/statistics`,
   },
@@ -114,30 +123,36 @@ export const endpoints = {
   applications: {
     base: `${config.FULL_API_URL}/applications`,
     getById: (id) => `${config.FULL_API_URL}/applications/${id}`,
-    getByEmployee: (employeeId) => `${config.FULL_API_URL}/applications/employee/${employeeId}`,
+    getByEmployee: (employeeId) =>
+      `${config.FULL_API_URL}/applications/employee/${employeeId}`,
     create: `${config.FULL_API_URL}/applications`,
     update: (id) => `${config.FULL_API_URL}/applications/${id}`,
     updateStatus: (id) => `${config.FULL_API_URL}/applications/${id}/status`,
     delete: (id) => `${config.FULL_API_URL}/applications/${id}`,
     addDocument: (id) => `${config.FULL_API_URL}/applications/${id}/documents`,
-    getStats: (employeeId) => `${config.FULL_API_URL}/applications/stats/${employeeId}`,
+    getStats: (employeeId) =>
+      `${config.FULL_API_URL}/applications/stats/${employeeId}`,
     getAll: `${config.FULL_API_URL}/applications/all`,
     searchEmployees: `${config.FULL_API_URL}/applications/employees/search`,
     assignedToMe: `${config.FULL_API_URL}/applications/assigned-to-me`,
     approve: (id) => `${config.FULL_API_URL}/applications/${id}/approve`,
     reject: (id) => `${config.FULL_API_URL}/applications/${id}/reject`,
     withdraw: (id) => `${config.FULL_API_URL}/applications/${id}/withdraw`,
-    withdrawAssignment: (id) => `${config.FULL_API_URL}/applications/${id}/withdraw-assignment`,
-    updatePriority: (id) => `${config.FULL_API_URL}/applications/${id}/priority`,
-    approvalLog: (id) => `${config.FULL_API_URL}/applications/${id}/approval-log`,
-    assignees: (id) => `${config.FULL_API_URL}/applications/${id}/assignees`
+    withdrawAssignment: (id) =>
+      `${config.FULL_API_URL}/applications/${id}/withdraw-assignment`,
+    updatePriority: (id) =>
+      `${config.FULL_API_URL}/applications/${id}/priority`,
+    approvalLog: (id) =>
+      `${config.FULL_API_URL}/applications/${id}/approval-log`,
+    assignees: (id) => `${config.FULL_API_URL}/applications/${id}/assignees`,
   },
 
   // Memos endpoints
   memos: {
     base: `${config.FULL_API_URL}/memos`,
     getAll: `${config.FULL_API_URL}/memos/all`,
-    getByEmployee: (employeeId) => `${config.FULL_API_URL}/memos/employee/${employeeId}`,
+    getByEmployee: (employeeId) =>
+      `${config.FULL_API_URL}/memos/employee/${employeeId}`,
     getById: (id) => `${config.FULL_API_URL}/memos/${id}`,
     create: `${config.FULL_API_URL}/memos`,
     update: (id) => `${config.FULL_API_URL}/memos/${id}`,
@@ -152,18 +167,26 @@ export const endpoints = {
   adjustments: {
     approvedTickets: `${config.FULL_API_URL}/adjustments/approved-tickets`,
     tickets: `${config.FULL_API_URL}/adjustments/tickets`,
-    employeeData: (employeeId) => `${config.FULL_API_URL}/adjustments/employee-data/${employeeId}`,
-    updateAttendance: (id) => `${config.FULL_API_URL}/adjustments/attendance/${id}`,
+    employeeData: (employeeId) =>
+      `${config.FULL_API_URL}/adjustments/employee-data/${employeeId}`,
+    updateAttendance: (id) =>
+      `${config.FULL_API_URL}/adjustments/attendance/${id}`,
     addAttendance: `${config.FULL_API_URL}/adjustments/attendance`,
-    updateLeaves: (employeeId) => `${config.FULL_API_URL}/adjustments/leaves/${employeeId}`,
+    updateLeaves: (employeeId) =>
+      `${config.FULL_API_URL}/adjustments/leaves/${employeeId}`,
     updateAbsent: (id) => `${config.FULL_API_URL}/adjustments/absent/${id}`,
     addAbsent: `${config.FULL_API_URL}/adjustments/absent`,
     deleteAbsent: (id) => `${config.FULL_API_URL}/adjustments/absent/${id}`,
-    convertAbsentToPaidLeave: (id) => `${config.FULL_API_URL}/adjustments/absent/${id}/convert-to-paid-leave`,
-    resolveCheckoutMissing: (id) => `${config.FULL_API_URL}/adjustments/checkout-missing/${id}`,
-    closeTicket: (applicationId) => `${config.FULL_API_URL}/adjustments/close-ticket/${applicationId}`,
-    ignoreTicket: (applicationId) => `${config.FULL_API_URL}/adjustments/ignore-ticket/${applicationId}`,
-    log: (applicationId) => `${config.FULL_API_URL}/adjustments/log/${applicationId}`,
+    convertAbsentToPaidLeave: (id) =>
+      `${config.FULL_API_URL}/adjustments/absent/${id}/convert-to-paid-leave`,
+    resolveCheckoutMissing: (id) =>
+      `${config.FULL_API_URL}/adjustments/checkout-missing/${id}`,
+    closeTicket: (applicationId) =>
+      `${config.FULL_API_URL}/adjustments/close-ticket/${applicationId}`,
+    ignoreTicket: (applicationId) =>
+      `${config.FULL_API_URL}/adjustments/ignore-ticket/${applicationId}`,
+    log: (applicationId) =>
+      `${config.FULL_API_URL}/adjustments/log/${applicationId}`,
   },
 
   // Sales endpoints
@@ -199,12 +222,14 @@ export const endpoints = {
     summary: `${config.FULL_API_URL}/sales-targets/summary`,
     get: (employeeId) => `${config.FULL_API_URL}/sales-targets/${employeeId}`,
     set: (employeeId) => `${config.FULL_API_URL}/sales-targets/${employeeId}`,
-    history: (employeeId, year) => `${config.FULL_API_URL}/sales-targets/${employeeId}/history?year=${year}`,
+    history: (employeeId, year) =>
+      `${config.FULL_API_URL}/sales-targets/${employeeId}/history?year=${year}`,
   },
 
   // Payroll endpoints
   payroll: {
-    getMonthly: (year, month) => `${config.FULL_API_URL}/payroll/${year}/${month}`,
+    getMonthly: (year, month) =>
+      `${config.FULL_API_URL}/payroll/${year}/${month}`,
     generate: `${config.FULL_API_URL}/payroll/generate`,
     updateStatus: (id) => `${config.FULL_API_URL}/payroll/${id}/status`,
     bulkStatus: `${config.FULL_API_URL}/payroll/bulk-status`,
@@ -220,11 +245,19 @@ export const endpoints = {
     my: `${config.FULL_API_URL}/attendance-corrections/my`,
     counts: `${config.FULL_API_URL}/attendance-corrections/counts`,
     tagged: `${config.FULL_API_URL}/attendance-corrections/tagged`,
-    taggedAction: (id) => `${config.FULL_API_URL}/attendance-corrections/tagged/${id}`,
+    taggedAction: (id) =>
+      `${config.FULL_API_URL}/attendance-corrections/tagged/${id}`,
     all: `${config.FULL_API_URL}/attendance-corrections/all`,
     hrAction: (id) => `${config.FULL_API_URL}/attendance-corrections/hr/${id}`,
     getById: (id) => `${config.FULL_API_URL}/attendance-corrections/${id}`,
     logs: (id) => `${config.FULL_API_URL}/attendance-corrections/${id}/logs`,
+  },
+
+  zkTime: {
+    connect: `${API_BASE_URL}/zkTime/connect`,
+    syncToday: `${API_BASE_URL}/zkTime/sync-today`, // Will be used as /sync-today/:userId
+    deviceInfo: `${API_BASE_URL}/zkTime/device-info`,
+    deviceTime: `${API_BASE_URL}/zkTime/device-time`,
   },
 
   // Managed Leave endpoints
@@ -245,7 +278,7 @@ export const endpoints = {
 // Helper function to build URL with query parameters
 export const buildUrl = (baseUrl, params = {}) => {
   const url = new URL(baseUrl);
-  Object.keys(params).forEach(key => {
+  Object.keys(params).forEach((key) => {
     if (params[key] !== null && params[key] !== undefined) {
       url.searchParams.append(key, params[key]);
     }
@@ -255,25 +288,25 @@ export const buildUrl = (baseUrl, params = {}) => {
 
 // Helper function to get auth headers
 export const getAuthHeaders = () => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem("token");
   return {
-    'Content-Type': 'application/json',
-    ...(token && { 'Authorization': `Bearer ${token}` }),
+    "Content-Type": "application/json",
+    ...(token && { Authorization: `Bearer ${token}` }),
   };
 };
 
 // Helper function to decode JWT and extract user info
 export const getDecodedToken = () => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem("token");
   if (!token) return null;
-  
+
   try {
     // JWT format: header.payload.signature
-    const payload = token.split('.')[1];
+    const payload = token.split(".")[1];
     const decoded = JSON.parse(atob(payload));
     return decoded;
   } catch (error) {
-    console.error('Error decoding token:', error);
+    console.error("Error decoding token:", error);
     return null;
   }
 };
@@ -304,9 +337,9 @@ export const apiRequest = async (url, options = {}) => {
     clearTimeout(timeoutId);
 
     // Handle non-JSON responses
-    const contentType = response.headers.get('content-type');
-    if (!contentType || !contentType.includes('application/json')) {
-      throw new Error('Server returned non-JSON response');
+    const contentType = response.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+      throw new Error("Server returned non-JSON response");
     }
 
     const data = await response.json();
@@ -318,10 +351,10 @@ export const apiRequest = async (url, options = {}) => {
     return data;
   } catch (error) {
     clearTimeout(timeoutId);
-    if (error.name === 'AbortError') {
-      throw new Error('Request timed out - please try again');
+    if (error.name === "AbortError") {
+      throw new Error("Request timed out - please try again");
     }
-    console.error('API Request Error:', error);
+    console.error("API Request Error:", error);
     throw error;
   }
 };
@@ -329,7 +362,7 @@ export const apiRequest = async (url, options = {}) => {
 // Debug logger (only logs in development)
 export const debugLog = (...args) => {
   if (config.ENABLE_DEBUG) {
-    console.log('[DEBUG]', ...args);
+    console.log("[DEBUG]", ...args);
   }
 };
 

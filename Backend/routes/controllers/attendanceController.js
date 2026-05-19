@@ -164,21 +164,22 @@ const validateAndFixWorkingHours = async (
 exports.checkIn = async (req, res) => {
   let connection;
   try {
-    // Extract from both JWT (auth) and request body for flexibility
-    // But prefer JWT employeeId for consistency with employee_onboarding.id
-    const jwtEmployeeId = req.user?.employeeId; // From JWT token (auth middleware)
-    const jwtUserId = req.user?.userId; // From JWT token (user_as_employees.id)
-    const reqEmployeeId = req.body.employee_id; // From request body
+    // Extract from both JWT (auth) and request body
+    const jwtEmployeeId = req.user?.employeeId;
+    const jwtUserId = req.user?.userId;
+    const reqEmployeeId = req.body.employee_id;
     const { email, name, device_info, ip_address } = req.body;
 
-    // Determine which employee_id to use
-    // IMPORTANT: Employee_Attendance.employee_id has FK to employee_onboarding.id (NOT user_as_employees.id)
-    // Priority: JWT employeeId (employee_onboarding.id) > request employee_id > fallback to jwtUserId
+    // Accept device time from frontend (for sync)
+    let deviceCheckInTime = req.body.check_in_time;
+    let deviceAttendanceDate = req.body.attendance_date;
+    let isDeviceSync = req.body.is_device_sync || false;
+
     let employee_id = jwtEmployeeId || reqEmployeeId || jwtUserId;
 
     if (process.env.NODE_ENV === "development") {
       console.log(
-        `📥 Check-in request: endpoint=/check-in employee=${employee_id} jwtEmployeeId=${jwtEmployeeId || "none"} jwtUserId=${jwtUserId || "none"} emailPresent=${!!email} name=${name || "N/A"}`,
+        `📥 Check-in request: employee=${employee_id} deviceSync=${isDeviceSync} deviceTime=${deviceCheckInTime || "none"} deviceDate=${deviceAttendanceDate || "none"}`,
       );
     }
 
@@ -189,148 +190,105 @@ exports.checkIn = async (req, res) => {
       });
     }
 
-    const now = getPakistanDate(); // Use Pakistan timezone
-    const checkInTime = getPakistanTimeString(); // HH:MM:SS in Pakistan timezone (for display)
-    const checkInTimePKT = getPakistanTimeString(); // HH:MM:SS in Pakistan timezone (for database storage - should be Pakistan time, not UTC)
-
-    // Calculate checkInTotalMinutes early (needed for auto-checkout logic)
-    const [checkInHourVal, checkInMin, checkInSec] = checkInTime
-      .split(":")
-      .map(Number);
-    const checkInHour = checkInHourVal; // Use the parsed hour value from the time string (not from Date.getHours())
-    const checkInTotalMinutes = checkInHourVal * 60 + checkInMin;
-
-    // Determine attendance date for night shift:
-    // Night shift: 21:00 (9 PM) to 06:00 (6 AM) next day
-    // If check-in is between 00:00-05:59, it belongs to the PREVIOUS day's shift
-    // If check-in is between 21:00-23:59, it belongs to TODAY's shift
+    // ============================================================
+    // DETERMINE CHECK-IN TIME AND DATE
+    // ============================================================
+    let checkInTime;
+    let checkInHour;
+    let checkInTotalMinutes;
     let attendanceDate;
-    if (checkInHour >= 0 && checkInHour < 6) {
-      // Early morning (00:00-05:59) - belongs to yesterday's shift
-      const yesterday = getPakistanYesterday();
-      attendanceDate = getLocalDateString(yesterday);
-      console.log(
-        `📅 Early morning check-in: Using YESTERDAY's date (${attendanceDate}) for night shift`,
-      );
+
+    if (deviceCheckInTime && deviceAttendanceDate && isDeviceSync) {
+      // ✅ Use device time and date AS-IS (frontend already corrected night shift)
+      checkInTime = deviceCheckInTime;
+      attendanceDate = deviceAttendanceDate;
+      
+      const [hour, minute] = checkInTime.split(":").map(Number);
+      checkInHour = hour;
+      checkInTotalMinutes = hour * 60 + minute;
+      
+      console.log(`📱 DEVICE SYNC: Time=${checkInTime}, Date=${attendanceDate}`);
     } else {
-      // Evening/normal hours - use today
-      attendanceDate = getPakistanDateString();
-      console.log(
-        `📅 Evening check-in: Using TODAY's date (${attendanceDate})`,
-      );
+      // Original night shift logic for manual check-in
+      const now = getPakistanDate();
+      checkInTime = getPakistanTimeString();
+      checkInHour = now.getHours();
+      checkInTotalMinutes = checkInHour * 60 + now.getMinutes();
+      
+      // Original night shift date logic
+      if (checkInHour >= 0 && checkInHour < 6) {
+        const yesterday = getPakistanYesterday();
+        attendanceDate = getLocalDateString(yesterday);
+        console.log(`📅 Manual early morning: Using YESTERDAY's date (${attendanceDate})`);
+      } else {
+        attendanceDate = getPakistanDateString();
+        console.log(`📅 Manual evening: Using TODAY's date (${attendanceDate})`);
+      }
     }
+
+    const checkInTimePKT = checkInTime;
 
     connection = await pool.getConnection();
 
     try {
       // ============================================================
-      // CRITICAL FIX: Check for PENDING checkout from CURRENT shift only
+      // PENDING CHECKOUT CHECK (Skip for Device Sync)
       // ============================================================
-      // Shift window: 21:00 (Day N) → 09:00 (Day N+1)
-      // - If time is 21:00-23:59 (evening): Look for pending from TODAY only
-      // - If time is 00:00-09:00 (morning): Look for pending from YESTERDAY only
-      // - Ignore old pending entries from days older than the current shift window
-      //
-      // During 09:00 - 21:00: No active shift, old pending entries should be ignored
-      // New check-in will auto-complete the old entry only if attempting to start new shift
-
+      const now = getPakistanDate();
       const currentHour = now.getHours();
       const currentMin = now.getMinutes();
       const currentTotalMinutes = currentHour * 60 + currentMin;
-      const nineAM = 9 * 60; // 540 minutes = 09:00
-      const ninePM = 21 * 60; // 1260 minutes = 21:00
+      const nineAM = 9 * 60;
+      const ninePM = 21 * 60;
       const todayStr = getPakistanDateString();
 
       let pendingFromCurrentShift = null;
 
-      // Determine if we should look for pending from TODAY or YESTERDAY
-      if (currentTotalMinutes >= ninePM) {
-        // Evening (21:00-23:59): Current shift started TODAY
-        const [pending] = await connection.query(
-          `SELECT id, check_in_time, attendance_date FROM Employee_Attendance 
-           WHERE employee_id = ? AND check_out_time IS NULL AND attendance_date = ?
-           LIMIT 1`,
-          [employee_id, todayStr],
-        );
-        if (pending.length > 0) {
-          pendingFromCurrentShift = pending[0];
+      // Only check pending for manual check-ins
+      if (!isDeviceSync) {
+        if (currentTotalMinutes >= ninePM) {
+          const [pending] = await connection.query(
+            `SELECT id, check_in_time, attendance_date FROM Employee_Attendance 
+             WHERE employee_id = ? AND check_out_time IS NULL AND attendance_date = ?
+             LIMIT 1`,
+            [employee_id, todayStr],
+          );
+          if (pending.length > 0) pendingFromCurrentShift = pending[0];
+        } else if (currentTotalMinutes < nineAM) {
+          const yesterdayDate = getPakistanYesterday();
+          const yesterdayStr = getLocalDateString(yesterdayDate);
+          const [pending] = await connection.query(
+            `SELECT id, check_in_time, attendance_date FROM Employee_Attendance 
+             WHERE employee_id = ? AND check_out_time IS NULL AND attendance_date = ?
+             LIMIT 1`,
+            [employee_id, yesterdayStr],
+          );
+          if (pending.length > 0) pendingFromCurrentShift = pending[0];
         }
-      } else if (currentTotalMinutes < nineAM) {
-        // Early morning (00:00-08:59): Current shift started YESTERDAY
-        const yesterdayDate = getPakistanYesterday();
-        const yesterdayStr = getLocalDateString(yesterdayDate);
-        const [pending] = await connection.query(
-          `SELECT id, check_in_time, attendance_date FROM Employee_Attendance 
-           WHERE employee_id = ? AND check_out_time IS NULL AND attendance_date = ?
-           LIMIT 1`,
-          [employee_id, yesterdayStr],
-        );
-        if (pending.length > 0) {
-          pendingFromCurrentShift = pending[0];
-        }
-      } else {
-        // Daytime (09:00-20:59): No active shift window
-        // Ignore any pending from old shifts - allow fresh check-in
-        console.log(
-          `⏰ Daytime hours (09:00-20:59): Not checking for pending checkout`,
-        );
       }
 
-      // If there's a pending checkout from CURRENT shift and within overlap window, could block
-      if (pendingFromCurrentShift) {
-        console.log(
-          `⚠️ PENDING CHECKOUT FROM CURRENT SHIFT - Employee has incomplete checkout`,
-        );
-        console.log(`   Employee: ${employee_id}`);
-        console.log(`   Pending Record: ID ${pendingFromCurrentShift.id}`);
-        console.log(
-          `   Check-in date: ${pendingFromCurrentShift.attendance_date}`,
-        );
-        console.log(
-          `   Check-in time: ${pendingFromCurrentShift.check_in_time}`,
-        );
-        console.log(
-          `   Current time: ${String(currentHour).padStart(2, "0")}:${String(currentMin).padStart(2, "0")}`,
-        );
-
-        // Check if within overlap window (9 AM - 9 PM)
-        const isOverlapWindow =
-          currentTotalMinutes >= nineAM && currentTotalMinutes < ninePM;
+      if (pendingFromCurrentShift && !isDeviceSync) {
+        const isOverlapWindow = currentTotalMinutes >= nineAM && currentTotalMinutes < ninePM;
         if (isOverlapWindow) {
-          console.log(
-            `   ⚠️ BLOCKING: Overlap window detected (9 AM - 9 PM) - must checkout first`,
-          );
           return res.status(409).json({
             success: false,
-            message:
-              "You have an incomplete checkout from the current shift. Please checkout first before checking in again.",
-            data: {
-              pendingCheckoutId: pendingFromCurrentShift.id,
-              checkInDate: pendingFromCurrentShift.attendance_date,
-              checkInTime: pendingFromCurrentShift.check_in_time,
-              reason: "Pending checkout during overlap window (9 AM - 9 PM)",
-            },
+            message: "You have an incomplete checkout. Please checkout first.",
+            data: { pendingCheckoutId: pendingFromCurrentShift.id }
           });
-        } else {
-          console.log(
-            `   ✅ Outside overlap window - allowing check-in with auto-complete of old entry`,
-          );
         }
       }
 
-      // Check if attendance record already exists for the calculated attendance date
+      // ============================================================
+      // CHECK EXISTING ATTENDANCE
+      // ============================================================
       const [existingAttendance] = await connection.query(
-        `SELECT id, check_in_time, check_out_time FROM Employee_Attendance WHERE employee_id = ? AND attendance_date = ?`,
+        `SELECT id, check_in_time, check_out_time FROM Employee_Attendance 
+         WHERE employee_id = ? AND attendance_date = ?`,
         [employee_id, attendanceDate],
       );
 
       if (existingAttendance.length > 0) {
-        // If there's an existing record with NULL check_out_time, check if we should auto-complete it
         if (existingAttendance[0].check_out_time === null) {
-          // IMPORTANT FIX: Only auto-checkout if it's after 9:00 AM (next day)
-          // This prevents immediate auto-checkout on same-shift re-login
-
-          // Get the check-in record with created_at timestamp
           const [fullRecord] = await connection.query(
             `SELECT id, check_in_time, created_at FROM Employee_Attendance WHERE id = ?`,
             [existingAttendance[0].id],
@@ -339,52 +297,30 @@ exports.checkIn = async (req, res) => {
           if (fullRecord.length > 0) {
             const createdAt = new Date(fullRecord[0].created_at);
             const pkNow = getPakistanDate();
-
-            // Check if current time is after 9:00 AM
-            const currentHour = pkNow.getHours();
+            const currentHourCheck = pkNow.getHours();
             const currentMinute = pkNow.getMinutes();
-            const isAfter9AM = currentHour >= 9; // 9:00 AM or later
-
-            // Check if check-in was from a previous day (not today)
+            const isAfter9AM = currentHourCheck >= 9;
+            
             const createdDate = new Date(createdAt);
             const currentDate = new Date(pkNow);
-            const isPreviousDay =
-              createdDate.toDateString() !== currentDate.toDateString();
+            const isNewShiftAttempt = checkInTotalMinutes >= 21 * 60;
 
-            // Auto-checkout if it's after 9:00 AM AND check-in was from previous day
-            // OR if it's a new shift attempt (employee trying to check in at shift hours 21:00+)
-            // This allows employees to auto-complete their previous shift and start a new one
-            const isNewShiftAttempt = checkInTotalMinutes >= 21 * 60; // Trying to check in during shift hours (21:00+)
-
-            if (isAfter9AM || isNewShiftAttempt) {
-              console.log(
-                `🔧 AUTO-COMPLETING PREVIOUS CHECKOUT: Record ID ${existingAttendance[0].id}`,
-              );
-              console.log(
-                `   Reason: ${isNewShiftAttempt ? "New shift check-in attempt (21:00+)" : `After 9:00 AM (current time: ${currentHour}:${String(currentMinute).padStart(2, "0")})`}`,
-              );
-
-              // Auto-complete the previous checkout at current time (Pakistan timezone)
-              // This is only a fallback - if user manually checks out before 9 AM, that time is used instead
-              const autoCheckOutTime = getPakistanTimeString(); // Use actual current time, not fixed 9:00 AM
-
+            // Auto-checkout for manual, skip for device sync
+            if ((isAfter9AM || isNewShiftAttempt) && !isDeviceSync) {
+              console.log(`🔧 AUTO-COMPLETING PREVIOUS CHECKOUT`);
+              const autoCheckOutTime = getPakistanTimeString();
+              
               const [breakResult] = await connection.query(
                 `SELECT total_break_duration_minutes FROM Employee_Attendance WHERE id = ?`,
                 [existingAttendance[0].id],
               );
-
-              const breakMinutes =
-                breakResult[0]?.total_break_duration_minutes || 0;
-
-              // Recalculate working hours for the auto-completed record
-              const oldCheckInTime = fullRecord[0].check_in_time;
+              const breakMinutes = breakResult[0]?.total_break_duration_minutes || 0;
               const workingHours = calculateWorkingHours(
-                oldCheckInTime,
+                fullRecord[0].check_in_time,
                 autoCheckOutTime,
                 breakMinutes,
               );
 
-              // Update the stale record with auto-completed checkout and working hours
               await connection.query(
                 `UPDATE Employee_Attendance 
                  SET check_out_time = ?, 
@@ -393,54 +329,17 @@ exports.checkIn = async (req, res) => {
                      overtime_minutes = ?,
                      overtime_hours = ?
                  WHERE id = ?`,
-                [
-                  autoCheckOutTime,
-                  workingHours.gross,
-                  workingHours.net,
-                  workingHours.overtime,
-                  workingHours.overtimeHours,
-                  existingAttendance[0].id,
-                ],
+                [autoCheckOutTime, workingHours.gross, workingHours.net, workingHours.overtime, workingHours.overtimeHours, existingAttendance[0].id],
               );
-
-              console.log(
-                `✅ PREVIOUS CHECKOUT AUTO-COMPLETED: ID ${existingAttendance[0].id}, checkout time: ${autoCheckOutTime}`,
-              );
-              console.log(
-                `   Working hours calculated: ${workingHours.gross} minutes (${(workingHours.gross / 60).toFixed(2)} hours)`,
-              );
-              // After auto-completing previous record, proceed to create new check-in
-            } else {
-              // Record is from today and before 9:00 AM - prevent duplicate check-in
-              console.log(
-                `⚠️ DUPLICATE CHECK-IN ATTEMPT BLOCKED (record from today, current time: ${currentHour}:${String(currentMinute).padStart(2, "0")})`,
-              );
-              console.log(`   Record ID: ${existingAttendance[0].id}`);
-              console.log(
-                `   Check-in Time: ${existingAttendance[0].check_in_time}`,
-              );
-              console.log(
-                `   Status: ALREADY CHECKED IN - Please checkout first before checking in again`,
-              );
-
+              console.log(`✅ Previous checkout auto-completed at ${autoCheckOutTime}`);
+            } else if (!isDeviceSync) {
               return res.status(409).json({
                 success: false,
-                message:
-                  "You are still checked in from your previous session. Please check out first before checking in again.",
-                data: {
-                  recordId: existingAttendance[0].id,
-                  checkInTime: existingAttendance[0].check_in_time,
-                  attendanceDate: attendanceDate,
-                  currentTime: `${currentHour}:${String(currentMinute).padStart(2, "0")}`,
-                  autoCheckoutTime: "09:00 AM",
-                  action:
-                    "Please call POST /api/v1/attendance/check-out to complete your previous session",
-                },
+                message: "You are still checked in. Please checkout first.",
               });
             }
           }
-        } else {
-          // Record has proper checkout, prevent duplicate check-in
+        } else if (!isDeviceSync) {
           return res.status(409).json({
             success: false,
             message: "Already checked in today",
@@ -449,121 +348,73 @@ exports.checkIn = async (req, res) => {
       }
 
       // ============================================================
-      // CHECK-IN TIME VALIDATION
+      // TIME VALIDATION (Skip for Device Sync)
       // ============================================================
-      // Business Rule:
-      //   Night shift window: 21:00 (9 PM) → 06:00 (6 AM next day)
-      //   - 00:00–06:00 (early morning) = still part of night shift → ALLOW (marked Late)
-      //   - 06:01–08:59 = gap between shifts → BLOCK
-      //   - 09:00 onwards = day/evening shift → ALLOW
-
-      const sixAM = 6 * 60; // 360 minutes = 06:00
-      const nineAMOffset = 21 * 60; // 1260 minutes for shift comparison
-
-      // Allow: 00:00-06:00 (night shift tail) OR 09:00+ (day shift / early check-in)
-      const isNightShiftTail =
-        checkInTotalMinutes >= 0 && checkInTotalMinutes <= sixAM;
-      const isDayShiftWindow = checkInTotalMinutes >= nineAM;
-      const isValidCheckInTime = isNightShiftTail || isDayShiftWindow;
-
+      let isValidCheckInTime = true;
+      
+      if (!isDeviceSync) {
+        const sixAM = 6 * 60;
+        const nineAMTime = 9 * 60;
+        const isNightShiftTail = checkInTotalMinutes >= 0 && checkInTotalMinutes <= sixAM;
+        const isDayShiftWindow = checkInTotalMinutes >= nineAMTime;
+        isValidCheckInTime = isNightShiftTail || isDayShiftWindow;
+      }
+      
       if (!isValidCheckInTime) {
-        console.log(
-          `❌ INVALID CHECK IN TIME: ${name} attempted check-in at ${checkInTime} (between 06:00 AM and 09:00 AM - gap between shifts)`,
-        );
+        console.log(`❌ INVALID CHECK IN TIME: ${checkInTime} (between 06:00-09:00 gap)`);
         return res.status(400).json({
           success: false,
-          message: `Invalid check-in time. Check-in is allowed from 09:00 AM onwards or before 06:00 AM (night shift). Your check-in at ${checkInTime} falls in the gap between shifts.`,
-          data: {
-            checkInTime: checkInTime,
-            validCheckInTime:
-              "00:00-06:00 AM (night shift) or 09:00 AM onwards",
-            attemptedTime: checkInTime,
-          },
+          message: `Invalid check-in time. Allowed: 00:00-06:00 (night shift) or 09:00 onwards. Your time: ${checkInTime}`,
         });
       }
 
-      // Determine attendance status based on check-in time
-      // Time boundaries:
-      // - Shift Start:  21:00 (1260 minutes)
-      // - ML After:     21:15 (1275 minutes) - Marginal Late window begins after this
-      // - Late After:   21:30 (1290 minutes) - Late window begins after this
-      const shiftStart = 21 * 60; // 21:00 = 1260 minutes
-      const mlAfterTime = 21 * 60 + 15; // 21:15 = 1275 minutes (ML boundary)
-      const lateAfterTime = 21 * 60 + 30; // 21:30 = 1290 minutes (Late boundary)
+      // ============================================================
+      // STATUS CALCULATION (Original Logic)
+      // ============================================================
+      const shiftStart = 21 * 60;
+      const mlAfterTime = 21 * 60 + 15;
+      const lateAfterTime = 21 * 60 + 30;
+      const sixAM = 6 * 60;
+      const nineAMTime = 9 * 60;
 
       let isLate = false;
       let lateByMinutes = 0;
       let status = "Present";
-      let onTime = 1; // Default to on time
+      let onTime = 1;
 
-      // Status determination logic:
-      // 1. Early check-in (09:00 AM - 20:59 PM): Present
-      // 2. On time (21:00 - 21:15):              Present
-      // 3. Marginal Late (21:15 - 21:30):        ML
-      // 4. Evening late (after 21:30):            Late
-      // 5. Early morning (00:00 - 06:00):         Late
-
-      if (checkInTotalMinutes >= nineAM && checkInTotalMinutes < shiftStart) {
-        // Early check-in (09:00 AM - 20:59 PM) - allowed and marked as Present
+      if (checkInTotalMinutes >= nineAMTime && checkInTotalMinutes < shiftStart) {
         isLate = false;
         status = "Present";
         onTime = 1;
         lateByMinutes = 0;
-        console.log(
-          `✅ Early Check In: ${name} at ${checkInTime} (checked in before shift start at 21:00)`,
-        );
-      } else if (
-        checkInTotalMinutes >= shiftStart &&
-        checkInTotalMinutes <= mlAfterTime
-      ) {
-        // On time: between 21:00 and 21:15 (inclusive)
+        console.log(`✅ Early Check In at ${checkInTime}`);
+      } else if (checkInTotalMinutes >= shiftStart && checkInTotalMinutes <= mlAfterTime) {
         isLate = false;
         status = "Present";
         onTime = 1;
         lateByMinutes = 0;
-        console.log(
-          `✅ On Time Check In: ${name} at ${checkInTime} (between 21:00-21:15)`,
-        );
-      } else if (
-        checkInTotalMinutes > mlAfterTime &&
-        checkInTotalMinutes <= lateAfterTime
-      ) {
-        // Marginal Late: between 21:15 and 21:30
+        console.log(`✅ On Time Check In at ${checkInTime}`);
+      } else if (checkInTotalMinutes > mlAfterTime && checkInTotalMinutes <= lateAfterTime) {
         isLate = false;
         lateByMinutes = checkInTotalMinutes - mlAfterTime;
         status = "ML";
         onTime = 0;
-        console.log(
-          `🔵 Marginal Late (ML) Check In: ${name} at ${checkInTime} (${lateByMinutes} minutes after 21:15 - ML window)`,
-        );
-      } else if (
-        checkInTotalMinutes > lateAfterTime &&
-        checkInTotalMinutes <= 23 * 60 + 59
-      ) {
-        // Evening late: After 21:30 in evening
+        console.log(`🔵 Marginal Late (ML): ${lateByMinutes} minutes`);
+      } else if (checkInTotalMinutes > lateAfterTime && checkInTotalMinutes <= 23 * 60 + 59) {
         isLate = true;
         lateByMinutes = checkInTotalMinutes - lateAfterTime;
         status = "Late";
         onTime = 0;
-        console.log(
-          `⏱️ Late Check In: ${name} at ${checkInTime} (${lateByMinutes} minutes late - after 21:30 PM)`,
-        );
+        console.log(`⏱️ Late: ${lateByMinutes} minutes`);
       } else if (checkInTotalMinutes >= 0 && checkInTotalMinutes <= sixAM) {
-        // Early morning late (any check-in from 00:00-06:00 is considered late)
         isLate = true;
         status = "Late";
         onTime = 0;
-        // Calculate minutes late: from 21:30 (1290) to early morning time
-        // For early morning: add 24 hours (1440 minutes) to make comparison work
-        const earlyMorningMinutesFrom21_30 =
-          1440 - lateAfterTime + checkInTotalMinutes;
-        lateByMinutes = earlyMorningMinutesFrom21_30;
-        console.log(
-          `⏱️ Late Check In (Early Morning): ${name} at ${checkInTime} (${lateByMinutes} minutes late - after 21:30 PM)`,
-        );
+        lateByMinutes = 1440 - lateAfterTime + checkInTotalMinutes;
+        console.log(`⏱️ Late (Early Morning): ${lateByMinutes} minutes`);
       }
 
-      // Create new attendance record
+      // Create new attendance record with source tracking
       const [result] = await connection.query(
         `INSERT INTO Employee_Attendance 
          (employee_id, email, name, attendance_date, check_in_time, status, on_time, late_by_minutes, device_info, ip_address)
@@ -578,36 +429,28 @@ exports.checkIn = async (req, res) => {
           onTime,
           lateByMinutes,
           device_info || null,
-          ip_address || null,
+          ip_address || null
         ],
       );
 
-      // Check if employee has an absence record for this date and remove it
+      // Remove absence record if exists
       try {
         const [absentRecord] = await connection.query(
           `SELECT id FROM Employee_Absent WHERE employee_id = ? AND absent_date = ?`,
           [employee_id, attendanceDate],
         );
-
         if (absentRecord.length > 0) {
           await connection.query(
             `DELETE FROM Employee_Absent WHERE employee_id = ? AND absent_date = ?`,
             [employee_id, attendanceDate],
           );
-          console.log(
-            `🗑️ REMOVED FROM ABSENCE: ${name} (${email}) was marked absent for ${attendanceDate}, now removed due to check-in`,
-          );
+          console.log(`🗑️ Removed absence record for ${attendanceDate}`);
         }
       } catch (err) {
-        console.error(
-          `⚠️ Error removing absence record for ${employee_id}:`,
-          err.message,
-        );
+        console.error(`⚠️ Error removing absence:`, err.message);
       }
 
-      console.log(
-        `✅ Check In: ${name} (${email}) at ${checkInTime} on ${attendanceDate}`,
-      );
+      console.log(`✅ Check In: ${name} at ${checkInTime} on ${attendanceDate} [Source: ${isDeviceSync ? "device" : "button"}]`);
 
       res.status(201).json({
         success: true,
@@ -632,22 +475,10 @@ exports.checkIn = async (req, res) => {
     }
   } catch (error) {
     console.error("❌ Check In error:", error);
-    console.error("❌ Error details:", {
-      message: error.message,
-      code: error.code,
-      sql: error.sql,
-      sqlState: error.sqlState,
-      errno: error.errno,
-      stack: error.stack,
-    });
     res.status(500).json({
       success: false,
       message: "Check in failed",
       error: error.message,
-      details: {
-        code: error.code,
-        sqlState: error.sqlState,
-      },
     });
   }
 };

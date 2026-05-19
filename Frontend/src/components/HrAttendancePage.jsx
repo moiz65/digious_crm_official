@@ -2319,33 +2319,6 @@ const EmployeeDetailView = ({
       </div>
 
       <div className="p-6">
-        {/* <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-8">
-          <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-5 border border-green-200 text-center shadow-sm hover:shadow-md transition-all duration-300">
-            <div className="text-2xl font-bold text-green-600">{empStats.present}</div>
-            <div className="text-xs font-medium text-green-700 mt-2">Present</div>
-          </div>
-          <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-5 border border-orange-200 text-center shadow-sm hover:shadow-md transition-all duration-300">
-            <div className="text-2xl font-bold text-orange-600">{empStats.leave}</div>
-            <div className="text-xs font-medium text-orange-700 mt-2">Leaves</div>
-          </div>
-          <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-5 border border-blue-200 text-center shadow-sm hover:shadow-md transition-all duration-300">
-            <div className="text-2xl font-bold text-blue-600">{empStats.halfday}</div>
-            <div className="text-xs font-medium text-blue-700 mt-2">Half Days</div>
-          </div>
-          <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-2xl p-5 border border-red-200 text-center shadow-sm hover:shadow-md transition-all duration-300">
-            <div className="text-2xl font-bold text-red-600">{empStats.absent}</div>
-            <div className="text-xs font-medium text-red-700 mt-2">Absent</div>
-          </div>
-          <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-5 border border-purple-200 text-center shadow-sm hover:shadow-md transition-all duration-300">
-            <div className="text-2xl font-bold text-purple-600">{empStats.attendanceRate}%</div>
-            <div className="text-xs font-medium text-purple-700 mt-2">Attendance</div>
-          </div>
-          <div className="bg-gradient-to-br from-cyan-50 to-cyan-100 rounded-2xl p-5 border border-cyan-200 text-center shadow-sm hover:shadow-md transition-all duration-300">
-            <div className="text-2xl font-bold text-cyan-600">{empStats.totalOvertime}h</div>
-            <div className="text-xs font-medium text-cyan-700 mt-2">Overtime</div>
-          </div>
-        </div> */}
-
         {/* Uninformed Section */}
         {unexplainedAbsences.length > 0 && (
           <div className="mb-8">
@@ -2404,36 +2377,6 @@ const EmployeeDetailView = ({
           <h3 className="text-lg font-semibold text-gray-900 mb-6">
             Leaves Summary
           </h3>
-
-          {/* Overall Leaves Stats */}
-          {/* <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">{employee.totalLeaves}</div>
-                <div className="text-xs text-blue-700 font-medium mt-1">Total Leaves</div>
-              </div>
-            </div>
-            <div className="bg-orange-50 rounded-xl p-4 border border-orange-200">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-orange-600">{employee.leavesTaken}</div>
-                <div className="text-xs text-orange-700 font-medium mt-1">Leaves Taken</div>
-              </div>
-            </div>
-            <div className="bg-green-50 rounded-xl p-4 border border-green-200">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">{employee.leavesRemaining}</div>
-                <div className="text-xs text-green-700 font-medium mt-1">Leaves Remaining</div>
-              </div>
-            </div>
-            <div className="bg-purple-50 rounded-xl p-4 border border-purple-200">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-purple-600">
-                  {((employee.leavesTaken / employee.totalLeaves) * 100).toFixed(0)}%
-                </div>
-                <div className="text-xs text-purple-700 font-medium mt-1">Utilization</div>
-              </div>
-            </div>
-          </div> */}
 
           {/* Detailed Leave Breakdown */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -5948,38 +5891,6 @@ export function HrAttendancePage() {
           </div>
 
           <div className="relative z-10 p-6">
-            {/* Header */}
-            {/* <div className="mb-8">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900">
-                    {employeeView === "detail" && selectedEmployee
-                      ? `${selectedEmployee.name}'s Attendance`
-                      : "HR Attendance Management"}
-                  </h1>
-                  <p className="text-gray-600">
-                    {employeeView === "detail" && selectedEmployee
-                      ? `Comprehensive attendance records and performance metrics`
-                      : "Track attendance, breaks, holidays, and employee leaves"}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Clock className="h-4 w-4" />
-                    {new Date().toLocaleTimeString()}
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    {new Date().toLocaleDateString("en-US", {
-                      weekday: "long",
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
-                  </div>
-                </div>
-              </div>
-            </div> */}
-
             {employeeView === "list" && (
               <>
                 <div className="flex border-b border-gray-200 mb-8">

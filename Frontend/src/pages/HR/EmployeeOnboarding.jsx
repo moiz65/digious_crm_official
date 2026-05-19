@@ -853,7 +853,7 @@ const EmployeeOnboarding = () => {
                       {errors.name && <p className="text-red-500 text-sm mt-2 font-medium">{errors.name}</p>}
                     </div>
 
-                    <div className="col-span-2">
+                    <div>
                       <label className="block text-sm font-bold text-slate-700 mb-3">Email Address *</label>
                       <div className="flex items-center gap-0 rounded-lg overflow-hidden border-2 border-gray-300 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500 transition-all">
                         <input
@@ -864,7 +864,7 @@ const EmployeeOnboarding = () => {
                             const emailPart = e.target.value.replace(/[^a-zA-Z0-9.]/g, '');
                             setFormData({ ...formData, email: emailPart ? `${emailPart}@digioussolutions.com` : '' });
                           }}
-                          placeholder="name"
+                          placeholder="Name"
                           className="flex-1 px-4 py-3 bg-white focus:outline-none text-gray-900"
                         />
                         <span className="px-4 py-3 bg-blue-50 border-l border-gray-300 text-gray-700 font-semibold text-sm">@digioussolutions.com</span>
