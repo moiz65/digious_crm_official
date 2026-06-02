@@ -3497,7 +3497,7 @@ exports.getBreakSummary = async (req, res) => {
           startTime: brk.break_start_time,
           endTime: brk.break_end_time,
           durationMinutes:
-            brk.break_duration_minutes || computeBreakDuration(brk),
+            brk.break_duration_minutes,
           reason: brk.reason,
           createdAt: brk.created_at,
         })),

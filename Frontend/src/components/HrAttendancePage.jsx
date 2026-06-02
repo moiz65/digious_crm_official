@@ -432,7 +432,7 @@ const BreakDetailsModal = ({ isOpen, onClose, breaks, date, employeeName }) => {
             </h2>
             <p className="text-gray-600 mt-1 text-sm">
               {employeeName} •{" "}
-              {new Date(date).toLocaleDateString("en-US", {
+              {new Date(date + "T00:00:00").toLocaleDateString("en-US", {
                 weekday: "long",
                 year: "numeric",
                 month: "long",
@@ -2013,8 +2013,16 @@ const EmployeeDetailView = ({
 
     // Build breaks array from actual break type counts with real durations
     let breaks = [];
-    let currentHour = 21; // Start from 21:00 (9 PM)
+    
+    // Start from check-in time, or use 9:00 AM as default if check-in is not available
+    let currentHour = 9;
     let currentMinute = 0;
+    
+    if (attendanceRecord.checkIn && attendanceRecord.checkIn !== "-") {
+      const [hour, minute] = attendanceRecord.checkIn.split(":").map(Number);
+      currentHour = hour;
+      currentMinute = minute;
+    }
 
     // Helper function to calculate end time
     const calculateEndTime = (startHour, startMin, durationMins) => {
@@ -2123,11 +2131,50 @@ const EmployeeDetailView = ({
     return breaks;
   };
 
-  const handleViewBreaks = (date) => {
-    const breaks = getEmployeeBreaksForDate(employee.id, date);
-    setSelectedDateBreaks(breaks);
-    setSelectedBreakDate(date);
-    setIsBreakModalOpen(true);
+  const handleViewBreaks = async (date) => {
+    try {
+      // Fetch break summary from existing API endpoint
+      const response = await fetch(
+        `${endpoints.attendance.breakSummary}?employee_id=${employee.id}&date=${date}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch breaks");
+      }
+
+      const result = await response.json();
+      
+      // Extract breaks from allBreaks array in the response
+      const formattedBreaks = (result.data?.breakStats?.allBreaks || []).map((breakRecord) => {
+        return {
+          id: breakRecord.id,
+          employeeId: employee.id,
+          date: date,
+          type: breakRecord.type,
+          breakStart: breakRecord.startTime, // Format: "01:17:57"
+          breakEnd: breakRecord.endTime,     // Format: "02:09:52"
+          duration: breakRecord.durationMinutes,
+          notes: breakRecord.reason || "",
+        };
+      });
+
+      setSelectedDateBreaks(formattedBreaks);
+      setSelectedBreakDate(date);
+      setIsBreakModalOpen(true);
+    } catch (error) {
+      console.error("Error fetching breaks:", error);
+      // Fallback to empty breaks if API fails
+      setSelectedDateBreaks([]);
+      setSelectedBreakDate(date);
+      setIsBreakModalOpen(true);
+    }
   };
 
   const getEmployeeAttendance = (employeeId) => {

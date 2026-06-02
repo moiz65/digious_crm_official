@@ -1,6 +1,9 @@
 const express = require("express");
+const http = require("http");  // ✅ ONLY ADD THIS - for Socket.IO
+const socketIO = require("socket.io");  // ✅ ONLY ADD THIS - Socket.IO library
 const cors = require("cors");
 const schedule = require("node-schedule");
+
 require("dotenv").config();
 const {
   getPakistanISO,
@@ -10,6 +13,60 @@ const {
 const pool = require("./config/database");
 
 const app = express();
+const server = http.createServer(app);  // ✅ ONLY ADD THIS - create HTTP server
+
+
+// Serve static files for uploads
+app.use("/uploads", express.static("uploads"));
+
+// ============================================================
+// ✅ SOCKET.IO SETUP (NEW - WON'T BREAK ANYTHING)
+// ============================================================
+const io = socketIO(server, {
+  cors: {
+    origin: [
+      "http://localhost:3000",
+      "http://localhost:5000",
+      "http://127.0.0.1:3000",
+      "http://127.0.0.1:5000",
+      "http://192.168.100.14:3000",
+      "http://192.168.100.14:5000",
+      "http://100.126.74.55:3000",
+      "http://100.126.74.55:5000"
+    ],
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+  },
+  transports: ["websocket", "polling"],
+  maxHttpBufferSize: 1e8
+});
+
+// Make io available globally for routes
+global.io = io;
+app.set("io", io);
+
+const chatSocket = require('./sockets/chatSocket');
+const jwt = require('jsonwebtoken');
+
+// Apply Socket.IO JWT Authentication Middleware
+io.use((socket, next) => {
+  const token = socket.handshake.auth?.token;
+  if (!token) {
+    console.warn("🔌 [Socket.IO] Connection attempt blocked - No token provided");
+    return next(new Error("Authentication error: No token provided"));
+  }
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    socket.userId = decoded.employeeId || decoded.userId;
+    next();
+  } catch (err) {
+    console.warn("🔌 [Socket.IO] Connection attempt blocked - Invalid token:", err.message);
+    return next(new Error("Authentication error: Invalid token"));
+  }
+});
+
+// Initialize Chat Sockets
+chatSocket(io);
 
 // Middleware
 // Increase request body size to accommodate base64 image uploads (e.g., profile/banner/images)
@@ -139,6 +196,7 @@ const managedLeaveRoutes = require('./routes/managedLeaveRoutes');
 const memoRoutes = require('./routes/memoRoutes');
 const zkTimeRoutes = require('./routes/zkTimeRoutes');
 const passcodeRoutes = require('./routes/passcodeRoutes');
+const chatRoutes = require('./routes/chatRoutes');
 
 app.use(`/api/${process.env.API_VERSION}`, onboardingRoutes);
 app.use(`/api/${process.env.API_VERSION}/auth`, authRoutes);
@@ -165,6 +223,7 @@ app.use(`/api/${process.env.API_VERSION}/managed-leaves`, managedLeaveRoutes);
 app.use(`/api/${process.env.API_VERSION}/memos`, memoRoutes);
 app.use(`/api/${process.env.API_VERSION}/zkTime`, zkTimeRoutes);
 app.use(`/api/${process.env.API_VERSION}/passcode`, passcodeRoutes);
+app.use(`/api/${process.env.API_VERSION}/chat`, chatRoutes);
 
 // 404 handler
 app.use((req, res) => {
@@ -423,13 +482,17 @@ const getLocalIP = () => {
 
 const localIP = getLocalIP();
 
-app.listen(PORT, "0.0.0.0", async () => {
+// ✅ CRITICAL: Replace app.listen with server.listen (ONLY THIS CHANGE)
+// This is the only change that affects how your server starts
+// Everything else (routes, middleware, CORS) works exactly the same
+server.listen(PORT, "0.0.0.0", async () => {
   console.log(`
 ╔════════════════════════════════════════╗
 ║   Digious CRM Backend Server Started   ║
 ║   🚀 Local: http://localhost:${PORT}    ║
 ║   🌐 Network: http://${localIP}:${PORT} ║
 ║   📊 Environment: ${process.env.NODE_ENV} ║
+║   📡 Socket.IO: Ready for connections  ║
 ╚════════════════════════════════════════╝
   `);
 
@@ -542,7 +605,3 @@ app.listen(PORT, "0.0.0.0", async () => {
     "✅ Daily auto-mark absent job scheduled (runs at 11:59 PM Pakistan Time)",
   );
 });
-
-// blank_commit
-// blank_commit
-// blank commit

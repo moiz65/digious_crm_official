@@ -4,12 +4,13 @@
 const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 const API_VERSION = process.env.REACT_APP_API_VERSION || "v1";
 const API_PREFIX = `/api/${API_VERSION}`;
-
+const SOCKET_URL = process.env.REACT_APP_SOCKET_URL || API_BASE_URL;
 export const config = {
   API_BASE_URL,
   API_VERSION,
   API_PREFIX,
   FULL_API_URL: `${API_BASE_URL}${API_PREFIX}`,
+  SOCKET_URL,
   ENVIRONMENT: process.env.REACT_APP_ENV || "development",
   APP_NAME: process.env.REACT_APP_NAME || "Digious CRM",
   APP_VERSION: process.env.REACT_APP_VERSION || "1.0.0",
@@ -273,6 +274,19 @@ export const endpoints = {
     getById: (id) => `${config.FULL_API_URL}/managed-leaves/${id}`,
     logs: (id) => `${config.FULL_API_URL}/managed-leaves/${id}/logs`,
   },
+
+  chat: {
+    conversations: `${API_BASE_URL}/chat/conversations`,
+    history: (userId) => `${API_BASE_URL}/chat/history/${userId}`,
+    send: `${API_BASE_URL}/chat/message`,
+    upload: `${API_BASE_URL}/chat/upload`,
+    markRead: `${API_BASE_URL}/chat/mark-read`,
+    unreadCount: `${API_BASE_URL}/chat/unread-count`,
+    search: `${API_BASE_URL}/chat/search`,
+    delete: (id) => `${API_BASE_URL}/chat/message/${id}`,
+    download: (id) => `${API_BASE_URL}/chat/download/${id}`,
+    users: `${API_BASE_URL}/chat/users`,
+  },
 };
 
 // Helper function to build URL with query parameters
@@ -365,5 +379,7 @@ export const debugLog = (...args) => {
     console.log("[DEBUG]", ...args);
   }
 };
+
+export { API_BASE_URL, SOCKET_URL };
 
 export default config;
