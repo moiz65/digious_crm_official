@@ -32,7 +32,9 @@ const io = socketIO(server, {
       "http://192.168.100.14:3000",
       "http://192.168.100.14:5000",
       "http://100.126.74.55:3000",
+      "http://169.254.83.107:3000",
       "http://100.126.74.55:5000"
+
     ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
@@ -91,6 +93,7 @@ const corsOptions = {
       "http://192.168.100.14:5000",
       "http://100.126.74.55:3000",
       "http://100.126.74.55:5000",
+      "http://169.254.83.107:3000",
     ];
 
     // Add environment-specific origins from .env

@@ -25,7 +25,8 @@ import {
   Database,
   X,
   Menu,
-  ChevronLeft
+  ChevronLeft,
+  Receipt 
 } from 'lucide-react';
 
 const Sidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) => {
@@ -82,6 +83,14 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) => 
     
     // Projects
     { id: 'projects', label: 'Projects', icon: ClipboardList, path: '/projects' },
+    
+    // Invoice
+    { 
+      id: 'invoice', 
+      label: 'Invoice', 
+      icon: Receipt,
+      path: '/admin/invoice'
+    },
     
     // System Settings
     { 

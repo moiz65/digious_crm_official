@@ -33,6 +33,7 @@ import AdminExpense from "./pages/Admin/AdminExpense";
 import AdminAdvances from "./pages/Admin/AdminAdvances";
 import AdminMemos from "./pages/Admin/AdminMemos";
 import Customer from "./pages/SuperAdmin/Customer";
+import Invoice from "./pages/SuperAdmin/Invoice";
 
 // HR Pages
 import HRDashboard from "./pages/HR/HRDashboard";
@@ -178,6 +179,14 @@ function AppContent() {
               <ProtectedRoute requiredRole="admin">
                 <AdminMemos />
               </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/invoice"
+            element={
+              
+                <Invoice />              
             }
           />
 
@@ -401,7 +410,14 @@ function AppContent() {
             path="/applications-memos"
             element={<Navigate to="/employee/applications" replace />}
           />
-          <Route path="/sales" element={<AdminSalesManagement />} />
+          <Route
+            path="/sales"
+            element={
+              <PasscodeProvider>
+                <AdminSalesManagement />
+              </PasscodeProvider>
+            }
+          />
 
           {/* Default redirect */}
           <Route path="/" element={<Navigate to="/login" />} />
