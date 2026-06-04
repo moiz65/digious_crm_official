@@ -1,4 +1,4 @@
-// InvoiceManagement.jsx - Complete Invoice Management System
+// InvoiceManagement.jsx - Complete Invoice Management System with Minimalist Design
 import React, {
   useState,
   useEffect,
@@ -6,6 +6,7 @@ import React, {
   useCallback,
   useMemo,
 } from "react";
+import pdfLogo from "../pdf_logo.png";
 import { endpoints } from "../config/api";
 import PagePreloader from "./PagePreloader";
 import {
@@ -54,14 +55,14 @@ import {
   Share2,
   Copy,
   ExternalLink,
+  UserPlus,
 } from "lucide-react";
-import Chart from "chart.js/auto";
 
 // Utility Functions
 const formatCurrency = (amount) => {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'USD',
+    currency: 'PKR',
     minimumFractionDigits: 2,
   }).format(amount);
 };
@@ -108,12 +109,29 @@ const getPriorityColor = (priority) => {
   return colors[priority] || 'text-slate-600 bg-slate-50';
 };
 
+const getPriorityIcon = (priority) => {
+  if (priority === 'High') return <AlertTriangle className="h-3.5 w-3.5 text-red-600" />;
+  if (priority === 'Medium') return <Zap className="h-3.5 w-3.5 text-amber-600" />;
+  return <Check className="h-3.5 w-3.5 text-emerald-600" />;
+};
+
+// Company Details
+const COMPANY_DETAILS = {
+  name: "Digious Solutions",
+  phone: "(+92)33 127 38475",
+  email: "digioussolutions@gmail.com",
+  address: "B-71 Block B, North Nazimabad, Karachi",
+  logo: "https://www.digioussolutions.com/assets/img/logo-white.svg",
+  pdf_logo: pdfLogo,
+};
+
 const InvoiceManagement = () => {
   // State Management
   const [invoices, setInvoices] = useState([]);
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showCreateCustomerModal, setShowCreateCustomerModal] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -159,14 +177,12 @@ const InvoiceManagement = () => {
         setTotalRecords(result.data.length);
         setFilteredRecords(result.data.length);
       } else {
-        // Fallback to mock data if API not ready
         setInvoices(getMockInvoices());
         setTotalRecords(getMockInvoices().length);
         setFilteredRecords(getMockInvoices().length);
       }
     } catch (error) {
       console.error("Error fetching invoices:", error);
-      // Use mock data for demo
       setInvoices(getMockInvoices());
       setTotalRecords(getMockInvoices().length);
       setFilteredRecords(getMockInvoices().length);
@@ -329,6 +345,11 @@ const InvoiceManagement = () => {
     URL.revokeObjectURL(url);
   };
 
+  // Add new customer
+  const addCustomer = (newCustomer) => {
+    setClients([...clients, { id: Date.now(), ...newCustomer }]);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
       <div className="p-8 max-w-[1600px] mx-auto">
@@ -403,7 +424,7 @@ const InvoiceManagement = () => {
           </div>
         </div>
 
-        {/* Main Filters Section - Clean & Readable */}
+        {/* Main Filters Section */}
         <div className="bg-white rounded-2xl shadow-lg border border-slate-200 mb-6 overflow-hidden">
           <div className="px-6 py-4 bg-gradient-to-r from-slate-50 to-white border-b border-slate-200">
             <div className="flex items-center gap-3">
@@ -433,9 +454,7 @@ const InvoiceManagement = () => {
           </div>
 
           <div className="p-6">
-            {/* Top row - Search and Quick Filters */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-5">
-              {/* Search */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
               <div className="lg:col-span-2">
                 <label className="block text-sm font-semibold text-slate-700 mb-2">
                   Search Invoice
@@ -452,7 +471,6 @@ const InvoiceManagement = () => {
                 </div>
               </div>
 
-              {/* Status Filter */}
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">
                   Status
@@ -472,23 +490,6 @@ const InvoiceManagement = () => {
                   <option>Cancelled</option>
                 </select>
               </div>
-
-              {/* Priority Filter */}
-              {/* <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">
-                  Priority
-                </label>
-                <select
-                  value={selectedPriority}
-                  onChange={(e) => setSelectedPriority(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 bg-white"
-                >
-                  <option>All</option>
-                  <option>High</option>
-                  <option>Medium</option>
-                  <option>Low</option>
-                </select>
-              </div> */}
 
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">
@@ -513,9 +514,6 @@ const InvoiceManagement = () => {
                 </div>
               </div>
             </div>
-
-            {/* Bottom row - Date filters and Month/Year navigation */}
-            
           </div>
         </div>
 
@@ -545,6 +543,15 @@ const InvoiceManagement = () => {
               setInvoices([newInvoice, ...invoices]);
               setShowCreateModal(false);
             }}
+            onAddCustomer={() => setShowCreateCustomerModal(true)}
+          />
+        )}
+
+        {/* Create Customer Modal */}
+        {showCreateCustomerModal && (
+          <CreateCustomerModal
+            onClose={() => setShowCreateCustomerModal(false)}
+            onSave={addCustomer}
           />
         )}
 
@@ -769,8 +776,112 @@ const InvoiceTable = ({
   );
 };
 
-// Create Invoice Modal Component (Simplified - removed tax, discount, project code)
-const CreateInvoiceModal = ({ onClose, clients, onSave }) => {
+// Create Customer Modal Component
+const CreateCustomerModal = ({ onClose, onSave }) => {
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    address: "",
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSave(formData);
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <UserPlus className="h-6 w-6 text-blue-600" />
+            <h2 className="text-2xl font-bold text-slate-800">Add New Customer</h2>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-lg">
+            <X className="h-6 w-6 text-slate-600" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-2">
+              Customer Name *
+            </label>
+            <input
+              type="text"
+              required
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              className="w-full px-3 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter customer name"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-2">
+              Email Address *
+            </label>
+            <input
+              type="email"
+              required
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              className="w-full px-3 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+              placeholder="customer@example.com"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-2">
+              Phone Number
+            </label>
+            <input
+              type="tel"
+              value={formData.phone}
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              className="w-full px-3 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+              placeholder="+1 234 567 8900"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-2">
+              Address
+            </label>
+            <textarea
+              rows="2"
+              value={formData.address}
+              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              className="w-full px-3 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+              placeholder="Customer address"
+            />
+          </div>
+
+          <div className="flex gap-3 justify-end pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-6 py-2.5 border border-slate-300 rounded-xl hover:bg-slate-50 transition-colors font-medium"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:shadow-lg transition-all font-medium"
+            >
+              Add Customer
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+// Create Invoice Modal Component
+const CreateInvoiceModal = ({ onClose, clients, onSave, onAddCustomer }) => {
   const [formData, setFormData] = useState({
     client_id: "",
     project_title: "",
@@ -811,11 +922,14 @@ const CreateInvoiceModal = ({ onClose, clients, onSave }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    const selectedClient = clients.find(c => c.id === parseInt(formData.client_id));
     const newInvoice = {
       id: Date.now(),
       invoice_number: `INV-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`,
-      client_name: clients.find(c => c.id === parseInt(formData.client_id))?.name || "",
-      client_email: clients.find(c => c.id === parseInt(formData.client_id))?.email || "",
+      client_name: selectedClient?.name || "",
+      client_email: selectedClient?.email || "",
+      client_phone: selectedClient?.phone || "",
+      client_address: selectedClient?.address || "",
       ...formData,
       subtotal: total,
       tax_amount: 0,
@@ -838,11 +952,20 @@ const CreateInvoiceModal = ({ onClose, clients, onSave }) => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Client Selection */}
+          {/* Client Selection with Add Customer Button */}
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">
-              Select Client *
-            </label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-semibold text-slate-700">
+                Select Client *
+              </label>
+              <button
+                type="button"
+                onClick={onAddCustomer}
+                className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+              >
+                <UserPlus className="h-4 w-4" /> Add New Customer
+              </button>
+            </div>
             <select
               required
               value={formData.client_id}
@@ -1008,7 +1131,7 @@ const CreateInvoiceModal = ({ onClose, clients, onSave }) => {
             />
           </div>
 
-          {/* Summary - Simplified */}
+          {/* Summary */}
           <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-5">
             <div className="flex justify-between items-center">
               <span className="text-lg font-semibold text-slate-700">Total Amount:</span>
@@ -1038,163 +1161,650 @@ const CreateInvoiceModal = ({ onClose, clients, onSave }) => {
   );
 };
 
-// Invoice Detail Modal Component (Simplified - removed tax, discount, project code)
+// InvoiceDetailModal Component - Minimalist Print Layout
 const InvoiceDetailModal = ({ invoice, onClose }) => {
   const handlePrint = () => {
+    const printContent = document.getElementById('invoice-print-content');
+    const originalContent = document.body.innerHTML;
+    document.body.innerHTML = printContent.innerHTML;
     window.print();
-  };
-
-  const handleDownload = () => {
-    alert("PDF download feature coming soon!");
+    document.body.innerHTML = originalContent;
+    window.location.reload();
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <Receipt className="h-8 w-8 text-blue-600" />
-            <h2 className="text-2xl font-bold text-slate-800">Invoice Details</h2>
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={handlePrint}
-              className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
-              title="Print"
-            >
-              <Printer className="h-5 w-5 text-slate-600" />
-            </button>
-            <button
-              onClick={handleDownload}
-              className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
-              title="Download PDF"
-            >
-              <FileDown className="h-5 w-5 text-slate-600" />
-            </button>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
-            >
-              <X className="h-6 w-6 text-slate-600" />
-            </button>
-          </div>
-        </div>
+    <>
+      {/* Modern Print Layout */}
+      <div id="invoice-print-content" className="hidden">
+        <style>{`
+          @page { 
+            size: A4; 
+            margin: 15mm;
+          }
+          * {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+          .modern-invoice {
+            max-width: 210mm;
+            margin: 0 auto;
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color: #0f172a;
+            position: relative;
+            overflow: hidden;
+          }
+          .modern-invoice::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(59,130,246,0.03) 0%, transparent 70%);
+            pointer-events: none;
+          }
+          .modern-invoice table {
+            width: 100%;
+            border-collapse: collapse;
+          }
+          .modern-invoice th, 
+          .modern-invoice td {
+            padding: 12px 10px;
+          }
+          .modern-invoice .items-table th {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            color: #ffffff;
+            font-weight: 600;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            border: none;
+          }
+          .modern-invoice .items-table td {
+            border-bottom: 1px solid #e2e8f0;
+            color: #334155;
+          }
+          .modern-invoice .items-table tr:hover td {
+            background: #f8fafc;
+          }
+          .modern-invoice .totals-table td {
+            padding: 8px 12px;
+          }
+          .modern-invoice .total-row {
+            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+            border-radius: 8px;
+          }
+          .gradient-text {
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+          }
+        `}</style>
 
-        {/* Invoice Header */}
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 mb-6">
-          <div className="flex justify-between items-start flex-wrap gap-4">
-            <div>
-              <div className="text-sm text-slate-500">INVOICE NUMBER</div>
-              <div className="text-2xl font-bold text-slate-800">{invoice.invoice_number}</div>
-              <div className="mt-2">
-                <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(invoice.status)}`}>
-                  {invoice.status}
-                </span>
+        <div className="modern-invoice" style={{ padding: '8px', position: 'relative' }}>
+          
+          {/* Decorative Header Bar */}
+          <div style={{
+            height: '4px',
+            background: 'linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899, #3b82f6)',
+            marginBottom: '32px',
+            borderRadius: '2px',
+            backgroundSize: '200% 100%',
+            animation: 'gradientShift 3s ease infinite'
+          }}></div>
+
+          {/* Header Section */}
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'flex-start',
+            marginBottom: '32px',
+            paddingBottom: '24px',
+            borderBottom: '2px solid #e2e8f0',
+            position: 'relative'
+          }}>
+            <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{
+                  width: '150px',
+                  height: '50px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <img
+                    src={COMPANY_DETAILS.pdf_logo || COMPANY_DETAILS.logo}
+                    alt={COMPANY_DETAILS.name + ' Logo'}
+                    style={{ width: '150px', height: '50px', objectFit: 'contain' }}
+                    onError={(e) => { e.target.style.display = 'none'; }}
+                  />
+                </div>
+                <div style={{ fontSize: '12px', color: '#475569', lineHeight: 1.4, maxWidth: '320px' }}>
+                  {COMPANY_DETAILS.address && <div>📍 {COMPANY_DETAILS.address}</div>}
+                  {COMPANY_DETAILS.phone && <div>📞 {COMPANY_DETAILS.phone}</div>}
+                  {COMPANY_DETAILS.email && <div>✉️ {COMPANY_DETAILS.email}</div>}
+                </div>
               </div>
             </div>
-            <div className="text-right">
-              <div className="text-sm text-slate-500">Total Amount</div>
-              <div className="text-3xl font-bold text-blue-600">{formatCurrency(invoice.total_amount)}</div>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ 
+                fontSize: '28px', 
+                fontWeight: '800', 
+                background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                WebkitBackgroundClip: 'text',
+                backgroundClip: 'text',
+                color: 'transparent',
+                letterSpacing: '2px',
+                marginBottom: '8px'
+              }}>
+                INVOICE
+              </div>
+              <div style={{ fontSize: '13px', color: '#475569', fontFamily: 'monospace', fontWeight: '600' }}>
+                #{invoice.invoice_number}
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Client Info */}
-        <div className="grid grid-cols-2 gap-6 mb-6">
-          <div>
-            <h3 className="text-sm font-semibold text-slate-500 mb-2">Bill To:</h3>
-            <div className="text-slate-800 font-semibold">{invoice.client_name}</div>
-            <div className="text-sm text-slate-600">{invoice.client_email}</div>
-          </div>
-          <div>
-            <h3 className="text-sm font-semibold text-slate-500 mb-2">Project:</h3>
-            <div className="text-slate-800 font-semibold">{invoice.project_title}</div>
-          </div>
-        </div>
+          {/* Two Column Info with Cards */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: '24px',
+            marginBottom: '32px'
+          }}>
+            {/* Bill To Card */}
+            <div style={{
+              background: 'linear-gradient(135deg, #f8fafc 0%, #ffffff 100%)',
+              borderRadius: '16px',
+              padding: '20px',
+              border: '1px solid #e2e8f0',
+              boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)'
+            }}>
+              <div style={{ 
+                fontSize: '10px', 
+                fontWeight: '700', 
+                textTransform: 'uppercase', 
+                letterSpacing: '1px', 
+                color: '#3b82f6',
+                marginBottom: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}>
+                <span>👤</span> BILL TO
+              </div>
+              <div style={{ fontSize: '15px', fontWeight: '700', color: '#0f172a', marginBottom: '8px' }}>
+                {invoice.client_name}
+              </div>
+              <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '4px' }}>
+                {invoice.client_email}
+              </div>
+              {invoice.client_phone && (
+                <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '4px' }}>
+                  📞 {invoice.client_phone}
+                </div>
+              )}
+              {invoice.client_address && (
+                <div style={{ fontSize: '11px', color: '#64748b', marginTop: '10px', paddingTop: '10px', borderTop: '1px dashed #e2e8f0' }}>
+                  📍 {invoice.client_address}
+                </div>
+              )}
+            </div>
 
-        {/* Dates */}
-        <div className="grid grid-cols-3 gap-4 mb-6 p-4 bg-slate-50 rounded-xl">
-          <div>
-            <div className="text-xs text-slate-500">Issue Date</div>
-            <div className="text-sm font-semibold text-slate-800">{formatDate(invoice.issue_date)}</div>
-          </div>
-          <div>
-            <div className="text-xs text-slate-500">Due Date</div>
-            <div className="text-sm font-semibold text-slate-800">{formatDate(invoice.due_date)}</div>
-          </div>
-          <div>
-            <div className="text-xs text-slate-500">Priority</div>
-            <div className={`inline-flex px-2 py-1 rounded-full text-xs font-semibold ${getPriorityColor(invoice.priority)}`}>
-              {invoice.priority}
+            {/* Right Column - Invoice Details + Billing Details */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{
+                background: 'linear-gradient(135deg, #f8fafc 0%, #ffffff 100%)',
+                borderRadius: '16px',
+                padding: '20px',
+                border: '1px solid #e2e8f0',
+                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)'
+              }}>
+                <div style={{ 
+                  fontSize: '10px', 
+                  fontWeight: '700', 
+                  textTransform: 'uppercase', 
+                  letterSpacing: '1px', 
+                  color: '#8b5cf6',
+                  marginBottom: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}>
+                  <span>📋</span> INVOICE DETAILS
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr', gap: '8px', fontSize: '11px' }}>
+                  <div style={{ color: '#64748b', fontWeight: '500' }}>Issue Date:</div>
+                  <div style={{ color: '#0f172a', fontWeight: '500' }}>{formatDate(invoice.issue_date)}</div>
+                  <div style={{ color: '#64748b', fontWeight: '500' }}>Due Date:</div>
+                  <div style={{ color: '#dc2626', fontWeight: '600' }}>{formatDate(invoice.due_date)}</div>
+                  <div style={{ color: '#64748b', fontWeight: '500' }}>Project:</div>
+                  <div style={{ color: '#0f172a', fontWeight: '600' }}>{invoice.project_title}</div>
+                  <div style={{ color: '#64748b', fontWeight: '500' }}>Priority:</div>
+                  <div>
+                    <span style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      padding: '3px 10px',
+                      borderRadius: '20px',
+                      fontSize: '9px',
+                      fontWeight: '700',
+                      background: invoice.priority === 'High' ? '#fef2f2' : invoice.priority === 'Medium' ? '#fffbeb' : '#f0fdf4',
+                      color: invoice.priority === 'High' ? '#dc2626' : invoice.priority === 'Medium' ? '#d97706' : '#16a34a'
+                    }}>
+                      {invoice.priority === 'High' ? '🔴' : invoice.priority === 'Medium' ? '🟡' : '🟢'} {invoice.priority || 'Medium'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Billing Details Card */}
+              
             </div>
           </div>
-        </div>
 
-        {/* Invoice Items */}
-        <div className="mb-6">
-          <h3 className="text-sm font-semibold text-slate-500 mb-3">Invoice Items</h3>
-          <div className="border rounded-xl overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-slate-50">
+          {/* Items Table - Premium Design */}
+          <div style={{ marginBottom: '28px' }}>
+            <table className="items-table" style={{ width: '100%', borderRadius: '12px', overflow: 'hidden' }}>
+              <thead>
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600">Description</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">Quantity</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">Unit Price</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">Amount</th>
+                  <th style={{ textAlign: 'left', padding: '14px 12px' }}>Description</th>
+                  <th style={{ textAlign: 'center', padding: '14px 12px', width: '15%' }}>Quantity</th>
+                  <th style={{ textAlign: 'right', padding: '14px 12px', width: '20%' }}>Unit Price</th>
+                  <th style={{ textAlign: 'right', padding: '14px 12px', width: '20%' }}>Amount</th>
                 </tr>
               </thead>
-              <tbody className="divide-y">
-                {invoice.items?.map((item, index) => (
-                  <tr key={index}>
-                    <td className="px-4 py-3 text-sm text-slate-700">{item.description}</td>
-                    <td className="px-4 py-3 text-sm text-right text-slate-700">{item.quantity}</td>
-                    <td className="px-4 py-3 text-sm text-right text-slate-700">{formatCurrency(item.unit_price)}</td>
-                    <td className="px-4 py-3 text-sm text-right text-slate-700">{formatCurrency(item.amount)}</td>
+              <tbody>
+                {invoice.items?.map((item, idx) => (
+                  <tr key={idx}>
+                    <td style={{ textAlign: 'left', padding: '12px', fontSize: '12px', fontWeight: '500' }}>
+                      {item.description || 'Service'}
+                    </td>
+                    <td style={{ textAlign: 'center', padding: '12px', fontSize: '12px' }}>
+                      {item.quantity || 1}
+                    </td>
+                    <td style={{ textAlign: 'right', padding: '12px', fontSize: '12px' }}>
+                      {formatCurrency(item.unit_price || 0)}
+                    </td>
+                    <td style={{ textAlign: 'right', padding: '12px', fontSize: '13px', fontWeight: '600', color: '#0f172a' }}>
+                      {formatCurrency(item.amount || 0)}
+                    </td>
                   </tr>
                 ))}
               </tbody>
-              <tfoot className="bg-slate-50">
-                <tr>
-                  <td colSpan="3" className="px-4 py-3 text-right font-semibold text-slate-700">Total:</td>
-                  <td className="px-4 py-3 text-right font-bold text-blue-600">{formatCurrency(invoice.total_amount)}</td>
-                </tr>
-              </tfoot>
             </table>
           </div>
-        </div>
 
-        {/* Notes & Terms */}
-        {invoice.notes && (
-          <div className="mb-4">
-            <h3 className="text-sm font-semibold text-slate-500 mb-1">Notes</h3>
-            <p className="text-sm text-slate-600 bg-slate-50 p-3 rounded-lg">{invoice.notes}</p>
+          {/* Totals Section - Modern Card Style */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '28px' }}>
+            <div style={{ width: '300px' }}>
+              <table className="totals-table" style={{ width: '100%' }}>
+                <tbody>
+                  <tr>
+                    <td style={{ color: '#64748b', fontSize: '11px', padding: '8px 12px' }}>Subtotal</td>
+                    <td style={{ textAlign: 'right', fontSize: '11px', color: '#334155', padding: '8px 12px' }}>
+                      {formatCurrency(invoice.subtotal || invoice.total_amount || 0)}
+                    </td>
+                  </tr>
+                  {invoice.tax_amount > 0 && (
+                    <tr>
+                      <td style={{ color: '#64748b', fontSize: '11px', padding: '8px 12px' }}>Tax ({invoice.tax_rate || 0}%)</td>
+                      <td style={{ textAlign: 'right', fontSize: '11px', color: '#334155', padding: '8px 12px' }}>
+                        {formatCurrency(invoice.tax_amount)}
+                      </td>
+                    </tr>
+                  )}
+                  {invoice.discount_amount > 0 && (
+                    <tr>
+                      <td style={{ color: '#64748b', fontSize: '11px', padding: '8px 12px' }}>Discount</td>
+                      <td style={{ textAlign: 'right', fontSize: '11px', color: '#dc2626', padding: '8px 12px' }}>
+                        -{formatCurrency(invoice.discount_amount)}
+                      </td>
+                    </tr>
+                  )}
+                  <tr className="total-row">
+                    <td style={{ fontSize: '14px', fontWeight: '700', color: '#0f172a', padding: '12px 12px', borderRadius: '8px' }}>
+                      Total Amount
+                    </td>
+                    <td style={{ textAlign: 'right', fontSize: '20px', fontWeight: '800', background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent', padding: '12px 12px' }}>
+                      {formatCurrency(invoice.total_amount || 0)}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
-        )}
-        
-        {invoice.terms && (
-          <div>
-            <h3 className="text-sm font-semibold text-slate-500 mb-1">Terms & Conditions</h3>
-            <p className="text-sm text-slate-600 bg-slate-50 p-3 rounded-lg">{invoice.terms}</p>
-          </div>
-        )}
 
-        {/* Actions */}
-        <div className="flex gap-3 justify-end mt-6 pt-6 border-t">
-          <button
-            onClick={onClose}
-            className="px-6 py-2.5 border border-slate-300 rounded-xl hover:bg-slate-50 transition-colors font-medium"
-          >
-            Close
-          </button>
-          <button className="px-6 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors font-medium">
-            Mark as Paid
-          </button>
-          <button className="px-6 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium">
-            Send Reminder
-          </button>
+          {/* Payment Status Badge */}
+          {invoice.status && (
+            <div style={{ 
+              textAlign: 'center', 
+              marginBottom: '24px',
+              padding: '10px',
+              background: invoice.status === 'Paid' ? 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)' : invoice.status === 'Unpaid' ? 'linear-gradient(135deg, #fef2f2 0%, #fecaca 100%)' : 'linear-gradient(135deg, #fffbeb 0%, #fde68a 100%)',
+              borderRadius: '12px',
+              border: `1px solid ${invoice.status === 'Paid' ? '#bbf7d0' : invoice.status === 'Unpaid' ? '#fecaca' : '#fde68a'}`
+            }}>
+              <span style={{
+                fontSize: '11px',
+                fontWeight: '700',
+                textTransform: 'uppercase',
+                letterSpacing: '1px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                color: invoice.status === 'Paid' ? '#16a34a' : invoice.status === 'Unpaid' ? '#dc2626' : '#d97706'
+              }}>
+                {invoice.status === 'Paid' ? '✅ PAID IN FULL' : invoice.status === 'Unpaid' ? '⚠️ PENDING PAYMENT' : '🟡 PARTIALLY PAID'}
+              </span>
+            </div>
+          )}
+
+          {/* Notes & Terms Grid */}
+          {(invoice.notes || invoice.terms) && (
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: invoice.notes && invoice.terms ? '1fr 1fr' : '1fr',
+              gap: '20px',
+              marginBottom: '24px',
+              paddingTop: '16px',
+              borderTop: '1px solid #e2e8f0'
+            }}>
+              {invoice.notes && (
+                <div style={{
+                  background: '#fefce8',
+                  borderRadius: '12px',
+                  padding: '14px',
+                  border: '1px solid #fef08a'
+                }}>
+                  <div style={{ fontSize: '9px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#854d0e', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span>📝</span> Notes
+                  </div>
+                  <div style={{ fontSize: '10px', color: '#713f12', lineHeight: '1.5' }}>
+                    {invoice.notes}
+                  </div>
+                </div>
+              )}
+              {invoice.terms && (
+                <div style={{
+                  background: '#eff6ff',
+                  borderRadius: '12px',
+                  padding: '14px',
+                  border: '1px solid #bfdbfe'
+                }}>
+                  <div style={{ fontSize: '9px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#1e40af', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span>⚖️</span> Terms & Conditions
+                  </div>
+                  <div style={{ fontSize: '10px', color: '#1e3a8a', lineHeight: '1.5' }}>
+                    {invoice.terms}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Premium Footer */}
+          <div style={{ 
+            textAlign: 'center', 
+            paddingTop: '20px', 
+            borderTop: '1px solid #e2e8f0',
+            marginTop: '8px',
+            position: 'relative'
+          }}>
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              background: '#f8fafc',
+              padding: '8px 20px',
+              borderRadius: '30px',
+              marginBottom: '12px'
+            }}>
+              <span style={{ fontSize: '10px', color: '#64748b' }}>💳</span>
+              <span style={{ fontSize: '9px', color: '#475569', fontWeight: '500' }}>
+                Please include invoice #{invoice.invoice_number} in your payment reference
+              </span>
+            </div>
+            <div style={{ fontSize: '9px', color: '#94a3b8' }}>
+              For questions, contact <strong>{COMPANY_DETAILS.email}</strong> | 📞 {COMPANY_DETAILS.phone}
+            </div>
+            <div style={{ fontSize: '8px', color: '#cbd5e1', marginTop: '10px' }}>
+              © {new Date().getFullYear()} {COMPANY_DETAILS.name} • All Rights Reserved
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* MODAL VIEW - Premium Modern Design */}
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-fadeIn">
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-y-auto animate-scaleIn">
+          {/* Premium Header */}
+          <div className="sticky top-0 bg-gradient-to-r from-white to-slate-50 border-b border-slate-200 px-6 py-4 flex justify-between items-center z-10">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+                <Receipt className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
+                  Invoice Details
+                </h2>
+                <p className="text-xs text-slate-500 font-mono">#{invoice.invoice_number}</p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={handlePrint}
+                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:shadow-lg transition-all duration-300 text-sm font-medium hover:scale-105"
+              >
+                <Printer className="h-4 w-4" /> Print / PDF
+              </button>
+              <button
+                onClick={onClose}
+                className="p-2.5 hover:bg-slate-100 rounded-xl transition-all duration-200"
+              >
+                <X className="h-5 w-5 text-slate-500" />
+              </button>
+            </div>
+          </div>
+
+          {/* Invoice Content */}
+          <div className="p-8">
+            {/* Premium Company Header */}
+            <div className="flex flex-col md:flex-row justify-between items-start gap-6 mb-8 pb-6 border-b border-slate-200">
+              <div className="flex items-center gap-4">
+                
+                <div>
+                  <img
+                    src={COMPANY_DETAILS.pdf_logo || COMPANY_DETAILS.logo}
+                    alt={COMPANY_DETAILS.name + ' Logo'}
+                    className="w-[250px] h-32 object-contain rounded-md"
+                    onError={(e) => { e.target.style.display = 'none'; }}
+                  />
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className="text-xs text-slate-500">📍</span>
+                    <p className="text-xs text-slate-600">{COMPANY_DETAILS.address}</p>
+                  </div>
+                  <div className="flex items-center gap-3 mt-1">
+                    <span className="text-xs text-slate-500">📞 {COMPANY_DETAILS.phone}</span>
+                    <span className="text-xs text-slate-500">✉️ {COMPANY_DETAILS.email}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-4xl font-black bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                  INVOICE
+                </div>
+                <div className="text-xs text-slate-500 mt-2">Issued: {formatDate(invoice.issue_date)}</div>
+                <div className="text-xs text-slate-500">Due: {formatDate(invoice.due_date)}</div>
+              </div>
+            </div>
+
+            {/* Client & Project Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+              <div className="bg-gradient-to-br from-slate-50 to-white rounded-xl p-5 shadow-md border border-slate-100 hover:shadow-lg transition-shadow">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <Users className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <h4 className="text-sm font-semibold text-slate-700">Client Information</h4>
+                </div>
+                <div className="space-y-2">
+                  <p className="font-bold text-slate-800 text-lg">{invoice.client_name}</p>
+                  <p className="text-sm text-slate-600 flex items-center gap-2">
+                    <Mail className="h-3 w-3" /> {invoice.client_email}
+                  </p>
+                  {invoice.client_phone && (
+                    <p className="text-sm text-slate-600 flex items-center gap-2">
+                      <Phone className="h-3 w-3" /> {invoice.client_phone}
+                    </p>
+                  )}
+                  {invoice.client_address && (
+                    <p className="text-sm text-slate-600 flex items-start gap-2 mt-3 pt-3 border-t border-slate-200">
+                      <MapPin className="h-3 w-3 mt-0.5" /> {invoice.client_address}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-br from-slate-50 to-white rounded-xl p-5 shadow-md border border-slate-100 hover:shadow-lg transition-shadow">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <Calendar className="h-4 w-4 text-purple-600" />
+                  </div>
+                  <h4 className="text-sm font-semibold text-slate-700">Project Details</h4>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-slate-500">Project Title:</span>
+                    <span className="text-sm font-semibold text-slate-800">{invoice.project_title}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-slate-500">Priority Level:</span>
+                    <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${getPriorityColor(invoice.priority)} shadow-sm`}>
+                      {getPriorityIcon(invoice.priority)}
+                      {invoice.priority || 'Medium'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-slate-500">Invoice Status:</span>
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(invoice.status)} shadow-sm`}>
+                      {invoice.status}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Premium Items Table */}
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="text-base font-bold text-slate-800 flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-blue-600" />
+                  Invoice Items
+                </h4>
+                <div className="text-sm text-slate-500">
+                  {invoice.items?.length || 0} item(s)
+                </div>
+              </div>
+              <div className="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                <table className="w-full text-sm">
+                  <thead className="bg-gradient-to-r from-slate-100 to-slate-50">
+                    <tr>
+                      <th className="px-5 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Description</th>
+                      <th className="px-5 py-3 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider w-20">Qty</th>
+                      <th className="px-5 py-3 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider w-28">Unit Price</th>
+                      <th className="px-5 py-3 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider w-28">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {invoice.items?.map((item, idx) => (
+                      <tr key={idx} className="hover:bg-slate-50 transition-colors duration-150">
+                        <td className="px-5 py-4 text-slate-700 font-medium">{item.description}</td>
+                        <td className="px-5 py-4 text-right text-slate-600">{item.quantity}</td>
+                        <td className="px-5 py-4 text-right text-slate-600">{formatCurrency(item.unit_price)}</td>
+                        <td className="px-5 py-4 text-right font-bold text-slate-800">{formatCurrency(item.amount)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot className="bg-gradient-to-r from-slate-50 to-slate-100 border-t-2 border-slate-200">
+                    <tr>
+                      <td colSpan="3" className="px-5 py-4 text-right font-bold text-slate-700 text-base">Total:</td>
+                      <td className="px-5 py-4 text-right font-black text-2xl bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                        {formatCurrency(invoice.total_amount)}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+
+            {/* Notes & Terms Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
+              {invoice.notes && (
+                <div className="bg-amber-50 rounded-xl p-4 border border-amber-200">
+                  <div className="flex items-center gap-2 mb-2">
+                    <AlertCircle className="h-4 w-4 text-amber-600" />
+                    <h5 className="text-xs font-bold text-amber-700 uppercase tracking-wide">Notes</h5>
+                  </div>
+                  <p className="text-sm text-amber-800">{invoice.notes}</p>
+                </div>
+              )}
+              {invoice.terms && (
+                <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
+                  <div className="flex items-center gap-2 mb-2">
+                    {/* <Shield className="h-4 w-4 text-blue-600" /> */}
+                    <h5 className="text-xs font-bold text-blue-700 uppercase tracking-wide">Terms & Conditions</h5>
+                  </div>
+                  <p className="text-sm text-blue-800">{invoice.terms}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex justify-end gap-3 pt-6 border-t border-slate-200">
+              <button 
+                onClick={onClose} 
+                className="px-6 py-2.5 text-sm font-medium border border-slate-300 rounded-xl hover:bg-slate-50 transition-all duration-200 hover:scale-105"
+              >
+                Close
+              </button>
+              <button 
+                onClick={handlePrint}
+                className="px-6 py-2.5 text-sm font-medium bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:shadow-lg transition-all duration-200 hover:scale-105 flex items-center gap-2"
+              >
+                <Printer className="h-4 w-4" />
+                Print Invoice
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes scaleIn {
+          from { opacity: 0; transform: scale(0.95); }
+          to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes gradientShift {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.3s ease-out;
+        }
+        .animate-scaleIn {
+          animation: scaleIn 0.3s ease-out;
+        }
+      `}</style>
+    </>
   );
 };
 
@@ -1239,12 +1849,14 @@ const getMockInvoices = () => {
   return [
     {
       id: 1,
-      invoice_number: "INV-2024-001",
+      invoice_number: "INV-2026-001",
       client_name: "Tech Corp Solutions",
       client_email: "billing@techcorp.com",
+      client_phone: "+1 234-567-8900",
+      client_address: "123 Tech Street, Silicon Valley, CA",
       project_title: "Website Development",
-      issue_date: "2024-01-15",
-      due_date: "2024-02-14",
+      issue_date: "2026-01-15",
+      due_date: "2026-02-14",
       subtotal: 5500,
       tax_amount: 0,
       discount_amount: 0,
@@ -1258,16 +1870,18 @@ const getMockInvoices = () => {
       ],
       notes: "Website launch completed successfully",
       terms: "Payment due within 30 days",
-      created_at: "2024-01-10T10:00:00Z",
+      created_at: "2026-01-10T10:00:00Z",
     },
     {
       id: 2,
-      invoice_number: "INV-2024-002",
+      invoice_number: "INV-2026-002",
       client_name: "Design Studio Inc",
       client_email: "accounts@designstudio.com",
+      client_phone: "+1 234-567-8901",
+      client_address: "456 Creative Ave, Arts District, NY",
       project_title: "Brand Identity Design",
-      issue_date: "2024-01-20",
-      due_date: "2024-02-19",
+      issue_date: "2026-01-20",
+      due_date: "2026-02-19",
       subtotal: 2500,
       tax_amount: 0,
       discount_amount: 0,
@@ -1281,13 +1895,15 @@ const getMockInvoices = () => {
       ],
       notes: "Initial concepts approved",
       terms: "Payment due upon receipt",
-      created_at: "2024-01-15T14:30:00Z",
+      created_at: "2026-01-15T14:30:00Z",
     },
     {
       id: 3,
-      invoice_number: "INV-2024-003",
+      invoice_number: "INV-2026-003",
       client_name: "E-commerce Ventures",
       client_email: "finance@ecomventures.com",
+      client_phone: "+1 234-567-8902",
+      client_address: "789 Market Street, Business Bay, CA",
       project_title: "Mobile App Development",
       issue_date: "2023-12-01",
       due_date: "2023-12-31",
@@ -1311,9 +1927,9 @@ const getMockInvoices = () => {
 
 const getMockClients = () => {
   return [
-    { id: 1, name: "Tech Corp Solutions", email: "billing@techcorp.com", phone: "+1 234-567-8900" },
-    { id: 2, name: "Design Studio Inc", email: "accounts@designstudio.com", phone: "+1 234-567-8901" },
-    { id: 3, name: "E-commerce Ventures", email: "finance@ecomventures.com", phone: "+1 234-567-8902" },
+    { id: 1, name: "Tech Corp Solutions", email: "billing@techcorp.com", phone: "+1 234-567-8900", address: "123 Tech Street, Silicon Valley, CA" },
+    { id: 2, name: "Design Studio Inc", email: "accounts@designstudio.com", phone: "+1 234-567-8901", address: "456 Creative Ave, Arts District, NY" },
+    { id: 3, name: "E-commerce Ventures", email: "finance@ecomventures.com", phone: "+1 234-567-8902", address: "789 Market Street, Business Bay, CA" },
   ];
 };
 
