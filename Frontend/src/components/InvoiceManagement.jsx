@@ -119,7 +119,7 @@ const getPriorityIcon = (priority) => {
 const COMPANY_DETAILS = {
   name: "Digious Solutions",
   phone: "(+92)33 127 38475",
-  email: "digioussolutions@gmail.com",
+  email: "digioussolutions123@gmail.com",
   address: "B-71 Block B, North Nazimabad, Karachi",
   logo: "https://www.digioussolutions.com/assets/img/logo-white.svg",
   pdf_logo: pdfLogo,
