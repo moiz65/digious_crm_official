@@ -206,6 +206,25 @@ export const endpoints = {
     deleteCategory: (id) => `${config.FULL_API_URL}/sales/categories/${id}`,
   },
 
+  // Invoice endpoints
+  invoices: {
+    base: `${config.FULL_API_URL}/invoices`,
+    getAll: `${config.FULL_API_URL}/invoices`,
+    stats: `${config.FULL_API_URL}/invoices/stats`,
+    getById: (id) => `${config.FULL_API_URL}/invoices/${id}`,
+    create: `${config.FULL_API_URL}/invoices`,
+    update: (id) => `${config.FULL_API_URL}/invoices/${id}`,
+    updateStatus: (id) => `${config.FULL_API_URL}/invoices/${id}/status`,
+    delete: (id) => `${config.FULL_API_URL}/invoices/${id}`,
+  },
+
+  // Client endpoints (customers mapped for invoice UI)
+  clients: {
+    base: `${config.FULL_API_URL}/clients`,
+    getAll: `${config.FULL_API_URL}/clients`,
+    create: `${config.FULL_API_URL}/clients`,
+  },
+
   // Customer endpoints
   customers: {
     base: `${config.FULL_API_URL}/customers`,

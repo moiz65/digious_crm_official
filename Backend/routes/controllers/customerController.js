@@ -19,6 +19,7 @@ const ensureCustomersTable = async () => {
       client_name     VARCHAR(200)  NOT NULL,
       client_email    VARCHAR(200)  NOT NULL,
       client_phone    VARCHAR(50)   DEFAULT NULL,
+      client_address  TEXT          DEFAULT NULL,
       total_spent     DECIMAL(14,2) NOT NULL DEFAULT 0.00,
       total_projects  INT(11)       NOT NULL DEFAULT 0,
       first_sale_date DATE          DEFAULT NULL,
@@ -29,6 +30,15 @@ const ensureCustomersTable = async () => {
       UNIQUE KEY uq_customer_email (client_email)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   `);
+
+  try {
+    await pool.query(`
+      ALTER TABLE customers
+      ADD COLUMN client_address TEXT DEFAULT NULL COMMENT 'Customer billing/mailing address'
+    `);
+  } catch (err) {
+    if (err.code !== 'ER_DUP_FIELDNAME') throw err;
+  }
 
   // Back-fill from existing sales if customers table is empty
   const [countRows] = await pool.query('SELECT COUNT(*) AS cnt FROM customers');
@@ -225,6 +235,67 @@ exports.getCustomers = async (req, res) => {
   }
 };
 
+// POST /customers – create a new customer
+exports.createCustomer = async (req, res) => {
+  try {
+    const {
+      client_name, name,
+      client_email, email,
+      client_phone, phone,
+      client_address, address,
+    } = req.body;
+
+    const cName = (client_name || name || '').trim();
+    const cEmail = (client_email || email || '').trim().toLowerCase();
+    const cPhone = client_phone || phone || null;
+    const cAddress = client_address || address || null;
+
+    if (!cName) {
+      return res.status(400).json({ success: false, message: 'Customer name is required' });
+    }
+    if (!cEmail) {
+      return res.status(400).json({ success: false, message: 'Customer email is required' });
+    }
+
+    const [existing] = await pool.query(
+      'SELECT id FROM customers WHERE client_email = ?',
+      [cEmail]
+    );
+    if (existing.length) {
+      return res.status(409).json({ success: false, message: 'A customer with this email already exists' });
+    }
+
+    const [result] = await pool.query(
+      `INSERT INTO customers (client_name, client_email, client_phone, client_address)
+       VALUES (?, ?, ?, ?)`,
+      [cName, cEmail, cPhone, cAddress]
+    );
+
+    const [rows] = await pool.query('SELECT * FROM customers WHERE id = ?', [result.insertId]);
+    const row = rows[0];
+
+    return res.status(201).json({
+      success: true,
+      message: 'Customer created',
+      data: row,
+      // Invoice UI client shape
+      client: {
+        id: row.id,
+        name: row.client_name,
+        email: row.client_email,
+        phone: row.client_phone,
+        address: row.client_address,
+      },
+    });
+  } catch (err) {
+    console.error('createCustomer error:', err);
+    if (err.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({ success: false, message: 'A customer with this email already exists' });
+    }
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
 // GET /customers/:id – single customer detail
 exports.getCustomerById = async (req, res) => {
   try {
@@ -331,13 +402,17 @@ exports.getCustomerHistory = async (req, res) => {
 exports.updateCustomer = async (req, res) => {
   try {
     const { id } = req.params;
-    const { client_name, client_phone } = req.body;
+    const { client_name, client_phone, client_address, address } = req.body;
 
     const fields = [];
     const values = [];
 
     if (client_name !== undefined) { fields.push('client_name = ?'); values.push(client_name); }
     if (client_phone !== undefined) { fields.push('client_phone = ?'); values.push(client_phone); }
+    if (client_address !== undefined || address !== undefined) {
+      fields.push('client_address = ?');
+      values.push(client_address ?? address);
+    }
 
     if (!fields.length) {
       return res.status(400).json({ success: false, message: 'No fields to update' });
