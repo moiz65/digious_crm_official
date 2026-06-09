@@ -261,7 +261,9 @@ const generatePayroll = async (req, res) => {
       const totalDaysInMonth = new Date(yearNum, monthNum, 0).getDate();
       totalDaysConsidered = cutoffDate;
       proRateFactor = cutoffDate / 30;
-      console.log(`📅 Current month detected: Generating payroll for ${monthNum}/${yearNum}`);
+      console.log(
+        `📅 Current month detected: Generating payroll for ${monthNum}/${yearNum}`,
+      );
       console.log(`   - Today's date: ${todayDate}`);
       console.log(`   - Cutoff date (yesterday): ${cutoffDate}`);
       console.log(`   - Pro-rate factor: ${proRateFactor} (${cutoffDate}/30)`);
@@ -299,18 +301,18 @@ const generatePayroll = async (req, res) => {
     if (isCurrentMonth && cutoffDate) {
       [attendanceSummary] = await pool.query(
         `
-        SELECT 
-          employee_id,
-          SUM(CASE WHEN status IN ('Present', 'Late') AND DAY(attendance_date) <= ? THEN 1 ELSE 0 END) AS present_days,
-          SUM(CASE WHEN status = 'Absent' AND DAY(attendance_date) <= ? THEN 1 ELSE 0 END) AS absent_days,
-          SUM(CASE WHEN status = 'Late' AND DAY(attendance_date) <= ? THEN 1 ELSE 0 END) AS late_days,
-          SUM(CASE WHEN status IN ('On Leave', 'Paid Leave') AND DAY(attendance_date) <= ? THEN 1 ELSE 0 END) AS leave_days,
-          SUM(CASE WHEN status = 'Half Day' AND DAY(attendance_date) <= ? THEN 1 ELSE 0 END) AS half_days
-        FROM Employee_Attendance
-        WHERE YEAR(attendance_date) = ? AND MONTH(attendance_date) = ?
-          AND DAY(attendance_date) <= ?
-        GROUP BY employee_id
-      `,
+    SELECT 
+      employee_id,
+      SUM(CASE WHEN status IN ('Present', 'Late') AND DAY(attendance_date) <= ? THEN 1 ELSE 0 END) AS present_days,
+      SUM(CASE WHEN status = 'Absent' AND DAY(attendance_date) <= ? THEN 1 ELSE 0 END) AS absent_days,
+      SUM(CASE WHEN status = 'Late' AND DAY(attendance_date) <= ? THEN 1 ELSE 0 END) AS late_days,
+      SUM(CASE WHEN status IN ('Leave', 'Paid Leave') AND DAY(attendance_date) <= ? THEN 1 ELSE 0 END) AS leave_days,
+      SUM(CASE WHEN status = 'Half Day' AND DAY(attendance_date) <= ? THEN 1 ELSE 0 END) AS half_days
+    FROM Employee_Attendance
+    WHERE YEAR(attendance_date) = ? AND MONTH(attendance_date) = ?
+      AND DAY(attendance_date) <= ?
+    GROUP BY employee_id
+  `,
         [
           cutoffDate,
           cutoffDate,
@@ -323,18 +325,20 @@ const generatePayroll = async (req, res) => {
         ],
       );
     } else {
+      // For previous months, query Employee_Attendance directly instead of using view
       [attendanceSummary] = await pool.query(
         `
-        SELECT 
-          employee_id,
-          COALESCE(present_days, 0) AS present_days,
-          COALESCE(absent_days, 0) AS absent_days,
-          COALESCE(late_days, 0) AS late_days,
-          COALESCE(leave_days, 0) AS leave_days,
-          COALESCE(half_days, 0) AS half_days
-        FROM Monthly_Attendance_Summary
-        WHERE year = ? AND month = ?
-      `,
+    SELECT 
+      employee_id,
+      SUM(CASE WHEN status IN ('Present', 'Late') THEN 1 ELSE 0 END) AS present_days,
+      SUM(CASE WHEN status = 'Absent' THEN 1 ELSE 0 END) AS absent_days,
+      SUM(CASE WHEN status = 'Late' THEN 1 ELSE 0 END) AS late_days,
+      SUM(CASE WHEN status IN ('Leave', 'Paid Leave') THEN 1 ELSE 0 END) AS leave_days,
+      SUM(CASE WHEN status = 'Half Day' THEN 1 ELSE 0 END) AS half_days
+    FROM Employee_Attendance
+    WHERE YEAR(attendance_date) = ? AND MONTH(attendance_date) = ?
+    GROUP BY employee_id
+  `,
         [yearNum, monthNum],
       );
     }
@@ -562,14 +566,15 @@ const generatePayroll = async (req, res) => {
         const rawAbsentDays = parseInt(totalAbsentMap[emp.id]) || 0;
         const leaveDays = parseInt(attendance.leave_days) || 0;
         const halfDays = parseInt(attendance.half_days) || 0;
-        const paidLeaveDaysFromAttendance = parseInt(detailed.paid_leave_days) || 0;
+        const paidLeaveDaysFromAttendance =
+          parseInt(detailed.paid_leave_days) || 0;
 
         // ============================================================
         // HALF DAY DEDUCTION LOGIC: 2 half days = 1 absent day
         // ============================================================
         const halfDaysToAbsent = Math.floor(halfDays / 2);
         const remainingHalfDays = halfDays % 2;
-        
+
         // Total absent days = raw absent days + half days converted to absent
         const totalAbsentDays = rawAbsentDays + halfDaysToAbsent;
 
@@ -585,22 +590,35 @@ const generatePayroll = async (req, res) => {
           (parseInt(leaveBalance.sick_used) || 0) +
           (parseInt(leaveBalance.annual_used) || 0);
         const yearlyPaidInAbsent = parseInt(yearlyPaidMap[emp.id]) || 0;
-        const unlinkedLeaves = Math.max(0, totalLeavesUsedYear - yearlyPaidInAbsent);
+        const unlinkedLeaves = Math.max(
+          0,
+          totalLeavesUsedYear - yearlyPaidInAbsent,
+        );
 
         // Calculate paid vs unpaid
         const rawUnpaid = Math.max(0, totalAbsentDays - markedPaidDays);
         const unlinkedForThisMonth = Math.min(unlinkedLeaves, rawUnpaid);
         const totalPaidLeaveDays = markedPaidDays + unlinkedForThisMonth;
-        const unpaidAbsentDays = Math.max(0, totalAbsentDays - totalPaidLeaveDays);
+        const unpaidAbsentDays = Math.max(
+          0,
+          totalAbsentDays - totalPaidLeaveDays,
+        );
 
         // Leave type breakdown
-        const casualLeaveDays = casualFromAbsent + (unlinkedForThisMonth > 0 ? Math.min(parseInt(leaveBalance.casual_used) || 0, unlinkedForThisMonth) : 0);
+        const casualLeaveDays =
+          casualFromAbsent +
+          (unlinkedForThisMonth > 0
+            ? Math.min(
+                parseInt(leaveBalance.casual_used) || 0,
+                unlinkedForThisMonth,
+              )
+            : 0);
         const sickLeaveDays = sickFromAbsent;
         const annualLeaveDays = annualFromAbsent;
 
         // Late deduction: every 3 lates = 1 day deduction
         const lateDeductionDays = Math.floor(lateDays / 3);
-        
+
         // Calculate deductions
         const absentDeduction = unpaidAbsentDays * dailyRate;
         const lateDeduction = lateDeductionDays * dailyRate;
@@ -608,27 +626,37 @@ const generatePayroll = async (req, res) => {
 
         const grossSalary = baseSalary + totalAllowances;
         const advanceInfo = advanceInstallmentMap[emp.id] || {};
-        const advanceDeduction = parseFloat(advanceInfo.total_advance_deduction) || 0;
+        const advanceDeduction =
+          parseFloat(advanceInfo.total_advance_deduction) || 0;
 
         const bonus = 0;
         const adjustment = 0;
-        const netSalary = grossSalary + bonus + adjustment - totalDeductions - advanceDeduction;
+        const netSalary =
+          grossSalary + bonus + adjustment - totalDeductions - advanceDeduction;
 
         // Generate notes with half day info
         let noteParts = [];
         if (isCurrentMonth) {
-          noteParts.push(`⚠️ PARTIAL MONTH: Data until ${cutoffDate}/${monthNum}/${yearNum} (${Math.round((cutoffDate / 30) * 100)}% of salary)`);
+          noteParts.push(
+            `⚠️ PARTIAL MONTH: Data until ${cutoffDate}/${monthNum}/${yearNum} (${Math.round((cutoffDate / 30) * 100)}% of salary)`,
+          );
         }
         if (halfDaysToAbsent > 0) {
-          noteParts.push(`${halfDays} half day(s) = ${halfDaysToAbsent} absent day(s) deducted${remainingHalfDays > 0 ? ` (${remainingHalfDays} half day remaining)` : ""}`);
+          noteParts.push(
+            `${halfDays} half day(s) = ${halfDaysToAbsent} absent day(s) deducted${remainingHalfDays > 0 ? ` (${remainingHalfDays} half day remaining)` : ""}`,
+          );
         }
         if (totalPaidLeaveDays > 0) {
-          noteParts.push(`Paid leaves: ${totalPaidLeaveDays} (${casualLeaveDays > 0 ? casualLeaveDays + " casual" : ""}${sickLeaveDays > 0 ? (casualLeaveDays > 0 ? ", " : "") + sickLeaveDays + " sick" : ""}${annualLeaveDays > 0 ? (casualLeaveDays > 0 || sickLeaveDays > 0 ? ", " : "") + annualLeaveDays + " annual" : ""})`);
+          noteParts.push(
+            `Paid leaves: ${totalPaidLeaveDays} (${casualLeaveDays > 0 ? casualLeaveDays + " casual" : ""}${sickLeaveDays > 0 ? (casualLeaveDays > 0 ? ", " : "") + sickLeaveDays + " sick" : ""}${annualLeaveDays > 0 ? (casualLeaveDays > 0 || sickLeaveDays > 0 ? ", " : "") + annualLeaveDays + " annual" : ""})`,
+          );
         } else if (totalAbsentDays > 0) {
           noteParts.push(`Unpaid absences: ${unpaidAbsentDays}`);
         }
         if (advanceDeduction > 0) {
-          noteParts.push(`Advance/loan deduction: Rs.${advanceDeduction.toLocaleString()}`);
+          noteParts.push(
+            `Advance/loan deduction: Rs.${advanceDeduction.toLocaleString()}`,
+          );
         }
 
         payrollRecords.push({
@@ -636,7 +664,9 @@ const generatePayroll = async (req, res) => {
           month: monthNum,
           year: yearNum,
           pay_period_start: payPeriod.start,
-          pay_period_end: isCurrentMonth ? `${yearNum}-${String(monthNum).padStart(2, "0")}-${cutoffDate}` : payPeriod.end,
+          pay_period_end: isCurrentMonth
+            ? `${yearNum}-${String(monthNum).padStart(2, "0")}-${cutoffDate}`
+            : payPeriod.end,
           days_in_month: daysInMonth,
           issue_date: payPeriod.issueDate,
           base_salary: baseSalary,
@@ -704,7 +734,10 @@ const generatePayroll = async (req, res) => {
         [monthNum, yearNum],
       );
     } catch (delError) {
-      console.log("Note: Error deleting old payroll records:", delError.message);
+      console.log(
+        "Note: Error deleting old payroll records:",
+        delError.message,
+      );
     }
 
     // 7. Insert new payroll records
@@ -800,7 +833,10 @@ const generatePayroll = async (req, res) => {
         );
       }
     } catch (advError) {
-      console.log("Note: Could not update advance installments:", advError.message);
+      console.log(
+        "Note: Could not update advance installments:",
+        advError.message,
+      );
     }
 
     return res.status(200).json({
