@@ -3,6 +3,7 @@
  *
  * ── Customers ──
  * GET    /api/v1/customers              – list all customers (search, sort)
+ * POST   /api/v1/customers              – create a new customer
  * GET    /api/v1/customers/:id          – single customer detail
  * GET    /api/v1/customers/:id/history  – full sales history for a customer
  * PUT    /api/v1/customers/:id          – update customer info
@@ -28,6 +29,7 @@ const adminGuard = (req, res, next) => {
 };
 
 router.get   ('/',            authMiddleware, adminGuard, ctrl.getCustomers);
+router.post  ('/',            authMiddleware, adminGuard, ctrl.createCustomer);
 router.post  ('/sync',        authMiddleware, adminGuard, ctrl.syncCustomers);
 router.get   ('/:id',         authMiddleware, adminGuard, ctrl.getCustomerById);
 router.get   ('/:id/history', authMiddleware, adminGuard, ctrl.getCustomerHistory);

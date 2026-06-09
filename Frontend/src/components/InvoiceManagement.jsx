@@ -7,7 +7,7 @@ import React, {
   useMemo,
 } from "react";
 import pdfLogo from "../pdf_logo.png";
-import { endpoints } from "../config/api";
+import { endpoints, apiRequest } from "../config/api";
 import PagePreloader from "./PagePreloader";
 import {
   CheckCircle,
@@ -135,6 +135,9 @@ const InvoiceManagement = () => {
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [newlyAddedClient, setNewlyAddedClient] = useState(null);
 
   // Filter States
   const [searchQuery, setSearchQuery] = useState("");
@@ -154,65 +157,46 @@ const InvoiceManagement = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
 
-  // Get user info for auth
-  const user = JSON.parse(localStorage.getItem("userInfo") || "{}");
-  const token = localStorage.getItem("token");
-
   // Fetch all invoices
   const fetchInvoices = useCallback(async () => {
     setLoading(true);
+    setError("");
     try {
-      const response = await fetch(
-        `${process.env.REACT_APP_API_URL || "http://100.126.74.55:5000"}/api/v1/invoices?limit=1000`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-      const result = await response.json();
-      if (result.success && result.data) {
+      const result = await apiRequest(`${endpoints.invoices.getAll}?limit=1000`);
+      if (result.success && Array.isArray(result.data)) {
         setInvoices(result.data);
-        setTotalRecords(result.data.length);
+        setTotalRecords(result.total ?? result.data.length);
         setFilteredRecords(result.data.length);
       } else {
-        setInvoices(getMockInvoices());
-        setTotalRecords(getMockInvoices().length);
-        setFilteredRecords(getMockInvoices().length);
+        setInvoices([]);
+        setTotalRecords(0);
+        setFilteredRecords(0);
       }
-    } catch (error) {
-      console.error("Error fetching invoices:", error);
-      setInvoices(getMockInvoices());
-      setTotalRecords(getMockInvoices().length);
-      setFilteredRecords(getMockInvoices().length);
+    } catch (err) {
+      console.error("Error fetching invoices:", err);
+      setError(err.message || "Failed to load invoices");
+      setInvoices([]);
+      setTotalRecords(0);
+      setFilteredRecords(0);
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, []);
 
-  // Fetch clients
+  // Fetch clients from customers table
   const fetchClients = useCallback(async () => {
     try {
-      const response = await fetch(
-        `${process.env.REACT_APP_API_URL || "http://100.126.74.55:5000"}/api/v1/clients?limit=1000`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      const result = await response.json();
-      if (result.success && result.data) {
+      const result = await apiRequest(`${endpoints.clients.getAll}?limit=1000`);
+      if (result.success && Array.isArray(result.data)) {
         setClients(result.data);
       } else {
-        setClients(getMockClients());
+        setClients([]);
       }
-    } catch (error) {
-      console.error("Error fetching clients:", error);
-      setClients(getMockClients());
+    } catch (err) {
+      console.error("Error fetching clients:", err);
+      setClients([]);
     }
-  }, [token]);
+  }, []);
 
   // Initial fetch
   useEffect(() => {
@@ -244,9 +228,15 @@ const InvoiceManagement = () => {
         matchesDateRange = invoiceDate >= startDate && invoiceDate <= endDate;
       }
 
-      return matchesSearch && matchesStatus && matchesPriority && matchesDateRange;
+      const invoiceDate = invoice.issue_date ? new Date(invoice.issue_date) : null;
+      const matchesMonth =
+        !invoiceDate ||
+        (invoiceDate.getMonth() + 1 === selectedMonth &&
+          invoiceDate.getFullYear() === selectedYear);
+
+      return matchesSearch && matchesStatus && matchesPriority && matchesDateRange && matchesMonth;
     });
-  }, [invoices, searchQuery, selectedStatus, selectedPriority, dateRange]);
+  }, [invoices, searchQuery, selectedStatus, selectedPriority, dateRange, selectedMonth, selectedYear]);
 
   useEffect(() => {
     setFilteredRecords(filteredData.length);
@@ -345,14 +335,91 @@ const InvoiceManagement = () => {
     URL.revokeObjectURL(url);
   };
 
-  // Add new customer
-  const addCustomer = (newCustomer) => {
-    setClients([...clients, { id: Date.now(), ...newCustomer }]);
+  const handleCreateInvoice = async (payload) => {
+    setActionLoading(true);
+    setError("");
+    try {
+      const result = await apiRequest(endpoints.invoices.create, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      if (result.success && result.data) {
+        setInvoices((prev) => [result.data, ...prev]);
+        setShowCreateModal(false);
+      }
+    } catch (err) {
+      setError(err.message || "Failed to create invoice");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDeleteInvoice = async (invoice) => {
+    setActionLoading(true);
+    setError("");
+    try {
+      await apiRequest(endpoints.invoices.delete(invoice.id), { method: "DELETE" });
+      setInvoices((prev) => prev.filter((i) => i.id !== invoice.id));
+      setShowDeleteConfirm(false);
+      setSelectedInvoice(null);
+    } catch (err) {
+      setError(err.message || "Failed to delete invoice");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const addCustomer = async (newCustomer) => {
+    setActionLoading(true);
+    setError("");
+    try {
+      const result = await apiRequest(endpoints.clients.create, {
+        method: "POST",
+        body: JSON.stringify({
+          name: newCustomer.name,
+          email: newCustomer.email,
+          phone: newCustomer.phone,
+          address: newCustomer.address,
+        }),
+      });
+      const client = result.client || {
+        id: result.data?.id,
+        name: result.data?.client_name || newCustomer.name,
+        email: result.data?.client_email || newCustomer.email,
+        phone: result.data?.client_phone || newCustomer.phone,
+        address: result.data?.client_address || newCustomer.address,
+      };
+      if (client.id) {
+        setClients((prev) => {
+          const exists = prev.some((c) => c.id === client.id);
+          return exists ? prev : [...prev, client];
+        });
+        setNewlyAddedClient(client);
+      }
+      setShowCreateCustomerModal(false);
+    } catch (err) {
+      setError(err.message || "Failed to create customer");
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
       <div className="p-8 max-w-[1600px] mx-auto">
+        {error && (
+          <div className="mb-6 flex items-center gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-rose-700">
+            <AlertCircle className="h-5 w-5 shrink-0" />
+            <span className="text-sm font-medium">{error}</span>
+            <button
+              onClick={() => setError("")}
+              className="ml-auto text-rose-500 hover:text-rose-700"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        )}
+
         {/* Header Section */}
         <div className="mb-8">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
@@ -365,6 +432,14 @@ const InvoiceManagement = () => {
               </p>
             </div>
             <div className="flex gap-3">
+              <button
+                onClick={() => { fetchInvoices(); fetchClients(); }}
+                disabled={loading}
+                className="flex items-center gap-2 px-6 py-3 bg-white text-slate-700 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-200 disabled:opacity-60"
+              >
+                <RefreshCw className={`h-5 w-5 ${loading ? "animate-spin" : ""}`} />
+                Refresh
+              </button>
               <button
                 onClick={exportToCSV}
                 className="flex items-center gap-2 px-6 py-3 bg-white text-slate-700 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-200"
@@ -537,13 +612,16 @@ const InvoiceManagement = () => {
         {/* Create/Edit Invoice Modal */}
         {showCreateModal && (
           <CreateInvoiceModal
-            onClose={() => setShowCreateModal(false)}
-            clients={clients}
-            onSave={(newInvoice) => {
-              setInvoices([newInvoice, ...invoices]);
+            onClose={() => {
               setShowCreateModal(false);
+              setNewlyAddedClient(null);
             }}
+            clients={clients}
+            onSave={handleCreateInvoice}
             onAddCustomer={() => setShowCreateCustomerModal(true)}
+            loading={actionLoading}
+            preselectedClient={newlyAddedClient}
+            onPreselectedConsumed={() => setNewlyAddedClient(null)}
           />
         )}
 
@@ -552,6 +630,7 @@ const InvoiceManagement = () => {
           <CreateCustomerModal
             onClose={() => setShowCreateCustomerModal(false)}
             onSave={addCustomer}
+            loading={actionLoading}
           />
         )}
 
@@ -570,11 +649,8 @@ const InvoiceManagement = () => {
         {showDeleteConfirm && selectedInvoice && (
           <DeleteConfirmModal
             invoice={selectedInvoice}
-            onConfirm={() => {
-              setInvoices(invoices.filter(i => i.id !== selectedInvoice.id));
-              setShowDeleteConfirm(false);
-              setSelectedInvoice(null);
-            }}
+            loading={actionLoading}
+            onConfirm={() => handleDeleteInvoice(selectedInvoice)}
             onClose={() => {
               setShowDeleteConfirm(false);
               setSelectedInvoice(null);
@@ -777,7 +853,7 @@ const InvoiceTable = ({
 };
 
 // Create Customer Modal Component
-const CreateCustomerModal = ({ onClose, onSave }) => {
+const CreateCustomerModal = ({ onClose, onSave, loading = false }) => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -788,7 +864,6 @@ const CreateCustomerModal = ({ onClose, onSave }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     onSave(formData);
-    onClose();
   };
 
   return (
@@ -869,9 +944,10 @@ const CreateCustomerModal = ({ onClose, onSave }) => {
             </button>
             <button
               type="submit"
-              className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:shadow-lg transition-all font-medium"
+              disabled={loading}
+              className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:shadow-lg transition-all font-medium disabled:opacity-60"
             >
-              Add Customer
+              {loading ? "Adding..." : "Add Customer"}
             </button>
           </div>
         </form>
@@ -880,8 +956,200 @@ const CreateCustomerModal = ({ onClose, onSave }) => {
   );
 };
 
+// Searchable client picker with live API suggestions
+const ClientSearchSelect = ({
+  clients,
+  value,
+  onChange,
+  required = false,
+  preselectedClient = null,
+  onPreselectedConsumed,
+}) => {
+  const containerRef = useRef(null);
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState([]);
+  const [open, setOpen] = useState(false);
+  const [searching, setSearching] = useState(false);
+  const [selected, setSelected] = useState(null);
+
+  const applyClient = useCallback((client) => {
+    if (!client?.id) return;
+    setSelected(client);
+    onChange(client.id, client);
+    setQuery("");
+    setOpen(false);
+    setResults([]);
+  }, [onChange]);
+
+  useEffect(() => {
+    if (preselectedClient?.id) {
+      applyClient(preselectedClient);
+      onPreselectedConsumed?.();
+    }
+  }, [preselectedClient, applyClient, onPreselectedConsumed]);
+
+  useEffect(() => {
+    if (!value) {
+      setSelected(null);
+      return;
+    }
+    const numericValue = parseInt(value, 10);
+    if (!selected || selected.id !== numericValue) {
+      const match = clients.find((c) => c.id === numericValue);
+      if (match) setSelected(match);
+    }
+  }, [value, clients, selected]);
+
+  useEffect(() => {
+    if (!open) return undefined;
+
+    const timer = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const params = new URLSearchParams({ limit: "15" });
+        if (query.trim()) params.set("search", query.trim());
+        const result = await apiRequest(`${endpoints.clients.getAll}?${params}`);
+        if (result.success && Array.isArray(result.data)) {
+          setResults(result.data);
+        } else {
+          setResults([]);
+        }
+      } catch {
+        const q = query.trim().toLowerCase();
+        const local = clients.filter((c) => {
+          if (!q) return true;
+          return (
+            c.name?.toLowerCase().includes(q) ||
+            c.email?.toLowerCase().includes(q) ||
+            c.phone?.toLowerCase().includes(q)
+          );
+        }).slice(0, 15);
+        setResults(local);
+      } finally {
+        setSearching(false);
+      }
+    }, query.trim() ? 280 : 0);
+
+    return () => clearTimeout(timer);
+  }, [query, open, clients]);
+
+  useEffect(() => {
+    const handleOutside = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleOutside);
+    return () => document.removeEventListener("mousedown", handleOutside);
+  }, []);
+
+  const clearSelection = () => {
+    setSelected(null);
+    onChange("", null);
+    setQuery("");
+    setResults([]);
+  };
+
+  return (
+    <div ref={containerRef} className="relative">
+      {selected ? (
+        <div className="flex items-center gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white">
+            {(selected.name || "?").charAt(0).toUpperCase()}
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="truncate font-semibold text-slate-800">{selected.name}</div>
+            <div className="truncate text-sm text-slate-500">{selected.email}</div>
+            {selected.phone && (
+              <div className="truncate text-xs text-slate-400">{selected.phone}</div>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={clearSelection}
+            className="rounded-lg p-2 text-slate-400 hover:bg-white hover:text-slate-600"
+            title="Change client"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      ) : (
+        <>
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              value={query}
+              required={required && !value}
+              placeholder="Search client by name, email, or phone..."
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setOpen(true);
+              }}
+              onFocus={() => setOpen(true)}
+              className="w-full rounded-xl border border-slate-300 py-2.5 pl-10 pr-10 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+            />
+            <button
+              type="button"
+              onClick={() => setOpen((prev) => !prev)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+              title="Browse clients"
+            >
+              <ChevronRight className={`h-4 w-4 transition-transform ${open ? "rotate-90" : ""}`} />
+            </button>
+          </div>
+
+          {open && (
+            <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-64 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-xl">
+              {searching ? (
+                <div className="flex items-center gap-2 px-4 py-3 text-sm text-slate-500">
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                  Searching clients...
+                </div>
+              ) : results.length > 0 ? (
+                results.map((client) => (
+                  <button
+                    key={client.id}
+                    type="button"
+                    onMouseDown={() => applyClient(client)}
+                    className="flex w-full items-center gap-3 border-b border-slate-50 px-4 py-3 text-left transition hover:bg-blue-50 last:border-0"
+                  >
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-bold text-slate-600">
+                      {(client.name || "?").charAt(0).toUpperCase()}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate font-medium text-slate-800">{client.name}</div>
+                      <div className="truncate text-sm text-slate-500">{client.email}</div>
+                    </div>
+                    {client.phone && (
+                      <span className="shrink-0 text-xs text-slate-400">{client.phone}</span>
+                    )}
+                  </button>
+                ))
+              ) : (
+                <div className="px-4 py-6 text-center text-sm text-slate-500">
+                  {query.trim() ? "No clients match your search" : "No clients found"}
+                </div>
+              )}
+            </div>
+          )}
+        </>
+      )}
+      <input type="hidden" value={value || ""} required={required} />
+    </div>
+  );
+};
+
 // Create Invoice Modal Component
-const CreateInvoiceModal = ({ onClose, clients, onSave, onAddCustomer }) => {
+const CreateInvoiceModal = ({
+  onClose,
+  clients,
+  onSave,
+  onAddCustomer,
+  loading = false,
+  preselectedClient = null,
+  onPreselectedConsumed,
+}) => {
   const [formData, setFormData] = useState({
     client_id: "",
     project_title: "",
@@ -922,23 +1190,25 @@ const CreateInvoiceModal = ({ onClose, clients, onSave, onAddCustomer }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const selectedClient = clients.find(c => c.id === parseInt(formData.client_id));
-    const newInvoice = {
-      id: Date.now(),
-      invoice_number: `INV-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`,
-      client_name: selectedClient?.name || "",
-      client_email: selectedClient?.email || "",
-      client_phone: selectedClient?.phone || "",
-      client_address: selectedClient?.address || "",
-      ...formData,
-      subtotal: total,
+    if (!formData.client_id) return;
+    onSave({
+      client_id: parseInt(formData.client_id, 10),
+      project_title: formData.project_title,
+      issue_date: formData.issue_date,
+      due_date: formData.due_date,
+      items: formData.items.map((item) => ({
+        description: item.description,
+        quantity: item.quantity,
+        unit_price: item.unit_price,
+        amount: item.amount,
+      })),
+      notes: formData.notes,
+      terms: formData.terms,
+      priority: formData.priority,
       tax_amount: 0,
       discount_amount: 0,
-      total_amount: total,
       status: "Sent",
-      created_at: new Date().toISOString(),
-    };
-    onSave(newInvoice);
+    });
   };
 
   return (
@@ -966,19 +1236,16 @@ const CreateInvoiceModal = ({ onClose, clients, onSave, onAddCustomer }) => {
                 <UserPlus className="h-4 w-4" /> Add New Customer
               </button>
             </div>
-            <select
-              required
+            <ClientSearchSelect
+              clients={clients}
               value={formData.client_id}
-              onChange={(e) => setFormData({ ...formData, client_id: e.target.value })}
-              className="w-full px-3 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Select a client...</option>
-              {clients.map((client) => (
-                <option key={client.id} value={client.id}>
-                  {client.name} - {client.email}
-                </option>
-              ))}
-            </select>
+              required
+              preselectedClient={preselectedClient}
+              onPreselectedConsumed={onPreselectedConsumed}
+              onChange={(clientId) =>
+                setFormData({ ...formData, client_id: clientId })
+              }
+            />
           </div>
 
           {/* Project Details */}
@@ -1150,9 +1417,10 @@ const CreateInvoiceModal = ({ onClose, clients, onSave, onAddCustomer }) => {
             </button>
             <button
               type="submit"
-              className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:shadow-lg transition-all font-medium"
+              disabled={loading || !formData.client_id}
+              className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:shadow-lg transition-all font-medium disabled:opacity-60"
             >
-              Create Invoice
+              {loading ? "Creating..." : "Create Invoice"}
             </button>
           </div>
         </form>
@@ -1809,7 +2077,7 @@ const InvoiceDetailModal = ({ invoice, onClose }) => {
 };
 
 // Delete Confirmation Modal
-const DeleteConfirmModal = ({ invoice, onConfirm, onClose }) => {
+const DeleteConfirmModal = ({ invoice, onConfirm, onClose, loading = false }) => {
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl">
@@ -1834,103 +2102,15 @@ const DeleteConfirmModal = ({ invoice, onConfirm, onClose }) => {
           </button>
           <button
             onClick={onConfirm}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            disabled={loading}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-60"
           >
-            Delete Invoice
+            {loading ? "Deleting..." : "Delete Invoice"}
           </button>
         </div>
       </div>
     </div>
   );
-};
-
-// Mock Data Functions
-const getMockInvoices = () => {
-  return [
-    {
-      id: 1,
-      invoice_number: "INV-2026-001",
-      client_name: "Tech Corp Solutions",
-      client_email: "billing@techcorp.com",
-      client_phone: "+1 234-567-8900",
-      client_address: "123 Tech Street, Silicon Valley, CA",
-      project_title: "Website Development",
-      issue_date: "2026-01-15",
-      due_date: "2026-02-14",
-      subtotal: 5500,
-      tax_amount: 0,
-      discount_amount: 0,
-      total_amount: 5500,
-      paid_amount: 5500,
-      status: "Paid",
-      priority: "High",
-      items: [
-        { description: "Frontend Development", quantity: 1, unit_price: 3000, amount: 3000 },
-        { description: "Backend Development", quantity: 1, unit_price: 2500, amount: 2500 },
-      ],
-      notes: "Website launch completed successfully",
-      terms: "Payment due within 30 days",
-      created_at: "2026-01-10T10:00:00Z",
-    },
-    {
-      id: 2,
-      invoice_number: "INV-2026-002",
-      client_name: "Design Studio Inc",
-      client_email: "accounts@designstudio.com",
-      client_phone: "+1 234-567-8901",
-      client_address: "456 Creative Ave, Arts District, NY",
-      project_title: "Brand Identity Design",
-      issue_date: "2026-01-20",
-      due_date: "2026-02-19",
-      subtotal: 2500,
-      tax_amount: 0,
-      discount_amount: 0,
-      total_amount: 2500,
-      paid_amount: 0,
-      status: "Unpaid",
-      priority: "Medium",
-      items: [
-        { description: "Logo Design", quantity: 1, unit_price: 1000, amount: 1000 },
-        { description: "Brand Guidelines", quantity: 1, unit_price: 1500, amount: 1500 },
-      ],
-      notes: "Initial concepts approved",
-      terms: "Payment due upon receipt",
-      created_at: "2026-01-15T14:30:00Z",
-    },
-    {
-      id: 3,
-      invoice_number: "INV-2026-003",
-      client_name: "E-commerce Ventures",
-      client_email: "finance@ecomventures.com",
-      client_phone: "+1 234-567-8902",
-      client_address: "789 Market Street, Business Bay, CA",
-      project_title: "Mobile App Development",
-      issue_date: "2023-12-01",
-      due_date: "2023-12-31",
-      subtotal: 10000,
-      tax_amount: 0,
-      discount_amount: 0,
-      total_amount: 10000,
-      paid_amount: 5000,
-      status: "Partially Paid",
-      priority: "High",
-      items: [
-        { description: "iOS Development", quantity: 1, unit_price: 5000, amount: 5000 },
-        { description: "Android Development", quantity: 1, unit_price: 5000, amount: 5000 },
-      ],
-      notes: "App in testing phase",
-      terms: "Payment upon milestone completion",
-      created_at: "2023-11-25T09:15:00Z",
-    },
-  ];
-};
-
-const getMockClients = () => {
-  return [
-    { id: 1, name: "Tech Corp Solutions", email: "billing@techcorp.com", phone: "+1 234-567-8900", address: "123 Tech Street, Silicon Valley, CA" },
-    { id: 2, name: "Design Studio Inc", email: "accounts@designstudio.com", phone: "+1 234-567-8901", address: "456 Creative Ave, Arts District, NY" },
-    { id: 3, name: "E-commerce Ventures", email: "finance@ecomventures.com", phone: "+1 234-567-8902", address: "789 Market Street, Business Bay, CA" },
-  ];
 };
 
 export default InvoiceManagement;
