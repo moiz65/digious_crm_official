@@ -662,144 +662,144 @@ const UnexplainedAbsenceTracking = ({
     });
   };
 
-  return (
-    <div className="bg-white rounded-3xl p-7 border border-gray-200 shadow-md mb-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-2xl font-bold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent">
-            Uninformed
-          </h2>
-          <p className="text-gray-600 mt-1 text-sm">
-            Employees who haven't reported their absence for{" "}
-            {new Date(selectedDate).toLocaleDateString()}
-          </p>
-        </div>
+  // return (
+  //   <div className="bg-white rounded-3xl p-7 border border-gray-200 shadow-md mb-6">
+  //     <div className="flex items-center justify-between mb-6">
+  //       <div>
+  //         <h2 className="text-2xl font-bold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent">
+  //           Uninformed
+  //         </h2>
+  //         <p className="text-gray-600 mt-1 text-sm">
+  //           Employees who haven't reported their absence for{" "}
+  //           {new Date(selectedDate).toLocaleDateString()}
+  //         </p>
+  //       </div>
 
-        <div className="flex items-center space-x-3">
-          {selectedAbsences.length > 0 && (
-            <>
-              <button
-                onClick={handleBulkMarkAsExplained}
-                className="flex items-center px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition duration-300"
-              >
-                <UserCheck className="h-4 w-4 mr-2" />
-                Mark as Explained ({selectedAbsences.length})
-              </button>
-              <button
-                onClick={handleBulkSendReminder}
-                className="flex items-center px-4 py-2 bg-orange-600 text-white rounded-xl hover:bg-orange-700 transition duration-300"
-              >
-                <MessageCircle className="h-4 w-4 mr-2" />
-                Send Reminder ({selectedAbsences.length})
-              </button>
-            </>
-          )}
-          <span
-            className={`px-3 py-1 rounded-full text-sm font-medium ${
-              unexplainedAbsences.length > 0
-                ? "bg-red-100 text-red-800"
-                : "bg-green-100 text-green-800"
-            }`}
-          >
-            {unexplainedAbsences.length} unexplained
-          </span>
-        </div>
-      </div>
+  //       <div className="flex items-center space-x-3">
+  //         {selectedAbsences.length > 0 && (
+  //           <>
+  //             <button
+  //               onClick={handleBulkMarkAsExplained}
+  //               className="flex items-center px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition duration-300"
+  //             >
+  //               <UserCheck className="h-4 w-4 mr-2" />
+  //               Mark as Explained ({selectedAbsences.length})
+  //             </button>
+  //             <button
+  //               onClick={handleBulkSendReminder}
+  //               className="flex items-center px-4 py-2 bg-orange-600 text-white rounded-xl hover:bg-orange-700 transition duration-300"
+  //             >
+  //               <MessageCircle className="h-4 w-4 mr-2" />
+  //               Send Reminder ({selectedAbsences.length})
+  //             </button>
+  //           </>
+  //         )}
+  //         <span
+  //           className={`px-3 py-1 rounded-full text-sm font-medium ${
+  //             unexplainedAbsences.length > 0
+  //               ? "bg-red-100 text-red-800"
+  //               : "bg-green-100 text-green-800"
+  //           }`}
+  //         >
+  //           {unexplainedAbsences.length} unexplained
+  //         </span>
+  //       </div>
+  //     </div>
 
-      {unexplainedAbsences.length > 0 ? (
-        <div className="space-y-3">
-          <div className="flex items-center p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl border border-gray-300">
-            <input
-              type="checkbox"
-              checked={
-                selectedAbsences.length === unexplainedAbsences.length &&
-                unexplainedAbsences.length > 0
-              }
-              onChange={handleSelectAll}
-              className="h-4 w-4 text-blue-600 rounded focus:ring-blue-500 mr-4 cursor-pointer"
-            />
-            <div className="flex-1 grid grid-cols-4 gap-4 text-sm font-semibold text-gray-700 uppercase tracking-wide">
-              <span>Employee</span>
-              <span>Department</span>
-              <span>Status</span>
-              <span>Actions</span>
-            </div>
-          </div>
+  //     {unexplainedAbsences.length > 0 ? (
+  //       <div className="space-y-3">
+  //         <div className="flex items-center p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl border border-gray-300">
+  //           <input
+  //             type="checkbox"
+  //             checked={
+  //               selectedAbsences.length === unexplainedAbsences.length &&
+  //               unexplainedAbsences.length > 0
+  //             }
+  //             onChange={handleSelectAll}
+  //             className="h-4 w-4 text-blue-600 rounded focus:ring-blue-500 mr-4 cursor-pointer"
+  //           />
+  //           <div className="flex-1 grid grid-cols-4 gap-4 text-sm font-semibold text-gray-700 uppercase tracking-wide">
+  //             <span>Employee</span>
+  //             <span>Department</span>
+  //             <span>Status</span>
+  //             <span>Actions</span>
+  //           </div>
+  //         </div>
 
-          {unexplainedAbsences.map((absence, index) =>
-            absence && absence.employee ? (
-              <div
-                key={absence.employee.id}
-                className="flex items-center p-5 bg-red-50 rounded-2xl border border-red-300 hover:shadow-md transition-all duration-300"
-              >
-                <input
-                  type="checkbox"
-                  checked={selectedAbsences.includes(index)}
-                  onChange={() => handleSelectAbsence(index)}
-                  className="h-4 w-4 text-blue-600 rounded focus:ring-blue-500 mr-4"
-                />
+  //         {unexplainedAbsences.map((absence, index) =>
+  //           absence && absence.employee ? (
+  //             <div
+  //               key={absence.employee.id}
+  //               className="flex items-center p-5 bg-red-50 rounded-2xl border border-red-300 hover:shadow-md transition-all duration-300"
+  //             >
+  //               <input
+  //                 type="checkbox"
+  //                 checked={selectedAbsences.includes(index)}
+  //                 onChange={() => handleSelectAbsence(index)}
+  //                 className="h-4 w-4 text-blue-600 rounded focus:ring-blue-500 mr-4"
+  //               />
 
-                <div className="flex-1 grid grid-cols-4 gap-4 items-center">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center text-white font-semibold">
-                      {absence.employee.avatar}
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-gray-900">
-                        {absence.employee.name}
-                      </h4>
-                      <p className="text-sm text-gray-600">
-                        {absence.employee.position}
-                      </p>
-                    </div>
-                  </div>
+  //               <div className="flex-1 grid grid-cols-4 gap-4 items-center">
+  //                 <div className="flex items-center space-x-3">
+  //                   <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center text-white font-semibold">
+  //                     {absence.employee.avatar}
+  //                   </div>
+  //                   <div>
+  //                     <h4 className="font-medium text-gray-900">
+  //                       {absence.employee.name}
+  //                     </h4>
+  //                     <p className="text-sm text-gray-600">
+  //                       {absence.employee.position}
+  //                     </p>
+  //                   </div>
+  //                 </div>
 
-                  <div>
-                    <span className="text-sm text-gray-700">
-                      {absence.employee.department}
-                    </span>
-                  </div>
+  //                 <div>
+  //                   <span className="text-sm text-gray-700">
+  //                     {absence.employee.department}
+  //                   </span>
+  //                 </div>
 
-                  <div>
-                    <span className="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium">
-                      Uninformed
-                    </span>
-                  </div>
+  //                 <div>
+  //                   <span className="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium">
+  //                     Uninformed
+  //                   </span>
+  //                 </div>
 
-                  <div className="flex items-center space-x-2">
-                    <button
-                      onClick={() =>
-                        onOpenExplanationModal(
-                          absence.employee.id,
-                          absence.date,
-                        )
-                      }
-                      className="flex items-center px-3 py-1 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 transition duration-200"
-                    >
-                      <UserCheck className="h-3 w-3 mr-1" />
-                      Explain
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ) : null,
-          )}
-        </div>
-      ) : (
-        <div className="text-center py-8">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <UserCheck className="h-8 w-8 text-green-600" />
-          </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            All absences explained
-          </h3>
-          <p className="text-gray-500">
-            Great! All employees have reported their absences for today.
-          </p>
-        </div>
-      )}
-    </div>
-  );
+  //                 <div className="flex items-center space-x-2">
+  //                   <button
+  //                     onClick={() =>
+  //                       onOpenExplanationModal(
+  //                         absence.employee.id,
+  //                         absence.date,
+  //                       )
+  //                     }
+  //                     className="flex items-center px-3 py-1 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 transition duration-200"
+  //                   >
+  //                     <UserCheck className="h-3 w-3 mr-1" />
+  //                     Explain
+  //                   </button>
+  //                 </div>
+  //               </div>
+  //             </div>
+  //           ) : null,
+  //         )}
+  //       </div>
+  //     ) : (
+  //       <div className="text-center py-8">
+  //         <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+  //           <UserCheck className="h-8 w-8 text-green-600" />
+  //         </div>
+  //         <h3 className="text-lg font-medium text-gray-900 mb-2">
+  //           All absences explained
+  //         </h3>
+  //         <p className="text-gray-500">
+  //           Great! All employees have reported their absences for today.
+  //         </p>
+  //       </div>
+  //     )}
+  //   </div>
+  // );
 };
 
 // Enhanced Monthly Overview Component
@@ -1688,211 +1688,211 @@ const MonthlyOverview = ({
   const isStacked = activeFilter === "stacked";
   const statsCards = getStatsCards();
 
-  return (
-    <div className="bg-gradient-to-br from-white via-gray-50 to-white rounded-3xl p-8 border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 mb-8">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 bg-clip-text text-transparent">
-            Monthly Overview
-          </h2>
-          <p className="text-gray-500 text-sm mt-1 font-medium">
-            {currentDate.toLocaleString("default", {
-              month: "long",
-              year: "numeric",
-            })}{" "}
-            Performance Analytics
-          </p>
-        </div>
+  // return (
+  //   <div className="bg-gradient-to-br from-white via-gray-50 to-white rounded-3xl p-8 border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 mb-8">
+  //     <div className="flex items-center justify-between mb-8">
+  //       <div>
+  //         <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 bg-clip-text text-transparent">
+  //           Monthly Overview
+  //         </h2>
+  //         <p className="text-gray-500 text-sm mt-1 font-medium">
+  //           {currentDate.toLocaleString("default", {
+  //             month: "long",
+  //             year: "numeric",
+  //           })}{" "}
+  //           Performance Analytics
+  //         </p>
+  //       </div>
 
-        <div className="flex items-center gap-4 bg-gray-50 p-3 rounded-xl border border-gray-200">
-          {/* Time Range Filter */}
-          <div className="flex gap-2">
-            {timeRangeOptions.map((option) => {
-              const IconComponent =
-                option.value === "weekly"
-                  ? Calendar
-                  : option.value === "monthly"
-                    ? BarChart3
-                    : option.value === "custom"
-                      ? Filter
-                      : Calendar;
-              return (
-                <button
-                  key={option.value}
-                  onClick={() => {
-                    onTimeRangeChange(option.value);
-                    if (option.value === "custom") {
-                      setShowCustomRange(true);
-                    }
-                  }}
-                  className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ${
-                    timeRange === option.value
-                      ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md"
-                      : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-100"
-                  }`}
-                >
-                  <IconComponent className="h-4 w-4" />
-                  {option.label}
-                </button>
-              );
-            })}
-          </div>
+  //       <div className="flex items-center gap-4 bg-gray-50 p-3 rounded-xl border border-gray-200">
+  //         {/* Time Range Filter */}
+  //         <div className="flex gap-2">
+  //           {timeRangeOptions.map((option) => {
+  //             const IconComponent =
+  //               option.value === "weekly"
+  //                 ? Calendar
+  //                 : option.value === "monthly"
+  //                   ? BarChart3
+  //                   : option.value === "custom"
+  //                     ? Filter
+  //                     : Calendar;
+  //             return (
+  //               <button
+  //                 key={option.value}
+  //                 onClick={() => {
+  //                   onTimeRangeChange(option.value);
+  //                   if (option.value === "custom") {
+  //                     setShowCustomRange(true);
+  //                   }
+  //                 }}
+  //                 className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ${
+  //                   timeRange === option.value
+  //                     ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md"
+  //                     : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-100"
+  //                 }`}
+  //               >
+  //                 <IconComponent className="h-4 w-4" />
+  //                 {option.label}
+  //               </button>
+  //             );
+  //           })}
+  //         </div>
 
-          {/* Data Type Filter */}
-          <div className="flex gap-2 ml-4 pl-4 border-l border-gray-300">
-            {filterOptions.map((option) => {
-              const IconComponent = option.icon;
-              return (
-                <button
-                  key={option.value}
-                  onClick={() => onFilterChange(option.value)}
-                  className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ${
-                    activeFilter === option.value
-                      ? "bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-md"
-                      : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-100"
-                  }`}
-                >
-                  <IconComponent className="h-4 w-4" />
-                  {option.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
+  //         {/* Data Type Filter */}
+  //         <div className="flex gap-2 ml-4 pl-4 border-l border-gray-300">
+  //           {filterOptions.map((option) => {
+  //             const IconComponent = option.icon;
+  //             return (
+  //               <button
+  //                 key={option.value}
+  //                 onClick={() => onFilterChange(option.value)}
+  //                 className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ${
+  //                   activeFilter === option.value
+  //                     ? "bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-md"
+  //                     : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-100"
+  //                 }`}
+  //               >
+  //                 <IconComponent className="h-4 w-4" />
+  //                 {option.label}
+  //               </button>
+  //             );
+  //           })}
+  //         </div>
+  //       </div>
+  //     </div>
 
-      {/* Custom Date Range Picker */}
-      {showCustomRange && (
-        <div className="mb-8 p-5 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl border border-blue-200 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-blue-900">
-              Select Custom Date Range
-            </h3>
-            <button
-              onClick={() => setShowCustomRange(false)}
-              className="text-blue-600 hover:text-blue-800 transition"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <div>
-              <label className="block text-xs font-semibold text-blue-800 mb-2">
-                Start Date
-              </label>
-              <input
-                type="date"
-                value={customRange.start}
-                onChange={(e) =>
-                  setCustomRange((prev) => ({ ...prev, start: e.target.value }))
-                }
-                className="w-full px-4 py-2.5 border border-blue-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-blue-800 mb-2">
-                End Date
-              </label>
-              <input
-                type="date"
-                value={customRange.end}
-                onChange={(e) =>
-                  setCustomRange((prev) => ({ ...prev, end: e.target.value }))
-                }
-                className="w-full px-4 py-2.5 border border-blue-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
-              />
-            </div>
-          </div>
-          <div className="flex justify-end gap-3">
-            <button
-              onClick={() => setShowCustomRange(false)}
-              className="px-4 py-2 text-sm font-medium border border-gray-300 rounded-lg hover:bg-gray-50 transition"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleCustomRangeApply}
-              className="px-4 py-2 text-sm font-medium bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-lg hover:shadow-md transition"
-            >
-              Apply Range
-            </button>
-          </div>
-        </div>
-      )}
+  //     {/* Custom Date Range Picker */}
+  //     {showCustomRange && (
+  //       <div className="mb-8 p-5 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl border border-blue-200 shadow-sm">
+  //         <div className="flex items-center justify-between mb-4">
+  //           <h3 className="text-sm font-semibold text-blue-900">
+  //             Select Custom Date Range
+  //           </h3>
+  //           <button
+  //             onClick={() => setShowCustomRange(false)}
+  //             className="text-blue-600 hover:text-blue-800 transition"
+  //           >
+  //             <X className="h-5 w-5" />
+  //           </button>
+  //         </div>
+  //         <div className="grid grid-cols-2 gap-4 mb-4">
+  //           <div>
+  //             <label className="block text-xs font-semibold text-blue-800 mb-2">
+  //               Start Date
+  //             </label>
+  //             <input
+  //               type="date"
+  //               value={customRange.start}
+  //               onChange={(e) =>
+  //                 setCustomRange((prev) => ({ ...prev, start: e.target.value }))
+  //               }
+  //               className="w-full px-4 py-2.5 border border-blue-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+  //             />
+  //           </div>
+  //           <div>
+  //             <label className="block text-xs font-semibold text-blue-800 mb-2">
+  //               End Date
+  //             </label>
+  //             <input
+  //               type="date"
+  //               value={customRange.end}
+  //               onChange={(e) =>
+  //                 setCustomRange((prev) => ({ ...prev, end: e.target.value }))
+  //               }
+  //               className="w-full px-4 py-2.5 border border-blue-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+  //             />
+  //           </div>
+  //         </div>
+  //         <div className="flex justify-end gap-3">
+  //           <button
+  //             onClick={() => setShowCustomRange(false)}
+  //             className="px-4 py-2 text-sm font-medium border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+  //           >
+  //             Cancel
+  //           </button>
+  //           <button
+  //             onClick={handleCustomRangeApply}
+  //             className="px-4 py-2 text-sm font-medium bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-lg hover:shadow-md transition"
+  //           >
+  //             Apply Range
+  //           </button>
+  //         </div>
+  //       </div>
+  //     )}
 
-      {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Main Column Chart */}
-        {/* <div className="lg:col-span-2 p-6 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl border border-gray-200 shadow-sm">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-bold text-gray-900">{getChartTitle()}</h3>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setChartType('line')}
-                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ${
-                  chartType === 'line'
-                    ? 'bg-blue-600 text-white shadow-md'
-                    : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
-                }`}
-              >
-                Line Chart
-              </button>
-              <button
-                onClick={() => setChartType('bar')}
-                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ${
-                  chartType === 'bar'
-                    ? 'bg-blue-600 text-white shadow-md'
-                    : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
-                }`}
-              >
-                Bar Chart
-              </button>
-            </div>
-          </div>
-          <ColumnChartComponent 
-            data={chartData}
-            title={getChartTitle()}
-            height={350}
-            stacked={isStacked}
-            chartType={chartType}
-          />
-        </div> */}
+  //     {/* Charts Grid */}
+  //     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+  //       {/* Main Column Chart */}
+  //       {/* <div className="lg:col-span-2 p-6 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl border border-gray-200 shadow-sm">
+  //         <div className="flex items-center justify-between mb-6">
+  //           <h3 className="text-lg font-bold text-gray-900">{getChartTitle()}</h3>
+  //           <div className="flex gap-2">
+  //             <button
+  //               onClick={() => setChartType('line')}
+  //               className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ${
+  //                 chartType === 'line'
+  //                   ? 'bg-blue-600 text-white shadow-md'
+  //                   : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
+  //               }`}
+  //             >
+  //               Line Chart
+  //             </button>
+  //             <button
+  //               onClick={() => setChartType('bar')}
+  //               className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ${
+  //                 chartType === 'bar'
+  //                   ? 'bg-blue-600 text-white shadow-md'
+  //                   : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
+  //               }`}
+  //             >
+  //               Bar Chart
+  //             </button>
+  //           </div>
+  //         </div>
+  //         <ColumnChartComponent 
+  //           data={chartData}
+  //           title={getChartTitle()}
+  //           height={350}
+  //           stacked={isStacked}
+  //           chartType={chartType}
+  //         />
+  //       </div> */}
 
-        {/* Stats Cards */}
-        {statsCards && statsCards.length > 0 && (
-          <>
-            {statsCards.map((stat, index) => (
-              <div
-                key={index}
-                className={`p-6 bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 ${
-                  statsCards.length % 2 === 1 && index === statsCards.length - 1
-                    ? "lg:col-span-2"
-                    : ""
-                }`}
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-semibold text-gray-700">
-                    {stat.label}
-                  </h3>
-                  <div
-                    className={`h-10 w-10 rounded-lg flex items-center justify-center ${stat.bg}`}
-                  >
-                    <span className="text-lg font-bold">📊</span>
-                  </div>
-                </div>
-                <div className={`text-3xl font-bold ${stat.color}`}>
-                  {stat.value}
-                </div>
-                {stat.trendText && (
-                  <p className="text-xs text-gray-600 mt-2">{stat.trendText}</p>
-                )}
-              </div>
-            ))}
-          </>
-        )}
-      </div>
-    </div>
-  );
+  //       {/* Stats Cards */}
+  //       {statsCards && statsCards.length > 0 && (
+  //         <>
+  //           {statsCards.map((stat, index) => (
+  //             <div
+  //               key={index}
+  //               className={`p-6 bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 ${
+  //                 statsCards.length % 2 === 1 && index === statsCards.length - 1
+  //                   ? "lg:col-span-2"
+  //                   : ""
+  //               }`}
+  //             >
+  //               <div className="flex items-center justify-between mb-3">
+  //                 <h3 className="text-sm font-semibold text-gray-700">
+  //                   {stat.label}
+  //                 </h3>
+  //                 <div
+  //                   className={`h-10 w-10 rounded-lg flex items-center justify-center ${stat.bg}`}
+  //                 >
+  //                   <span className="text-lg font-bold">📊</span>
+  //                 </div>
+  //               </div>
+  //               <div className={`text-3xl font-bold ${stat.color}`}>
+  //                 {stat.value}
+  //               </div>
+  //               {stat.trendText && (
+  //                 <p className="text-xs text-gray-600 mt-2">{stat.trendText}</p>
+  //               )}
+  //             </div>
+  //           ))}
+  //         </>
+  //       )}
+  //     </div>
+  //   </div>
+  // );
 };
 
 // Enhanced Employee Detail View Component with Notes Editing
@@ -3712,228 +3712,264 @@ const OverviewTab = ({
 
       {/* Attendance Details Section - Only show when a date is explicitly selected */}
       {selectedDate && (
-        <div className="bg-white rounded-3xl p-7 border border-gray-200 shadow-md">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-4">
-              <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
-                Attendance for{" "}
-                {new Date(selectedDate).toLocaleDateString("en-US", {
-                  weekday: "long",
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}
-              </h2>
-            </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-500">
-                {
-                  getFilteredAttendanceData().filter(
-                    (item) => item.date === selectedDate,
-                  ).length
-                }{" "}
-                of {getFilteredEmployees().length} employees
-              </span>
-              <div className="relative">
-                <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search employees..."
-                  value={attendanceSearch}
-                  onChange={(e) => setAttendanceSearch(e.target.value)}
-                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#349dff] focus:border-transparent text-sm w-48"
-                />
-              </div>
-            </div>
-          </div>
+  <div className="bg-white rounded-3xl p-7 border border-gray-200 shadow-md">
+    <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center space-x-4">
+        <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+          Attendance for{" "}
+          {new Date(selectedDate).toLocaleDateString("en-US", {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          })}
+        </h2>
+      </div>
+      <div className="flex items-center space-x-4">
+        <span className="text-sm text-gray-500">
+          {
+            getFilteredAttendanceData().filter(
+              (item) => item.date === selectedDate,
+            ).length
+          }{" "}
+          of {getFilteredEmployees().length} employees
+        </span>
+        <div className="relative">
+          <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search employees..."
+            value={attendanceSearch}
+            onChange={(e) => setAttendanceSearch(e.target.value)}
+            className="pl-10 pr-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#349dff] focus:border-transparent text-sm w-48"
+          />
+        </div>
+      </div>
+    </div>
 
-          <div className="grid grid-cols-4 gap-4 mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">
-                {stats.presentToday}
-              </div>
-              <div className="text-xs text-gray-600 font-medium">Present</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-red-600">
-                {stats.absent}
-              </div>
-              <div className="text-xs text-gray-600 font-medium">Absent</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-orange-600">
-                {stats.onLeave}
-              </div>
-              <div className="text-xs text-gray-600 font-medium">On Leave</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">
-                {stats.lateToday}
-              </div>
-              <div className="text-xs text-gray-600 font-medium">Late</div>
-            </div>
-          </div>
+    {/* Stats Cards */}
+    <div className="grid grid-cols-4 gap-4 mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
+      <div className="text-center">
+        <div className="text-2xl font-bold text-green-600">
+          {stats.presentToday}
+        </div>
+        <div className="text-xs text-gray-600 font-medium">Present</div>
+      </div>
+      <div className="text-center">
+        <div className="text-2xl font-bold text-red-600">
+          {stats.absent}
+        </div>
+        <div className="text-xs text-gray-600 font-medium">Absent</div>
+      </div>
+      <div className="text-center">
+        <div className="text-2xl font-bold text-orange-600">
+          {stats.onLeave}
+        </div>
+        <div className="text-xs text-gray-600 font-medium">On Leave</div>
+      </div>
+      <div className="text-center">
+        <div className="text-2xl font-bold text-blue-600">
+          {stats.lateToday}
+        </div>
+        <div className="text-xs text-gray-600 font-medium">Late</div>
+      </div>
+    </div>
 
-          <div className="flex items-center space-x-4 mb-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
-            <div className="flex items-center space-x-2">
-              <span className="text-sm font-medium text-gray-700">
-                Filter by:
-              </span>
-              <select
-                value={attendanceFilter}
-                onChange={(e) => setAttendanceFilter(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#349dff] focus:border-transparent"
-              >
-                <option value="all">All Status</option>
-                <option value="present">Present</option>
-                <option value="absent">Absent</option>
-                <option value="leave">On Leave</option>
-                <option value="paid_leave">Paid Leave (PL)</option>
-                <option value="halfday">Half Day</option>
-                <option value="unexplained">Uninformed Absent (UA)</option>
-              </select>
-            </div>
-            <div className="flex items-center space-x-2">
-              <span className="text-sm font-medium text-gray-700">
-                Sort by:
-              </span>
-              <select
-                value={attendanceSort}
-                onChange={(e) => setAttendanceSort(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#349dff] focus:border-transparent"
-              >
-                <option value="name">Name</option>
-                <option value="department">Department</option>
-                <option value="status">Status</option>
-              </select>
-            </div>
-          </div>
+    {/* Filters */}
+    <div className="flex items-center space-x-4 mb-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
+      <div className="flex items-center space-x-2">
+        <span className="text-sm font-medium text-gray-700">
+          Filter by:
+        </span>
+        <select
+          value={attendanceFilter}
+          onChange={(e) => setAttendanceFilter(e.target.value)}
+          className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#349dff] focus:border-transparent"
+        >
+          <option value="all">All Status</option>
+          <option value="present">Present</option>
+          <option value="absent">Absent</option>
+          <option value="leave">On Leave</option>
+          <option value="paid_leave">Paid Leave (PL)</option>
+          <option value="halfday">Half Day</option>
+          <option value="unexplained">Uninformed Absent (UA)</option>
+        </select>
+      </div>
+      <div className="flex items-center space-x-2">
+        <span className="text-sm font-medium text-gray-700">
+          Sort by:
+        </span>
+        <select
+          value={attendanceSort}
+          onChange={(e) => setAttendanceSort(e.target.value)}
+          className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#349dff] focus:border-transparent"
+        >
+          <option value="name">Name</option>
+          <option value="department">Department</option>
+          <option value="status">Status</option>
+        </select>
+      </div>
+    </div>
 
-          <div className="space-y-2">
-            {getFilteredAndSortedAttendance().map((employee) => {
-              // Filter attendance data directly by selectedDate
-              const selectedDateAttendance = attendanceData.filter(
-                (item) => item.date === selectedDate,
-              );
-              const attendance = selectedDateAttendance.find(
-                (a) => a.employeeId === employee.id,
-              );
-              const status = attendance?.status || "absent";
-              const isHoliday = holidays.some((h) => h.date === selectedDate);
+    {/* Table */}
+    <div className="overflow-x-auto">
+      <table className="min-w-full divide-y divide-gray-200">
+        <thead className="bg-gray-50">
+          <tr>
+            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Employee
+            </th>
+            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Department
+            </th>
+            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Position
+            </th>
+            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Check In
+            </th>
+            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Check Out
+            </th>
+            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Late
+            </th>
+            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Status
+            </th>
+          </tr>
+        </thead>
+        <tbody className="bg-white divide-y divide-gray-200">
+          {getFilteredAndSortedAttendance().map((employee) => {
+            // Filter attendance data directly by selectedDate
+            const selectedDateAttendance = attendanceData.filter(
+              (item) => item.date === selectedDate,
+            );
+            const attendance = selectedDateAttendance.find(
+              (a) => a.employeeId === employee.id,
+            );
+            const status = attendance?.status || "absent";
+            const isHoliday = holidays.some((h) => h.date === selectedDate);
 
-              return (
-                <div
-                  key={employee.id}
-                  className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-sm transition-all duration-200"
-                >
-                  <div className="flex items-center space-x-3 flex-1">
-                    {/* Avatar */}
+            return (
+              <tr key={employee.id} className="hover:bg-gray-50 transition-colors duration-200">
+                {/* Employee Info */}
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="flex items-center">
                     <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center text-white font-semibold text-sm">
                       {employee.avatar}
                     </div>
-
-                    {/* Employee Info */}
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-gray-900">
+                    <div className="ml-4">
+                      <div className="text-sm font-medium text-gray-900">
                         {employee.name}
-                      </h4>
-                      <div className="text-sm text-gray-500">
-                        {employee.department} • {employee.position}
                       </div>
                     </div>
-
-                    {/* Time Info */}
-                    {attendance && attendance.checkIn !== "-" && (
-                      <div className="hidden md:flex items-center space-x-4 text-sm text-gray-600">
-                        <div className="flex items-center space-x-1">
-                          <span className="text-gray-500">In:</span>
-                          <span className="font-medium">
-                            {attendance.checkIn}
-                          </span>
-                        </div>
-                        {attendance.checkOut !== "-" && (
-                          <div className="flex items-center space-x-1">
-                            <span className="text-gray-500">Out:</span>
-                            <span className="font-medium">
-                              {attendance.checkOut}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    )}
                   </div>
-
-                  {/* Status Badge */}
-                  <div className="flex items-center space-x-2">
+                </td>
+                
+                {/* Department */}
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm text-gray-900">{employee.department}</div>
+                </td>
+                
+                {/* Position */}
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm text-gray-900">{employee.position}</div>
+                </td>
+                
+                {/* Check In */}
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm font-medium text-gray-900">
+                    {attendance?.checkIn || "-"}
+                  </div>
+                </td>
+                
+                {/* Check Out */}
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm font-medium text-gray-900">
+                    {attendance?.checkOut || "-"}
+                  </div>
+                </td>
+                
+                {/* Late */}
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {attendance?.late && attendance.late !== "-" && !isHoliday ? (
+                    <span className="text-sm text-orange-600 font-medium">
+                      {attendance.late}
+                    </span>
+                  ) : (
+                    <span className="text-sm text-gray-400">-</span>
+                  )}
+                </td>
+                
+                {/* Status Badge */}
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {isHoliday ? (
+                    <span className="px-3 py-1.5 rounded-md text-sm font-medium bg-purple-50 text-purple-700">
+                      Holiday
+                    </span>
+                  ) : (
                     <span
                       className={`px-3 py-1.5 rounded-md text-sm font-medium ${
-                        isHoliday
-                          ? "bg-purple-50 text-purple-700"
-                          : status === "late"
-                            ? "bg-orange-50 text-orange-700"
-                            : status === "present"
-                              ? "bg-green-50 text-green-700"
-                              : status === "leave"
-                                ? "bg-blue-50 text-blue-700"
-                                : status === "halfday"
-                                  ? "bg-yellow-50 text-yellow-700"
-                                  : status === "absent"
-                                    ? "bg-red-50 text-red-700"
-                                    : "bg-gray-50 text-gray-700"
+                        status === "late"
+                          ? "bg-orange-50 text-orange-700"
+                          : status === "present"
+                            ? "bg-green-50 text-green-700"
+                            : status === "leave"
+                              ? "bg-blue-50 text-blue-700"
+                              : status === "halfday"
+                                ? "bg-yellow-50 text-yellow-700"
+                                : status === "absent"
+                                  ? "bg-red-50 text-red-700"
+                                  : "bg-gray-50 text-gray-700"
                       }`}
                     >
-                      {isHoliday
-                        ? "Holiday"
-                        : status === "late"
-                          ? "Late"
-                          : status === "present"
-                            ? "Present"
-                            : status === "leave"
-                              ? "On Leave"
-                              : status === "halfday"
-                                ? "Half Day"
-                                : status === "absent"
-                                  ? "Absent"
-                                  : status}
+                      {status === "late"
+                        ? "Late"
+                        : status === "present"
+                          ? "Present"
+                          : status === "leave"
+                            ? "On Leave"
+                            : status === "halfday"
+                              ? "Half Day"
+                              : status === "absent"
+                                ? "Absent"
+                                : status}
                     </span>
-                    {!isHoliday &&
-                      attendance &&
-                      attendance.late &&
-                      attendance.late !== "-" && (
-                        <span className="text-xs text-orange-600 font-medium">
-                          {attendance.late}
-                        </span>
-                      )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
 
-          {getFilteredAndSortedAttendance().length === 0 && (
-            <div className="text-center py-12">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Users className="h-8 w-8 text-gray-400" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                No employees found
-              </h3>
-              <p className="text-gray-500 mb-4">
-                Try adjusting your filters or search terms
-              </p>
-              <button
-                onClick={() => {
-                  setAttendanceSearch("");
-                  setAttendanceFilter("all");
-                }}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200"
-              >
-                Clear Filters
-              </button>
-            </div>
-          )}
+    {/* Empty State */}
+    {getFilteredAndSortedAttendance().length === 0 && (
+      <div className="text-center py-12">
+        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <Users className="h-8 w-8 text-gray-400" />
         </div>
-      )}
+        <h3 className="text-lg font-medium text-gray-900 mb-2">
+          No employees found
+        </h3>
+        <p className="text-gray-500 mb-4">
+          Try adjusting your filters or search terms
+        </p>
+        <button
+          onClick={() => {
+            setAttendanceSearch("");
+            setAttendanceFilter("all");
+          }}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200"
+        >
+          Clear Filters
+        </button>
+      </div>
+    )}
+  </div>
+)}
 
       {/* Empty state when no date is selected */}
       {!selectedDate && (
@@ -5956,122 +5992,7 @@ export function HrAttendancePage() {
                   ))}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-5 mb-8">
-                  {/* Present Today Card */}
-                  <div className="group relative bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-6 border border-green-200 shadow-sm hover:shadow-lg hover:border-green-300 transition-all duration-300 overflow-hidden">
-                    <div className="absolute top-0 right-0 w-20 h-20 bg-green-100 rounded-full -mr-8 -mt-8 opacity-40 group-hover:opacity-60 transition-opacity"></div>
-                    <div className="relative z-10">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-sm font-semibold text-gray-700">
-                          Present Today
-                        </h3>
-                        <div className="p-2.5 bg-green-100 rounded-lg">
-                          <CheckCircle className="h-5 w-5 text-green-600" />
-                        </div>
-                      </div>
-                      <div className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-                        {stats.presentToday}
-                      </div>
-                      <p className="text-sm text-green-700 mt-2 flex items-center font-medium">
-                        <Users className="h-4 w-4 mr-1.5" />
-                        {stats.totalEmployees > 0
-                          ? Math.round(
-                              (stats.presentToday / stats.totalEmployees) * 100,
-                            )
-                          : 0}
-                        % attendance rate
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* On Leave Card */}
-                  <div className="group relative bg-gradient-to-br from-orange-50 to-amber-50 rounded-2xl p-6 border border-orange-200 shadow-sm hover:shadow-lg hover:border-orange-300 transition-all duration-300 overflow-hidden">
-                    <div className="absolute top-0 right-0 w-20 h-20 bg-orange-100 rounded-full -mr-8 -mt-8 opacity-40 group-hover:opacity-60 transition-opacity"></div>
-                    <div className="relative z-10">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-sm font-semibold text-gray-700">
-                          On Leave
-                        </h3>
-                        <div className="p-2.5 bg-orange-100 rounded-lg">
-                          <Calendar className="h-5 w-5 text-orange-600" />
-                        </div>
-                      </div>
-                      <div className="text-3xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
-                        {stats.onLeave}
-                      </div>
-                      <p className="text-sm text-orange-700 mt-2 flex items-center font-medium">
-                        <Clock className="h-4 w-4 mr-1.5" />
-                        {stats.totalLeavesTaken} total this month
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Monthly Rate Card */}
-                  <div className="group relative bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-6 border border-blue-200 shadow-sm hover:shadow-lg hover:border-blue-300 transition-all duration-300 overflow-hidden">
-                    <div className="absolute top-0 right-0 w-20 h-20 bg-blue-100 rounded-full -mr-8 -mt-8 opacity-40 group-hover:opacity-60 transition-opacity"></div>
-                    <div className="relative z-10">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-sm font-semibold text-gray-700">
-                          Monthly Rate
-                        </h3>
-                        <div className="p-2.5 bg-blue-100 rounded-lg">
-                          <PieChart className="h-5 w-5 text-blue-600" />
-                        </div>
-                      </div>
-                      <div className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
-                        {stats.monthlyAttendanceRate}%
-                      </div>
-                      <p className="text-sm text-blue-700 mt-2 flex items-center font-medium">
-                        <BarChart3 className="h-4 w-4 mr-1.5" />
-                        Overall performance
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Late Today Card */}
-                  <div className="group relative bg-gradient-to-br from-red-50 to-rose-50 rounded-2xl p-6 border border-red-200 shadow-sm hover:shadow-lg hover:border-red-300 transition-all duration-300 overflow-hidden">
-                    <div className="absolute top-0 right-0 w-20 h-20 bg-red-100 rounded-full -mr-8 -mt-8 opacity-40 group-hover:opacity-60 transition-opacity"></div>
-                    <div className="relative z-10">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-sm font-semibold text-gray-700">
-                          Late Today
-                        </h3>
-                        <div className="p-2.5 bg-red-100 rounded-lg">
-                          <Clock className="h-5 w-5 text-red-600" />
-                        </div>
-                      </div>
-                      <div className="text-3xl font-bold bg-gradient-to-r from-red-600 to-rose-600 bg-clip-text text-transparent">
-                        {stats.lateToday}
-                      </div>
-                      <p className="text-sm text-red-700 mt-2 flex items-center font-medium">
-                        <AlertCircle className="h-4 w-4 mr-1.5" />
-                        Late arrivals
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Uninformed Card */}
-                  <div className="group relative bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 border border-purple-200 shadow-sm hover:shadow-lg hover:border-purple-300 transition-all duration-300 overflow-hidden">
-                    <div className="absolute top-0 right-0 w-20 h-20 bg-purple-100 rounded-full -mr-8 -mt-8 opacity-40 group-hover:opacity-60 transition-opacity"></div>
-                    <div className="relative z-10">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-sm font-semibold text-gray-700">
-                          Uninformed
-                        </h3>
-                        <div className="p-2.5 bg-purple-100 rounded-lg">
-                          <UserX className="h-5 w-5 text-purple-600" />
-                        </div>
-                      </div>
-                      <div className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                        {stats.unexplainedAbsences}
-                      </div>
-                      <p className="text-sm text-purple-700 mt-2 flex items-center font-medium">
-                        <AlertCircle className="h-4 w-4 mr-1.5" />
-                        Need follow-up
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                {/*  */}
 
                 {activeTab === "overview" && (
                   <>
