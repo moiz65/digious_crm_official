@@ -125,10 +125,19 @@ const fetchInvoiceItems = async (invoiceIds) => {
   return map;
 };
 
+// MySQL DATE columns must stay calendar dates — never use toISOString() (UTC shift).
 const formatDateField = (value) => {
   if (!value) return null;
-  if (value instanceof Date) return value.toISOString().split('T')[0];
-  return String(value).split('T')[0];
+  if (typeof value === 'string') {
+    return value.split('T')[0].split(' ')[0];
+  }
+  if (value instanceof Date) {
+    const year = value.getFullYear();
+    const month = String(value.getMonth() + 1).padStart(2, '0');
+    const day = String(value.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+  return String(value).split('T')[0].split(' ')[0];
 };
 
 const formatInvoice = (row, items = []) => ({

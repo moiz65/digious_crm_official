@@ -2553,7 +2553,7 @@ exports.getAllAttendance = async (req, res) => {
       let query = `
         SELECT 
           ea.*,
-          eo.employee_id,
+          eo.employee_id AS employee_code,
           eo.name,
           eo.email,
           eo.department,
