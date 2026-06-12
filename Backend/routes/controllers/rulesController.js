@@ -20,6 +20,15 @@ exports.getAllRules = async (req, res) => {
       connection.release();
     }
   } catch (error) {
+    if (error.code === 'ER_NO_SUCH_TABLE') {
+      console.warn('⚠️ Company_Rules table not found — returning empty rules list');
+      return res.status(200).json({
+        success: true,
+        message: 'Rules fetched successfully (defaults)',
+        data: [],
+        count: 0
+      });
+    }
     console.error('❌ Error fetching rules:', error);
     res.status(500).json({
       success: false,
@@ -61,6 +70,15 @@ exports.getBreakRules = async (req, res) => {
       connection.release();
     }
   } catch (error) {
+    if (error.code === 'ER_NO_SUCH_TABLE') {
+      console.warn('⚠️ Company_Rules table not found — returning default break rules');
+      return res.status(200).json({
+        success: true,
+        message: 'Break rules fetched successfully (defaults)',
+        data: [],
+        count: 0
+      });
+    }
     console.error('❌ Error fetching break rules:', error);
     res.status(500).json({
       success: false,

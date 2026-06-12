@@ -67,12 +67,48 @@ const formatCurrency = (amount) => {
   }).format(amount);
 };
 
+// Parse YYYY-MM-DD as a calendar date (no UTC timezone shift)
+const parseDateOnly = (dateString) => {
+  if (!dateString) return null;
+  const str = String(dateString).split("T")[0].split(" ")[0];
+  const [year, month, day] = str.split("-").map(Number);
+  if (!year || !month || !day) return null;
+  return new Date(year, month - 1, day);
+};
+
+const toDateInputValue = (dateString) => {
+  if (!dateString) return "";
+  const str = String(dateString).split("T")[0].split(" ")[0];
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+  const date = parseDateOnly(dateString);
+  if (!date) return "";
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+};
+
+const getLocalDateString = (date = new Date()) => {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+};
+
+const addDaysToDateString = (dateString, days) => {
+  const date = parseDateOnly(dateString) || new Date();
+  date.setDate(date.getDate() + days);
+  return getLocalDateString(date);
+};
+
 const formatDate = (dateString) => {
   if (!dateString) return "-";
-  return new Date(dateString).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
+  const date = parseDateOnly(dateString);
+  if (!date) return "-";
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
   });
 };
 
@@ -131,6 +167,7 @@ const InvoiceManagement = () => {
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingInvoice, setEditingInvoice] = useState(null);
   const [showCreateCustomerModal, setShowCreateCustomerModal] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -222,13 +259,16 @@ const InvoiceManagement = () => {
 
       let matchesDateRange = true;
       if (dateRange.start && dateRange.end) {
-        const invoiceDate = new Date(invoice.issue_date);
-        const startDate = new Date(dateRange.start);
-        const endDate = new Date(dateRange.end);
-        matchesDateRange = invoiceDate >= startDate && invoiceDate <= endDate;
+        const invoiceDate = parseDateOnly(invoice.issue_date);
+        const startDate = parseDateOnly(dateRange.start);
+        const endDate = parseDateOnly(dateRange.end);
+        matchesDateRange =
+          invoiceDate && startDate && endDate
+            ? invoiceDate >= startDate && invoiceDate <= endDate
+            : true;
       }
 
-      const invoiceDate = invoice.issue_date ? new Date(invoice.issue_date) : null;
+      const invoiceDate = parseDateOnly(invoice.issue_date);
       const matchesMonth =
         !invoiceDate ||
         (invoiceDate.getMonth() + 1 === selectedMonth &&
@@ -354,6 +394,43 @@ const InvoiceManagement = () => {
     }
   };
 
+  const handleUpdateInvoice = async (payload) => {
+    if (!editingInvoice?.id) return;
+    setActionLoading(true);
+    setError("");
+    try {
+      const result = await apiRequest(endpoints.invoices.update(editingInvoice.id), {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      });
+      if (result.success && result.data) {
+        setInvoices((prev) =>
+          prev.map((inv) => (inv.id === result.data.id ? result.data : inv)),
+        );
+        if (selectedInvoice?.id === result.data.id) {
+          setSelectedInvoice(result.data);
+        }
+        setEditingInvoice(null);
+        setShowCreateModal(false);
+      }
+    } catch (err) {
+      setError(err.message || "Failed to update invoice");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const openCreateModal = () => {
+    setEditingInvoice(null);
+    setShowCreateModal(true);
+  };
+
+  const openEditModal = (invoice) => {
+    setEditingInvoice(invoice);
+    setShowCreateModal(true);
+    setShowDetailModal(false);
+  };
+
   const handleDeleteInvoice = async (invoice) => {
     setActionLoading(true);
     setError("");
@@ -448,7 +525,7 @@ const InvoiceManagement = () => {
                 Export CSV
               </button>
               <button
-                onClick={() => setShowCreateModal(true)}
+                onClick={openCreateModal}
                 className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
               >
                 <Plus className="h-5 w-5" />
@@ -600,6 +677,7 @@ const InvoiceManagement = () => {
             setSelectedInvoice(invoice);
             setShowDetailModal(true);
           }}
+          onEditInvoice={openEditModal}
           onDeleteInvoice={(invoice) => {
             setSelectedInvoice(invoice);
             setShowDeleteConfirm(true);
@@ -614,10 +692,12 @@ const InvoiceManagement = () => {
           <CreateInvoiceModal
             onClose={() => {
               setShowCreateModal(false);
+              setEditingInvoice(null);
               setNewlyAddedClient(null);
             }}
             clients={clients}
-            onSave={handleCreateInvoice}
+            invoice={editingInvoice}
+            onSave={editingInvoice ? handleUpdateInvoice : handleCreateInvoice}
             onAddCustomer={() => setShowCreateCustomerModal(true)}
             loading={actionLoading}
             preselectedClient={newlyAddedClient}
@@ -638,6 +718,7 @@ const InvoiceManagement = () => {
         {showDetailModal && selectedInvoice && (
           <InvoiceDetailModal
             invoice={selectedInvoice}
+            onEdit={() => openEditModal(selectedInvoice)}
             onClose={() => {
               setShowDetailModal(false);
               setSelectedInvoice(null);
@@ -667,6 +748,7 @@ const InvoiceTable = ({
   data,
   loading,
   onViewDetails,
+  onEditInvoice,
   onDeleteInvoice,
   currentPage,
   setCurrentPage,
@@ -771,9 +853,18 @@ const InvoiceTable = ({
                     <div className="text-sm text-slate-700">
                       {formatDate(invoice.due_date)}
                     </div>
-                    {new Date(invoice.due_date) < new Date() && invoice.status !== "Paid" && (
-                      <div className="text-xs text-red-500 mt-1">Overdue</div>
-                    )}
+                    {(() => {
+                      const dueDate = parseDateOnly(invoice.due_date);
+                      const today = parseDateOnly(getLocalDateString());
+                      return (
+                        dueDate &&
+                        today &&
+                        dueDate < today &&
+                        invoice.status !== "Paid" && (
+                          <div className="text-xs text-red-500 mt-1">Overdue</div>
+                        )
+                      );
+                    })()}
                   </td>
                   <td className="px-6 py-4">
                     <div className="font-bold text-slate-800">
@@ -803,6 +894,13 @@ const InvoiceTable = ({
                         title="View Details"
                       >
                         <Eye className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => onEditInvoice(invoice)}
+                        className="p-2 bg-amber-50 hover:bg-amber-100 text-amber-600 rounded-lg transition-colors"
+                        title="Edit Invoice"
+                      >
+                        <Edit className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => onDeleteInvoice(invoice)}
@@ -1140,26 +1238,47 @@ const ClientSearchSelect = ({
   );
 };
 
-// Create Invoice Modal Component
+// Create / Edit Invoice Modal Component
 const CreateInvoiceModal = ({
   onClose,
   clients,
+  invoice = null,
   onSave,
   onAddCustomer,
   loading = false,
   preselectedClient = null,
   onPreselectedConsumed,
 }) => {
-  const [formData, setFormData] = useState({
-    client_id: "",
-    project_title: "",
-    issue_date: new Date().toISOString().split('T')[0],
-    due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    items: [{ description: "", quantity: 1, unit_price: 0, amount: 0 }],
-    notes: "",
-    terms: "",
-    priority: "Medium",
+  const isEditing = Boolean(invoice?.id);
+  const today = getLocalDateString();
+
+  const buildInitialForm = (inv) => ({
+    client_id: inv?.customer_id || inv?.client_id || "",
+    project_title: inv?.project_title || "",
+    issue_date: inv?.issue_date ? toDateInputValue(inv.issue_date) : today,
+    due_date: inv?.due_date
+      ? toDateInputValue(inv.due_date)
+      : addDaysToDateString(today, 30),
+    items:
+      inv?.items?.length > 0
+        ? inv.items.map((item) => ({
+            description: item.description || "",
+            quantity: item.quantity ?? 1,
+            unit_price: item.unit_price ?? 0,
+            amount: item.amount ?? 0,
+          }))
+        : [{ description: "", quantity: 1, unit_price: 0, amount: 0 }],
+    notes: inv?.notes || "",
+    terms: inv?.terms || "",
+    priority: inv?.priority || "Medium",
+    status: inv?.status || "Sent",
   });
+
+  const [formData, setFormData] = useState(() => buildInitialForm(invoice));
+
+  useEffect(() => {
+    setFormData(buildInitialForm(invoice));
+  }, [invoice]);
 
   const calculateTotal = () => {
     return formData.items.reduce((sum, item) => sum + (item.amount || 0), 0);
@@ -1191,7 +1310,7 @@ const CreateInvoiceModal = ({
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.client_id) return;
-    onSave({
+    const payload = {
       client_id: parseInt(formData.client_id, 10),
       project_title: formData.project_title,
       issue_date: formData.issue_date,
@@ -1207,15 +1326,18 @@ const CreateInvoiceModal = ({
       priority: formData.priority,
       tax_amount: 0,
       discount_amount: 0,
-      status: "Sent",
-    });
+      status: formData.status,
+    };
+    onSave(payload);
   };
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-slate-800">Create New Invoice</h2>
+          <h2 className="text-2xl font-bold text-slate-800">
+            {isEditing ? "Edit Invoice" : "Create New Invoice"}
+          </h2>
           <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-lg">
             <X className="h-6 w-6 text-slate-600" />
           </button>
@@ -1354,20 +1476,40 @@ const CreateInvoiceModal = ({
             </div>
           </div>
 
-          {/* Priority */}
-          <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">
-              Priority
-            </label>
-            <select
-              value={formData.priority}
-              onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-              className="w-full px-3 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500"
-            >
-              <option>High</option>
-              <option>Medium</option>
-              <option>Low</option>
-            </select>
+          {/* Priority & Status */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                Priority
+              </label>
+              <select
+                value={formData.priority}
+                onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+              >
+                <option>High</option>
+                <option>Medium</option>
+                <option>Low</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                Status
+              </label>
+              <select
+                value={formData.status}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+              >
+                <option>Sent</option>
+                <option>Draft</option>
+                <option>Unpaid</option>
+                <option>Paid</option>
+                <option>Partially Paid</option>
+                <option>Overdue</option>
+                <option>Cancelled</option>
+              </select>
+            </div>
           </div>
 
           {/* Notes */}
@@ -1420,7 +1562,13 @@ const CreateInvoiceModal = ({
               disabled={loading || !formData.client_id}
               className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:shadow-lg transition-all font-medium disabled:opacity-60"
             >
-              {loading ? "Creating..." : "Create Invoice"}
+              {loading
+                ? isEditing
+                  ? "Saving..."
+                  : "Creating..."
+                : isEditing
+                  ? "Save Changes"
+                  : "Create Invoice"}
             </button>
           </div>
         </form>
@@ -1430,7 +1578,7 @@ const CreateInvoiceModal = ({
 };
 
 // InvoiceDetailModal Component - Minimalist Print Layout
-const InvoiceDetailModal = ({ invoice, onClose }) => {
+const InvoiceDetailModal = ({ invoice, onClose, onEdit }) => {
   const handlePrint = () => {
     const printContent = document.getElementById('invoice-print-content');
     const originalContent = document.body.innerHTML;
@@ -1863,6 +2011,12 @@ const InvoiceDetailModal = ({ invoice, onClose }) => {
               </div>
             </div>
             <div className="flex gap-2">
+              <button
+                onClick={onEdit}
+                className="flex items-center gap-2 px-5 py-2.5 bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition-all duration-300 text-sm font-medium"
+              >
+                <Edit className="h-4 w-4" /> Edit
+              </button>
               <button
                 onClick={handlePrint}
                 className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:shadow-lg transition-all duration-300 text-sm font-medium hover:scale-105"

@@ -3848,7 +3848,14 @@ const OverviewTab = ({
             const attendance = selectedDateAttendance.find(
               (a) => a.employeeId === employee.id,
             );
-            const status = attendance?.status || "absent";
+            const rawStatus = attendance?.status || "absent";
+            const isLate =
+              rawStatus === "late" ||
+              rawStatus === "ml" ||
+              (attendance?.late && attendance.late !== "-");
+            const isPresent =
+              rawStatus === "present" || (attendance?.checkIn && attendance.checkIn !== "-" && !isLate);
+            const status = isLate ? "late" : isPresent ? "present" : rawStatus;
             const isHoliday = holidays.some((h) => h.date === selectedDate);
 
             return (
@@ -3874,7 +3881,9 @@ const OverviewTab = ({
                 
                 {/* Position */}
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{employee.position}</div>
+                  <div className="text-sm text-gray-900">
+                    {employee.position || "-"}
+                  </div>
                 </td>
                 
                 {/* Check In */}
@@ -4516,6 +4525,28 @@ const NotificationContainer = ({ notifications }) => {
   );
 };
 
+// Keep numeric employee_onboarding.id — never parse DG codes like "DG-0010" as integers
+const normalizeEmployeeId = (id) => {
+  if (id == null) return id;
+  if (typeof id === "number") return id;
+  if (typeof id === "string" && /^\d+$/.test(id)) return parseInt(id, 10);
+  return id;
+};
+
+const formatAttendanceDate = (attendanceDate) => {
+  if (!attendanceDate) return "";
+  if (
+    typeof attendanceDate === "string" &&
+    attendanceDate.match(/^\d{4}-\d{2}-\d{2}$/)
+  ) {
+    return attendanceDate;
+  }
+  if (typeof attendanceDate === "string" && attendanceDate.includes("T")) {
+    return new Date(attendanceDate).toLocaleDateString("en-CA");
+  }
+  return String(attendanceDate).split("T")[0];
+};
+
 // Helper function to get current work date based on night shift schedule
 // Night shift: 21:00 (9 PM) to 06:00 (6 AM)
 // The shift spans two calendar days:
@@ -5063,7 +5094,7 @@ export function HrAttendancePage() {
           id: emp.id,
           name: emp.name,
           department: emp.department,
-          position: emp.position,
+          position: emp.designation || emp.position || "",
           email: emp.email,
           phone: emp.phone || "",
           status: emp.status || "active",
@@ -5094,7 +5125,9 @@ export function HrAttendancePage() {
         // Fetch history with reasonable limit + today's data in parallel
         const [historyResponse, todayResponse] = await Promise.all([
           fetch(endpoints.attendance.all + "?limit=500&page=1"),
-          fetch(endpoints.attendance.all + `-with-absent?date=${todayDate}`),
+          fetch(
+            `${endpoints.attendance.allWithAbsent}?date=${todayDate}&limit=500`,
+          ),
         ]);
 
         const historyData = await historyResponse.json();
@@ -5119,17 +5152,9 @@ export function HrAttendancePage() {
         ];
 
         const formattedData = combinedAttendance.map((record) => {
-          // Fix timezone issue: Convert UTC date to local date string
-          // Handle both ISO timestamps and simple date strings
-          let attendanceDateStr;
-          if (record.attendance_date.includes("T")) {
-            // ISO timestamp format (e.g., "2026-01-01T19:00:00.000Z")
-            const attendanceDate = new Date(record.attendance_date);
-            attendanceDateStr = attendanceDate.toLocaleDateString("en-CA");
-          } else {
-            // Simple date string format (e.g., "2026-01-01") - used for synthetic absent records
-            attendanceDateStr = record.attendance_date;
-          }
+          const attendanceDateStr = formatAttendanceDate(
+            record.attendance_date,
+          );
 
           // FIXED: Calculate working hours if missing but check-in/out exist
           let calculatedHours = "-";
@@ -5214,11 +5239,7 @@ export function HrAttendancePage() {
 
           return {
             id: record.id,
-            employeeId:
-              typeof record.employee_id === "string"
-                ? parseInt(record.employee_id.replace(/\D/g, "")) ||
-                  record.employee_id
-                : record.employee_id,
+            employeeId: normalizeEmployeeId(record.employee_id),
             name: record.name,
             email: record.email,
             date: attendanceDateStr,
@@ -5363,79 +5384,35 @@ export function HrAttendancePage() {
     setHolidays(sampleHolidays);
   }, [currentDate]);
 
-  // Fetch absent records for selected date if it's not today
+  // Fetch complete attendance (present + absent) whenever a calendar date is selected
   useEffect(() => {
-    const handleSelectedDateChange = async () => {
+    if (!selectedDate) return;
+
+    const fetchSelectedDateAttendance = async () => {
       try {
-        // Check if we already have data for selectedDate
-        const existingData = attendanceData.filter(
-          (item) => item.date === selectedDate,
-        );
-
-        // If we have some data for this date, we're good
-        if (existingData.length > 0) {
-          console.log(
-            `✅ Found ${existingData.length} records for ${selectedDate}`,
-          );
-          return;
-        }
-
-        // If selectedDate is today, we should already have it (loaded in initial fetch)
-        const todayDate = getWorkDate();
-        if (selectedDate === todayDate) {
-          console.log(
-            `📅 Selected date is today (${selectedDate}), should already have data`,
-          );
-          return;
-        }
-
-        // For historical dates with no data, fetch absent records
-        console.log(
-          `🔄 Fetching absent records for historical date: ${selectedDate}`,
-        );
         const response = await fetch(
-          endpoints.attendance.all + `-with-absent?date=${selectedDate}`,
+          `${endpoints.attendance.allWithAbsent}?date=${selectedDate}&limit=500`,
         );
         const data = await response.json();
         const dateRecords = Array.isArray(data) ? data : data.data || [];
 
-        if (dateRecords.length === 0) {
-          console.log(`⚠️ No records found for ${selectedDate}`);
-          return;
-        }
-
-        // Format the fetched records
         const formattedRecords = dateRecords.map((record) => {
-          // Handle both ISO timestamp and plain date string formats
-          // If it's already in YYYY-MM-DD format, use it directly; otherwise convert from ISO
-          let attendanceDateStr;
-          if (
-            record.attendance_date &&
-            record.attendance_date.match(/^\d{4}-\d{2}-\d{2}$/)
-          ) {
-            // Plain date string like "2025-12-30"
-            attendanceDateStr = record.attendance_date;
-          } else {
-            // ISO timestamp like "2025-12-29T19:00:00.000Z"
-            const attendanceDate = new Date(record.attendance_date);
-            attendanceDateStr = attendanceDate.toLocaleDateString("en-CA");
-          }
+          const attendanceDateStr = formatAttendanceDate(
+            record.attendance_date,
+          );
 
-          // Calculate hours: use current_session_minutes if still checked in, otherwise use gross_working_time_minutes
           let hoursValue = "0.0";
           if (record.check_out_time) {
-            // Checked out - use finalized gross working time
             hoursValue = record.gross_working_time_minutes
               ? (record.gross_working_time_minutes / 60).toFixed(1)
               : "0.0";
           } else if (record.current_session_minutes !== undefined) {
-            // Still checked in - use real-time current session
             hoursValue = (record.current_session_minutes / 60).toFixed(1);
           }
 
           return {
             id: record.id,
-            employeeId: record.employee_id,
+            employeeId: normalizeEmployeeId(record.employee_id),
             name: record.name,
             email: record.email,
             date: attendanceDateStr,
@@ -5460,28 +5437,24 @@ export function HrAttendancePage() {
             prayer_break_duration_minutes:
               record.prayer_break_duration_minutes || 0,
             remarks: record.remarks || "",
+            notes: record.remarks || "",
           };
         });
 
-        // Add these records to attendanceData, removing any existing ones for this date first
         setAttendanceData((prev) => {
           const filtered = prev.filter((item) => item.date !== selectedDate);
           return [...filtered, ...formattedRecords];
         });
-
-        console.log(
-          `✅ Added ${formattedRecords.length} records for ${selectedDate}`,
-        );
       } catch (error) {
         console.error(
-          `Error fetching absent records for ${selectedDate}:`,
+          `Error fetching attendance for ${selectedDate}:`,
           error,
         );
       }
     };
 
-    handleSelectedDateChange();
-  }, [selectedDate]); // Remove attendanceData dependency to avoid infinite loop
+    fetchSelectedDateAttendance();
+  }, [selectedDate]);
 
   // When an employee detail view opens, load their full attendance history (last 6 months)
   // The initial load only fetches 500 total records; this ensures the specific employee has full data
