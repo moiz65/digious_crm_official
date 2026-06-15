@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 env:
-  AZURE_WEBAPP_NAME: digiouscrm
+  AZURE_WEBAPP_NAME: digiousems
   NODE_VERSION: '20.x'
 
 jobs:
