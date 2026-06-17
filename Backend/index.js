@@ -33,7 +33,8 @@ const io = socketIO(server, {
       "http://192.168.100.14:5000",
       "http://100.126.74.55:3000",
       "http://169.254.83.107:3000",
-      "http://100.126.74.55:5000"
+      "http://100.126.74.55:5000",
+      "https://digious-crm-old-official.vercel.app"
 
     ],
     credentials: true,
