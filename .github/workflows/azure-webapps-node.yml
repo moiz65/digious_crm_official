@@ -1,0 +1,61 @@
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+env:
+  AZURE_WEBAPP_NAME: digiousems
+  NODE_VERSION: '20.x'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Use Node.js ${{ env.NODE_VERSION }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+
+    # Install Backend Dependencies
+    - name: Install Backend Dependencies
+      run: |
+        cd Backend
+        npm install
+        cd ..
+
+    # Install Frontend Dependencies and Build React
+    - name: Install Frontend Dependencies & Build
+      run: |
+        cd Frontend
+        npm install
+        npm run build
+        cd ..
+      env:
+        CI: false  # Treat warnings as warnings, not errors
+
+    # Create deployment package structure
+    - name: Prepare Deployment Package
+      run: |
+        # Create deploy folder
+        mkdir -p deploy/Backend
+        
+        # Copy backend
+        cp -r Backend/* deploy/Backend/
+        cp Backend/package.json deploy/Backend/
+        
+        # Copy built frontend to backend's public folder (for serving)
+        mkdir -p deploy/Backend/public
+        cp -r Frontend/build/* deploy/Backend/public/
+        
+        # Copy root package.json if exists
+        cp package.json deploy/ 2>/dev/null || true
+
+    - name: 'Deploy to Azure WebApp'
+      uses: azure/webapps-deploy@v3
+      with:
+        app-name: ${{ env.AZURE_WEBAPP_NAME }}
+        publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+        package: ./deploy
