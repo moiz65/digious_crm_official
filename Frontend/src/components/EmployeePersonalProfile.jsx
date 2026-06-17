@@ -436,16 +436,36 @@ const EmployeePersonalProfileV2 = ({ employeeId: propsEmployeeId, onBack }) => {
             : onboardingDetails?.base_salary
               ? Number(onboardingDetails.base_salary)
               : null,
-          totalAllowances:
-            financialSummary?.total_allowances !== undefined
-              ? Number(financialSummary.total_allowances)
-              : 0,
-          allowancesList: Array.isArray(financialSummary?.allowances)
-            ? financialSummary.allowances.map((a) => ({
+          totalAllowances: (() => {
+            if (financialSummary?.total_allowances !== undefined) {
+              return Number(financialSummary.total_allowances);
+            }
+            const onboardingAllowances = Array.isArray(onboardingDetails?.allowances)
+              ? onboardingDetails.allowances
+              : [];
+            if (onboardingAllowances.length > 0) {
+              return onboardingAllowances.reduce(
+                (sum, a) => sum + Number(a.amount || a.allowance_amount || 0),
+                0,
+              );
+            }
+            return 0;
+          })(),
+          allowancesList: (() => {
+            if (Array.isArray(financialSummary?.allowances) && financialSummary.allowances.length > 0) {
+              return financialSummary.allowances.map((a) => ({
                 name: a.name || a.allowance_name || "",
                 amount: Number(a.amount || a.allowance_amount || 0),
-              }))
-            : [],
+              }));
+            }
+            const onboardingAllowances = Array.isArray(onboardingDetails?.allowances)
+              ? onboardingDetails.allowances
+              : [];
+            return onboardingAllowances.map((a) => ({
+              name: a.name || a.allowance_name || "",
+              amount: Number(a.amount || a.allowance_amount || 0),
+            }));
+          })(),
         },
 
         // Merge CNIC and other onboarding fields into personalDetails

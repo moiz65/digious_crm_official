@@ -242,14 +242,15 @@ const getFinancialSummary = async (req, res) => {
     }
 
     const emp = empRows[0];
-    const empId = emp.employee_id || emp.id;
+    // FK columns (employee_salary, employee_allowances, etc.) use employee_onboarding.id
+    const numericEmpId = emp.id;
 
     // Get base salary and total salary from employee_salary table
     let salary = { base_salary: null, total_salary: null };
     try {
       const [salRows] = await pool.query(
         'SELECT base_salary, total_salary FROM employee_salary WHERE employee_id = ?',
-        [empId]
+        [numericEmpId]
       );
       if (salRows.length > 0) {
         salary = salRows[0];
@@ -279,7 +280,7 @@ const getFinancialSummary = async (req, res) => {
     try {
       const [allowRows] = await pool.query(
         'SELECT allowance_name, allowance_amount FROM employee_allowances WHERE employee_id = ?',
-        [empId]
+        [numericEmpId]
       );
       allowances = allowRows || [];
       totalAllowances = allowances.reduce((sum, a) => sum + (parseFloat(a.allowance_amount) || 0), 0);
@@ -291,7 +292,6 @@ const getFinancialSummary = async (req, res) => {
     // Get bank account info (masked)
     let bankAccount = null;
     try {
-      // Try both ID formats since empId might be the ID or the employee_id string
       const [baRows] = await pool.query(
         `SELECT
            id AS bank_account_id,
@@ -300,9 +300,9 @@ const getFinancialSummary = async (req, res) => {
            bank_name,
            account_type
          FROM employee_bank_accounts
-         WHERE id = ? OR employee_id = ?
+         WHERE employee_id = ?
          LIMIT 1`,
-        [id, empId]
+        [numericEmpId]
       );
       if (baRows.length > 0) {
         bankAccount = baRows[0];
@@ -314,8 +314,8 @@ const getFinancialSummary = async (req, res) => {
 
     // Build response
     const result = {
-      id: empId,
-      employee_id: empId,
+      id: numericEmpId,
+      employee_id: emp.employee_id,
       name: emp.name,
       base_salary: salary.base_salary ? parseFloat(salary.base_salary) : null,
       total_salary: salary.total_salary ? parseFloat(salary.total_salary) : null,
