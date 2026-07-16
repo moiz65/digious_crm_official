@@ -30,6 +30,7 @@ import { endpoints, apiRequest } from "../config/api";
 import toast from "react-hot-toast";
 import ProtectedModule from "./ProtectedModule";
 import { usePasscode } from "../context/PasscodeContext";
+import companyLogo from '../NEW_SHADOW.png';
 
 const MONTHS = [
   "",
@@ -135,219 +136,430 @@ const StatusBadge = ({ status }) => {
   );
 };
 
-// ✅ PDF Generation Helper
-const generatePayslipPDF = (payroll) => {
-  // Create a hidden div for PDF content
+// ✅ PDF Generation Helper - Only Logo (No Company Name/Tagline)
+const generatePayslipPDF = (payroll, companyLogo = null) => {
+  // Get current date
+  const currentDate = new Date().toLocaleDateString("en-PK", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+
+  // Company Logo HTML (fallback if no logo provided)
+  const logoHTML = companyLogo
+    ? `<img src="${companyLogo}" alt="Company Logo" style="height: 50px; width: auto; object-fit: contain; max-height: 55px;" />`
+    : `
+      <svg viewBox="0 0 100 100" width="50" height="50" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="100" height="100" rx="12" fill="#2563eb"/>
+        <text x="50" y="68" text-anchor="middle" font-size="40" font-weight="700" fill="white" font-family="Arial">D</text>
+      </svg>
+    `;
+
   const pdfContent = document.createElement("div");
-  pdfContent.style.width = "800px";
-  pdfContent.style.padding = "30px";
+  pdfContent.style.width = "794px";
+  pdfContent.style.padding = "20px 25px";
   pdfContent.style.backgroundColor = "white";
-  pdfContent.style.fontFamily = "Arial, sans-serif";
+  pdfContent.style.fontFamily = "'Segoe UI', Arial, sans-serif";
+  pdfContent.style.fontSize = "12px";
+  pdfContent.style.boxSizing = "border-box";
   pdfContent.innerHTML = `
     <style>
-      @media print {
-        body { margin: 0; padding: 0; }
-        .no-print { display: none; }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
       }
-      .payslip-container {
-        max-width: 800px;
+      .payslip {
+        width: 100%;
+        max-width: 794px;
         margin: 0 auto;
-        background: white;
+        background: #ffffff;
+        font-family: 'Segoe UI', Arial, sans-serif;
+        font-size: 11px;
+        color: #1e293b;
       }
+      
+      /* ===== HEADER ===== */
       .header {
-        text-align: center;
-        border-bottom: 2px solid #2563eb;
-        padding-bottom: 15px;
-        margin-bottom: 20px;
-      }
-      .company-name {
-        font-size: 24px;
-        font-weight: bold;
-        color: #1e3a8a;
-        margin-bottom: 5px;
-      }
-      .payslip-title {
-        font-size: 20px;
-        font-weight: bold;
-        color: #2563eb;
-      }
-      .employee-section {
-        background: #f3f4f6;
-        padding: 15px;
-        border-radius: 8px;
-        margin-bottom: 20px;
-      }
-      .section-title {
-        font-size: 16px;
-        font-weight: bold;
-        color: #1f2937;
-        border-left: 4px solid #2563eb;
-        padding-left: 10px;
-        margin: 15px 0 10px 0;
-      }
-      .grid-2 {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
-      }
-      .info-row {
         display: flex;
         justify-content: space-between;
-        padding: 5px 0;
+        align-items: center;
+        padding: 10px 16px 8px 16px;
+        border-bottom: 3px solid #2563eb;
+        background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+        border-radius: 6px 6px 0 0;
       }
-      .info-label {
+      .header-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .logo-box {
+        width: auto;
+        height: 60px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        overflow: hidden;
+      }
+      .logo-box img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .logo-box svg {
+        width: 48px;
+        height: 48px;
+      }
+      .header-right {
+        text-align: right;
+      }
+      .header-right .title {
+        font-size: 20px;
+        font-weight: 800;
+        color: #2563eb;
+        letter-spacing: 2px;
+      }
+      .header-right .period {
+        font-size: 10px;
+        color: #64748b;
+        font-weight: 500;
+      }
+      
+      /* ===== EMPLOYEE INFO ===== */
+      .employee-info {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 4px 20px;
+        padding: 10px 16px;
+        background: #f8fafc;
+        border-radius: 6px;
+        margin: 8px 0 10px 0;
+        border: 1px solid #e2e8f0;
+      }
+      .emp-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 2px 0;
+        border-bottom: 1px dashed #e2e8f0;
+      }
+      .emp-item:last-child {
+        border-bottom: none;
+      }
+      .emp-label {
+        font-size: 9px;
         font-weight: 600;
-        color: #4b5563;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
       }
-      .info-value {
-        color: #1f2937;
+      .emp-value {
+        font-size: 11px;
+        font-weight: 500;
+        color: #0f172a;
+      }
+      .status-badge {
+        display: inline-block;
+        padding: 1px 10px;
+        border-radius: 12px;
+        font-size: 9px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+      }
+      .status-badge.paid { background: #dcfce7; color: #166534; }
+      .status-badge.pending { background: #fef3c7; color: #92400e; }
+      .status-badge.draft { background: #e2e8f0; color: #475569; }
+      .status-badge.approved { background: #dbeafe; color: #1e40af; }
+      
+      /* ===== SECTION TITLE ===== */
+      .section-title {
+        font-size: 10px;
+        font-weight: 700;
+        color: #1e293b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 6px 0 4px 0;
+        margin: 6px 0 4px 0;
+        border-bottom: 1.5px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .section-title .bar {
+        display: inline-block;
+        width: 3px;
+        height: 14px;
+        background: #2563eb;
+        border-radius: 2px;
+      }
+      
+      /* ===== TABLES ===== */
+      .table-wrap {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin: 2px 0 4px 0;
+      }
+      .table-wrap .table-col {
+        min-width: 0;
       }
       .amount-table {
         width: 100%;
         border-collapse: collapse;
-        margin: 10px 0;
-      }
-      .amount-table th, .amount-table td {
-        padding: 8px;
-        text-align: left;
-        border-bottom: 1px solid #e5e7eb;
+        font-size: 10.5px;
       }
       .amount-table th {
-        background: #f3f4f6;
+        background: #f1f5f9;
+        color: #64748b;
         font-weight: 600;
+        font-size: 9px;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        padding: 5px 10px;
+        text-align: left;
+        border-bottom: 1.5px solid #e2e8f0;
       }
-      .text-right {
+      .amount-table td {
+        padding: 4px 10px;
+        border-bottom: 1px solid #f1f5f9;
+      }
+      .amount-table tr:last-child td {
+        border-bottom: none;
+      }
+      .amount-table .text-right {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+      }
+      .amount-table .total-row td {
+        font-weight: 700;
+        font-size: 11px;
+        border-top: 2px solid #2563eb;
+        padding-top: 6px;
+        background: #f8fafc;
+      }
+      .amount-table .negative { color: #dc2626; }
+      .amount-table .positive { color: #16a34a; }
+      
+      /* ===== NET SALARY ===== */
+      .net-salary {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: linear-gradient(135deg, #1a3a6b 0%, #2563eb 100%);
+        border-radius: 8px;
+        padding: 12px 20px;
+        margin: 10px 0 6px 0;
+      }
+      .net-salary .left .label {
+        color: rgba(255,255,255,0.7);
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .net-salary .left .words {
+        color: rgba(255,255,255,0.5);
+        font-size: 9px;
+        font-weight: 300;
+        margin-top: 1px;
+      }
+      .net-salary .amount {
+        color: white;
+        font-size: 24px;
+        font-weight: 700;
+        letter-spacing: 0.3px;
+      }
+      .net-salary .amount .curr {
+        font-size: 12px;
+        opacity: 0.6;
+        font-weight: 400;
+        margin-right: 2px;
+      }
+      
+      /* ===== ATTENDANCE ===== */
+      .attendance-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 4px;
+        padding: 6px 0;
+      }
+      .attendance-item {
+        text-align: center;
+        background: #f8fafc;
+        border-radius: 4px;
+        padding: 4px 2px;
+        border: 1px solid #e2e8f0;
+      }
+      .attendance-item .num {
+        font-size: 13px;
+        font-weight: 700;
+        color: #0f172a;
+      }
+      .attendance-item .lbl {
+        font-size: 8px;
+        color: #94a3b8;
+        font-weight: 500;
+      }
+      
+      /* ===== FOOTER ===== */
+      .footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 16px 0 16px;
+        border-top: 1px solid #e2e8f0;
+        margin-top: 8px;
+        font-size: 8px;
+        color: #94a3b8;
+      }
+      .footer .right {
         text-align: right;
       }
-      .net-salary {
-        background: #2563eb;
-        color: white;
-        padding: 15px;
-        border-radius: 8px;
-        margin-top: 20px;
-        text-align: center;
+      .footer .right strong {
+        color: #64748b;
       }
-      .net-salary-amount {
-        font-size: 28px;
-        font-weight: bold;
-      }
-      .footer {
-        text-align: center;
-        font-size: 12px;
-        color: #9ca3af;
-        margin-top: 30px;
-        padding-top: 15px;
-        border-top: 1px solid #e5e7eb;
+      
+      /* ===== PRINT ===== */
+      @media print {
+        body { margin: 0; padding: 0; background: white; }
+        .payslip { box-shadow: none; border-radius: 0; }
+        .no-print { display: none !important; }
+        .header { background: #f8fafc !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .net-salary { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .status-badge { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .amount-table th { background: #f1f5f9 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .attendance-item { background: #f8fafc !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       }
     </style>
-    <div class="payslip-container">
+
+    <div class="payslip">
+      <!-- HEADER - Only Logo -->
       <div class="header">
-        <div class="company-name">Digious Solutions</div>
-        <div class="payslip-title">PAYSLIP</div>
-        <div style="font-size: 12px; color: #6b7280; margin-top: 5px;">
-          ${MONTHS[payroll.month]} ${payroll.year}
+        <div class="header-left">
+          <div class="logo-box">${logoHTML}</div>
+        </div>
+        <div class="header-right">
+          <div class="title">PAYSLIP</div>
+          <div class="period">${MONTHS[payroll.month]} ${payroll.year}</div>
         </div>
       </div>
-      
-      <div class="employee-section">
-        <div class="grid-2">
-          <div>
-            <div class="info-row"><span class="info-label">Employee ID:</span><span class="info-value">${payroll.employee_code || "—"}</span></div>
-            <div class="info-row"><span class="info-label">Name:</span><span class="info-value">${payroll.employee_name || "—"}</span></div>
-            <div class="info-row"><span class="info-label">Department:</span><span class="info-value">${payroll.department || "—"}</span></div>
-          </div>
-          <div>
-            <div class="info-row"><span class="info-label">Pay Period:</span><span class="info-value">${formatDate(payroll.pay_period_start)} - ${formatDate(payroll.pay_period_end)}</span></div>
-            <div class="info-row"><span class="info-label">Issue Date:</span><span class="info-value">${formatDate(payroll.issue_date)}</span></div>
-            <div class="info-row"><span class="info-label">Status:</span><span class="info-value">${statusConfig[payroll.status]?.label || "Pending"}</span></div>
-          </div>
+
+      <!-- EMPLOYEE INFO -->
+      <div class="employee-info">
+        <div class="emp-item"><span class="emp-label">Employee ID</span><span class="emp-value">${payroll.employee_code || "—"}</span></div>
+        <div class="emp-item"><span class="emp-label">Name</span><span class="emp-value">${payroll.employee_name || "—"}</span></div>
+        <div class="emp-item"><span class="emp-label">Department</span><span class="emp-value">${payroll.department || "—"}</span></div>
+        <div class="emp-item"><span class="emp-label">Pay Period</span><span class="emp-value">${formatDate(payroll.pay_period_start)} - ${formatDate(payroll.pay_period_end)}</span></div>
+        <div class="emp-item"><span class="emp-label">Issue Date</span><span class="emp-value">${formatDate(payroll.issue_date)}</span></div>
+        <div class="emp-item"><span class="emp-label">Status</span><span class="emp-value"><span class="status-badge ${payroll.status}">${statusConfig[payroll.status]?.label || "Pending"}</span></span></div>
+      </div>
+
+      <!-- EARNINGS & DEDUCTIONS -->
+      <div class="table-wrap">
+        <div class="table-col">
+          <div class="section-title"><span class="bar"></span>Earnings</div>
+          <table class="amount-table">
+            <thead><tr><th>Description</th><th class="text-right">Amount (PKR)</th></tr></thead>
+            <tbody>
+              <tr><td>Base Salary</td><td class="text-right">${formatNum(payroll.base_salary)}</td></tr>
+              ${payroll.total_allowances > 0 ? `<tr><td>Total Allowances</td><td class="text-right">${formatNum(payroll.total_allowances)}</td></tr>` : ""}
+              ${payroll.bonus > 0 ? `<tr><td>Bonus / Incentive</td><td class="text-right">${formatNum(payroll.bonus)}</td></tr>` : ""}
+              ${payroll.adjustment !== 0 ? `<tr><td>Adjustment</td><td class="text-right ${payroll.adjustment > 0 ? "positive" : "negative"}">${payroll.adjustment > 0 ? "+" : ""}${formatNum(payroll.adjustment)}</td></tr>` : ""}
+            </tbody>
+            <tfoot>
+              <tr class="total-row"><td>Gross Salary</td><td class="text-right">${formatNum(payroll.gross_salary)}</td></tr>
+            </tfoot>
+          </table>
+        </div>
+        <div class="table-col">
+          <div class="section-title"><span class="bar"></span>Deductions</div>
+          <table class="amount-table">
+            <thead><tr><th>Description</th><th class="text-right">Amount (PKR)</th></tr></thead>
+            <tbody>
+              ${payroll.absent_deduction > 0 ? `<tr><td>Absent (${payroll.absent_days} days)</td><td class="text-right negative">-${formatNum(payroll.absent_deduction)}</td></tr>` : ""}
+              ${payroll.late_deduction > 0 ? `<tr><td>Late (${payroll.late_days} lates)</td><td class="text-right negative">-${formatNum(payroll.late_deduction)}</td></tr>` : ""}
+              ${payroll.advance_deduction > 0 ? `<tr><td>Advance / Loan</td><td class="text-right negative">-${formatNum(payroll.advance_deduction)}</td></tr>` : ""}
+              ${payroll.tax_deduction > 0 ? `<tr><td>Income Tax</td><td class="text-right negative">-${formatNum(payroll.tax_deduction)}</td></tr>` : ""}
+              ${payroll.other_deduction > 0 ? `<tr><td>Other</td><td class="text-right negative">-${formatNum(payroll.other_deduction)}</td></tr>` : ""}
+            </tbody>
+            <tfoot>
+              <tr class="total-row"><td>Total Deductions</td><td class="text-right negative">-${formatNum(payroll.total_deductions + (payroll.advance_deduction || 0) + (payroll.tax_deduction || 0) + (payroll.other_deduction || 0))}</td></tr>
+            </tfoot>
+          </table>
         </div>
       </div>
-      
-      <div class="section-title">Earnings</div>
-      <table class="amount-table">
-        <thead>
-          <tr><th>Description</th><th class="text-right">Amount (PKR)</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>Base Salary</td><td class="text-right">${formatNum(payroll.base_salary)}</td></tr>
-          ${payroll.total_allowances > 0 ? `<tr><td>Total Allowances</td><td class="text-right">${formatNum(payroll.total_allowances)}</td></tr>` : ""}
-          ${payroll.bonus > 0 ? `<tr><td>Bonus</td><td class="text-right">${formatNum(payroll.bonus)}</td></tr>` : ""}
-          ${payroll.adjustment !== 0 ? `<tr><td>Adjustment</td><td class="text-right">${payroll.adjustment > 0 ? "+" : ""}${formatNum(payroll.adjustment)}</td></tr>` : ""}
-        </tbody>
-        <tfoot>
-          <tr style="font-weight: bold; background: #f3f4f6;"><td>Gross Salary</td><td class="text-right">${formatNum(payroll.gross_salary)}</td></tr>
-        </tfoot>
-      </table>
-      
-      <div class="section-title">Deductions</div>
-      <table class="amount-table">
-        <thead>
-          <tr><th>Description</th><th class="text-right">Amount (PKR)</th></tr>
-        </thead>
-        <tbody>
-          ${payroll.absent_deduction > 0 ? `<tr><td>Absent Days (${payroll.absent_days} days)</td><td class="text-right">−${formatNum(payroll.absent_deduction)}</td></tr>` : ""}
-          ${payroll.late_deduction > 0 ? `<tr><td>Late Deduction (${payroll.late_days} lates)</td><td class="text-right">−${formatNum(payroll.late_deduction)}</td></tr>` : ""}
-          ${payroll.advance_deduction > 0 ? `<tr><td>Advance/Loan Deduction</td><td class="text-right">−${formatNum(payroll.advance_deduction)}</td></tr>` : ""}
-        </tbody>
-        <tfoot>
-          <tr style="font-weight: bold; background: #f3f4f6;"><td>Total Deductions</td><td class="text-right">−${formatNum(payroll.total_deductions + (payroll.advance_deduction || 0))}</td></tr>
-        </tfoot>
-      </table>
-      
-      <div class="section-title">Attendance Summary</div>
-      <table class="amount-table">
-        <thead>
-          <tr><th>Type</th><th class="text-right">Days</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>Present</td><td class="text-right">${payroll.present_days || 0}</td></tr>
-          <tr><td>Absent (Unpaid)</td><td class="text-right">${payroll.absent_days || 0}</td></tr>
-          <tr><td>Late</td><td class="text-right">${payroll.late_days || 0}</td></tr>
-          <tr><td>Paid Leave</td><td class="text-right">${payroll.leave_days || 0}</td></tr>
-          <tr><td>Half Day</td><td class="text-right">${payroll.half_days || 0}</td></tr>
-        </tbody>
-      </table>
-      
+
+      <!-- ATTENDANCE SUMMARY -->
+      <div class="section-title"><span class="bar"></span>Attendance Summary</div>
+      <div class="attendance-grid">
+        <div class="attendance-item"><div class="num">${payroll.present_days || 0}</div><div class="lbl">Present</div></div>
+        <div class="attendance-item"><div class="num">${payroll.absent_days || 0}</div><div class="lbl">Absent</div></div>
+        <div class="attendance-item"><div class="num">${payroll.late_days || 0}</div><div class="lbl">Late</div></div>
+        <div class="attendance-item"><div class="num">${payroll.leave_days || 0}</div><div class="lbl">Leave</div></div>
+        <div class="attendance-item"><div class="num">${payroll.half_days || 0}</div><div class="lbl">Half Day</div></div>
+      </div>
+
+      <!-- NET SALARY -->
       <div class="net-salary">
-        <div style="font-size: 14px; opacity: 0.9;">Net Salary</div>
-        <div class="net-salary-amount">PKR ${formatNum(payroll.net_salary)}</div>
-        <div style="font-size: 11px; margin-top: 5px;">(Amount in words: ${numberToWords(Math.floor(payroll.net_salary))} Rupees Only)</div>
+        <div class="left">
+          <div class="label">Net Salary</div>
+          <div class="words">${numberToWords(Math.floor(payroll.net_salary))} Rupees Only</div>
+        </div>
+        <div class="amount"><span class="curr">PKR</span> ${formatNum(payroll.net_salary)}</div>
       </div>
-      
+
+      <!-- FOOTER -->
       <div class="footer">
-        <p>This is a system-generated payslip. For any discrepancies, please contact HR department.</p>
-        <p>Generated on: ${new Date().toLocaleString()}</p>
+        <span>System-generated payslip · For discrepancies, contact HR</span>
+        <div class="right">
+          <strong>Digious Solutions</strong> · ${currentDate} · Confidential
+        </div>
       </div>
     </div>
   `;
 
   // Open print window
-  const printWindow = window.open("", "_blank");
+  const printWindow = window.open("", "_blank", "width=820,height=700");
   printWindow.document.write(`
     <html>
       <head>
         <title>Payslip - ${MONTHS[payroll.month]} ${payroll.year}</title>
         <style>
-          body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { 
+            background: #e2e8f0; 
+            padding: 15px; 
+            font-family: 'Segoe UI', Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+          }
           @media print {
-            body { margin: 0; padding: 0; }
-            .no-print { display: none; }
+            body { background: white; padding: 0; display: block; }
+            .no-print { display: none !important; }
           }
         </style>
       </head>
       <body>
         ${pdfContent.innerHTML}
-        <div class="no-print" style="text-align: center; margin-top: 20px; padding: 10px;">
-          <button onclick="window.print();" style="padding: 10px 20px; background: #2563eb; color: white; border: none; border-radius: 8px; cursor: pointer; margin-right: 10px;">🖨️ Print / Save as PDF</button>
-          <button onclick="window.close();" style="padding: 10px 20px; background: #6b7280; color: white; border: none; border-radius: 8px; cursor: pointer;">Close</button>
+        <div class="no-print" style="text-align: center; margin-top: 12px; padding: 10px; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); max-width: 794px; margin-left: auto; margin-right: auto;">
+          <button onclick="window.print();" style="padding: 8px 24px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; margin-right: 10px; font-weight: 600; font-size: 13px;">
+            🖨️ Print / PDF
+          </button>
+          <button onclick="window.close();" style="padding: 8px 24px; background: #f1f5f9; color: #475569; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px;">
+            ✕ Close
+          </button>
+          <p style="font-size: 10px; color: #94a3b8; margin-top: 6px;">
+            Press <strong>Ctrl+P</strong> → Save as PDF
+          </p>
         </div>
         <script>
-          // Auto-trigger print dialog
           window.onload = function() {
-            setTimeout(() => {
-              window.print();
-            }, 500);
+            setTimeout(function() { window.print(); }, 600);
           };
         </script>
       </body>
@@ -359,15 +571,69 @@ const generatePayslipPDF = (payroll) => {
 // Helper function to convert number to words (simple version)
 const numberToWords = (num) => {
   if (num === 0) return "Zero";
-  const ones = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"];
-  const tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
-  
+  const ones = [
+    "",
+    "One",
+    "Two",
+    "Three",
+    "Four",
+    "Five",
+    "Six",
+    "Seven",
+    "Eight",
+    "Nine",
+    "Ten",
+    "Eleven",
+    "Twelve",
+    "Thirteen",
+    "Fourteen",
+    "Fifteen",
+    "Sixteen",
+    "Seventeen",
+    "Eighteen",
+    "Nineteen",
+  ];
+  const tens = [
+    "",
+    "",
+    "Twenty",
+    "Thirty",
+    "Forty",
+    "Fifty",
+    "Sixty",
+    "Seventy",
+    "Eighty",
+    "Ninety",
+  ];
+
   if (num < 20) return ones[num];
-  if (num < 100) return tens[Math.floor(num / 10)] + (num % 10 !== 0 ? " " + ones[num % 10] : "");
-  if (num < 1000) return ones[Math.floor(num / 100)] + " Hundred" + (num % 100 !== 0 ? " and " + numberToWords(num % 100) : "");
-  if (num < 100000) return numberToWords(Math.floor(num / 1000)) + " Thousand" + (num % 1000 !== 0 ? " " + numberToWords(num % 1000) : "");
-  if (num < 10000000) return numberToWords(Math.floor(num / 100000)) + " Lakh" + (num % 100000 !== 0 ? " " + numberToWords(num % 100000) : "");
-  return numberToWords(Math.floor(num / 10000000)) + " Crore" + (num % 10000000 !== 0 ? " " + numberToWords(num % 10000000) : "");
+  if (num < 100)
+    return (
+      tens[Math.floor(num / 10)] + (num % 10 !== 0 ? " " + ones[num % 10] : "")
+    );
+  if (num < 1000)
+    return (
+      ones[Math.floor(num / 100)] +
+      " Hundred" +
+      (num % 100 !== 0 ? " and " + numberToWords(num % 100) : "")
+    );
+  if (num < 100000)
+    return (
+      numberToWords(Math.floor(num / 1000)) +
+      " Thousand" +
+      (num % 1000 !== 0 ? " " + numberToWords(num % 1000) : "")
+    );
+  if (num < 10000000)
+    return (
+      numberToWords(Math.floor(num / 100000)) +
+      " Lakh" +
+      (num % 100000 !== 0 ? " " + numberToWords(num % 100000) : "")
+    );
+  return (
+    numberToWords(Math.floor(num / 10000000)) +
+    " Crore" +
+    (num % 10000000 !== 0 ? " " + numberToWords(num % 10000000) : "")
+  );
 };
 
 // PaySlip Modal with Download Button
@@ -377,7 +643,7 @@ const PaySlipModal = ({ payroll, onClose }) => {
   const dailyRateNote = `${formatNum(payroll.base_salary)} ÷ 30 = ${formatNum(payroll.daily_rate)}/day`;
 
   const handleDownload = () => {
-    generatePayslipPDF(payroll);
+    generatePayslipPDF(payroll, companyLogo);
   };
 
   return (
@@ -552,7 +818,8 @@ const PaySlipModal = ({ payroll, onClose }) => {
                     <span className="text-slate-600">
                       Unpaid Absent{" "}
                       <span className="text-slate-400">
-                        ({payroll.absent_days}d × {formatNum(payroll.daily_rate)})
+                        ({payroll.absent_days}d ×{" "}
+                        {formatNum(payroll.daily_rate)})
                       </span>
                     </span>
                     <span className="font-medium text-rose-600">
@@ -573,7 +840,8 @@ const PaySlipModal = ({ payroll, onClose }) => {
                     <span className="text-slate-600">
                       Late{" "}
                       <span className="text-slate-400">
-                        ({payroll.late_days} lates = {payroll.late_deduction_days}d)
+                        ({payroll.late_days} lates ={" "}
+                        {payroll.late_deduction_days}d)
                       </span>
                     </span>
                     <span className="font-medium text-amber-600">
@@ -583,7 +851,9 @@ const PaySlipModal = ({ payroll, onClose }) => {
                 )}
                 {(payroll.advance_deduction || 0) > 0 && (
                   <div className="flex justify-between text-sm">
-                    <span className="text-slate-600">Advance / Loan Deduction</span>
+                    <span className="text-slate-600">
+                      Advance / Loan Deduction
+                    </span>
                     <span className="font-medium text-purple-600">
                       −{formatNum(payroll.advance_deduction)}
                     </span>
@@ -652,13 +922,41 @@ const PaySlipModal = ({ payroll, onClose }) => {
             </div>
             <div className="p-4 grid grid-cols-5 gap-3">
               {[
-                { label: "Present", value: payroll.present_days || 0, color: "text-emerald-600", bg: "bg-emerald-50" },
-                { label: "Absent", value: payroll.absent_days || 0, color: "text-rose-600", bg: "bg-rose-50" },
-                { label: "Late", value: payroll.late_days || 0, color: "text-amber-600", bg: "bg-amber-50" },
-                { label: "Paid Leave", value: payroll.leave_days || 0, color: "text-blue-600", bg: "bg-blue-50" },
-                { label: "Half Day", value: payroll.half_days || 0, color: "text-purple-600", bg: "bg-purple-50" },
+                {
+                  label: "Present",
+                  value: payroll.present_days || 0,
+                  color: "text-emerald-600",
+                  bg: "bg-emerald-50",
+                },
+                {
+                  label: "Absent",
+                  value: payroll.absent_days || 0,
+                  color: "text-rose-600",
+                  bg: "bg-rose-50",
+                },
+                {
+                  label: "Late",
+                  value: payroll.late_days || 0,
+                  color: "text-amber-600",
+                  bg: "bg-amber-50",
+                },
+                {
+                  label: "Paid Leave",
+                  value: payroll.leave_days || 0,
+                  color: "text-blue-600",
+                  bg: "bg-blue-50",
+                },
+                {
+                  label: "Half Day",
+                  value: payroll.half_days || 0,
+                  color: "text-purple-600",
+                  bg: "bg-purple-50",
+                },
               ].map((s) => (
-                <div key={s.label} className={`text-center p-3 ${s.bg} rounded-lg`}>
+                <div
+                  key={s.label}
+                  className={`text-center p-3 ${s.bg} rounded-lg`}
+                >
                   <p className="text-xs text-slate-500">{s.label}</p>
                   <p className={`text-xl font-bold ${s.color}`}>{s.value}</p>
                 </div>
@@ -675,9 +973,24 @@ const PaySlipModal = ({ payroll, onClose }) => {
                 </h3>
               </div>
               <div className="p-4 grid grid-cols-3 gap-4 text-sm">
-                <div><p className="text-slate-400 text-xs">Bank</p><p className="font-medium text-slate-800">{payroll.bank_name}</p></div>
-                <div><p className="text-slate-400 text-xs">Account</p><p className="font-medium text-slate-800">{payroll.account_number}</p></div>
-                <div><p className="text-slate-400 text-xs">Title</p><p className="font-medium text-slate-800">{payroll.account_title_name}</p></div>
+                <div>
+                  <p className="text-slate-400 text-xs">Bank</p>
+                  <p className="font-medium text-slate-800">
+                    {payroll.bank_name}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-slate-400 text-xs">Account</p>
+                  <p className="font-medium text-slate-800">
+                    {payroll.account_number}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-slate-400 text-xs">Title</p>
+                  <p className="font-medium text-slate-800">
+                    {payroll.account_title_name}
+                  </p>
+                </div>
               </div>
             </div>
           )}
@@ -756,7 +1069,9 @@ const EmployeePayrollPage = () => {
       }
     } catch (err) {
       console.error("Failed to fetch payslip:", err);
-      toast.error("Failed to load payslip: " + (err.message || "Unknown error"));
+      toast.error(
+        "Failed to load payslip: " + (err.message || "Unknown error"),
+      );
     } finally {
       setPayslipLoading(null);
     }
@@ -766,7 +1081,10 @@ const EmployeePayrollPage = () => {
   const totalEarned = records
     .filter((r) => r.status === "success")
     .reduce((sum, r) => sum + r.net_salary, 0);
-  const totalDeductions = records.reduce((sum, r) => sum + r.total_deductions, 0);
+  const totalDeductions = records.reduce(
+    (sum, r) => sum + r.total_deductions,
+    0,
+  );
 
   if (loading) {
     return (
@@ -806,17 +1124,56 @@ const EmployeePayrollPage = () => {
         {/* Summary Cards - same as your existing code */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[
-            { label: "Current Net Salary", value: latest ? formatCurrency(latest.net_salary) : "—", sub: latest ? `${MONTHS[latest.month]} ${latest.year}` : "No data", icon: BadgeDollarSign, iconBg: "bg-blue-50", iconColor: "text-blue-600" },
-            { label: "Base Salary", value: latest ? formatCurrency(latest.base_salary) : "—", sub: latest ? `Daily: PKR ${formatNum(latest.daily_rate)}` : "÷ 30", icon: Briefcase, iconBg: "bg-emerald-50", iconColor: "text-emerald-600" },
-            { label: "Total Paid", value: formatCurrency(totalEarned), sub: `${records.filter((r) => r.status === "success").length} payslip(s)`, icon: TrendingUp, iconBg: "bg-green-50", iconColor: "text-green-600" },
-            { label: "Total Deductions", value: formatCurrency(totalDeductions), sub: "All time", icon: TrendingDown, iconBg: "bg-rose-50", iconColor: "text-rose-600" },
+            {
+              label: "Current Net Salary",
+              value: latest ? formatCurrency(latest.net_salary) : "—",
+              sub: latest
+                ? `${MONTHS[latest.month]} ${latest.year}`
+                : "No data",
+              icon: BadgeDollarSign,
+              iconBg: "bg-blue-50",
+              iconColor: "text-blue-600",
+            },
+            {
+              label: "Base Salary",
+              value: latest ? formatCurrency(latest.base_salary) : "—",
+              sub: latest
+                ? `Daily: PKR ${formatNum(latest.daily_rate)}`
+                : "÷ 30",
+              icon: Briefcase,
+              iconBg: "bg-emerald-50",
+              iconColor: "text-emerald-600",
+            },
+            {
+              label: "Total Paid",
+              value: formatCurrency(totalEarned),
+              sub: `${records.filter((r) => r.status === "success").length} payslip(s)`,
+              icon: TrendingUp,
+              iconBg: "bg-green-50",
+              iconColor: "text-green-600",
+            },
+            {
+              label: "Total Deductions",
+              value: formatCurrency(totalDeductions),
+              sub: "All time",
+              icon: TrendingDown,
+              iconBg: "bg-rose-50",
+              iconColor: "text-rose-600",
+            },
           ].map((card, i) => {
             const Icon = card.icon;
             return (
-              <div key={i} className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-2xl p-6">
+              <div
+                key={i}
+                className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-2xl p-6"
+              >
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm font-medium text-blue-800">{card.label}</span>
-                  <div className={`p-2 ${card.iconBg} rounded-lg`}><Icon className={`h-4 w-4 ${card.iconColor}`} /></div>
+                  <span className="text-sm font-medium text-blue-800">
+                    {card.label}
+                  </span>
+                  <div className={`p-2 ${card.iconBg} rounded-lg`}>
+                    <Icon className={`h-4 w-4 ${card.iconColor}`} />
+                  </div>
                 </div>
                 <p className="text-3xl font-bold text-blue-600">{card.value}</p>
                 <p className="text-xs text-blue-600 mt-1">{card.sub}</p>
@@ -839,8 +1196,12 @@ const EmployeePayrollPage = () => {
           {records.length === 0 ? (
             <div className="p-16 text-center">
               <FileText className="h-14 w-14 text-slate-200 mx-auto mb-4" />
-              <p className="text-slate-500 font-semibold">No Payroll Records Found</p>
-              <p className="text-sm text-slate-400 mt-1">Your payroll records will appear here once generated by admin.</p>
+              <p className="text-slate-500 font-semibold">
+                No Payroll Records Found
+              </p>
+              <p className="text-sm text-slate-400 mt-1">
+                Your payroll records will appear here once generated by admin.
+              </p>
             </div>
           ) : (
             <>
@@ -849,51 +1210,135 @@ const EmployeePayrollPage = () => {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="bg-slate-50/80">
-                      <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Pay Period</th>
-                      <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Month Days</th>
-                      <th className="text-right px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Base Salary</th>
-                      <th className="text-right px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Allowances</th>
-                      <th className="text-right px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Deductions</th>
-                      <th className="text-right px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Bonus/Adj</th>
-                      <th className="text-right px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Net Salary</th>
-                      <th className="text-center px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Attendance</th>
-                      <th className="text-center px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                      <th className="text-center px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Issue Date</th>
+                      <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                        Pay Period
+                      </th>
+                      <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                        Month Days
+                      </th>
+                      <th className="text-right px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                        Base Salary
+                      </th>
+                      <th className="text-right px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                        Allowances
+                      </th>
+                      <th className="text-right px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                        Deductions
+                      </th>
+                      <th className="text-right px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                        Bonus/Adj
+                      </th>
+                      <th className="text-right px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                        Net Salary
+                      </th>
+                      <th className="text-center px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                        Attendance
+                      </th>
+                      <th className="text-center px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="text-center px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                        Issue Date
+                      </th>
                       <th className="text-right px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider w-20"></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {records.map((r) => (
-                      <tr key={r.id} className="hover:bg-blue-50/40 transition-colors group">
+                      <tr
+                        key={r.id}
+                        className="hover:bg-blue-50/40 transition-colors group"
+                      >
                         <td className="px-5 py-4">
-                          <p className="font-semibold text-slate-800">{MONTHS[r.month]} {r.year}</p>
-                          <p className="text-xs text-slate-400 mt-0.5">{r.pay_period_start ? `${formatDate(r.pay_period_start)} → ${formatDate(r.pay_period_end)}` : `${r.month}/${r.year}`}</p>
+                          <p className="font-semibold text-slate-800">
+                            {MONTHS[r.month]} {r.year}
+                          </p>
+                          <p className="text-xs text-slate-400 mt-0.5">
+                            {r.pay_period_start
+                              ? `${formatDate(r.pay_period_start)} → ${formatDate(r.pay_period_end)}`
+                              : `${r.month}/${r.year}`}
+                          </p>
                         </td>
-                        <td className="px-5 py-4 text-center"><span className="inline-flex items-center px-2 py-0.5 bg-slate-100 rounded text-xs font-medium text-slate-600">{r.days_in_month || r.working_days || 30}d</span></td>
-                        <td className="px-5 py-4 text-center font-medium text-slate-700">{formatNum(r.base_salary)}</td>
-                        <td className="px-5 py-4 text-center text-emerald-600 font-medium">+{formatNum(r.total_allowances)}</td>
-                        <td className="px-5 py-4 text-center text-rose-600 font-medium">{r.total_deductions > 0 ? `−${formatNum(r.total_deductions)}` : <span className="text-slate-300">0</span>}</td>
+                        <td className="px-5 py-4 text-center">
+                          <span className="inline-flex items-center px-2 py-0.5 bg-slate-100 rounded text-xs font-medium text-slate-600">
+                            {r.days_in_month || r.working_days || 30}d
+                          </span>
+                        </td>
+                        <td className="px-5 py-4 text-center font-medium text-slate-700">
+                          {formatNum(r.base_salary)}
+                        </td>
+                        <td className="px-5 py-4 text-center text-emerald-600 font-medium">
+                          +{formatNum(r.total_allowances)}
+                        </td>
+                        <td className="px-5 py-4 text-center text-rose-600 font-medium">
+                          {r.total_deductions > 0 ? (
+                            `−${formatNum(r.total_deductions)}`
+                          ) : (
+                            <span className="text-slate-300">0</span>
+                          )}
+                        </td>
                         <td className="px-5 py-4 text-center">
                           <div className="space-y-0.5">
-                            {(r.bonus || 0) > 0 && <span className="text-xs font-medium text-emerald-600 block">+{formatNum(r.bonus)}</span>}
-                            {(r.adjustment || 0) !== 0 && <span className={`text-xs font-medium block ${r.adjustment > 0 ? "text-blue-600" : "text-rose-600"}`}>{r.adjustment > 0 ? "+" : ""}{formatNum(r.adjustment)}</span>}
-                            {!r.bonus && !r.adjustment && <span className="text-slate-300">—</span>}
+                            {(r.bonus || 0) > 0 && (
+                              <span className="text-xs font-medium text-emerald-600 block">
+                                +{formatNum(r.bonus)}
+                              </span>
+                            )}
+                            {(r.adjustment || 0) !== 0 && (
+                              <span
+                                className={`text-xs font-medium block ${r.adjustment > 0 ? "text-blue-600" : "text-rose-600"}`}
+                              >
+                                {r.adjustment > 0 ? "+" : ""}
+                                {formatNum(r.adjustment)}
+                              </span>
+                            )}
+                            {!r.bonus && !r.adjustment && (
+                              <span className="text-slate-300">—</span>
+                            )}
                           </div>
                         </td>
-                        <td className="px-5 py-4 text-center"><p className="font-bold text-blue-700">{formatNum(r.net_salary)}</p></td>
-                        <td className="px-5 py-4"><div className="flex items-center justify-center gap-1.5"><span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-700 rounded text-xs font-medium">P:{r.present_days}</span><span className="px-1.5 py-0.5 bg-rose-50 text-rose-700 rounded text-xs font-medium">A:{r.absent_days}</span><span className="px-1.5 py-0.5 bg-amber-50 text-amber-700 rounded text-xs font-medium">L:{r.late_days}</span></div></td>
-                        <td className="px-5 py-4 text-center"><StatusBadge status={r.status} /></td>
-                        <td className="px-5 py-4 text-center text-xs text-slate-500">{r.issue_date ? formatDate(r.issue_date) : "—"}</td>
+                        <td className="px-5 py-4 text-center">
+                          <p className="font-bold text-blue-700">
+                            {formatNum(r.net_salary)}
+                          </p>
+                        </td>
+                        <td className="px-5 py-4">
+                          <div className="flex items-center justify-center gap-1.5">
+                            <span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-700 rounded text-xs font-medium">
+                              P:{r.present_days}
+                            </span>
+                            <span className="px-1.5 py-0.5 bg-rose-50 text-rose-700 rounded text-xs font-medium">
+                              A:{r.absent_days}
+                            </span>
+                            <span className="px-1.5 py-0.5 bg-amber-50 text-amber-700 rounded text-xs font-medium">
+                              L:{r.late_days}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-5 py-4 text-center">
+                          <StatusBadge status={r.status} />
+                        </td>
+                        <td className="px-5 py-4 text-center text-xs text-slate-500">
+                          {r.issue_date ? formatDate(r.issue_date) : "—"}
+                        </td>
                         <td className="px-5 py-4 text-right">
-                          <button onClick={() => viewPayslip(r)} disabled={payslipLoading === r.id} className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-xs font-semibold inline-flex items-center gap-1.5">
-                            {payslipLoading === r.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Eye className="h-3.5 w-3.5" />}
+                          <button
+                            onClick={() => viewPayslip(r)}
+                            disabled={payslipLoading === r.id}
+                            className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-xs font-semibold inline-flex items-center gap-1.5"
+                          >
+                            {payslipLoading === r.id ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <Eye className="h-3.5 w-3.5" />
+                            )}
                             View
                           </button>
                         </td>
-                       </tr>
+                      </tr>
                     ))}
                   </tbody>
-                 </table>
+                </table>
               </div>
 
               {/* Mobile Cards - same as your existing code */}
@@ -902,29 +1347,117 @@ const EmployeePayrollPage = () => {
                   const isExpanded = expandedId === r.id;
                   return (
                     <div key={r.id} className="p-4">
-                      <div className="flex items-center justify-between cursor-pointer" onClick={() => setExpandedId(isExpanded ? null : r.id)}>
+                      <div
+                        className="flex items-center justify-between cursor-pointer"
+                        onClick={() => setExpandedId(isExpanded ? null : r.id)}
+                      >
                         <div className="flex-1">
-                          <div className="flex items-center gap-2"><p className="font-semibold text-slate-800">{SHORT_MONTHS[r.month]} {r.year}</p><StatusBadge status={r.status} /></div>
-                          <p className="text-lg font-bold text-blue-700 mt-0.5">PKR {formatNum(r.net_salary)}</p>
-                          {r.issue_date && <p className="text-xs text-slate-400 mt-0.5">Issue: {formatDate(r.issue_date)}</p>}
+                          <div className="flex items-center gap-2">
+                            <p className="font-semibold text-slate-800">
+                              {SHORT_MONTHS[r.month]} {r.year}
+                            </p>
+                            <StatusBadge status={r.status} />
+                          </div>
+                          <p className="text-lg font-bold text-blue-700 mt-0.5">
+                            PKR {formatNum(r.net_salary)}
+                          </p>
+                          {r.issue_date && (
+                            <p className="text-xs text-slate-400 mt-0.5">
+                              Issue: {formatDate(r.issue_date)}
+                            </p>
+                          )}
                         </div>
-                        {isExpanded ? <ChevronUp className="h-5 w-5 text-slate-400" /> : <ChevronDown className="h-5 w-5 text-slate-400" />}
+                        {isExpanded ? (
+                          <ChevronUp className="h-5 w-5 text-slate-400" />
+                        ) : (
+                          <ChevronDown className="h-5 w-5 text-slate-400" />
+                        )}
                       </div>
                       {isExpanded && (
                         <div className="mt-3 pt-3 border-t border-slate-100 space-y-2.5">
                           <div className="grid grid-cols-2 gap-2 text-sm">
-                            <div className="flex justify-between"><span className="text-slate-500">Pay Period</span></div>
-                            <div className="text-right text-slate-700 text-xs">{r.pay_period_start ? `${formatDate(r.pay_period_start)} → ${formatDate(r.pay_period_end)}` : `${r.month}/${r.year}`}</div>
-                            <div><span className="text-slate-500">Days in Month</span></div><div className="text-right text-slate-700">{r.days_in_month || r.working_days || 30}</div>
-                            <div><span className="text-slate-500">Base Salary</span></div><div className="text-right text-slate-700">{formatNum(r.base_salary)}</div>
-                            <div><span className="text-slate-500">Allowances</span></div><div className="text-right text-emerald-600">+{formatNum(r.total_allowances)}</div>
-                            <div><span className="text-slate-500">Deductions</span></div><div className="text-right text-rose-600">−{formatNum(r.total_deductions)}</div>
-                            {(r.bonus || 0) > 0 && <><div><span className="text-slate-500">Bonus</span></div><div className="text-right text-emerald-600">+{formatNum(r.bonus)}</div></>}
-                            {(r.adjustment || 0) !== 0 && <><div><span className="text-slate-500">Adjustment</span></div><div className={`text-right ${r.adjustment > 0 ? "text-blue-600" : "text-rose-600"}`}>{r.adjustment > 0 ? "+" : ""}{formatNum(r.adjustment)}</div></>}
-                            <div><span className="text-slate-500">Attendance</span></div><div className="text-right text-slate-700">P:{r.present_days} A:{r.absent_days} L:{r.late_days}</div>
+                            <div className="flex justify-between">
+                              <span className="text-slate-500">Pay Period</span>
+                            </div>
+                            <div className="text-right text-slate-700 text-xs">
+                              {r.pay_period_start
+                                ? `${formatDate(r.pay_period_start)} → ${formatDate(r.pay_period_end)}`
+                                : `${r.month}/${r.year}`}
+                            </div>
+                            <div>
+                              <span className="text-slate-500">
+                                Days in Month
+                              </span>
+                            </div>
+                            <div className="text-right text-slate-700">
+                              {r.days_in_month || r.working_days || 30}
+                            </div>
+                            <div>
+                              <span className="text-slate-500">
+                                Base Salary
+                              </span>
+                            </div>
+                            <div className="text-right text-slate-700">
+                              {formatNum(r.base_salary)}
+                            </div>
+                            <div>
+                              <span className="text-slate-500">Allowances</span>
+                            </div>
+                            <div className="text-right text-emerald-600">
+                              +{formatNum(r.total_allowances)}
+                            </div>
+                            <div>
+                              <span className="text-slate-500">Deductions</span>
+                            </div>
+                            <div className="text-right text-rose-600">
+                              −{formatNum(r.total_deductions)}
+                            </div>
+                            {(r.bonus || 0) > 0 && (
+                              <>
+                                <div>
+                                  <span className="text-slate-500">Bonus</span>
+                                </div>
+                                <div className="text-right text-emerald-600">
+                                  +{formatNum(r.bonus)}
+                                </div>
+                              </>
+                            )}
+                            {(r.adjustment || 0) !== 0 && (
+                              <>
+                                <div>
+                                  <span className="text-slate-500">
+                                    Adjustment
+                                  </span>
+                                </div>
+                                <div
+                                  className={`text-right ${r.adjustment > 0 ? "text-blue-600" : "text-rose-600"}`}
+                                >
+                                  {r.adjustment > 0 ? "+" : ""}
+                                  {formatNum(r.adjustment)}
+                                </div>
+                              </>
+                            )}
+                            <div>
+                              <span className="text-slate-500">Attendance</span>
+                            </div>
+                            <div className="text-right text-slate-700">
+                              P:{r.present_days} A:{r.absent_days} L:
+                              {r.late_days}
+                            </div>
                           </div>
-                          <button onClick={(e) => { e.stopPropagation(); viewPayslip(r); }} disabled={payslipLoading === r.id} className="w-full py-2.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-sm font-semibold flex items-center justify-center gap-2">
-                            {payslipLoading === r.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              viewPayslip(r);
+                            }}
+                            disabled={payslipLoading === r.id}
+                            className="w-full py-2.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-sm font-semibold flex items-center justify-center gap-2"
+                          >
+                            {payslipLoading === r.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
                             View Full Payslip
                           </button>
                         </div>
@@ -939,7 +1472,10 @@ const EmployeePayrollPage = () => {
 
         {/* PaySlip Modal */}
         {selectedPayslip && (
-          <PaySlipModal payroll={selectedPayslip} onClose={() => setSelectedPayslip(null)} />
+          <PaySlipModal
+            payroll={selectedPayslip}
+            onClose={() => setSelectedPayslip(null)}
+          />
         )}
       </div>
     </ProtectedModule>
@@ -947,4 +1483,3 @@ const EmployeePayrollPage = () => {
 };
 
 export default EmployeePayrollPage;
-

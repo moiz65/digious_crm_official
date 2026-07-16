@@ -238,7 +238,7 @@ const EmployeeProfile = () => {
       const currentMonth = currentDate.getMonth() + 1;
 
       const response = await fetch(
-        `${process.env.REACT_APP_API_URL || "http://100.126.74.55:5000"}/api/v1/sales-targets/${employeeId}?month=${currentMonth}&year=${currentYear}`,
+        `${process.env.REACT_APP_API_URL || "http://100.118.172.21:5000"}/api/v1/sales-targets/${employeeId}?month=${currentMonth}&year=${currentYear}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -3177,7 +3177,7 @@ const ProfileDetailModal = ({
       const currentMonth = currentDate.getMonth() + 1;
 
       const response = await fetch(
-        `${process.env.REACT_APP_API_URL || "http://100.126.74.55:5000"}/api/v1/sales-targets/${employeeId}?month=${currentMonth}&year=${currentYear}`,
+        `${process.env.REACT_APP_API_URL || "http://100.118.172.21:5000"}/api/v1/sales-targets/${employeeId}?month=${currentMonth}&year=${currentYear}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

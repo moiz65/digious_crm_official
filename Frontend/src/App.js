@@ -1,4 +1,4 @@
-// App.js
+// App.js - COMPLETE FIXED VERSION
 
 import React from "react";
 import {
@@ -6,6 +6,7 @@ import {
   Routes,
   Route,
   Navigate,
+  useLocation,
 } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "./context/AuthContext";
@@ -24,9 +25,6 @@ import Dashboard from "./pages/SuperAdmin/Dashboard";
 import Attendance from "./pages/SuperAdmin/Attendance";
 import ActivityTracker from "./pages/SuperAdmin/ActivityTracker";
 import Employees from "./pages/SuperAdmin/Employee";
-// Legacy application imports removed — unified ApplicationsPage used via wrappers
-// import ApplicationandMemos from './pages/SuperAdmin/ApplicationandMemos';
-// import AdminApplicationsMemos from './pages/SuperAdmin/ApplicationsMemos';
 import AdminSalesManagement from "./pages/SuperAdmin/AdminSalesManagement";
 import PayrollManagement from "./pages/SuperAdmin/PayrollManagement";
 import AdminExpense from "./pages/Admin/AdminExpense";
@@ -41,8 +39,6 @@ import HrAttendance from "./pages/HR/HrAttendance";
 import HRMyAttendance from "./pages/HR/HRMyAttendance";
 import EmployeeManagement from "./pages/HR/EmployeeManagement";
 import EmployeeOnboarding from "./pages/HR/EmployeeOnboarding";
-// import ApplicationsMemos from './pages/HR/ApplicationsMemos'; // Legacy — replaced by Applications_and_Memos
-// import LeaveManagement from './pages/HR/Applications_and_Memos';
 import UserRoles_and_Permissions from "./pages/HR/UserRoles_and_Permissions";
 import RoleTemplates from "./pages/HR/RoleTemplates";
 import Applications_and_Memos from "./pages/HR/Applications_and_Memos";
@@ -63,25 +59,44 @@ import Sales from "./pages/Employees/Sales";
 import AttendanceCorrectionPage from "./components/AttendanceCorrectionPage";
 
 import { PasscodeProvider } from "../src/context/PasscodeContext";
-
 import { ChatProvider } from "../src/context/ChatContext";
-// Chat Page
-// import ChatPage from "./pages/ChatPage";
 import ChatDashboard from "./components/ChatDashboard";
+
+// ✅ Wrapper component for ChatDashboard
+const ChatDashboardWrapper = () => {
+  const location = useLocation();
+  const publicRoutes = [
+    "/login",
+    "/signup",
+    "/forgot-password",
+    "/verify-otp",
+    "/change-password",
+    "/unauthorized",
+  ];
+  
+  // ✅ ONLY show ChatDashboard on non-public routes
+  if (publicRoutes.includes(location.pathname)) {
+    return null;
+  }
+  
+  return (
+    <ProtectedRoute>
+      <ChatDashboard />
+    </ProtectedRoute>
+  );
+};
 
 function AppContent() {
   return (
     <ChatProvider>
       <div className="App">
         <Routes>
-          {/* Public routes */}
+          {/* ✅ Public routes - FIRST */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignUpPage />} />
           <Route path="/change-password" element={<ChangePasswordPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/verify-otp" element={<VerifyOTPPage />} />
-
-          {/* Unauthorized page */}
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
           {/* Admin Routes */}
@@ -114,7 +129,7 @@ function AppContent() {
             }
           />
           <Route
-            path="/admin/payroll" // This is correct
+            path="/admin/payroll"
             element={
               <ProtectedRoute requiredRole="admin">
                 <PasscodeProvider>
@@ -132,7 +147,7 @@ function AppContent() {
             }
           />
           <Route
-            path="/admin/customers" // This is correct
+            path="/admin/customers"
             element={
               <ProtectedRoute requiredRole="admin">
                 <PasscodeProvider>
@@ -181,14 +196,7 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
-
-          <Route
-            path="/admin/invoice"
-            element={
-              
-                <Invoice />              
-            }
-          />
+          <Route path="/admin/invoice" element={<Invoice />} />
 
           {/* HR Routes */}
           <Route
@@ -388,19 +396,15 @@ function AppContent() {
             }
           />
 
-          {/* <Route path="/chat" element={<ChatPage />} /> */}
-          {/* Legacy routes (for backward compatibility) */}
+          {/* Legacy routes */}
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/attendance" element={<Attendance />} />
           <Route path="/hrattendance" element={<HrAttendance />} />
           <Route path="/activity-tracker" element={<ActivityTracker />} />
           <Route path="/testdashboard" element={<ActivityTracker />} />
           <Route path="/employeeattendance" element={<EmployeeAttendance />} />
-          {/* superAdmin */}
           <Route path="/employees" element={<Employees />} />
           <Route path="/add-employees" element={<EmployeeOnboarding />} />
-
-          {/* superAdmin */}
           <Route path="/employeedetails" element={<EmployeeDetails />} />
           <Route
             path="/application-memos"
@@ -419,16 +423,13 @@ function AppContent() {
             }
           />
 
-          {/* Default redirect */}
-          <Route path="/" element={<Navigate to="/login" />} />
-
-          {/* 404 page */}
-          <Route path="*" element={<Navigate to="/login" />} />
+          {/* Default redirect - LAST */}
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
-        {/* Chat Dashboard Widget - Shows on all pages when user is logged in */}
-        <ProtectedRoute>
-          <ChatDashboard />
-        </ProtectedRoute>
+        
+        {/* ✅ ChatDashboard ONLY on protected routes */}
+        <ChatDashboardWrapper />
       </div>
     </ChatProvider>
   );
@@ -465,4 +466,3 @@ function App() {
 }
 
 export default App;
-

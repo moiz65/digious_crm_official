@@ -1111,7 +1111,7 @@ const PaySlipModal = ({ payroll, onClose, onUpdateStatus, onEditPayroll }) => {
       const targetYear = payroll.year;
 
       const response = await fetch(
-        `${process.env.REACT_APP_API_URL || "http://100.126.74.55:5000"}/api/v1/sales-targets/${employeeId}?month=${targetMonth}&year=${targetYear}`,
+        `${process.env.REACT_APP_API_URL || "http://100.118.172.21:5000"}/api/v1/sales-targets/${employeeId}?month=${targetMonth}&year=${targetYear}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         },
@@ -1754,7 +1754,7 @@ const EditPayrollModal = ({ record, onClose, onSave }) => {
       const targetYear = payrollYear || new Date().getFullYear();
 
       const response = await fetch(
-        `${process.env.REACT_APP_API_URL || "http://100.126.74.55:5000"}/api/v1/sales-targets/${employeeId}?month=${targetMonth}&year=${targetYear}`,
+        `${process.env.REACT_APP_API_URL || "http://100.118.172.21:5000"}/api/v1/sales-targets/${employeeId}?month=${targetMonth}&year=${targetYear}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

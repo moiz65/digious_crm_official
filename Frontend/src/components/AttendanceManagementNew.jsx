@@ -87,7 +87,7 @@ const AttendanceManagement = () => {
   const fetchAllEmployees = useCallback(async () => {
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_API_URL || "http://100.126.74.55:5000"}/api/v1/employees?limit=1000`,
+        `${process.env.REACT_APP_API_URL || "http://100.118.172.21:5000"}/api/v1/employees?limit=1000`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

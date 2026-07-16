@@ -75,7 +75,7 @@ const HrSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem = ()
 
   const menuItems = [
     { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard', path: '/hr/dashboard' },
-    { id: 'employees', icon: Users, label: 'Employee Management', path: '/hr/employee-management' },
+    { id: 'employees', icon: Users, label: 'Employees', path: '/hr/employee-management' },
     { id: 'applicationmemos', icon: Calendar, label: 'Applications & Memos', path: '/hr/applications-memos' },
     { id: 'memos', icon: FileText, label: 'Memos', path: '/hr/memos' },
     { 
