@@ -152,10 +152,10 @@ exports.login = async (req, res) => {
          (employee_id, email, name, session_token, device_type, device_name, browser, os, 
           ip_address, hostname, mac_address, user_agent, country, city, timezone, login_time, is_active)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 1)`,
-        [user.employee_id, user.email, user.name, token, deviceInfo.deviceType, deviceInfo.deviceName, 
-         deviceInfo.browser, deviceInfo.os, deviceInfo.ipAddress, deviceInfo.hostname, 
-         deviceInfo.macAddress, deviceInfo.userAgent, deviceInfo.country, deviceInfo.city, 
-         deviceInfo.timezone]
+        [user.employee_id, user.email, user.name, token, deviceInfo.deviceType, deviceInfo.deviceName,
+        deviceInfo.browser, deviceInfo.os, deviceInfo.ipAddress, deviceInfo.hostname,
+        deviceInfo.macAddress, deviceInfo.userAgent, deviceInfo.country, deviceInfo.city,
+        deviceInfo.timezone]
       );
 
       console.log(`✅ Login recorded for ${user.email} - Device: ${deviceInfo.deviceType}`);
@@ -169,10 +169,10 @@ exports.login = async (req, res) => {
       const deviceType = deviceInfo.deviceType;
 
       if (existingSession.length > 0) {
-        const deviceField = deviceType === 'PC' ? 'pc_count' : 
-                           deviceType === 'Mobile' ? 'mobile_count' : 
-                           deviceType === 'Tablet' ? 'tablet_count' : 'other_count';
-        
+        const deviceField = deviceType === 'PC' ? 'pc_count' :
+          deviceType === 'Mobile' ? 'mobile_count' :
+            deviceType === 'Tablet' ? 'tablet_count' : 'other_count';
+
         await connection.query(
           `UPDATE user_concurrent_sessions SET 
             total_active_sessions = total_active_sessions + 1,
@@ -231,7 +231,16 @@ exports.login = async (req, res) => {
       // Don't fail the login if session recording fails
     }
 
+    const [employeeData] = await connection.query(
+      `SELECT device_user_id FROM employee_onboarding WHERE employee_id = ? OR email = ?`,
+      [user.employee_id, user.email]
+    );
+
+    const deviceUserId = employeeData[0]?.device_user_id || null;
+
     console.log(`✅ Login successful for ${user.email}`);
+    console.log(`✅ Login successful for ${deviceUserId}`);
+
 
     res.status(200).json({
       success: true,
@@ -245,6 +254,7 @@ exports.login = async (req, res) => {
         position: user.position,
         role: user.department,
         token: token,
+        device_user_id: deviceUserId,
         requestPasswordChange: user.request_password_change === 1
       }
     });
@@ -353,9 +363,9 @@ exports.logout = async (req, res) => {
           );
 
           // Update concurrent sessions
-          const deviceField = session.device_type === 'PC' ? 'pc_count' : 
-                             session.device_type === 'Mobile' ? 'mobile_count' : 
-                             session.device_type === 'Tablet' ? 'tablet_count' : 'other_count';
+          const deviceField = session.device_type === 'PC' ? 'pc_count' :
+            session.device_type === 'Mobile' ? 'mobile_count' :
+              session.device_type === 'Tablet' ? 'tablet_count' : 'other_count';
 
           await connection.query(
             `UPDATE user_concurrent_sessions SET 
@@ -423,9 +433,9 @@ exports.logoutNoCheckout = async (req, res) => {
           );
 
           // Update concurrent sessions counts
-          const deviceField = session.device_type === 'PC' ? 'pc_count' : 
-                             session.device_type === 'Mobile' ? 'mobile_count' : 
-                             session.device_type === 'Tablet' ? 'tablet_count' : 'other_count';
+          const deviceField = session.device_type === 'PC' ? 'pc_count' :
+            session.device_type === 'Mobile' ? 'mobile_count' :
+              session.device_type === 'Tablet' ? 'tablet_count' : 'other_count';
 
           await connection.query(
             `UPDATE user_concurrent_sessions SET 
@@ -653,10 +663,10 @@ exports.deactivateUser = async (req, res) => {
 exports.getIPInfo = async (req, res) => {
   try {
     // Get IP from request headers (works with proxies)
-    let ipAddress = req.ip || 
-                   req.connection.remoteAddress ||
-                   req.socket.remoteAddress ||
-                   req.connection.socket?.remoteAddress;
+    let ipAddress = req.ip ||
+      req.connection.remoteAddress ||
+      req.socket.remoteAddress ||
+      req.connection.socket?.remoteAddress;
 
     // Remove IPv6 prefix if present
     if (ipAddress && ipAddress.includes(':')) {

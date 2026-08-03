@@ -28,6 +28,7 @@ import {
   Trash2,
   MoreVertical,
   UserPlus,
+  Heart,
   RotateCcw,
   BarChart3,
   Send,
@@ -210,93 +211,93 @@ const ColumnChartComponent = ({
 
   const chartData = stacked
     ? {
-        labels: data.map((item) => item.name),
-        datasets: [
-          {
-            label: "Present",
-            data: data.map((item) => item.present),
-            backgroundColor:
-              chartType === "line" ? "rgba(16, 185, 129, 0.1)" : "#10b981",
-            borderColor: "#10b981",
-            borderWidth: 2.5,
-            tension: 0.4,
-            fill: chartType === "line",
-            pointRadius: 4,
-            pointBackgroundColor: "#10b981",
-            pointBorderColor: "#fff",
-            pointBorderWidth: 2,
-            pointHoverRadius: 6,
-          },
-          {
-            label: "Leaves",
-            data: data.map((item) => item.leave),
-            backgroundColor:
-              chartType === "line" ? "rgba(245, 158, 11, 0.1)" : "#f59e0b",
-            borderColor: "#f59e0b",
-            borderWidth: 2.5,
-            tension: 0.4,
-            fill: chartType === "line",
-            pointRadius: 4,
-            pointBackgroundColor: "#f59e0b",
-            pointBorderColor: "#fff",
-            pointBorderWidth: 2,
-            pointHoverRadius: 6,
-          },
-          {
-            label: "Half Days",
-            data: data.map((item) => item.halfday),
-            backgroundColor:
-              chartType === "line" ? "rgba(59, 130, 246, 0.1)" : "#3b82f6",
-            borderColor: "#3b82f6",
-            borderWidth: 2.5,
-            tension: 0.4,
-            fill: chartType === "line",
-            pointRadius: 4,
-            pointBackgroundColor: "#3b82f6",
-            pointBorderColor: "#fff",
-            pointBorderWidth: 2,
-            pointHoverRadius: 6,
-          },
-          {
-            label: "Absent",
-            data: data.map((item) => item.absent),
-            backgroundColor:
-              chartType === "line" ? "rgba(239, 68, 68, 0.1)" : "#ef4444",
-            borderColor: "#ef4444",
-            borderWidth: 2.5,
-            tension: 0.4,
-            fill: chartType === "line",
-            pointRadius: 4,
-            pointBackgroundColor: "#ef4444",
-            pointBorderColor: "#fff",
-            pointBorderWidth: 2,
-            pointHoverRadius: 6,
-          },
-        ],
-      }
+      labels: data.map((item) => item.name),
+      datasets: [
+        {
+          label: "Present",
+          data: data.map((item) => item.present),
+          backgroundColor:
+            chartType === "line" ? "rgba(16, 185, 129, 0.1)" : "#10b981",
+          borderColor: "#10b981",
+          borderWidth: 2.5,
+          tension: 0.4,
+          fill: chartType === "line",
+          pointRadius: 4,
+          pointBackgroundColor: "#10b981",
+          pointBorderColor: "#fff",
+          pointBorderWidth: 2,
+          pointHoverRadius: 6,
+        },
+        {
+          label: "Leaves",
+          data: data.map((item) => item.leave),
+          backgroundColor:
+            chartType === "line" ? "rgba(245, 158, 11, 0.1)" : "#f59e0b",
+          borderColor: "#f59e0b",
+          borderWidth: 2.5,
+          tension: 0.4,
+          fill: chartType === "line",
+          pointRadius: 4,
+          pointBackgroundColor: "#f59e0b",
+          pointBorderColor: "#fff",
+          pointBorderWidth: 2,
+          pointHoverRadius: 6,
+        },
+        {
+          label: "Half Days",
+          data: data.map((item) => item.halfday),
+          backgroundColor:
+            chartType === "line" ? "rgba(59, 130, 246, 0.1)" : "#3b82f6",
+          borderColor: "#3b82f6",
+          borderWidth: 2.5,
+          tension: 0.4,
+          fill: chartType === "line",
+          pointRadius: 4,
+          pointBackgroundColor: "#3b82f6",
+          pointBorderColor: "#fff",
+          pointBorderWidth: 2,
+          pointHoverRadius: 6,
+        },
+        {
+          label: "Absent",
+          data: data.map((item) => item.absent),
+          backgroundColor:
+            chartType === "line" ? "rgba(239, 68, 68, 0.1)" : "#ef4444",
+          borderColor: "#ef4444",
+          borderWidth: 2.5,
+          tension: 0.4,
+          fill: chartType === "line",
+          pointRadius: 4,
+          pointBackgroundColor: "#ef4444",
+          pointBorderColor: "#fff",
+          pointBorderWidth: 2,
+          pointHoverRadius: 6,
+        },
+      ],
+    }
     : {
-        labels: data.map((item) => item.name),
-        datasets: [
-          {
-            label: title,
-            data: data.map((item) => item.value),
-            backgroundColor:
-              chartType === "line"
-                ? data.map((item) => item.color + "20")
-                : data.map((item) => item.color),
-            borderColor: data.map((item) => item.color),
-            borderWidth: chartType === "line" ? 2.5 : 0,
-            tension: chartType === "line" ? 0.4 : undefined,
-            fill: chartType === "line",
-            pointRadius: chartType === "line" ? 4 : undefined,
-            pointBackgroundColor:
-              chartType === "line" ? data.map((item) => item.color) : undefined,
-            pointBorderColor: chartType === "line" ? "#fff" : undefined,
-            pointBorderWidth: chartType === "line" ? 2 : undefined,
-            pointHoverRadius: chartType === "line" ? 6 : undefined,
-          },
-        ],
-      };
+      labels: data.map((item) => item.name),
+      datasets: [
+        {
+          label: title,
+          data: data.map((item) => item.value),
+          backgroundColor:
+            chartType === "line"
+              ? data.map((item) => item.color + "20")
+              : data.map((item) => item.color),
+          borderColor: data.map((item) => item.color),
+          borderWidth: chartType === "line" ? 2.5 : 0,
+          tension: chartType === "line" ? 0.4 : undefined,
+          fill: chartType === "line",
+          pointRadius: chartType === "line" ? 4 : undefined,
+          pointBackgroundColor:
+            chartType === "line" ? data.map((item) => item.color) : undefined,
+          pointBorderColor: chartType === "line" ? "#fff" : undefined,
+          pointBorderWidth: chartType === "line" ? 2 : undefined,
+          pointHoverRadius: chartType === "line" ? 6 : undefined,
+        },
+      ],
+    };
 
   const ChartComponent = chartType === "line" ? Line : Bar;
 
@@ -613,11 +614,11 @@ const UnexplainedAbsenceTracking = ({
 
         return isUnexplained
           ? {
-              employee,
-              attendance,
-              date: selectedDate,
-              reason: "No explanation provided",
-            }
+            employee,
+            attendance,
+            date: selectedDate,
+            reason: "No explanation provided",
+          }
           : null;
       })
       .filter(Boolean);
@@ -1913,6 +1914,8 @@ const EmployeeDetailView = ({
   const [isBreakModalOpen, setIsBreakModalOpen] = useState(false);
   const [selectedBreakDate, setSelectedBreakDate] = useState("");
   const [editingNotes, setEditingNotes] = useState("");
+  const [leaveData, setLeaveData] = useState(null);
+  const [leaveLoading, setLeaveLoading] = useState(false);
 
   // HR Edit Modal State
   const [isHrEditModalOpen, setIsHrEditModalOpen] = useState(false);
@@ -1932,15 +1935,15 @@ const EmployeeDetailView = ({
     const editRecord = record
       ? { ...record, dateStr }
       : {
-          id: null,
-          dateStr,
-          status: "absent",
-          checkIn: "",
-          checkOut: "",
-          notes: "",
-          remarks: "",
-          isNewRecord: true,
-        };
+        id: null,
+        dateStr,
+        status: "absent",
+        checkIn: "",
+        checkOut: "",
+        notes: "",
+        remarks: "",
+        isNewRecord: true,
+      };
     setHrEditRecord(editRecord);
     setHrEditForm({
       check_in_time:
@@ -2013,11 +2016,11 @@ const EmployeeDetailView = ({
 
     // Build breaks array from actual break type counts with real durations
     let breaks = [];
-    
+
     // Start from check-in time, or use 9:00 AM as default if check-in is not available
     let currentHour = 9;
     let currentMinute = 0;
-    
+
     if (attendanceRecord.checkIn && attendanceRecord.checkIn !== "-") {
       const [hour, minute] = attendanceRecord.checkIn.split(":").map(Number);
       currentHour = hour;
@@ -2150,7 +2153,7 @@ const EmployeeDetailView = ({
       }
 
       const result = await response.json();
-      
+
       // Extract breaks from allBreaks array in the response
       const formattedBreaks = (result.data?.breakStats?.allBreaks || []).map((breakRecord) => {
         return {
@@ -2176,6 +2179,55 @@ const EmployeeDetailView = ({
       setIsBreakModalOpen(true);
     }
   };
+
+  const fetchLeaveBalance = async () => {
+    if (!employee?.id) return;
+
+    setLeaveLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL || "http://localhost:5000"}/api/v1/leaves/employee/${employee.id}/leaveBalance`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      const data = await response.json();
+
+      if (data.success) {
+        setLeaveData(data);
+        console.log("✅ Leave balance fetched:", data);
+      } else {
+        console.error("Failed to fetch leave balance:", data.message);
+        // Use fallback data
+        setLeaveData({
+          casual: { used: 0, total: 8, remaining: 8 },
+          sick: { used: 0, total: 8, remaining: 8 },
+          annual: { used: 0, total: 12, remaining: 12 },
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching leave balance:", error);
+      // Use fallback data
+      setLeaveData({
+        casual: { used: 0, total: 8, remaining: 8 },
+        sick: { used: 0, total: 8, remaining: 8 },
+        annual: { used: 0, total: 12, remaining: 12 },
+      });
+    } finally {
+      setLeaveLoading(false);
+    }
+  };
+
+  // Fetch leave balance when employee changes
+  useEffect(() => {
+    if (employee?.id) {
+      fetchLeaveBalance();
+    }
+  }, [employee?.id]);
 
   const getEmployeeAttendance = (employeeId) => {
     return attendanceData.filter((att) => att.employeeId === employeeId);
@@ -2420,14 +2472,18 @@ const EmployeeDetailView = ({
           </div>
         )}
 
+        {/* ✅ LEAVE SUMMARY - DYNAMIC */}
         <div className="bg-white rounded-2xl p-6 mb-8 border border-gray-200 shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-900 mb-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
+            <Calendar className="h-5 w-5 text-blue-600" />
             Leaves Summary
+            {leaveLoading && (
+              <span className="ml-2 text-sm text-gray-400">(Loading...)</span>
+            )}
           </h3>
 
-          {/* Detailed Leave Breakdown */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Casual Leaves Block */}
+            {/* Casual Leaves */}
             <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition-shadow duration-300">
               <div className="flex items-center justify-between mb-4">
                 <h4 className="font-bold text-lg">Casual Leaves</h4>
@@ -2435,37 +2491,41 @@ const EmployeeDetailView = ({
                   <Calendar className="h-5 w-5 text-white" />
                 </div>
               </div>
-
               <div className="space-y-3">
                 <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3">
-                  <div className="text-sm text-blue-100 mb-1">Used/ Total</div>
+                  <div className="text-sm text-blue-100 mb-1">Used / Total</div>
                   <div className="text-3xl font-bold">
-                    {empLeaves?.casualLeavesTaken || 0}/
-                    {empLeaves?.casualLeaves || 8}
+                    {leaveData?.casual?.used ?? 0} / {leaveData?.casual?.total ?? 8}
+                  </div>
+                  <div className="text-xs text-blue-200 mt-1">
+                    {leaveData?.casual?.remaining ?? 8} remaining
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Sick Leaves Block */}
+            {/* Sick Leaves */}
             <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition-shadow duration-300">
               <div className="flex items-center justify-between mb-4">
                 <h4 className="font-bold text-lg">Sick Leaves</h4>
-                <div className="bg-white/20 backdrop-blur-md rounded-full p-3"></div>
+                <div className="bg-white/20 backdrop-blur-md rounded-full p-3">
+                  <Heart className="h-5 w-5 text-white" />
+                </div>
               </div>
-
               <div className="space-y-3">
                 <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3">
-                  <div className="text-sm text-red-100 mb-1">Used/ Total</div>
+                  <div className="text-sm text-red-100 mb-1">Used / Total</div>
                   <div className="text-3xl font-bold">
-                    {empLeaves?.sickLeavesTaken || 0}/
-                    {empLeaves?.sickLeaves || 8}
+                    {leaveData?.sick?.used ?? 0} / {leaveData?.sick?.total ?? 8}
+                  </div>
+                  <div className="text-xs text-red-200 mt-1">
+                    {leaveData?.sick?.remaining ?? 8} remaining
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Annual Leaves Block */}
+            {/* Annual Leaves */}
             <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition-shadow duration-300">
               <div className="flex items-center justify-between mb-4">
                 <h4 className="font-bold text-lg">Annual Leaves</h4>
@@ -2473,13 +2533,14 @@ const EmployeeDetailView = ({
                   <Zap className="h-5 w-5 text-white" />
                 </div>
               </div>
-
               <div className="space-y-3">
                 <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3">
-                  <div className="text-sm text-green-100 mb-1">Used/ Total</div>
+                  <div className="text-sm text-green-100 mb-1">Used / Total</div>
                   <div className="text-3xl font-bold">
-                    {empLeaves?.annualLeavesTaken || 0}/
-                    {empLeaves?.annualLeaves || 12}
+                    {leaveData?.annual?.used ?? 0} / {leaveData?.annual?.total ?? 12}
+                  </div>
+                  <div className="text-xs text-green-200 mt-1">
+                    {leaveData?.annual?.remaining ?? 12} remaining
                   </div>
                 </div>
               </div>
@@ -2976,8 +3037,8 @@ const EmployeeDetailView = ({
                         </td>
                         <td className="px-4 py-3">
                           {record &&
-                          record.checkIn &&
-                          record.checkIn !== "-" ? (
+                            record.checkIn &&
+                            record.checkIn !== "-" ? (
                             <span className="text-green-600 font-medium">
                               {record.checkIn}
                             </span>
@@ -2989,8 +3050,8 @@ const EmployeeDetailView = ({
                         </td>
                         <td className="px-4 py-3">
                           {record &&
-                          record.checkOut &&
-                          record.checkOut !== "-" ? (
+                            record.checkOut &&
+                            record.checkOut !== "-" ? (
                             <span className="text-blue-600 font-medium">
                               {record.checkOut}
                             </span>
@@ -3027,9 +3088,9 @@ const EmployeeDetailView = ({
                         </td>
                         <td className="px-4 py-3 text-center text-gray-700">
                           {record &&
-                          record.overtime &&
-                          record.overtime !== "0.0" &&
-                          record.overtime !== "0"
+                            record.overtime &&
+                            record.overtime !== "0.0" &&
+                            record.overtime !== "0"
                             ? `${record.overtime}h`
                             : "—"}
                         </td>
@@ -3335,11 +3396,10 @@ const EmployeeListView = ({
           return (
             <div
               key={employee.id}
-              className={`flex items-center justify-between p-5 rounded-2xl border transition-all duration-300 cursor-pointer ${
-                isSelected
-                  ? "bg-blue-50 border-blue-300 shadow-md"
-                  : "bg-white border-gray-200 hover:border-[#349dff] hover:bg-blue-50 hover:shadow-md"
-              }`}
+              className={`flex items-center justify-between p-5 rounded-2xl border transition-all duration-300 cursor-pointer ${isSelected
+                ? "bg-blue-50 border-blue-300 shadow-md"
+                : "bg-white border-gray-200 hover:border-[#349dff] hover:bg-blue-50 hover:shadow-md"
+                }`}
             >
               <div className="flex items-center space-x-4">
                 <input
@@ -3417,7 +3477,7 @@ const EmployeeListView = ({
                   >
                     <Eye className="h-4 w-4" />
                   </button>
-                  <button
+                  {/* <button
                     onClick={(e) => {
                       e.stopPropagation();
                       onEditEmployee(employee);
@@ -3434,7 +3494,7 @@ const EmployeeListView = ({
                     className="p-2 text-gray-400 hover:text-red-600 transition duration-300"
                   >
                     <Trash2 className="h-4 w-4" />
-                  </button>
+                  </button> */}
                 </div>
               </div>
             </div>
@@ -3634,12 +3694,11 @@ const OverviewTab = ({
 
                   hover:shadow-lg hover:-translate-y-0.5
 
-                  ${
-                    isWeekend
-                      ? "border-gray-300 bg-gray-100/80"
-                      : isSelected
-                        ? "border-blue-300 ring-1 ring-blue-200"
-                        : "border-slate-200"
+                  ${isWeekend
+                    ? "border-gray-300 bg-gray-100/80"
+                    : isSelected
+                      ? "border-blue-300 ring-1 ring-blue-200"
+                      : "border-slate-200"
                   }
                 `}
               >
@@ -3647,11 +3706,10 @@ const OverviewTab = ({
                 <div
                   className={`
                   absolute top-0 left-0 right-0 h-1.5 rounded-t-2xl
-                  ${
-                    isWeekend
+                  ${isWeekend
                       ? "bg-gradient-to-r from-gray-400 to-gray-300"
                       : "bg-gradient-to-r from-emerald-500 to-teal-400"
-                  }
+                    }
                 `}
                 ></div>
 
@@ -3712,273 +3770,272 @@ const OverviewTab = ({
 
       {/* Attendance Details Section - Only show when a date is explicitly selected */}
       {selectedDate && (
-  <div className="bg-white rounded-3xl p-7 border border-gray-200 shadow-md">
-    <div className="flex items-center justify-between mb-6">
-      <div className="flex items-center space-x-4">
-        <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
-          Attendance for{" "}
-          {new Date(selectedDate).toLocaleDateString("en-US", {
-            weekday: "long",
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          })}
-        </h2>
-      </div>
-      <div className="flex items-center space-x-4">
-        <span className="text-sm text-gray-500">
-          {
-            getFilteredAttendanceData().filter(
-              (item) => item.date === selectedDate,
-            ).length
-          }{" "}
-          of {getFilteredEmployees().length} employees
-        </span>
-        <div className="relative">
-          <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search employees..."
-            value={attendanceSearch}
-            onChange={(e) => setAttendanceSearch(e.target.value)}
-            className="pl-10 pr-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#349dff] focus:border-transparent text-sm w-48"
-          />
-        </div>
-      </div>
-    </div>
+        <div className="bg-white rounded-3xl p-7 border border-gray-200 shadow-md">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-4">
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                Attendance for{" "}
+                {new Date(selectedDate).toLocaleDateString("en-US", {
+                  weekday: "long",
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </h2>
+            </div>
+            <div className="flex items-center space-x-4">
+              <span className="text-sm text-gray-500">
+                {
+                  getFilteredAttendanceData().filter(
+                    (item) => item.date === selectedDate,
+                  ).length
+                }{" "}
+                of {getFilteredEmployees().length} employees
+              </span>
+              <div className="relative">
+                <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search employees..."
+                  value={attendanceSearch}
+                  onChange={(e) => setAttendanceSearch(e.target.value)}
+                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#349dff] focus:border-transparent text-sm w-48"
+                />
+              </div>
+            </div>
+          </div>
 
-    {/* Stats Cards */}
-    <div className="grid grid-cols-4 gap-4 mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
-      <div className="text-center">
-        <div className="text-2xl font-bold text-green-600">
-          {stats.presentToday}
-        </div>
-        <div className="text-xs text-gray-600 font-medium">Present</div>
-      </div>
-      <div className="text-center">
-        <div className="text-2xl font-bold text-red-600">
-          {stats.absent}
-        </div>
-        <div className="text-xs text-gray-600 font-medium">Absent</div>
-      </div>
-      <div className="text-center">
-        <div className="text-2xl font-bold text-orange-600">
-          {stats.onLeave}
-        </div>
-        <div className="text-xs text-gray-600 font-medium">On Leave</div>
-      </div>
-      <div className="text-center">
-        <div className="text-2xl font-bold text-blue-600">
-          {stats.lateToday}
-        </div>
-        <div className="text-xs text-gray-600 font-medium">Late</div>
-      </div>
-    </div>
+          {/* Stats Cards */}
+          <div className="grid grid-cols-4 gap-4 mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-green-600">
+                {stats.presentToday}
+              </div>
+              <div className="text-xs text-gray-600 font-medium">Present</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-red-600">
+                {stats.absent}
+              </div>
+              <div className="text-xs text-gray-600 font-medium">Absent</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-orange-600">
+                {stats.onLeave}
+              </div>
+              <div className="text-xs text-gray-600 font-medium">On Leave</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-blue-600">
+                {stats.lateToday}
+              </div>
+              <div className="text-xs text-gray-600 font-medium">Late</div>
+            </div>
+          </div>
 
-    {/* Filters */}
-    <div className="flex items-center space-x-4 mb-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
-      <div className="flex items-center space-x-2">
-        <span className="text-sm font-medium text-gray-700">
-          Filter by:
-        </span>
-        <select
-          value={attendanceFilter}
-          onChange={(e) => setAttendanceFilter(e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#349dff] focus:border-transparent"
-        >
-          <option value="all">All Status</option>
-          <option value="present">Present</option>
-          <option value="absent">Absent</option>
-          <option value="leave">On Leave</option>
-          <option value="paid_leave">Paid Leave (PL)</option>
-          <option value="halfday">Half Day</option>
-          <option value="unexplained">Uninformed Absent (UA)</option>
-        </select>
-      </div>
-      <div className="flex items-center space-x-2">
-        <span className="text-sm font-medium text-gray-700">
-          Sort by:
-        </span>
-        <select
-          value={attendanceSort}
-          onChange={(e) => setAttendanceSort(e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#349dff] focus:border-transparent"
-        >
-          <option value="name">Name</option>
-          <option value="department">Department</option>
-          <option value="status">Status</option>
-        </select>
-      </div>
-    </div>
+          {/* Filters */}
+          <div className="flex items-center space-x-4 mb-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
+            <div className="flex items-center space-x-2">
+              <span className="text-sm font-medium text-gray-700">
+                Filter by:
+              </span>
+              <select
+                value={attendanceFilter}
+                onChange={(e) => setAttendanceFilter(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#349dff] focus:border-transparent"
+              >
+                <option value="all">All Status</option>
+                <option value="present">Present</option>
+                <option value="absent">Absent</option>
+                <option value="leave">On Leave</option>
+                <option value="paid_leave">Paid Leave (PL)</option>
+                <option value="halfday">Half Day</option>
+                <option value="unexplained">Uninformed Absent (UA)</option>
+              </select>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="text-sm font-medium text-gray-700">
+                Sort by:
+              </span>
+              <select
+                value={attendanceSort}
+                onChange={(e) => setAttendanceSort(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#349dff] focus:border-transparent"
+              >
+                <option value="name">Name</option>
+                <option value="department">Department</option>
+                <option value="status">Status</option>
+              </select>
+            </div>
+          </div>
 
-    {/* Table */}
-    <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
-          <tr>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Employee
-            </th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Department
-            </th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Position
-            </th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Check In
-            </th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Check Out
-            </th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Late
-            </th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Status
-            </th>
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          {getFilteredAndSortedAttendance().map((employee) => {
-            // Filter attendance data directly by selectedDate
-            const selectedDateAttendance = attendanceData.filter(
-              (item) => item.date === selectedDate,
-            );
-            const attendance = selectedDateAttendance.find(
-              (a) => a.employeeId === employee.id,
-            );
-            const rawStatus = attendance?.status || "absent";
-            const isLate =
-              rawStatus === "late" ||
-              rawStatus === "ml" ||
-              (attendance?.late && attendance.late !== "-");
-            const isPresent =
-              rawStatus === "present" || (attendance?.checkIn && attendance.checkIn !== "-" && !isLate);
-            const status = isLate ? "late" : isPresent ? "present" : rawStatus;
-            const isHoliday = holidays.some((h) => h.date === selectedDate);
+          {/* Table */}
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Employee
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Department
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Position
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Check In
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Check Out
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Late
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {getFilteredAndSortedAttendance().map((employee) => {
+                  // Filter attendance data directly by selectedDate
+                  const selectedDateAttendance = attendanceData.filter(
+                    (item) => item.date === selectedDate,
+                  );
+                  const attendance = selectedDateAttendance.find(
+                    (a) => a.employeeId === employee.id,
+                  );
+                  const rawStatus = attendance?.status || "absent";
+                  const isLate =
+                    rawStatus === "late" ||
+                    rawStatus === "ml" ||
+                    (attendance?.late && attendance.late !== "-");
+                  const isPresent =
+                    rawStatus === "present" || (attendance?.checkIn && attendance.checkIn !== "-" && !isLate);
+                  const status = isLate ? "late" : isPresent ? "present" : rawStatus;
+                  const isHoliday = holidays.some((h) => h.date === selectedDate);
 
-            return (
-              <tr key={employee.id} className="hover:bg-gray-50 transition-colors duration-200">
-                {/* Employee Info */}
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center">
-                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center text-white font-semibold text-sm">
-                      {employee.avatar}
-                    </div>
-                    <div className="ml-4">
-                      <div className="text-sm font-medium text-gray-900">
-                        {employee.name}
-                      </div>
-                    </div>
-                  </div>
-                </td>
-                
-                {/* Department */}
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{employee.department}</div>
-                </td>
-                
-                {/* Position */}
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">
-                    {employee.position || "-"}
-                  </div>
-                </td>
-                
-                {/* Check In */}
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">
-                    {attendance?.checkIn || "-"}
-                  </div>
-                </td>
-                
-                {/* Check Out */}
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">
-                    {attendance?.checkOut || "-"}
-                  </div>
-                </td>
-                
-                {/* Late */}
-                <td className="px-6 py-4 whitespace-nowrap">
-                  {attendance?.late && attendance.late !== "-" && !isHoliday ? (
-                    <span className="text-sm text-orange-600 font-medium">
-                      {attendance.late}
-                    </span>
-                  ) : (
-                    <span className="text-sm text-gray-400">-</span>
-                  )}
-                </td>
-                
-                {/* Status Badge */}
-                <td className="px-6 py-4 whitespace-nowrap">
-                  {isHoliday ? (
-                    <span className="px-3 py-1.5 rounded-md text-sm font-medium bg-purple-50 text-purple-700">
-                      Holiday
-                    </span>
-                  ) : (
-                    <span
-                      className={`px-3 py-1.5 rounded-md text-sm font-medium ${
-                        status === "late"
-                          ? "bg-orange-50 text-orange-700"
-                          : status === "present"
-                            ? "bg-green-50 text-green-700"
-                            : status === "leave"
-                              ? "bg-blue-50 text-blue-700"
-                              : status === "halfday"
-                                ? "bg-yellow-50 text-yellow-700"
-                                : status === "absent"
-                                  ? "bg-red-50 text-red-700"
-                                  : "bg-gray-50 text-gray-700"
-                      }`}
-                    >
-                      {status === "late"
-                        ? "Late"
-                        : status === "present"
-                          ? "Present"
-                          : status === "leave"
-                            ? "On Leave"
-                            : status === "halfday"
-                              ? "Half Day"
-                              : status === "absent"
-                                ? "Absent"
-                                : status}
-                    </span>
-                  )}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
+                  return (
+                    <tr key={employee.id} className="hover:bg-gray-50 transition-colors duration-200">
+                      {/* Employee Info */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center text-white font-semibold text-sm">
+                            {employee.avatar}
+                          </div>
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-gray-900">
+                              {employee.name}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
 
-    {/* Empty State */}
-    {getFilteredAndSortedAttendance().length === 0 && (
-      <div className="text-center py-12">
-        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Users className="h-8 w-8 text-gray-400" />
+                      {/* Department */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{employee.department}</div>
+                      </td>
+
+                      {/* Position */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {employee.position || "-"}
+                        </div>
+                      </td>
+
+                      {/* Check In */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">
+                          {attendance?.checkIn || "-"}
+                        </div>
+                      </td>
+
+                      {/* Check Out */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">
+                          {attendance?.checkOut || "-"}
+                        </div>
+                      </td>
+
+                      {/* Late */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {attendance?.late && attendance.late !== "-" && !isHoliday ? (
+                          <span className="text-sm text-orange-600 font-medium">
+                            {attendance.late}
+                          </span>
+                        ) : (
+                          <span className="text-sm text-gray-400">-</span>
+                        )}
+                      </td>
+
+                      {/* Status Badge */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {isHoliday ? (
+                          <span className="px-3 py-1.5 rounded-md text-sm font-medium bg-purple-50 text-purple-700">
+                            Holiday
+                          </span>
+                        ) : (
+                          <span
+                            className={`px-3 py-1.5 rounded-md text-sm font-medium ${status === "late"
+                              ? "bg-orange-50 text-orange-700"
+                              : status === "present"
+                                ? "bg-green-50 text-green-700"
+                                : status === "leave"
+                                  ? "bg-blue-50 text-blue-700"
+                                  : status === "halfday"
+                                    ? "bg-yellow-50 text-yellow-700"
+                                    : status === "absent"
+                                      ? "bg-red-50 text-red-700"
+                                      : "bg-gray-50 text-gray-700"
+                              }`}
+                          >
+                            {status === "late"
+                              ? "Late"
+                              : status === "present"
+                                ? "Present"
+                                : status === "leave"
+                                  ? "On Leave"
+                                  : status === "halfday"
+                                    ? "Half Day"
+                                    : status === "absent"
+                                      ? "Absent"
+                                      : status}
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Empty State */}
+          {getFilteredAndSortedAttendance().length === 0 && (
+            <div className="text-center py-12">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Users className="h-8 w-8 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                No employees found
+              </h3>
+              <p className="text-gray-500 mb-4">
+                Try adjusting your filters or search terms
+              </p>
+              <button
+                onClick={() => {
+                  setAttendanceSearch("");
+                  setAttendanceFilter("all");
+                }}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200"
+              >
+                Clear Filters
+              </button>
+            </div>
+          )}
         </div>
-        <h3 className="text-lg font-medium text-gray-900 mb-2">
-          No employees found
-        </h3>
-        <p className="text-gray-500 mb-4">
-          Try adjusting your filters or search terms
-        </p>
-        <button
-          onClick={() => {
-            setAttendanceSearch("");
-            setAttendanceFilter("all");
-          }}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200"
-        >
-          Clear Filters
-        </button>
-      </div>
-    )}
-  </div>
-)}
+      )}
 
       {/* Empty state when no date is selected */}
       {!selectedDate && (
@@ -4189,11 +4246,10 @@ const HolidaysManagement = ({ holidays, onAddHoliday, onDeleteHoliday }) => {
             </div>
             <div className="flex items-center space-x-2">
               <span
-                className={`text-xs px-2 py-1 rounded-full ${
-                  holiday.type === "public"
-                    ? "bg-green-100 text-green-800"
-                    : "bg-blue-100 text-blue-800"
-                }`}
+                className={`text-xs px-2 py-1 rounded-full ${holiday.type === "public"
+                  ? "bg-green-100 text-green-800"
+                  : "bg-blue-100 text-blue-800"
+                  }`}
               >
                 {holiday.type}
               </span>
@@ -4508,13 +4564,12 @@ const NotificationContainer = ({ notifications }) => {
       {notifications.map((notification) => (
         <div
           key={notification.id}
-          className={`p-4 rounded-lg shadow-lg border-l-4 transform transition-all duration-300 ${
-            notification.type === "success"
-              ? "bg-green-50 border-green-500 text-green-800"
-              : notification.type === "error"
-                ? "bg-red-50 border-red-500 text-red-800"
-                : "bg-blue-50 border-blue-500 text-blue-800"
-          }`}
+          className={`p-4 rounded-lg shadow-lg border-l-4 transform transition-all duration-300 ${notification.type === "success"
+            ? "bg-green-50 border-green-500 text-green-800"
+            : notification.type === "error"
+              ? "bg-red-50 border-red-500 text-red-800"
+              : "bg-blue-50 border-blue-500 text-blue-800"
+            }`}
         >
           <div className="flex items-center justify-between">
             <span className="font-medium">{notification.message}</span>
@@ -4862,10 +4917,10 @@ export function HrAttendancePage() {
         prev.map((att) =>
           att.id === existingRecord.id
             ? {
-                ...att,
-                status,
-                notes: notes || att.notes,
-              }
+              ...att,
+              status,
+              notes: notes || att.notes,
+            }
             : att,
         ),
       );
@@ -5292,9 +5347,9 @@ export function HrAttendancePage() {
         const sampleRules = {
           workHours: workingHours
             ? {
-                start: workingHours.start_time,
-                end: workingHours.end_time,
-              }
+              start: workingHours.start_time,
+              end: workingHours.end_time,
+            }
             : { start: "09:00", end: "18:00" },
           breakDuration: 60,
           gracePeriod: 15,
@@ -5954,11 +6009,10 @@ export function HrAttendancePage() {
                     <button
                       key={tab}
                       onClick={() => setActiveTab(tab)}
-                      className={`px-6 py-3 text-sm font-semibold transition duration-300 border-b-2 ${
-                        activeTab === tab
-                          ? "border-emerald-600 text-emerald-700"
-                          : "border-transparent text-gray-600 hover:text-gray-900"
-                      }`}
+                      className={`px-6 py-3 text-sm font-semibold transition duration-300 border-b-2 ${activeTab === tab
+                        ? "border-emerald-600 text-emerald-700"
+                        : "border-transparent text-gray-600 hover:text-gray-900"
+                        }`}
                     >
                       {tab.charAt(0).toUpperCase() + tab.slice(1)}
                     </button>

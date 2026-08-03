@@ -118,10 +118,10 @@ exports.updateCategory = async (req, res) => {
     const fields = [];
     const values = [];
 
-    if (name !== undefined)        { fields.push('name = ?');        values.push(name.trim()); }
-    if (description !== undefined)  { fields.push('description = ?');  values.push(description); }
-    if (color !== undefined)        { fields.push('color = ?');        values.push(color); }
-    if (is_active !== undefined)    { fields.push('is_active = ?');    values.push(is_active ? 1 : 0); }
+    if (name !== undefined) { fields.push('name = ?'); values.push(name.trim()); }
+    if (description !== undefined) { fields.push('description = ?'); values.push(description); }
+    if (color !== undefined) { fields.push('color = ?'); values.push(color); }
+    if (is_active !== undefined) { fields.push('is_active = ?'); values.push(is_active ? 1 : 0); }
 
     if (!fields.length) {
       return res.status(400).json({ success: false, message: 'No fields to update' });
@@ -161,17 +161,19 @@ exports.deleteCategory = async (req, res) => {
 // ─────────────────────────────────────────────────────────
 
 // GET /  (with optional query params: from, to, category_id, search)
+// In getExpenses, ensure date is returned as string without timezone conversion
 exports.getExpenses = async (req, res) => {
   try {
-    const { from, to, category_id, search } = req.query;
+    const { from, to, category_id, search, payment_type } = req.query;
 
     let where = ['1=1'];
     const params = [];
 
-    if (from)        { where.push('e.expense_date >= ?'); params.push(from); }
-    if (to)          { where.push('e.expense_date <= ?'); params.push(to); }
-    if (category_id) { where.push('e.category_id = ?');   params.push(category_id); }
-    if (search)      {
+    if (from) { where.push('e.expense_date >= ?'); params.push(from); }
+    if (to) { where.push('e.expense_date <= ?'); params.push(to); }
+    if (category_id) { where.push('e.category_id = ?'); params.push(category_id); }
+    if (payment_type) { where.push('e.payment_type = ?'); params.push(payment_type); }
+    if (search) {
       where.push('(e.category_name LIKE ? OR e.note LIKE ?)');
       params.push(`%${search}%`, `%${search}%`);
     }
@@ -181,8 +183,9 @@ exports.getExpenses = async (req, res) => {
               e.category_id,
               e.category_name,
               e.amount,
+              e.payment_type,
               e.note,
-              e.expense_date,
+              DATE_FORMAT(e.expense_date, '%Y-%m-%d') AS expense_date,  -- ✅ FIX: Format as string
               e.expense_time,
               e.created_at,
               c.color AS category_color
@@ -193,7 +196,6 @@ exports.getExpenses = async (req, res) => {
       params
     );
 
-    // Also return the total
     const [totalRows] = await pool.query(
       `SELECT COALESCE(SUM(e.amount), 0) AS total
        FROM   expenses e
@@ -214,15 +216,22 @@ exports.getExpenses = async (req, res) => {
 };
 
 // POST /
+// POST /
 exports.createExpense = async (req, res) => {
   try {
-    const { category_id, amount, note = '' } = req.body;
+    const { category_id, amount, payment_type, note = '' } = req.body;
+
+    console.log("=========================================");
+    console.log("📝 [createExpense] Full body:", req.body);
+    console.log("📝 [createExpense] payment_type raw:", payment_type);
+    console.log("📝 [createExpense] payment_type type:", typeof payment_type);
+    console.log("=========================================");
 
     if (!category_id || !amount) {
       return res.status(400).json({ success: false, message: 'category_id and amount are required' });
     }
 
-    // Fetch category name for denormalization
+    // Fetch category name
     const [cats] = await pool.query(
       `SELECT name FROM expense_categories WHERE id = ? AND is_active = 1`, [category_id]
     );
@@ -231,14 +240,30 @@ exports.createExpense = async (req, res) => {
     }
 
     const now = new Date();
-    // Accept custom date from request body; fall back to today
     const expense_date = req.body.expense_date || now.toISOString().slice(0, 10);
     const expense_time = req.body.expense_time || now.toTimeString().slice(0, 8);
 
+    // ✅ FIX: Use payment_type as is, default only if empty
+    let finalPaymentType = "Bank Account"; // Default
+
+    // Check if payment_type exists and is a valid non-empty string
+    if (payment_type !== undefined && payment_type !== null && payment_type !== '') {
+      // Check if it's a valid payment type
+      const validPaymentTypes = ['Bank Account', 'PayPal', 'Cash', 'Credit Card'];
+      if (validPaymentTypes.includes(payment_type)) {
+        finalPaymentType = payment_type;
+      } else {
+        console.log("⚠️ Invalid payment_type:", payment_type, "using default");
+        finalPaymentType = "Bank Account";
+      }
+    }
+
+    console.log("✅ [createExpense] Final payment_type:", finalPaymentType);
+
     const [result] = await pool.query(
-      `INSERT INTO expenses (category_id, category_name, amount, note, expense_date, expense_time, created_by)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [category_id, cats[0].name, parseFloat(amount), note.trim(), expense_date, expense_time, req.user?.userId || req.user?.id || null]
+      `INSERT INTO expenses (category_id, category_name, amount, payment_type, note, expense_date, expense_time, created_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [category_id, cats[0].name, parseFloat(amount), finalPaymentType, note.trim(), expense_date, expense_time, req.user?.userId || req.user?.id || null]
     );
 
     const [rows] = await pool.query(
@@ -249,9 +274,11 @@ exports.createExpense = async (req, res) => {
       [result.insertId]
     );
 
+    console.log("✅ [createExpense] Created:", rows[0]);
+
     return res.status(201).json({ success: true, message: 'Expense created', data: rows[0] });
   } catch (err) {
-    console.error('createExpense error:', err);
+    console.error('❌ createExpense error:', err);
     return res.status(500).json({ success: false, message: 'Server error' });
   }
 };
@@ -260,7 +287,7 @@ exports.createExpense = async (req, res) => {
 exports.updateExpense = async (req, res) => {
   try {
     const { id } = req.params;
-    const { category_id, amount, note, expense_date, expense_time } = req.body;
+    const { category_id, amount, payment_type, note, expense_date, expense_time } = req.body;
 
     const fields = [];
     const values = [];
@@ -276,7 +303,8 @@ exports.updateExpense = async (req, res) => {
       values.push(category_id, cats[0].name);
     }
     if (amount !== undefined) { fields.push('amount = ?'); values.push(parseFloat(amount)); }
-    if (note   !== undefined) { fields.push('note = ?');   values.push(note.trim()); }
+    if (payment_type !== undefined) { fields.push('payment_type = ?'); values.push(payment_type); }
+    if (note !== undefined) { fields.push('note = ?'); values.push(note.trim()); }
     if (expense_date !== undefined) { fields.push('expense_date = ?'); values.push(expense_date); }
     if (expense_time !== undefined) { fields.push('expense_time = ?'); values.push(expense_time); }
 

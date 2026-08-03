@@ -25,6 +25,8 @@ import {
   Gift,
   PlusCircle,
   Download,
+  Target,
+  TrendingUp as TrendingUpIcon,
 } from "lucide-react";
 import { endpoints, apiRequest } from "../config/api";
 import toast from "react-hot-toast";
@@ -63,11 +65,90 @@ const SHORT_MONTHS = [
   "Dec",
 ];
 
+// ✅ ADDED: Helper function to convert number to words
+const numberToWords = (num) => {
+  if (num === 0) return "Zero";
+  const ones = [
+    "",
+    "One",
+    "Two",
+    "Three",
+    "Four",
+    "Five",
+    "Six",
+    "Seven",
+    "Eight",
+    "Nine",
+    "Ten",
+    "Eleven",
+    "Twelve",
+    "Thirteen",
+    "Fourteen",
+    "Fifteen",
+    "Sixteen",
+    "Seventeen",
+    "Eighteen",
+    "Nineteen",
+  ];
+  const tens = [
+    "",
+    "",
+    "Twenty",
+    "Thirty",
+    "Forty",
+    "Fifty",
+    "Sixty",
+    "Seventy",
+    "Eighty",
+    "Ninety",
+  ];
+
+  if (num < 20) return ones[num];
+  if (num < 100)
+    return (
+      tens[Math.floor(num / 10)] + (num % 10 !== 0 ? " " + ones[num % 10] : "")
+    );
+  if (num < 1000)
+    return (
+      ones[Math.floor(num / 100)] +
+      " Hundred" +
+      (num % 100 !== 0 ? " and " + numberToWords(num % 100) : "")
+    );
+  if (num < 100000)
+    return (
+      numberToWords(Math.floor(num / 1000)) +
+      " Thousand" +
+      (num % 1000 !== 0 ? " " + numberToWords(num % 1000) : "")
+    );
+  if (num < 10000000)
+    return (
+      numberToWords(Math.floor(num / 100000)) +
+      " Lakh" +
+      (num % 100000 !== 0 ? " " + numberToWords(num % 100000) : "")
+    );
+  return (
+    numberToWords(Math.floor(num / 10000000)) +
+    " Crore" +
+    (num % 10000000 !== 0 ? " " + numberToWords(num % 10000000) : "")
+  );
+};
+
 const formatCurrency = (amount) => {
   const num = parseFloat(amount) || 0;
   return (
     "PKR " +
     num.toLocaleString("en-PK", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    })
+  );
+};
+
+const formatUSD = (amount) => {
+  const num = parseFloat(amount) || 0;
+  return (
+    "$" +
+    num.toLocaleString("en-US", {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     })
@@ -136,16 +217,20 @@ const StatusBadge = ({ status }) => {
   );
 };
 
-// ✅ PDF Generation Helper - Only Logo (No Company Name/Tagline)
+// ✅ Updated PDF Generation Helper with Sales Details
 const generatePayslipPDF = (payroll, companyLogo = null) => {
-  // Get current date
   const currentDate = new Date().toLocaleDateString("en-PK", {
     day: "2-digit",
     month: "short",
     year: "numeric",
   });
 
-  // Company Logo HTML (fallback if no logo provided)
+  const isSalesEmployee = payroll.department === "Sales" || payroll.department?.toLowerCase() === "sales";
+  const commissionAmount = parseFloat(payroll.commission_amount_pkr) || 0;
+  const netSales = parseFloat(payroll.net_sales) || 0;
+  const commissionPercent = parseFloat(payroll.commission_percentage) || 0;
+  const conversionRate = parseFloat(payroll.dollar_conversion_rate) || 280;
+
   const logoHTML = companyLogo
     ? `<img src="${companyLogo}" alt="Company Logo" style="height: 50px; width: auto; object-fit: contain; max-height: 55px;" />`
     : `
@@ -162,6 +247,7 @@ const generatePayslipPDF = (payroll, companyLogo = null) => {
   pdfContent.style.fontFamily = "'Segoe UI', Arial, sans-serif";
   pdfContent.style.fontSize = "12px";
   pdfContent.style.boxSizing = "border-box";
+  
   pdfContent.innerHTML = `
     <style>
       * {
@@ -179,7 +265,6 @@ const generatePayslipPDF = (payroll, companyLogo = null) => {
         color: #1e293b;
       }
       
-      /* ===== HEADER ===== */
       .header {
         display: flex;
         justify-content: space-between;
@@ -228,7 +313,6 @@ const generatePayslipPDF = (payroll, companyLogo = null) => {
         font-weight: 500;
       }
       
-      /* ===== EMPLOYEE INFO ===== */
       .employee-info {
         display: grid;
         grid-template-columns: 1fr 1fr 1fr;
@@ -274,7 +358,6 @@ const generatePayslipPDF = (payroll, companyLogo = null) => {
       .status-badge.draft { background: #e2e8f0; color: #475569; }
       .status-badge.approved { background: #dbeafe; color: #1e40af; }
       
-      /* ===== SECTION TITLE ===== */
       .section-title {
         font-size: 10px;
         font-weight: 700;
@@ -296,7 +379,6 @@ const generatePayslipPDF = (payroll, companyLogo = null) => {
         border-radius: 2px;
       }
       
-      /* ===== TABLES ===== */
       .table-wrap {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -343,7 +425,6 @@ const generatePayslipPDF = (payroll, companyLogo = null) => {
       .amount-table .negative { color: #dc2626; }
       .amount-table .positive { color: #16a34a; }
       
-      /* ===== NET SALARY ===== */
       .net-salary {
         display: flex;
         justify-content: space-between;
@@ -379,7 +460,6 @@ const generatePayslipPDF = (payroll, companyLogo = null) => {
         margin-right: 2px;
       }
       
-      /* ===== ATTENDANCE ===== */
       .attendance-grid {
         display: grid;
         grid-template-columns: repeat(5, 1fr);
@@ -404,7 +484,6 @@ const generatePayslipPDF = (payroll, companyLogo = null) => {
         font-weight: 500;
       }
       
-      /* ===== FOOTER ===== */
       .footer {
         display: flex;
         justify-content: space-between;
@@ -422,7 +501,39 @@ const generatePayslipPDF = (payroll, companyLogo = null) => {
         color: #64748b;
       }
       
-      /* ===== PRINT ===== */
+      .sales-section {
+        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+        border: 1px solid #bbf7d0;
+        border-radius: 8px;
+        padding: 10px 16px;
+        margin: 8px 0 4px 0;
+      }
+      .sales-section .title {
+        font-size: 9px;
+        font-weight: 700;
+        color: #166534;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 4px;
+      }
+      .sales-section .row {
+        display: flex;
+        justify-content: space-between;
+        padding: 3px 0;
+        font-size: 10px;
+        border-bottom: 1px dashed #bbf7d0;
+      }
+      .sales-section .row:last-child {
+        border-bottom: none;
+      }
+      .sales-section .label {
+        color: #166534;
+      }
+      .sales-section .value {
+        font-weight: 600;
+        color: #0f172a;
+      }
+      
       @media print {
         body { margin: 0; padding: 0; background: white; }
         .payslip { box-shadow: none; border-radius: 0; }
@@ -432,11 +543,11 @@ const generatePayslipPDF = (payroll, companyLogo = null) => {
         .status-badge { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         .amount-table th { background: #f1f5f9 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         .attendance-item { background: #f8fafc !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .sales-section { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       }
     </style>
 
     <div class="payslip">
-      <!-- HEADER - Only Logo -->
       <div class="header">
         <div class="header-left">
           <div class="logo-box">${logoHTML}</div>
@@ -447,7 +558,6 @@ const generatePayslipPDF = (payroll, companyLogo = null) => {
         </div>
       </div>
 
-      <!-- EMPLOYEE INFO -->
       <div class="employee-info">
         <div class="emp-item"><span class="emp-label">Employee ID</span><span class="emp-value">${payroll.employee_code || "—"}</span></div>
         <div class="emp-item"><span class="emp-label">Name</span><span class="emp-value">${payroll.employee_name || "—"}</span></div>
@@ -457,7 +567,6 @@ const generatePayslipPDF = (payroll, companyLogo = null) => {
         <div class="emp-item"><span class="emp-label">Status</span><span class="emp-value"><span class="status-badge ${payroll.status}">${statusConfig[payroll.status]?.label || "Pending"}</span></span></div>
       </div>
 
-      <!-- EARNINGS & DEDUCTIONS -->
       <div class="table-wrap">
         <div class="table-col">
           <div class="section-title"><span class="bar"></span>Earnings</div>
@@ -473,6 +582,18 @@ const generatePayslipPDF = (payroll, companyLogo = null) => {
               <tr class="total-row"><td>Gross Salary</td><td class="text-right">${formatNum(payroll.gross_salary)}</td></tr>
             </tfoot>
           </table>
+          ${isSalesEmployee ? `
+            <div class="sales-section">
+              <div class="title">💰 Sales Commission</div>
+              <div class="row"><span class="label">Net Sales (USD)</span><span class="value">${formatUSD(netSales)}</span></div>
+              <div class="row"><span class="label">Commission Rate</span><span class="value">${commissionPercent}%</span></div>
+              <div class="row"><span class="label">Conversion Rate</span><span class="value">Rs. ${formatNum(conversionRate)}/USD</span></div>
+              <div class="row" style="font-weight:700;border-top:2px solid #bbf7d0;padding-top:4px;margin-top:2px;">
+                <span class="label">Commission Amount (PKR)</span>
+                <span class="value" style="color:#16a34a;">+ ${formatCurrency(commissionAmount)}</span>
+              </div>
+            </div>
+          ` : ''}
         </div>
         <div class="table-col">
           <div class="section-title"><span class="bar"></span>Deductions</div>
@@ -492,7 +613,6 @@ const generatePayslipPDF = (payroll, companyLogo = null) => {
         </div>
       </div>
 
-      <!-- ATTENDANCE SUMMARY -->
       <div class="section-title"><span class="bar"></span>Attendance Summary</div>
       <div class="attendance-grid">
         <div class="attendance-item"><div class="num">${payroll.present_days || 0}</div><div class="lbl">Present</div></div>
@@ -502,7 +622,6 @@ const generatePayslipPDF = (payroll, companyLogo = null) => {
         <div class="attendance-item"><div class="num">${payroll.half_days || 0}</div><div class="lbl">Half Day</div></div>
       </div>
 
-      <!-- NET SALARY -->
       <div class="net-salary">
         <div class="left">
           <div class="label">Net Salary</div>
@@ -511,7 +630,6 @@ const generatePayslipPDF = (payroll, companyLogo = null) => {
         <div class="amount"><span class="curr">PKR</span> ${formatNum(payroll.net_salary)}</div>
       </div>
 
-      <!-- FOOTER -->
       <div class="footer">
         <span>System-generated payslip · For discrepancies, contact HR</span>
         <div class="right">
@@ -521,7 +639,6 @@ const generatePayslipPDF = (payroll, companyLogo = null) => {
     </div>
   `;
 
-  // Open print window
   const printWindow = window.open("", "_blank", "width=820,height=700");
   printWindow.document.write(`
     <html>
@@ -568,79 +685,16 @@ const generatePayslipPDF = (payroll, companyLogo = null) => {
   printWindow.document.close();
 };
 
-// Helper function to convert number to words (simple version)
-const numberToWords = (num) => {
-  if (num === 0) return "Zero";
-  const ones = [
-    "",
-    "One",
-    "Two",
-    "Three",
-    "Four",
-    "Five",
-    "Six",
-    "Seven",
-    "Eight",
-    "Nine",
-    "Ten",
-    "Eleven",
-    "Twelve",
-    "Thirteen",
-    "Fourteen",
-    "Fifteen",
-    "Sixteen",
-    "Seventeen",
-    "Eighteen",
-    "Nineteen",
-  ];
-  const tens = [
-    "",
-    "",
-    "Twenty",
-    "Thirty",
-    "Forty",
-    "Fifty",
-    "Sixty",
-    "Seventy",
-    "Eighty",
-    "Ninety",
-  ];
-
-  if (num < 20) return ones[num];
-  if (num < 100)
-    return (
-      tens[Math.floor(num / 10)] + (num % 10 !== 0 ? " " + ones[num % 10] : "")
-    );
-  if (num < 1000)
-    return (
-      ones[Math.floor(num / 100)] +
-      " Hundred" +
-      (num % 100 !== 0 ? " and " + numberToWords(num % 100) : "")
-    );
-  if (num < 100000)
-    return (
-      numberToWords(Math.floor(num / 1000)) +
-      " Thousand" +
-      (num % 1000 !== 0 ? " " + numberToWords(num % 1000) : "")
-    );
-  if (num < 10000000)
-    return (
-      numberToWords(Math.floor(num / 100000)) +
-      " Lakh" +
-      (num % 100000 !== 0 ? " " + numberToWords(num % 100000) : "")
-    );
-  return (
-    numberToWords(Math.floor(num / 10000000)) +
-    " Crore" +
-    (num % 10000000 !== 0 ? " " + numberToWords(num % 10000000) : "")
-  );
-};
-
-// PaySlip Modal with Download Button
+// ─── Updated PaySlip Modal with Sales Details ──────────────────────────
 const PaySlipModal = ({ payroll, onClose }) => {
   if (!payroll) return null;
 
   const dailyRateNote = `${formatNum(payroll.base_salary)} ÷ 30 = ${formatNum(payroll.daily_rate)}/day`;
+  const isSalesEmployee = payroll.department === "Sales" || payroll.department?.toLowerCase() === "sales";
+  const commissionAmount = parseFloat(payroll.commission_amount_pkr) || 0;
+  const netSales = parseFloat(payroll.net_sales) || 0;
+  const commissionPercent = parseFloat(payroll.commission_percentage) || 0;
+  const conversionRate = parseFloat(payroll.dollar_conversion_rate) || 280;
 
   const handleDownload = () => {
     generatePayslipPDF(payroll, companyLogo);
@@ -655,7 +709,6 @@ const PaySlipModal = ({ payroll, onClose }) => {
         className="bg-white rounded-2xl w-full max-w-2xl max-h-[92vh] overflow-y-auto shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 rounded-t-2xl z-10">
           <div className="flex items-center justify-between">
             <div>
@@ -669,7 +722,6 @@ const PaySlipModal = ({ payroll, onClose }) => {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              {/* ✅ Download Button */}
               <button
                 onClick={handleDownload}
                 className="p-2 rounded-lg bg-blue-50 hover:bg-blue-100 transition-colors"
@@ -687,9 +739,7 @@ const PaySlipModal = ({ payroll, onClose }) => {
           </div>
         </div>
 
-        {/* Rest of the modal content remains the same */}
         <div className="p-6 space-y-5">
-          {/* Employee Card */}
           <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-slate-50 to-blue-50 rounded-xl border border-slate-200">
             <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center text-white font-bold text-lg shadow-sm">
               {(payroll.employee_name || "?")[0]}
@@ -706,7 +756,15 @@ const PaySlipModal = ({ payroll, onClose }) => {
             <StatusBadge status={payroll.status} />
           </div>
 
-          {/* Issue Date Banner */}
+          {isSalesEmployee && (
+            <div className="flex items-center gap-2 px-4 py-2.5 bg-emerald-50 border border-emerald-200 rounded-lg">
+              <TrendingUpIcon className="h-4 w-4 text-emerald-600 flex-shrink-0" />
+              <p className="text-sm text-emerald-700">
+                <span className="font-medium">Sales Employee</span> • Commission included
+              </p>
+            </div>
+          )}
+
           {payroll.issue_date && (
             <div className="flex items-center gap-2 px-4 py-2.5 bg-blue-50 border border-blue-100 rounded-lg">
               <CalendarDays className="h-4 w-4 text-blue-500 flex-shrink-0" />
@@ -717,7 +775,6 @@ const PaySlipModal = ({ payroll, onClose }) => {
             </div>
           )}
 
-          {/* Salary Calculation Info */}
           <div className="flex items-center gap-2 px-4 py-2.5 bg-amber-50 border border-amber-100 rounded-lg">
             <Info className="h-4 w-4 text-amber-500 flex-shrink-0" />
             <p className="text-xs text-amber-700">
@@ -726,9 +783,7 @@ const PaySlipModal = ({ payroll, onClose }) => {
             </p>
           </div>
 
-          {/* Earnings & Deductions Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {/* Earnings */}
             <div className="border border-emerald-100 rounded-xl overflow-hidden">
               <div className="px-4 py-3 bg-emerald-50 border-b border-emerald-100">
                 <h3 className="font-semibold text-emerald-800 flex items-center gap-2 text-sm">
@@ -802,10 +857,32 @@ const PaySlipModal = ({ payroll, onClose }) => {
                     </span>
                   </div>
                 )}
+                
+                {isSalesEmployee && commissionAmount > 0 && (
+                  <div className="mt-2 p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+                    <div className="flex justify-between text-sm font-semibold text-emerald-800">
+                      <span>💰 Sales Commission</span>
+                      <span>+{formatCurrency(commissionAmount)}</span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 mt-2 text-xs text-emerald-700">
+                      <div className="text-center">
+                        <p className="font-medium">Net Sales</p>
+                        <p className="font-bold">{formatUSD(netSales)}</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="font-medium">Rate</p>
+                        <p className="font-bold">{commissionPercent}%</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="font-medium">Conversion</p>
+                        <p className="font-bold">Rs. {formatNum(conversionRate)}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Deductions */}
             <div className="border border-rose-100 rounded-xl overflow-hidden">
               <div className="px-4 py-3 bg-rose-50 border-b border-rose-100">
                 <h3 className="font-semibold text-rose-800 flex items-center gap-2 text-sm">
@@ -879,7 +956,6 @@ const PaySlipModal = ({ payroll, onClose }) => {
             </div>
           </div>
 
-          {/* Net Salary */}
           <div className="p-5 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl text-white">
             <div className="flex items-center justify-between">
               <div>
@@ -893,6 +969,8 @@ const PaySlipModal = ({ payroll, onClose }) => {
                     ` + ${formatNum(payroll.bonus)} bonus`}
                   {(payroll.adjustment || 0) !== 0 &&
                     ` + ${formatNum(payroll.adjustment)} adj`}
+                  {isSalesEmployee && commissionAmount > 0 &&
+                    ` + ${formatCurrency(commissionAmount)} commission`}
                   {` − ${formatNum(payroll.total_deductions)} deductions`}
                   {(payroll.advance_deduction || 0) > 0 &&
                     ` − ${formatNum(payroll.advance_deduction)} advance/loan`}
@@ -907,7 +985,6 @@ const PaySlipModal = ({ payroll, onClose }) => {
             </div>
           </div>
 
-          {/* Attendance Summary */}
           <div className="border border-slate-200 rounded-xl overflow-hidden">
             <div className="px-4 py-3 bg-slate-50 border-b border-slate-200">
               <h3 className="font-semibold text-slate-700 text-sm flex items-center gap-2">
@@ -964,7 +1041,6 @@ const PaySlipModal = ({ payroll, onClose }) => {
             </div>
           </div>
 
-          {/* Bank Details */}
           {payroll.bank_name && (
             <div className="border border-slate-200 rounded-xl overflow-hidden">
               <div className="px-4 py-3 bg-slate-50 border-b border-slate-200">
@@ -1022,15 +1098,8 @@ const PaySlipModal = ({ payroll, onClose }) => {
   );
 };
 
-// Rest of the EmployeePayrollPage component remains the same...
-// (Keep all the existing code from your original component below)
-
 // ─── Main Employee Payroll Page ───────────────────────
 const EmployeePayrollPage = () => {
-  // ... existing code (fetchPayroll, state, etc.)
-  // Keep everything exactly as in your original component
-  // Just update the View button to open modal with download
-
   const [records, setRecords] = useState([]);
   const [employee, setEmployee] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -1086,6 +1155,8 @@ const EmployeePayrollPage = () => {
     0,
   );
 
+  const isSalesEmployee = employee?.department === "Sales" || employee?.department?.toLowerCase() === "sales";
+
   if (loading) {
     return (
       <div className="p-6 flex items-center justify-center min-h-[50vh]">
@@ -1121,7 +1192,16 @@ const EmployeePayrollPage = () => {
       description="Sensitive employee payroll information. Access requires security verification."
     >
       <div className="p-4 md:p-6 lg:p-8 max-w-full mx-auto space-y-6">
-        {/* Summary Cards - same as your existing code */}
+        {isSalesEmployee && (
+          <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center gap-3">
+            <TrendingUpIcon className="h-5 w-5 text-emerald-600" />
+            <div>
+              <p className="text-sm font-semibold text-emerald-800">Sales Employee</p>
+              <p className="text-xs text-emerald-600">Your payslip includes sales commission based on monthly performance</p>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[
             {
@@ -1182,7 +1262,6 @@ const EmployeePayrollPage = () => {
           })}
         </div>
 
-        {/* Salary History Table - same as your existing code */}
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
             <h3 className="font-semibold text-slate-800 flex items-center gap-2 text-sm">
@@ -1205,7 +1284,6 @@ const EmployeePayrollPage = () => {
             </div>
           ) : (
             <>
-              {/* Desktop Table */}
               <div className="hidden lg:block overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
@@ -1244,107 +1322,122 @@ const EmployeePayrollPage = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {records.map((r) => (
-                      <tr
-                        key={r.id}
-                        className="hover:bg-blue-50/40 transition-colors group"
-                      >
-                        <td className="px-5 py-4">
-                          <p className="font-semibold text-slate-800">
-                            {MONTHS[r.month]} {r.year}
-                          </p>
-                          <p className="text-xs text-slate-400 mt-0.5">
-                            {r.pay_period_start
-                              ? `${formatDate(r.pay_period_start)} → ${formatDate(r.pay_period_end)}`
-                              : `${r.month}/${r.year}`}
-                          </p>
-                        </td>
-                        <td className="px-5 py-4 text-center">
-                          <span className="inline-flex items-center px-2 py-0.5 bg-slate-100 rounded text-xs font-medium text-slate-600">
-                            {r.days_in_month || r.working_days || 30}d
-                          </span>
-                        </td>
-                        <td className="px-5 py-4 text-center font-medium text-slate-700">
-                          {formatNum(r.base_salary)}
-                        </td>
-                        <td className="px-5 py-4 text-center text-emerald-600 font-medium">
-                          +{formatNum(r.total_allowances)}
-                        </td>
-                        <td className="px-5 py-4 text-center text-rose-600 font-medium">
-                          {r.total_deductions > 0 ? (
-                            `−${formatNum(r.total_deductions)}`
-                          ) : (
-                            <span className="text-slate-300">0</span>
-                          )}
-                        </td>
-                        <td className="px-5 py-4 text-center">
-                          <div className="space-y-0.5">
-                            {(r.bonus || 0) > 0 && (
-                              <span className="text-xs font-medium text-emerald-600 block">
-                                +{formatNum(r.bonus)}
+                    {records.map((r) => {
+                      const isSales = r.department === "Sales" || r.department?.toLowerCase() === "sales";
+                      const hasCommission = parseFloat(r.commission_amount_pkr) > 0;
+                      return (
+                        <tr
+                          key={r.id}
+                          className="hover:bg-blue-50/40 transition-colors group"
+                        >
+                          <td className="px-5 py-4">
+                            <p className="font-semibold text-slate-800">
+                              {MONTHS[r.month]} {r.year}
+                            </p>
+                            <p className="text-xs text-slate-400 mt-0.5">
+                              {r.pay_period_start
+                                ? `${formatDate(r.pay_period_start)} → ${formatDate(r.pay_period_end)}`
+                                : `${r.month}/${r.year}`}
+                            </p>
+                            {isSales && hasCommission && (
+                              <span className="text-[10px] text-emerald-600 font-medium bg-emerald-50 px-2 py-0.5 rounded-full mt-1 inline-block">
+                                + Commission
                               </span>
                             )}
-                            {(r.adjustment || 0) !== 0 && (
-                              <span
-                                className={`text-xs font-medium block ${r.adjustment > 0 ? "text-blue-600" : "text-rose-600"}`}
-                              >
-                                {r.adjustment > 0 ? "+" : ""}
-                                {formatNum(r.adjustment)}
-                              </span>
-                            )}
-                            {!r.bonus && !r.adjustment && (
-                              <span className="text-slate-300">—</span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-5 py-4 text-center">
-                          <p className="font-bold text-blue-700">
-                            {formatNum(r.net_salary)}
-                          </p>
-                        </td>
-                        <td className="px-5 py-4">
-                          <div className="flex items-center justify-center gap-1.5">
-                            <span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-700 rounded text-xs font-medium">
-                              P:{r.present_days}
+                          </td>
+                          <td className="px-5 py-4 text-center">
+                            <span className="inline-flex items-center px-2 py-0.5 bg-slate-100 rounded text-xs font-medium text-slate-600">
+                              {r.days_in_month || r.working_days || 30}d
                             </span>
-                            <span className="px-1.5 py-0.5 bg-rose-50 text-rose-700 rounded text-xs font-medium">
-                              A:{r.absent_days}
-                            </span>
-                            <span className="px-1.5 py-0.5 bg-amber-50 text-amber-700 rounded text-xs font-medium">
-                              L:{r.late_days}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-5 py-4 text-center">
-                          <StatusBadge status={r.status} />
-                        </td>
-                        <td className="px-5 py-4 text-center text-xs text-slate-500">
-                          {r.issue_date ? formatDate(r.issue_date) : "—"}
-                        </td>
-                        <td className="px-5 py-4 text-right">
-                          <button
-                            onClick={() => viewPayslip(r)}
-                            disabled={payslipLoading === r.id}
-                            className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-xs font-semibold inline-flex items-center gap-1.5"
-                          >
-                            {payslipLoading === r.id ? (
-                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          </td>
+                          <td className="px-5 py-4 text-center font-medium text-slate-700">
+                            {formatNum(r.base_salary)}
+                          </td>
+                          <td className="px-5 py-4 text-center text-emerald-600 font-medium">
+                            +{formatNum(r.total_allowances)}
+                          </td>
+                          <td className="px-5 py-4 text-center text-rose-600 font-medium">
+                            {r.total_deductions > 0 ? (
+                              `−${formatNum(r.total_deductions)}`
                             ) : (
-                              <Eye className="h-3.5 w-3.5" />
+                              <span className="text-slate-300">0</span>
                             )}
-                            View
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
+                          </td>
+                          <td className="px-5 py-4 text-center">
+                            <div className="space-y-0.5">
+                              {(r.bonus || 0) > 0 && (
+                                <span className="text-xs font-medium text-emerald-600 block">
+                                  +{formatNum(r.bonus)}
+                                </span>
+                              )}
+                              {(r.adjustment || 0) !== 0 && (
+                                <span
+                                  className={`text-xs font-medium block ${r.adjustment > 0 ? "text-blue-600" : "text-rose-600"}`}
+                                >
+                                  {r.adjustment > 0 ? "+" : ""}
+                                  {formatNum(r.adjustment)}
+                                </span>
+                              )}
+                              {isSales && parseFloat(r.commission_amount_pkr) > 0 && (
+                                <span className="text-xs font-medium text-emerald-600 block">
+                                  +{formatCurrency(r.commission_amount_pkr)} commission
+                                </span>
+                              )}
+                              {!r.bonus && !r.adjustment && !(isSales && parseFloat(r.commission_amount_pkr) > 0) && (
+                                <span className="text-slate-300">—</span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-5 py-4 text-center">
+                            <p className="font-bold text-blue-700">
+                              {formatNum(r.net_salary)}
+                            </p>
+                          </td>
+                          <td className="px-5 py-4">
+                            <div className="flex items-center justify-center gap-1.5">
+                              <span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-700 rounded text-xs font-medium">
+                                P:{r.present_days}
+                              </span>
+                              <span className="px-1.5 py-0.5 bg-rose-50 text-rose-700 rounded text-xs font-medium">
+                                A:{r.absent_days}
+                              </span>
+                              <span className="px-1.5 py-0.5 bg-amber-50 text-amber-700 rounded text-xs font-medium">
+                                L:{r.late_days}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-5 py-4 text-center">
+                            <StatusBadge status={r.status} />
+                          </td>
+                          <td className="px-5 py-4 text-center text-xs text-slate-500">
+                            {r.issue_date ? formatDate(r.issue_date) : "—"}
+                          </td>
+                          <td className="px-5 py-4 text-right">
+                            <button
+                              onClick={() => viewPayslip(r)}
+                              disabled={payslipLoading === r.id}
+                              className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-xs font-semibold inline-flex items-center gap-1.5"
+                            >
+                              {payslipLoading === r.id ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <Eye className="h-3.5 w-3.5" />
+                              )}
+                              View
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
 
-              {/* Mobile Cards - same as your existing code */}
               <div className="lg:hidden divide-y divide-slate-100">
                 {records.map((r) => {
                   const isExpanded = expandedId === r.id;
+                  const isSales = r.department === "Sales" || r.department?.toLowerCase() === "sales";
+                  const hasCommission = parseFloat(r.commission_amount_pkr) > 0;
                   return (
                     <div key={r.id} className="p-4">
                       <div
@@ -1352,11 +1445,16 @@ const EmployeePayrollPage = () => {
                         onClick={() => setExpandedId(isExpanded ? null : r.id)}
                       >
                         <div className="flex-1">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <p className="font-semibold text-slate-800">
                               {SHORT_MONTHS[r.month]} {r.year}
                             </p>
                             <StatusBadge status={r.status} />
+                            {isSales && hasCommission && (
+                              <span className="text-[10px] text-emerald-600 font-medium bg-emerald-50 px-2 py-0.5 rounded-full">
+                                + Commission
+                              </span>
+                            )}
                           </div>
                           <p className="text-lg font-bold text-blue-700 mt-0.5">
                             PKR {formatNum(r.net_salary)}
@@ -1385,17 +1483,13 @@ const EmployeePayrollPage = () => {
                                 : `${r.month}/${r.year}`}
                             </div>
                             <div>
-                              <span className="text-slate-500">
-                                Days in Month
-                              </span>
+                              <span className="text-slate-500">Days in Month</span>
                             </div>
                             <div className="text-right text-slate-700">
                               {r.days_in_month || r.working_days || 30}
                             </div>
                             <div>
-                              <span className="text-slate-500">
-                                Base Salary
-                              </span>
+                              <span className="text-slate-500">Base Salary</span>
                             </div>
                             <div className="text-right text-slate-700">
                               {formatNum(r.base_salary)}
@@ -1425,9 +1519,7 @@ const EmployeePayrollPage = () => {
                             {(r.adjustment || 0) !== 0 && (
                               <>
                                 <div>
-                                  <span className="text-slate-500">
-                                    Adjustment
-                                  </span>
+                                  <span className="text-slate-500">Adjustment</span>
                                 </div>
                                 <div
                                   className={`text-right ${r.adjustment > 0 ? "text-blue-600" : "text-rose-600"}`}
@@ -1437,13 +1529,38 @@ const EmployeePayrollPage = () => {
                                 </div>
                               </>
                             )}
+                            {isSales && hasCommission && (
+                              <>
+                                <div>
+                                  <span className="text-slate-500">Commission</span>
+                                </div>
+                                <div className="text-right text-emerald-600">
+                                  +{formatCurrency(r.commission_amount_pkr)}
+                                </div>
+                              </>
+                            )}
                             <div>
                               <span className="text-slate-500">Attendance</span>
                             </div>
                             <div className="text-right text-slate-700">
-                              P:{r.present_days} A:{r.absent_days} L:
-                              {r.late_days}
+                              P:{r.present_days} A:{r.absent_days} L:{r.late_days}
                             </div>
+                            {isSales && (
+                              <>
+                                <div>
+                                  <span className="text-slate-500">Net Sales</span>
+                                </div>
+                                <div className="text-right text-slate-700">
+                                  ${formatNum(r.net_sales || 0)}
+                                </div>
+                                <div>
+                                  <span className="text-slate-500">Commission Rate</span>
+                                </div>
+                                <div className="text-right text-slate-700">
+                                  {r.commission_percentage || 0}%
+                                </div>
+                              </>
+                            )}
                           </div>
                           <button
                             onClick={(e) => {
@@ -1470,7 +1587,6 @@ const EmployeePayrollPage = () => {
           )}
         </div>
 
-        {/* PaySlip Modal */}
         {selectedPayslip && (
           <PaySlipModal
             payroll={selectedPayslip}

@@ -294,7 +294,7 @@ const EmployeeSalesPage = () => {
   const merchants = [
     "Ziffs PayPal",
     "Stripe",
-    "Digious PayPal",
+    "CashApp",
     "Innovative PayPal",
     "Crypto",
     "Invoice",
@@ -1136,7 +1136,7 @@ const EmployeeSalesPage = () => {
               {/* Total Sales */}
               <div className="col-span-2 sm:col-span-1">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Total Sales ($) *
+                  Total Sale Amount ($) *
                 </label>
                 <input
                   type="number"

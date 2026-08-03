@@ -81,12 +81,19 @@ export const getPayslip = async (id) => {
  * @param {Object} data - { bonus, adjustment, adjustment_reason }
  * @returns {Promise<Object>}
  */
+// services/payrollService.js - Already correct, but ensure this:
+
 export const editPayrollRecord = async (id, data) => {
   const url = endpoints.payroll.editPayroll(id);
+  console.log('📤 [editPayrollRecord] Sending to:', url);
+  console.log('📤 [editPayrollRecord] Data:', data);
+
   const response = await apiRequest(url, {
     method: 'PUT',
     body: JSON.stringify(data),
   });
+
+  console.log('📥 [editPayrollRecord] Response:', response);
   return response.data;
 };
 

@@ -56,7 +56,7 @@ export const PasscodeProvider = ({ children }) => {
         if (data.data.isAdmin) {
           setShowSetupModal(false);
           setHasPasscode(true);
-          toast.success('👑 Admin: Use "admin123" to access modules');
+          // toast.success('👑 Admin: Use "admin123" to access modules');
         } else {
           if (data.data.hasPasscode) {
             setShowSetupModal(false);

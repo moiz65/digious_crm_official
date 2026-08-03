@@ -205,6 +205,8 @@ const clientRoutes = require('./routes/clientRoutes');
 const zkTimeRoutes = require('./routes/zkTimeRoutes');
 const passcodeRoutes = require('./routes/passcodeRoutes');
 const chatRoutes = require('./routes/chatRoutes');
+const roleRoutes = require('./routes/roleRoutes');
+const paymentTypes = require('./routes/paymentTypeRoutes');
 
 app.use(`/api/${process.env.API_VERSION}`, onboardingRoutes);
 app.use(`/api/${process.env.API_VERSION}/auth`, authRoutes);
@@ -234,6 +236,9 @@ app.use(`/api/${process.env.API_VERSION}/clients`, clientRoutes);
 app.use(`/api/${process.env.API_VERSION}/zkTime`, zkTimeRoutes);
 app.use(`/api/${process.env.API_VERSION}/passcode`, passcodeRoutes);
 app.use(`/api/${process.env.API_VERSION}/chat`, chatRoutes);
+app.use(`/api/${process.env.API_VERSION}/roles`, roleRoutes);
+app.use(`/api/${process.env.API_VERSION}/types`, paymentTypes);
+
 
 // 404 handler
 app.use((req, res) => {

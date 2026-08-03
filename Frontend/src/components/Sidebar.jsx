@@ -98,7 +98,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) => 
       label: 'Settings', 
       icon: Settings,
       children: [
-        { id: 'user-roles', label: 'User Roles & Permissions', icon: Shield, path: '/user-roles' },
+        { id: 'user-roles', label: 'Roles & Permissions', icon: Shield, path: '/admin/roles' },
         { id: 'system-config', label: 'System Configuration', icon: Database, path: '/system-config' },
       ]
     },

@@ -17,7 +17,7 @@ router.post('/break', authMiddleware, attendanceController.recordBreak);
 router.post('/break-start', authMiddleware, attendanceController.recordBreakStart);   // Save break immediately on start
 router.patch('/break-progress', authMiddleware, attendanceController.recordBreakProgress); // Auto-save progress every 30s
 router.patch('/break-end', authMiddleware, attendanceController.recordBreakEnd);     // Update break with end time
-router.get('/ongoing-breaks/:employee_id', authMiddleware, attendanceController.getOngoingBreaks); // Get unfinished breaks
+router.get('/ongoing-breaks/:employee_id', attendanceController.getOngoingBreaks); // Get unfinished breaks
 router.get('/today-breaks/:employee_id', authMiddleware, attendanceController.getTodayBreaks); // Get today's completed breaks
 
 // Get attendance data (Public for HR Dashboard)

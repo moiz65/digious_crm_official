@@ -1615,7 +1615,7 @@ exports.getOngoingBreaks = async (req, res) => {
       if (attendanceRecord.length === 0) {
         return res.status(200).json({
           success: true,
-          message: "No active check in found",
+          message: "No active break found",
           data: [],
         });
       }

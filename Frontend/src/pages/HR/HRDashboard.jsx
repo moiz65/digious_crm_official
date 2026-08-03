@@ -16,6 +16,8 @@ import {
   Calendar,
   User,
   Download,
+  Coffee,
+  Timer,
   Brain,
 } from "lucide-react";
 import { getPakistanDateString } from "../../utils/timezone";
@@ -37,6 +39,7 @@ const HRDashboard = () => {
   const { role } = useAuth();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [activeItem, setActiveItem] = useState("dashboard");
+  const [activeBreaks, setActiveBreaks] = useState([]);
   const [stats, setStats] = useState([
     {
       label: "Total Present",
@@ -208,6 +211,83 @@ const HRDashboard = () => {
       setEmployees([]);
     }
   }, []);
+
+  const fetchActiveBreaks = useCallback(async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const headers = { Authorization: `Bearer ${token}` };
+
+      // Fetch all active employees first
+      const employeesRes = await fetch(
+        `${process.env.REACT_APP_API_URL || "http://100.118.172.21:5000"}/api/v1/employees?limit=1000`,
+        { headers },
+      );
+      const employeesData = await employeesRes.json();
+      const activeEmployees = (employeesData.data || []).filter(
+        (e) => e.status === "Active",
+      );
+
+      // Create a map for quick employee lookup
+      const employeeMap = new Map();
+      activeEmployees.forEach((emp) => {
+        employeeMap.set(emp.employee_id, emp);
+      });
+
+      // Fetch breaks for all employees (if you have a bulk endpoint)
+      // Or loop through each employee
+      const breakPromises = activeEmployees.map(async (employee) => {
+        try {
+          const breakRes = await fetch(
+            `${process.env.REACT_APP_API_URL || "http://100.118.172.21:5000"}/api/v1/attendance/ongoing-breaks/${employee.id}`,
+            { headers },
+          );
+          
+          const breakData = await breakRes.json();
+
+          if (
+            breakData.success &&
+            breakData.data &&
+            breakData.data.length > 0
+          ) {
+            return breakData.data.map((breakItem) => ({
+              id: breakItem.id,
+              employee_id: employee.id,
+              employee_name: employee.name,
+              break_type: breakItem.break_type,
+              break_start_time: breakItem.break_start_time,
+              break_duration_minutes: breakItem.break_duration_minutes || 0,
+              status: breakItem.status,
+              attendance_date: breakItem.attendance_date,
+            }));
+          }
+          return [];
+        } catch (err) {
+          console.error(`Error fetching breaks for ${employee.name}:`, err);
+          return [];
+        }
+      });
+
+      const allBreaks = await Promise.all(breakPromises);
+      const flattenedBreaks = allBreaks.flat();
+
+      console.log("Active Breaks:", flattenedBreaks);
+      setActiveBreaks(flattenedBreaks);
+    } catch (error) {
+      console.error("Error fetching active breaks:", error);
+      setActiveBreaks([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchActiveBreaks();
+
+    // Auto refresh every 30 seconds
+    const interval = setInterval(() => {
+      fetchActiveBreaks();
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [fetchActiveBreaks]);
 
   // Fetch monthly attendance data using the dedicated API
   const fetchMonthlyAttendance = useCallback(async () => {
@@ -498,8 +578,126 @@ const HRDashboard = () => {
                 </div>
               </div>
 
+              {/* Welcome Section */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8 w-full">
+                <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-10">
+                  <div className="mb-6">
+                    <h2 className="text-3xl font-bold text-gray-900 mb-3">
+                      Welcome to HR Portal
+                    </h2>
+                    <div className="w-12 h-1 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-full"></div>
+                  </div>
+                  <p className="text-gray-600 text-base leading-relaxed mb-8">
+                    Manage your team efficiently with comprehensive tools for
+                    attendance tracking, employee management, and application
+                    processing.
+                  </p>
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border border-blue-200">
+                      <div className="text-3xl mb-3">👥</div>
+                      <h3 className="font-bold text-blue-900 mb-2 text-lg">
+                        Team Management
+                      </h3>
+                      <p className="text-sm text-blue-700">
+                        View and manage team members
+                      </p>
+                    </div>
+                    <div className="p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-xl border border-green-200">
+                      <div className="text-3xl mb-3">📋</div>
+                      <h3 className="font-bold text-green-900 mb-2 text-lg">
+                        Attendance
+                      </h3>
+                      <p className="text-sm text-green-700">
+                        Monitor attendance records
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-10 h-fit sticky top-24">
+                  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div className="px-5 py-4 border-b border-slate-100 bg-gradient-to-r from-amber-50 to-white">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="p-1.5 bg-amber-100 rounded-lg">
+                            <Coffee className="h-4 w-4 text-amber-600" />
+                          </div>
+                          <h3 className="font-semibold text-slate-800">On Break</h3>
+                        </div>
+                        <span className="text-xs font-medium bg-amber-100 text-amber-700 px-2.5 py-1 rounded-full">
+                          {activeBreaks.length}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="divide-y divide-slate-50 max-h-[420px] overflow-y-auto">
+                      {activeBreaks.length > 0 ? (
+                        activeBreaks.map((breakItem) => {
+                          const employee = employees.find(
+                            (e) => e.id === breakItem.employee_id,
+                          );
+                          // Calculate duration from start time
+                          const getDuration = (startTime) => {
+                            if (!startTime) return "0m";
+                            const [hours, minutes] = startTime.split(":").map(Number);
+                            const startMinutes = hours * 60 + minutes;
+                            const now = new Date();
+                            const currentMinutes =
+                              now.getHours() * 60 + now.getMinutes();
+                            let diff = currentMinutes - startMinutes;
+                            if (diff < 0) diff += 24 * 60;
+                            if (diff < 60) return `${diff}m`;
+                            const hrs = Math.floor(diff / 60);
+                            const mins = diff % 60;
+                            return `${hrs}h ${mins}m`;
+                          };
+
+                          return (
+                            <div
+                              key={breakItem.id}
+                              className="p-4 hover:bg-slate-50 transition-colors"
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white font-semibold text-sm shadow-sm">
+                                  {employee?.name
+                                    ?.split(" ")
+                                    .map((n) => n[0])
+                                    .join("") || "?"}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-medium text-slate-800">
+                                    {employee?.name || breakItem.employee_name}
+                                  </p>
+                                  <p className="text-xs text-slate-400">
+                                    {breakItem.break_type || "Break"} • Started at{" "}
+                                    {breakItem.break_start_time?.slice(0, 5)}
+                                  </p>
+                                </div>
+                                <div className="flex items-center gap-1 text-orange-600 bg-orange-50 px-2.5 py-1 rounded-full font-mono">
+                                  <Timer className="h-3 w-3" />
+                                  <span className="text-xs font-medium">
+                                    {getDuration(breakItem.break_start_time)}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <div className="p-8 text-center">
+                          <Coffee className="h-10 w-10 text-slate-300 mx-auto mb-3" />
+                          <p className="text-slate-500 font-medium">No breaks</p>
+                          <p className="text-xs text-slate-400 mt-1">
+                            All employees are working
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* Monthly Attendance Bar Chart Section */}
-              <div className="mb-12 w-full bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+              <div className="mt-12 w-full bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                 <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
                   <div>
                     <h2 className="text-xl font-bold text-gray-900">
@@ -729,65 +927,7 @@ const HRDashboard = () => {
                 )}
               </div>
 
-              {/* Welcome Section */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8 w-full">
-                <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-10">
-                  <div className="mb-6">
-                    <h2 className="text-3xl font-bold text-gray-900 mb-3">
-                      Welcome to HR Portal
-                    </h2>
-                    <div className="w-12 h-1 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-full"></div>
-                  </div>
-                  <p className="text-gray-600 text-base leading-relaxed mb-8">
-                    Manage your team efficiently with comprehensive tools for
-                    attendance tracking, employee management, and application
-                    processing.
-                  </p>
-                  <div className="grid grid-cols-2 gap-6">
-                    <div className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border border-blue-200">
-                      <div className="text-3xl mb-3">👥</div>
-                      <h3 className="font-bold text-blue-900 mb-2 text-lg">
-                        Team Management
-                      </h3>
-                      <p className="text-sm text-blue-700">
-                        View and manage team members
-                      </p>
-                    </div>
-                    <div className="p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-xl border border-green-200">
-                      <div className="text-3xl mb-3">📋</div>
-                      <h3 className="font-bold text-green-900 mb-2 text-lg">
-                        Attendance
-                      </h3>
-                      <p className="text-sm text-green-700">
-                        Monitor attendance records
-                      </p>
-                    </div>
-                  </div>
-                </div>
 
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-10 h-fit sticky top-24">
-                  <div className="mb-8">
-                    <h3 className="text-2xl font-bold text-gray-900">
-                      Quick Actions
-                    </h3>
-                    <div className="w-8 h-1 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-full mt-2"></div>
-                  </div>
-                  <div className="space-y-4">
-                    <button className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:shadow-lg transition-all text-sm font-semibold uppercase">
-                      Mark Attendance
-                    </button>
-                    <button className="w-full px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl hover:shadow-lg transition-all text-sm font-semibold uppercase">
-                      View Team
-                    </button>
-                    <button className="w-full px-6 py-3 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-xl hover:shadow-lg transition-all text-sm font-semibold uppercase">
-                      Process Applications
-                    </button>
-                    <button className="w-full px-6 py-3 bg-gradient-to-r from-orange-600 to-orange-700 text-white rounded-xl hover:shadow-lg transition-all text-sm font-semibold uppercase">
-                      Generate Reports
-                    </button>
-                  </div>
-                </div>
-              </div>
             </div>
           </PagePreloader>
         </div>

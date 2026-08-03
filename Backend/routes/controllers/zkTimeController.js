@@ -4,7 +4,7 @@ const Zkteco = require("zkteco-js");
 
 // ============ CONFIGURATION ============
 const zkConfig = {
-  ip: "192.168.100.20",
+  ip: "192.168.1.80",
   port: 4370,
   timeout: 10000,
   inport: 5200,
