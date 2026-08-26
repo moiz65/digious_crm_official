@@ -81,13 +81,14 @@ const ALL_STATUSES = [
   "cancelled",
   "refunded",
 ];
+
 const MERCHANTS = [
   "Stripe",
   "Ziffs PayPal",
-  "Digious PayPal",
   "Innovative PayPal",
   "Crypto",
   "Invoice",
+  "CashApp"
 ];
 
 const formatCurrency = (amount) =>
@@ -141,10 +142,10 @@ const getDeadlineInfo = (deadline) => {
 const fmtDate = (d) =>
   d
     ? new Date(d).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      })
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    })
     : "\u2014";
 
 // ─── Main Component ────────────────────────────────────────────────────────
@@ -239,7 +240,7 @@ const AdvancedSalesManagement = () => {
   useEffect(() => {
     const token = localStorage.getItem("token");
     fetch(
-      `${process.env.REACT_APP_API_URL || "http://100.118.172.21:5000"}/api/v1/employees`,
+      `${process.env.REACT_APP_API_URL || "http://100.114.9.93:5000"}/api/v1/employees`,
       {
         headers: { Authorization: `Bearer ${token}` },
       },
@@ -379,6 +380,9 @@ const AdvancedSalesManagement = () => {
   const totalUpfront = sales.reduce((s, r) => s + r.upfrontPayment, 0);
   const totalRemaining = sales.reduce((s, r) => s + r.remainingBalance, 0);
   const completedCount = sales.filter((r) => r.status === "completed").length;
+  const refundedSales = sales.filter((r) => r.status === "refunded");
+  const refundedCount = refundedSales.length;
+  const refundedAmount = refundedSales.reduce((sum, r) => sum + r.upfrontPayment, 0);
 
   // ── Filter + sort + paginate ─────────────────────────────────────────────
   const filtered = sales
@@ -604,6 +608,13 @@ const AdvancedSalesManagement = () => {
       grad: "from-purple-500 to-violet-600",
       sub: `${filtered.length > 0 ? Math.round((completedCount / filtered.length) * 100) : 0}% rate`,
     },
+    {
+      title: "Refunded",
+      value: formatCurrency(refundedAmount),
+      Icon: AlertCircle,
+      grad: "from-red-500 to-rose-600",
+      sub: `${refundedCount} sale(s) refunded`,
+    },
   ];
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -647,11 +658,10 @@ const AdvancedSalesManagement = () => {
 
         {/* Summary Cards */}
         <div
-          className={`grid gap-4 mb-6 ${
-            selectedSalesIds.size > 0
-              ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
-              : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
-          }`}
+          className={`grid gap-4 mb-6 ${selectedSalesIds.size > 0
+            ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
+            : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
+            }`}
         >
           {/* Selected Sales Summary Card */}
 
@@ -666,8 +676,8 @@ const AdvancedSalesManagement = () => {
                   {selectedSalesIds.size > 0
                     ? formatCurrency(selectedTotals.totalUpfront)
                     : formatCurrency(
-                        filtered.reduce((sum, s) => sum + s.upfrontPayment, 0),
-                      )}
+                      filtered.reduce((sum, s) => sum + s.upfrontPayment, 0),
+                    )}
                 </div>
                 <div className="text-green-100 text-xs">Paid Amount</div>
               </div>
@@ -690,14 +700,44 @@ const AdvancedSalesManagement = () => {
                   {selectedSalesIds.size > 0
                     ? formatCurrency(selectedTotals.totalRemaining)
                     : formatCurrency(
-                        filtered.reduce(
-                          (sum, s) => sum + s.remainingBalance,
-                          0,
-                        ),
-                      )}
+                      filtered.reduce(
+                        (sum, s) => sum + s.remainingBalance,
+                        0,
+                      ),
+                    )}
                 </div>
                 <div className="text-orange-100 text-xs">Remaining</div>
               </div>
+            </div>
+          </div>
+
+          {/* REFUNDED CARD */}
+          <div className="bg-gradient-to-br from-red-500 to-rose-600 rounded-2xl p-5 text-white shadow-xl">
+            <div className="flex items-center justify-between mb-3">
+              <div className="p-2 bg-white/20 rounded-lg">
+                <AlertCircle className="h-6 w-6" />
+              </div>
+              <div className="text-right">
+                <div className="text-2xl font-bold">
+                  {selectedSalesIds.size > 0
+                    ? formatCurrency(
+                      filtered
+                        .filter((s) => selectedSalesIds.has(s.id) && s.status === "refunded")
+                        .reduce((sum, s) => sum + s.upfrontPayment, 0)
+                    )
+                    : formatCurrency(
+                      filtered
+                        .filter((s) => s.status === "refunded")
+                        .reduce((sum, s) => sum + s.upfrontPayment, 0)
+                    )}
+                </div>
+                <div className="text-red-100 text-xs">Refunded Amount</div>
+              </div>
+            </div>
+            <div className="text-xs text-red-100">
+              {selectedSalesIds.size > 0
+                ? filtered.filter((s) => selectedSalesIds.has(s.id) && s.status === "refunded").length
+                : filtered.filter((s) => s.status === "refunded").length} sale(s) refunded
             </div>
           </div>
 
@@ -773,11 +813,10 @@ const AdvancedSalesManagement = () => {
                     setDateRange("daily");
                     setSelectedDate(new Date());
                   }}
-                  className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all ${
-                    dateRange === "daily"
-                      ? "bg-white text-blue-600 shadow-sm"
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
+                  className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all ${dateRange === "daily"
+                    ? "bg-white text-blue-600 shadow-sm"
+                    : "text-gray-600 hover:text-gray-900"
+                    }`}
                 >
                   Daily
                 </button>
@@ -786,21 +825,19 @@ const AdvancedSalesManagement = () => {
                     setDateRange("monthly");
                     setSelectedDate(new Date());
                   }}
-                  className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all ${
-                    dateRange === "monthly"
-                      ? "bg-white text-blue-600 shadow-sm"
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
+                  className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all ${dateRange === "monthly"
+                    ? "bg-white text-blue-600 shadow-sm"
+                    : "text-gray-600 hover:text-gray-900"
+                    }`}
                 >
                   Monthly
                 </button>
                 <button
                   onClick={() => setShowDatePicker(!showDatePicker)}
-                  className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all ${
-                    dateRange === "custom"
-                      ? "bg-white text-blue-600 shadow-sm"
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
+                  className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all ${dateRange === "custom"
+                    ? "bg-white text-blue-600 shadow-sm"
+                    : "text-gray-600 hover:text-gray-900"
+                    }`}
                 >
                   Custom
                 </button>
@@ -1097,6 +1134,7 @@ const AdvancedSalesManagement = () => {
                     { label: "Total", field: "amount" },
                     { label: "Upfront", field: null },
                     { label: "Merchant", field: null },
+                    { label: "Status", field: "status" },
                     { label: "Sale Date", field: "date" },
                     { label: "Actions", field: null },
                   ].map((col) => (
@@ -1282,6 +1320,28 @@ const AdvancedSalesManagement = () => {
                         ) : (
                           <span className="text-xs text-gray-700">
                             {sale.merchant || "\u2014"}
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Status - With Inline Edit */}
+                      <td className="px-4 py-3">
+                        {isEdit ? (
+                          <select
+                            value={editData.status}
+                            onChange={(e) => onEditChange("status", e.target.value)}
+                            className="px-2 py-1 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          >
+                            {ALL_STATUSES.map((s) => (
+                              <option key={s} value={s}>
+                                {s.charAt(0).toUpperCase() + s.slice(1).replace("-", " ")}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 w-fit ${statusBg}`}>
+                            <StatusIcon className="w-3 h-3" />
+                            {sale.status.charAt(0).toUpperCase() + sale.status.slice(1).replace("-", " ")}
                           </span>
                         )}
                       </td>
@@ -1540,11 +1600,10 @@ const AddSaleModal = ({ categories, employees, saving, onSubmit, onClose }) => {
                           setEmployeeSearchTerm("");
                           setShowEmployeeDropdown(false);
                         }}
-                        className={`w-full px-4 py-3 text-left text-sm hover:bg-blue-50 transition-colors flex items-center justify-between border-b border-gray-100 last:border-0 ${
-                          String(form.employeeId) === String(emp.id)
-                            ? "bg-blue-50 text-blue-600"
-                            : "text-gray-700"
-                        }`}
+                        className={`w-full px-4 py-3 text-left text-sm hover:bg-blue-50 transition-colors flex items-center justify-between border-b border-gray-100 last:border-0 ${String(form.employeeId) === String(emp.id)
+                          ? "bg-blue-50 text-blue-600"
+                          : "text-gray-700"
+                          }`}
                       >
                         <div className="flex-1">
                           <div className="font-medium">{emp.name}</div>

@@ -30,6 +30,7 @@ import {
   Loader2, // Add this
 } from "lucide-react";
 import PagePreloader from "./PagePreloader";
+import toast from 'react-hot-toast';
 import {
   getMonthlyPayroll,
   generatePayroll as generatePayrollAPI,
@@ -195,26 +196,38 @@ const PayrollManagements = () => {
 
   const handleSaveEdit = async (id, data) => {
     try {
+      console.log('📤 Saving payroll edit:', data);
+
       const result = await editPayrollAPI(id, data);
-      // Update local state
+
+      // Update local state with all fields
       setPayrollData((prev) =>
         prev.map((r) =>
           r.id === id
             ? {
-                ...r,
-                bonus: result.bonus,
-                adjustment: result.adjustment,
-                adjustment_reason: result.adjustment_reason,
-                net_salary: result.net_salary,
-              }
+              ...r,
+              bonus: result.bonus,
+              bonus_reason: result.bonus_reason,
+              adjustment: result.adjustment,
+              adjustment_reason: result.adjustment_reason,
+              net_sales: result.net_sales,
+              commission_percentage: result.commission_percentage,
+              commission_amount_usd: result.commission_amount_usd,
+              commission_amount_pkr: result.commission_amount_pkr,
+              dollar_conversion_rate: result.dollar_conversion_rate,
+              net_salary: result.net_salary,
+            }
             : r,
         ),
       );
+
       setShowEditModal(false);
       setEditingRecord(null);
+      toast.success('Payroll updated successfully!');
     } catch (err) {
       console.error("Failed to edit payroll:", err);
       setError(err.message || "Failed to edit payroll record");
+      toast.error(err.message || 'Failed to update payroll');
     }
   };
 
@@ -316,11 +329,10 @@ const PayrollManagements = () => {
                       handleGenerate();
                     }}
                     disabled={generating} // Only disable when generating, NOT based on month
-                    className={`flex items-center gap-2 px-4 py-2.5 border rounded-xl font-semibold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed ${
-                      generating
+                    className={`flex items-center gap-2 px-4 py-2.5 border rounded-xl font-semibold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed ${generating
                         ? "bg-slate-50 border-slate-200 text-slate-400"
                         : "bg-white border-blue-200 text-blue-600 hover:bg-blue-50"
-                    }`}
+                      }`}
                   >
                     <RefreshCw
                       className={`h-4 w-4 ${generating ? "animate-spin" : ""}`}
@@ -514,9 +526,9 @@ const PayrollManagements = () => {
                   <div className="text-emerald-100 text-xs">
                     {visiblePayrollValues.success
                       ? (
-                          (stats.successCount / (payrollData.length || 1)) *
-                          100
-                        ).toFixed(1)
+                        (stats.successCount / (payrollData.length || 1)) *
+                        100
+                      ).toFixed(1)
                       : "••"}
                     % paid
                   </div>
@@ -1111,7 +1123,7 @@ const PaySlipModal = ({ payroll, onClose, onUpdateStatus, onEditPayroll }) => {
       const targetYear = payroll.year;
 
       const response = await fetch(
-        `${process.env.REACT_APP_API_URL || "http://100.118.172.21:5000"}/api/v1/sales-targets/${employeeId}?month=${targetMonth}&year=${targetYear}`,
+        `${process.env.REACT_APP_API_URL || "http://100.114.9.93:5000"}/api/v1/sales-targets/${employeeId}?month=${targetMonth}&year=${targetYear}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         },
@@ -1136,10 +1148,10 @@ const PaySlipModal = ({ payroll, onClose, onUpdateStatus, onEditPayroll }) => {
   const commissionAmountPKR =
     payroll.commission_amount_pkr ||
     (payroll.net_sales &&
-    payroll.commission_percentage &&
-    payroll.dollar_conversion_rate
+      payroll.commission_percentage &&
+      payroll.dollar_conversion_rate
       ? ((payroll.net_sales * payroll.commission_percentage) / 100) *
-        payroll.dollar_conversion_rate
+      payroll.dollar_conversion_rate
       : 0);
 
   const netSalesUSD = payroll.net_sales || 0;
@@ -1352,11 +1364,11 @@ const PaySlipModal = ({ payroll, onClose, onUpdateStatus, onEditPayroll }) => {
                     const commissionAmount =
                       payroll.commission_amount_pkr ||
                       (payroll.net_sales &&
-                      payroll.commission_percentage &&
-                      payroll.dollar_conversion_rate
+                        payroll.commission_percentage &&
+                        payroll.dollar_conversion_rate
                         ? ((payroll.net_sales * payroll.commission_percentage) /
-                            100) *
-                          payroll.dollar_conversion_rate
+                          100) *
+                        payroll.dollar_conversion_rate
                         : 0);
                     if (commissionAmount > 0) {
                       return (
@@ -1491,7 +1503,7 @@ const PaySlipModal = ({ payroll, onClose, onUpdateStatus, onEditPayroll }) => {
                   <span className="font-bold text-rose-700">
                     {formatCurrency(
                       parseFloat(payroll.total_deductions || 0) +
-                        parseFloat(payroll.advance_deduction || 0),
+                      parseFloat(payroll.advance_deduction || 0),
                     )}
                   </span>
                 </div>
@@ -1754,7 +1766,7 @@ const EditPayrollModal = ({ record, onClose, onSave }) => {
       const targetYear = payrollYear || new Date().getFullYear();
 
       const response = await fetch(
-        `${process.env.REACT_APP_API_URL || "http://100.118.172.21:5000"}/api/v1/sales-targets/${employeeId}?month=${targetMonth}&year=${targetYear}`,
+        `${process.env.REACT_APP_API_URL || "http://100.114.9.93:5000"}/api/v1/sales-targets/${employeeId}?month=${targetMonth}&year=${targetYear}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -1906,7 +1918,7 @@ const EditPayrollModal = ({ record, onClose, onSave }) => {
                             Math.round(
                               (salesTarget.achieved /
                                 salesTarget.monthly_target) *
-                                100,
+                              100,
                             ),
                           )}
                           %

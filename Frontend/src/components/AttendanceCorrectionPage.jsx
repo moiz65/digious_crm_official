@@ -97,7 +97,7 @@ const FileSliderPanel = ({ isOpen, onClose, ticket }) => {
           transition-all duration-300 ease-in-out
           ${isOpen ? 'translate-x-0 opacity-100 pointer-events-auto' : 'translate-x-full opacity-0 pointer-events-none'}
         `}
-        style={{ 
+        style={{
           transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
           visibility: isOpen ? 'visible' : 'hidden'
         }}
@@ -227,7 +227,7 @@ const TicketDetailView = ({ ticket, onBack, onAction, userRole, currentEmployeeI
   const isTaggedPerson = ticket.tagged_employee_id === currentEmployeeId;
   const canTaggedAct = isTaggedPerson && ticket.tagged_status === 'pending';
   const canHRAct = (userRole === 'hr' || userRole === 'admin') &&
-                   ticket.overall_status === 'tagged_approved' && ticket.hr_status === 'pending';
+    ticket.overall_status === 'tagged_approved' && ticket.hr_status === 'pending';
 
   return (
     <div>
@@ -241,7 +241,7 @@ const TicketDetailView = ({ ticket, onBack, onAction, userRole, currentEmployeeI
             >
               <ArrowLeft className="h-5 w-5 text-gray-600" />
             </button>
-            
+
             {/* Large Avatar */}
             <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-2xl flex items-center justify-center text-white font-bold text-2xl shadow-lg ring-2 ring-white flex-shrink-0">
               {ticket.employee_name?.charAt(0)?.toUpperCase() || 'A'}
@@ -366,7 +366,7 @@ const TicketDetailView = ({ ticket, onBack, onAction, userRole, currentEmployeeI
               <StatusBadge
                 status={
                   ticket.tagged_status === 'approved' ? 'tagged_approved' :
-                  ticket.tagged_status === 'rejected' ? 'tagged_rejected' : 'open'
+                    ticket.tagged_status === 'rejected' ? 'tagged_rejected' : 'open'
                 }
               />
             </div>
@@ -395,7 +395,7 @@ const TicketDetailView = ({ ticket, onBack, onAction, userRole, currentEmployeeI
                   <StatusBadge
                     status={
                       ticket.hr_status === 'approved' ? 'hr_approved' :
-                      ticket.hr_status === 'rejected' ? 'hr_rejected' : 'open'
+                        ticket.hr_status === 'rejected' ? 'hr_rejected' : 'open'
                     }
                   />
                 </div>
@@ -422,11 +422,10 @@ const TicketDetailView = ({ ticket, onBack, onAction, userRole, currentEmployeeI
               <div className="space-y-4">
                 {logs.map((log) => (
                   <div key={log.id} className="flex items-start gap-4 relative">
-                    <div className={`w-3 h-3 rounded-full mt-1 flex-shrink-0 ring-2 ring-white ${
-                      log.action.includes('approved') ? 'bg-green-500' :
-                      log.action.includes('rejected') ? 'bg-red-500' :
-                      log.action === 'created' ? 'bg-blue-500' : 'bg-gray-400'
-                    }`} />
+                    <div className={`w-3 h-3 rounded-full mt-1 flex-shrink-0 ring-2 ring-white ${log.action.includes('approved') ? 'bg-green-500' :
+                        log.action.includes('rejected') ? 'bg-red-500' :
+                          log.action === 'created' ? 'bg-blue-500' : 'bg-gray-400'
+                      }`} />
                     <div>
                       <p className="text-sm text-gray-800">
                         <span className="font-semibold">{log.action_by_name}</span>
@@ -522,11 +521,10 @@ const LeaveBalanceCards = ({ balance, selectedType, onSelect }) => {
             key={key}
             type="button"
             onClick={() => onSelect?.(key)}
-            className={`relative p-5 rounded-2xl border-2 transition-all duration-300 text-left ${
-              isActive
+            className={`relative p-5 rounded-2xl border-2 transition-all duration-300 text-left ${isActive
                 ? `bg-gradient-to-br ${c.activeBg} border-transparent text-white shadow-lg transform -translate-y-0.5`
                 : `bg-gradient-to-br ${c.bg} ${c.border} hover:shadow-md`
-            } ${onSelect ? 'cursor-pointer' : 'cursor-default'}`}
+              } ${onSelect ? 'cursor-pointer' : 'cursor-default'}`}
           >
             <div className="flex items-center justify-between mb-3">
               <Icon className={`w-5 h-5 ${isActive ? 'text-white' : c.icon}`} />
@@ -658,11 +656,10 @@ const CreateLeaveTicketForm = ({ balance, onSubmit, onCancel, submitting }) => {
           <button
             type="button"
             onClick={() => setLeaveScenario('mark_absent_as_leave')}
-            className={`p-4 rounded-xl border-2 text-left transition-all ${
-              leaveScenario === 'mark_absent_as_leave'
+            className={`p-4 rounded-xl border-2 text-left transition-all ${leaveScenario === 'mark_absent_as_leave'
                 ? 'border-indigo-500 bg-indigo-50 shadow-sm'
                 : 'border-gray-200 hover:border-gray-300 bg-white'
-            }`}
+              }`}
           >
             <div className="flex items-center gap-2 mb-1">
               <ArrowLeft className="w-4 h-4 text-orange-500" />
@@ -673,11 +670,10 @@ const CreateLeaveTicketForm = ({ balance, onSubmit, onCancel, submitting }) => {
           <button
             type="button"
             onClick={() => setLeaveScenario('advance_leave')}
-            className={`p-4 rounded-xl border-2 text-left transition-all ${
-              leaveScenario === 'advance_leave'
+            className={`p-4 rounded-xl border-2 text-left transition-all ${leaveScenario === 'advance_leave'
                 ? 'border-indigo-500 bg-indigo-50 shadow-sm'
                 : 'border-gray-200 hover:border-gray-300 bg-white'
-            }`}
+              }`}
           >
             <div className="flex items-center gap-2 mb-1">
               <CalendarDays className="w-4 h-4 text-green-500" />
@@ -889,7 +885,7 @@ const LeaveTicketDetailView = ({ ticket, onBack, onAction, userRole, currentEmpl
   const isTaggedPerson = ticket.tagged_employee_id === currentEmployeeId;
   const canTaggedAct = isTaggedPerson && ticket.tagged_status === 'pending';
   const canHRAct = (userRole === 'hr' || userRole === 'admin') &&
-                   ticket.overall_status === 'tagged_approved' && ticket.hr_status === 'pending';
+    ticket.overall_status === 'tagged_approved' && ticket.hr_status === 'pending';
 
   const scenarioLabel = ticket.leave_scenario === 'mark_absent_as_leave'
     ? 'Mark Absent as Paid Leave'
@@ -939,9 +935,9 @@ const LeaveTicketDetailView = ({ ticket, onBack, onAction, userRole, currentEmpl
             <div>
               <p className="text-xs text-gray-500 font-medium">Date Range</p>
               <p className="text-sm font-bold text-gray-900 mt-0.5">
-                {parseDate(ticket.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                <span>{new Date(ticket.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                 {ticket.start_date !== ticket.end_date && (
-                  <> — {parseDate(ticket.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</>
+                  <span> – {new Date(ticket.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                 )}
               </p>
             </div>
@@ -978,7 +974,7 @@ const LeaveTicketDetailView = ({ ticket, onBack, onAction, userRole, currentEmpl
               </div>
               <StatusBadge status={
                 ticket.tagged_status === 'approved' ? 'tagged_approved' :
-                ticket.tagged_status === 'rejected' ? 'tagged_rejected' : 'open'
+                  ticket.tagged_status === 'rejected' ? 'tagged_rejected' : 'open'
               } />
             </div>
             {ticket.tagged_remarks && (
@@ -1004,7 +1000,7 @@ const LeaveTicketDetailView = ({ ticket, onBack, onAction, userRole, currentEmpl
                   </div>
                   <StatusBadge status={
                     ticket.hr_status === 'approved' ? 'hr_approved' :
-                    ticket.hr_status === 'rejected' ? 'hr_rejected' : 'open'
+                      ticket.hr_status === 'rejected' ? 'hr_rejected' : 'open'
                   } />
                 </div>
                 {ticket.hr_remarks && (
@@ -1048,12 +1044,11 @@ const LeaveTicketDetailView = ({ ticket, onBack, onAction, userRole, currentEmpl
               <div className="space-y-4">
                 {logs.map((log) => (
                   <div key={log.id} className="flex items-start gap-4 relative">
-                    <div className={`w-3 h-3 rounded-full mt-1 flex-shrink-0 ring-2 ring-white ${
-                      log.action.includes('approved') ? 'bg-green-500' :
-                      log.action.includes('rejected') ? 'bg-red-500' :
-                      log.action === 'created' ? 'bg-blue-500' :
-                      log.action === 'applied' ? 'bg-emerald-500' : 'bg-gray-400'
-                    }`} />
+                    <div className={`w-3 h-3 rounded-full mt-1 flex-shrink-0 ring-2 ring-white ${log.action.includes('approved') ? 'bg-green-500' :
+                        log.action.includes('rejected') ? 'bg-red-500' :
+                          log.action === 'created' ? 'bg-blue-500' :
+                            log.action === 'applied' ? 'bg-emerald-500' : 'bg-gray-400'
+                      }`} />
                     <div>
                       <p className="text-sm text-gray-800">
                         <span className="font-semibold">{log.action_by_name}</span>
@@ -1496,8 +1491,8 @@ const AttendanceCorrectionPage = () => {
   // ────────────────────────────────────────────────────────────
   return (
     <>
-    <div className="flex h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-cyan-50 animate-slideInList">
-      <style>{`
+      <div className="flex h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-cyan-50 animate-slideInList">
+        <style>{`
         @keyframes slideInListView {
           from {
             opacity: 0;
@@ -1512,446 +1507,432 @@ const AttendanceCorrectionPage = () => {
           animation: slideInListView 0.3s ease-out;
         }
       `}</style>
-      {renderSidebar()}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <DashboardHeader
-          title={moduleTab === 'corrections' ? 'Attendance Corrections' : 'Managed Leave'}
-          subtitle={moduleTab === 'corrections' ? 'Review and manage attendance correction requests' : 'Manage leave requests and balances'}
-        />
-        <RoleBasedNav role={role} />
+        {renderSidebar()}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <DashboardHeader
+            title={moduleTab === 'corrections' ? 'Attendance Corrections' : 'Managed Leave'}
+            subtitle={moduleTab === 'corrections' ? 'Review and manage attendance correction requests' : 'Manage leave requests and balances'}
+          />
+          <RoleBasedNav role={role} />
 
-        {/* Module‑level Tabs */}
-        <div className="bg-transparent border-b border-gray-200 px-6 pt-[20px]">
-          <div className="flex gap-2">
-            <button
-              onClick={() => setModuleTab('corrections')}
-              className={`flex items-center gap-2 px-5 py-3 text-sm font-bold border-b-2 transition-all ${
-                moduleTab === 'corrections'
-                  ? 'border-indigo-600 text-indigo-700 bg-indigo-50/60'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              <FileText className="w-4 h-4" />
-              Attendance Corrections
-            </button>
-            <button
-              onClick={() => setModuleTab('managed_leave')}
-              className={`flex items-center gap-2 px-5 py-3 text-sm font-bold border-b-2 transition-all ${
-                moduleTab === 'managed_leave'
-                  ? 'border-indigo-600 text-indigo-700 bg-indigo-50/60'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              <CalendarDays className="w-4 h-4" />
-              Managed Leave
-              {(mlCounts.my_open > 0 || mlCounts.tagged_pending > 0 || mlCounts.hr_pending > 0) && (
-                <span className="bg-red-500 text-white text-[10px] rounded-full px-1.5 py-0.5 leading-none">
-                  {(mlCounts.my_open || 0) + (mlCounts.tagged_pending || 0) + (mlCounts.hr_pending || 0)}
-                </span>
-              )}
-            </button>
-          </div>
-        </div>
-
-        {moduleTab === 'corrections' ? (
-        <>
-        {/* Corrections Sub‑Tabs */}
-        <div className="bg-transparent border-b border-gray-200 px-6">
-          <div className="flex gap-1">
-            <button
-              onClick={() => { setActiveTab('my'); setStatusFilter('all'); }}
-              className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-all ${
-                activeTab === 'my' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              <Edit3 className="w-4 h-4" />
-              My Requests
-              {counts.my_open > 0 && (
-                <span className="bg-blue-500 text-white text-[10px] rounded-full px-1.5 py-0.5 leading-none">{counts.my_open}</span>
-              )}
-            </button>
-            <button
-              onClick={() => { setActiveTab('tagged'); setStatusFilter('all'); }}
-              className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-all ${
-                activeTab === 'tagged' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              <Tag className="w-4 h-4" />
-              Tagged to Me
-              {counts.tagged_pending > 0 && (
-                <span className="bg-orange-500 text-white text-[10px] rounded-full px-1.5 py-0.5 leading-none">{counts.tagged_pending}</span>
-              )}
-            </button>
-            {isHR && (
+          {/* Module‑level Tabs */}
+          <div className="bg-transparent border-b border-gray-200 px-6 pt-[20px]">
+            <div className="flex gap-2">
               <button
-                onClick={() => { setActiveTab('hr'); setStatusFilter('all'); }}
-                className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-all ${
-                  activeTab === 'hr' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
+                onClick={() => setModuleTab('corrections')}
+                className={`flex items-center gap-2 px-5 py-3 text-sm font-bold border-b-2 transition-all ${moduleTab === 'corrections'
+                    ? 'border-indigo-600 text-indigo-700 bg-indigo-50/60'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                  }`}
               >
-                <Shield className="w-4 h-4" />
-                HR Approvals
-                {counts.hr_pending > 0 && (
-                  <span className="bg-red-500 text-white text-[10px] rounded-full px-1.5 py-0.5 leading-none">{counts.hr_pending}</span>
+                <FileText className="w-4 h-4" />
+                Attendance Corrections
+              </button>
+              <button
+                onClick={() => setModuleTab('managed_leave')}
+                className={`flex items-center gap-2 px-5 py-3 text-sm font-bold border-b-2 transition-all ${moduleTab === 'managed_leave'
+                    ? 'border-indigo-600 text-indigo-700 bg-indigo-50/60'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                  }`}
+              >
+                <CalendarDays className="w-4 h-4" />
+                Managed Leave
+                {(mlCounts.my_open > 0 || mlCounts.tagged_pending > 0 || mlCounts.hr_pending > 0) && (
+                  <span className="bg-red-500 text-white text-[10px] rounded-full px-1.5 py-0.5 leading-none">
+                    {(mlCounts.my_open || 0) + (mlCounts.tagged_pending || 0) + (mlCounts.hr_pending || 0)}
+                  </span>
                 )}
               </button>
-            )}
-          </div>
-        </div>
-
-        <main className="flex-1 overflow-y-auto p-6">
-          {/* Filters */}
-          <div className="flex items-center justify-between flex-wrap gap-3 py-5">
-            <div className="flex items-center gap-2 flex-wrap">
-              <Filter className="w-4 h-4 text-gray-400" />
-              {['all', 'open', 'tagged_approved', 'tagged_rejected', 'hr_approved', 'hr_rejected', 'applied'].map(s => (
-                <button
-                  key={s}
-                  onClick={() => setStatusFilter(s)}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
-                    statusFilter === s
-                      ? 'bg-indigo-600 text-white shadow-sm'
-                      : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
-                  }`}
-                >
-                  {s === 'all' ? 'All' : s.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
-                </button>
-              ))}
             </div>
-            <button
-              onClick={() => { fetchTickets(); fetchCounts(); }}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <RefreshCw className="w-3.5 h-3.5" /> Refresh
-            </button>
           </div>
 
-          {/* Table */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-            {loading ? (
-              <div className="flex items-center justify-center py-20">
-                <div className="animate-spin rounded-full h-7 w-7 border-2 border-indigo-600 border-t-transparent" />
-              </div>
-            ) : tickets.length === 0 ? (
-              <div className="py-16 text-center">
-                <FileText className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-                <h3 className="text-base font-semibold text-gray-500">No correction tickets found</h3>
-                <p className="text-sm text-gray-400 mt-1">
-                  {activeTab === 'my'
-                    ? "You haven't submitted any correction requests yet."
-                    : activeTab === 'tagged'
-                    ? 'No correction requests are tagged to you.'
-                    : 'No correction tickets to review.'}
-                </p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="bg-gray-50 border-b border-gray-200">
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Ticket #</th>
-                      {activeTab !== 'my' && (
-                        <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Employee</th>
+          {moduleTab === 'corrections' ? (
+            <>
+              {/* Corrections Sub‑Tabs */}
+              <div className="bg-transparent border-b border-gray-200 px-6">
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => { setActiveTab('my'); setStatusFilter('all'); }}
+                    className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-all ${activeTab === 'my' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+                      }`}
+                  >
+                    <Edit3 className="w-4 h-4" />
+                    My Requests
+                    {counts.my_open > 0 && (
+                      <span className="bg-blue-500 text-white text-[10px] rounded-full px-1.5 py-0.5 leading-none">{counts.my_open}</span>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => { setActiveTab('tagged'); setStatusFilter('all'); }}
+                    className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-all ${activeTab === 'tagged' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+                      }`}
+                  >
+                    <Tag className="w-4 h-4" />
+                    Tagged to Me
+                    {counts.tagged_pending > 0 && (
+                      <span className="bg-orange-500 text-white text-[10px] rounded-full px-1.5 py-0.5 leading-none">{counts.tagged_pending}</span>
+                    )}
+                  </button>
+                  {isHR && (
+                    <button
+                      onClick={() => { setActiveTab('hr'); setStatusFilter('all'); }}
+                      className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-all ${activeTab === 'hr' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+                        }`}
+                    >
+                      <Shield className="w-4 h-4" />
+                      HR Approvals
+                      {counts.hr_pending > 0 && (
+                        <span className="bg-red-500 text-white text-[10px] rounded-full px-1.5 py-0.5 leading-none">{counts.hr_pending}</span>
                       )}
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Current</th>
-                      <th className="text-center px-2 py-3"></th>
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Requested</th>
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Reviewer</th>
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">HR</th>
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                      <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">View</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {tickets.map((t) => {
-                      const correctedParts = [];
-                      if (t.corrected_check_in) correctedParts.push(`In: ${t.corrected_check_in}`);
-                      if (t.corrected_check_out) correctedParts.push(`Out: ${t.corrected_check_out}`);
-                      if (t.corrected_status) correctedParts.push(t.corrected_status);
-
-                      const originalParts = [];
-                      if (t.original_check_in) originalParts.push(`In: ${t.original_check_in}`);
-                      if (t.original_check_out) originalParts.push(`Out: ${t.original_check_out}`);
-                      if (t.original_status) originalParts.push(t.original_status);
-
-                      return (
-                        <tr
-                          key={t.id}
-                          className="hover:bg-indigo-50 border-b border-gray-100 cursor-pointer transition-all duration-200 hover:shadow-sm"
-                          onClick={() => openDetail(t)}
-                        >
-                          <td className="px-4 py-3">
-                            <span className="font-semibold text-indigo-700">{t.ticket_number}</span>
-                            <p className="text-[11px] text-gray-400 mt-0.5">
-                              {new Date(t.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                            </p>
-                          </td>
-                          {activeTab !== 'my' && (
-                            <td className="px-4 py-3">
-                              <p className="font-medium text-gray-900 text-xs">{t.employee_name}</p>
-                            </td>
-                          )}
-                          <td className="px-4 py-3 text-gray-700">
-                            {parseDate(t.attendance_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="text-xs text-gray-700 space-y-0.5">
-                              {originalParts.length > 0
-                                ? originalParts.map((p, i) => <div key={i}>{p}</div>)
-                                : <span className="text-gray-400">—</span>}
-                            </div>
-                          </td>
-                          <td className="px-2 py-3 text-center">
-                            {correctedParts.length > 0 && <ArrowRight className="w-3.5 h-3.5 text-gray-400 mx-auto" />}
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="text-xs font-medium text-green-700 space-y-0.5">
-                              {correctedParts.length > 0
-                                ? correctedParts.map((p, i) => <div key={i}>{p}</div>)
-                                : <span className="text-gray-400">No change</span>}
-                            </div>
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="text-xs">
-                              <p className="text-gray-800 font-medium">{t.tagged_employee_name}</p>
-                              <p className={`text-[11px] font-semibold ${
-                                t.tagged_status === 'approved' ? 'text-green-600' :
-                                t.tagged_status === 'rejected' ? 'text-red-600' : 'text-yellow-600'
-                              }`}>
-                                {t.tagged_status}
-                              </p>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3">
-                            <span className={`text-xs font-semibold ${
-                              t.hr_status === 'approved' ? 'text-green-600' :
-                              t.hr_status === 'rejected' ? 'text-red-600' : 'text-yellow-600'
-                            }`}>
-                              {t.hr_status}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3">
-                            <StatusBadge status={t.overall_status} />
-                          </td>
-                          <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
-                            <button 
-                              onClick={() => openDetail(t)}
-                              className="p-1.5 rounded-lg hover:bg-indigo-100 transition-colors"
-                            >
-                              <Eye className="w-4 h-4 text-indigo-500" />
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                    </button>
+                  )}
+                </div>
               </div>
-            )}
-          </div>
-        </main>
-        </>
-        ) : (
-        <>
-        {/* ─── Managed Leave Sub‑Tabs ─── */}
-        <div className="bg-transparent border-b border-gray-200 px-6">
-          <div className="flex gap-1">
-            <button
-              onClick={() => { setMlActiveTab('my'); setMlStatusFilter('all'); }}
-              className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-all ${
-                mlActiveTab === 'my' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              <Edit3 className="w-4 h-4" />
-              My Requests
-              {mlCounts.my_open > 0 && (
-                <span className="bg-blue-500 text-white text-[10px] rounded-full px-1.5 py-0.5 leading-none">{mlCounts.my_open}</span>
-              )}
-            </button>
-            <button
-              onClick={() => { setMlActiveTab('tagged'); setMlStatusFilter('all'); }}
-              className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-all ${
-                mlActiveTab === 'tagged' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              <Tag className="w-4 h-4" />
-              Tagged to Me
-              {mlCounts.tagged_pending > 0 && (
-                <span className="bg-orange-500 text-white text-[10px] rounded-full px-1.5 py-0.5 leading-none">{mlCounts.tagged_pending}</span>
-              )}
-            </button>
-            {isHR && (
-              <button
-                onClick={() => { setMlActiveTab('hr'); setMlStatusFilter('all'); }}
-                className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-all ${
-                  mlActiveTab === 'hr' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <Shield className="w-4 h-4" />
-                HR Approvals
-                {mlCounts.hr_pending > 0 && (
-                  <span className="bg-red-500 text-white text-[10px] rounded-full px-1.5 py-0.5 leading-none">{mlCounts.hr_pending}</span>
-                )}
-              </button>
-            )}
-          </div>
-        </div>
 
-        <main className="flex-1 overflow-y-auto p-6">
-          {/* Leave Balance Cards */}
-          <LeaveBalanceCards balance={leaveBalance} />
-
-          {/* Filters + New button */}
-          <div className="flex items-center justify-between flex-wrap gap-3 mb-5">
-            <div className="flex items-center gap-2 flex-wrap">
-              <Filter className="w-4 h-4 text-gray-400" />
-              {['all', 'open', 'tagged_approved', 'tagged_rejected', 'hr_approved', 'hr_rejected', 'applied'].map(s => (
-                <button
-                  key={s}
-                  onClick={() => setMlStatusFilter(s)}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
-                    mlStatusFilter === s
-                      ? 'bg-indigo-600 text-white shadow-sm'
-                      : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
-                  }`}
-                >
-                  {s === 'all' ? 'All' : s.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
-                </button>
-              ))}
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => { fetchMlTickets(); fetchMlCounts(); fetchLeaveBalance(); }}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                <RefreshCw className="w-3.5 h-3.5" /> Refresh
-              </button>
-              <button
-                onClick={() => setMlView('create')}
-                className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
-              >
-                <Plus className="w-3.5 h-3.5" /> New Leave Request
-              </button>
-            </div>
-          </div>
-
-          {/* Managed Leave Table */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-            {mlLoading ? (
-              <div className="flex items-center justify-center py-20">
-                <div className="animate-spin rounded-full h-7 w-7 border-2 border-indigo-600 border-t-transparent" />
-              </div>
-            ) : mlTickets.length === 0 ? (
-              <div className="py-16 text-center">
-                <CalendarDays className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-                <h3 className="text-base font-semibold text-gray-500">No leave tickets found</h3>
-                <p className="text-sm text-gray-400 mt-1">
-                  {mlActiveTab === 'my'
-                    ? "You haven't submitted any leave requests yet."
-                    : mlActiveTab === 'tagged'
-                    ? 'No leave requests are tagged to you.'
-                    : 'No leave tickets to review.'}
-                </p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="bg-gray-50 border-b border-gray-200">
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Ticket #</th>
-                      {mlActiveTab !== 'my' && (
-                        <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Employee</th>
-                      )}
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Leave Type</th>
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Scenario</th>
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Dates</th>
-                      <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Days</th>
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Reviewer</th>
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">HR</th>
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                      <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">View</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {mlTickets.map((t) => (
-                      <tr
-                        key={t.id}
-                        className="hover:bg-indigo-50 border-b border-gray-100 cursor-pointer transition-all duration-200 hover:shadow-sm"
-                        onClick={() => openMlDetail(t)}
+              <main className="flex-1 overflow-y-auto p-6">
+                {/* Filters */}
+                <div className="flex items-center justify-between flex-wrap gap-3 py-5">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Filter className="w-4 h-4 text-gray-400" />
+                    {['all', 'open', 'tagged_approved', 'tagged_rejected', 'hr_approved', 'hr_rejected', 'applied'].map(s => (
+                      <button
+                        key={s}
+                        onClick={() => setStatusFilter(s)}
+                        className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${statusFilter === s
+                            ? 'bg-indigo-600 text-white shadow-sm'
+                            : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                          }`}
                       >
-                        <td className="px-4 py-3">
-                          <span className="font-semibold text-indigo-700">{t.ticket_number}</span>
-                          <p className="text-[11px] text-gray-400 mt-0.5">
-                            {new Date(t.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                          </p>
-                        </td>
-                        {mlActiveTab !== 'my' && (
-                          <td className="px-4 py-3">
-                            <p className="font-medium text-gray-900 text-xs">{t.employee_name}</p>
-                          </td>
-                        )}
-                        <td className="px-4 py-3">
-                          <LeaveTypeBadge type={t.leave_type} />
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className="text-xs text-gray-600">
-                            {t.leave_scenario === 'mark_absent_as_leave' ? 'Mark Absent' : 'Advance Leave'}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-xs text-gray-700">
-                          <span>{new Date(t.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-                          {t.start_date !== t.end_date && (
-                            <span> – {new Date(t.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold">
-                            {t.total_days}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="text-xs">
-                            <p className="text-gray-800 font-medium">{t.tagged_employee_name}</p>
-                            <p className={`text-[11px] font-semibold ${
-                              t.tagged_status === 'approved' ? 'text-green-600' :
-                              t.tagged_status === 'rejected' ? 'text-red-600' : 'text-yellow-600'
-                            }`}>
-                              {t.tagged_status}
-                            </p>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className={`text-xs font-semibold ${
-                            t.hr_status === 'approved' ? 'text-green-600' :
-                            t.hr_status === 'rejected' ? 'text-red-600' : 'text-yellow-600'
-                          }`}>
-                            {t.hr_status}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3">
-                          <StatusBadge status={t.overall_status} />
-                        </td>
-                        <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
-                          <button
-                            onClick={() => openMlDetail(t)}
-                            className="p-1.5 rounded-lg hover:bg-indigo-100 transition-colors"
-                          >
-                            <Eye className="w-4 h-4 text-indigo-500" />
-                          </button>
-                        </td>
-                      </tr>
+                        {s === 'all' ? 'All' : s.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
+                      </button>
                     ))}
-                  </tbody>
-                </table>
+                  </div>
+                  <button
+                    onClick={() => { fetchTickets(); fetchCounts(); }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" /> Refresh
+                  </button>
+                </div>
+
+                {/* Table */}
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                  {loading ? (
+                    <div className="flex items-center justify-center py-20">
+                      <div className="animate-spin rounded-full h-7 w-7 border-2 border-indigo-600 border-t-transparent" />
+                    </div>
+                  ) : tickets.length === 0 ? (
+                    <div className="py-16 text-center">
+                      <FileText className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+                      <h3 className="text-base font-semibold text-gray-500">No correction tickets found</h3>
+                      <p className="text-sm text-gray-400 mt-1">
+                        {activeTab === 'my'
+                          ? "You haven't submitted any correction requests yet."
+                          : activeTab === 'tagged'
+                            ? 'No correction requests are tagged to you.'
+                            : 'No correction tickets to review.'}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="bg-gray-50 border-b border-gray-200">
+                            <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Ticket #</th>
+                            {activeTab !== 'my' && (
+                              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Employee</th>
+                            )}
+                            <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
+                            <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Current</th>
+                            <th className="text-center px-2 py-3"></th>
+                            <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Requested</th>
+                            <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Reviewer</th>
+                            <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">HR</th>
+                            <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                            <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">View</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                          {tickets.map((t) => {
+                            const correctedParts = [];
+                            if (t.corrected_check_in) correctedParts.push(`In: ${t.corrected_check_in}`);
+                            if (t.corrected_check_out) correctedParts.push(`Out: ${t.corrected_check_out}`);
+                            if (t.corrected_status) correctedParts.push(t.corrected_status);
+
+                            const originalParts = [];
+                            if (t.original_check_in) originalParts.push(`In: ${t.original_check_in}`);
+                            if (t.original_check_out) originalParts.push(`Out: ${t.original_check_out}`);
+                            if (t.original_status) originalParts.push(t.original_status);
+
+                            return (
+                              <tr
+                                key={t.id}
+                                className="hover:bg-indigo-50 border-b border-gray-100 cursor-pointer transition-all duration-200 hover:shadow-sm"
+                                onClick={() => openDetail(t)}
+                              >
+                                <td className="px-4 py-3">
+                                  <span className="font-semibold text-indigo-700">{t.ticket_number}</span>
+                                  <p className="text-[11px] text-gray-400 mt-0.5">
+                                    {new Date(t.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                  </p>
+                                </td>
+                                {activeTab !== 'my' && (
+                                  <td className="px-4 py-3">
+                                    <p className="font-medium text-gray-900 text-xs">{t.employee_name}</p>
+                                  </td>
+                                )}
+                                <td className="px-4 py-3 text-gray-700">
+                                  {parseDate(t.attendance_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                </td>
+                                <td className="px-4 py-3">
+                                  <div className="text-xs text-gray-700 space-y-0.5">
+                                    {originalParts.length > 0
+                                      ? originalParts.map((p, i) => <div key={i}>{p}</div>)
+                                      : <span className="text-gray-400">—</span>}
+                                  </div>
+                                </td>
+                                <td className="px-2 py-3 text-center">
+                                  {correctedParts.length > 0 && <ArrowRight className="w-3.5 h-3.5 text-gray-400 mx-auto" />}
+                                </td>
+                                <td className="px-4 py-3">
+                                  <div className="text-xs font-medium text-green-700 space-y-0.5">
+                                    {correctedParts.length > 0
+                                      ? correctedParts.map((p, i) => <div key={i}>{p}</div>)
+                                      : <span className="text-gray-400">No change</span>}
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <div className="text-xs">
+                                    <p className="text-gray-800 font-medium">{t.tagged_employee_name}</p>
+                                    <p className={`text-[11px] font-semibold ${t.tagged_status === 'approved' ? 'text-green-600' :
+                                        t.tagged_status === 'rejected' ? 'text-red-600' : 'text-yellow-600'
+                                      }`}>
+                                      {t.tagged_status}
+                                    </p>
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <span className={`text-xs font-semibold ${t.hr_status === 'approved' ? 'text-green-600' :
+                                      t.hr_status === 'rejected' ? 'text-red-600' : 'text-yellow-600'
+                                    }`}>
+                                    {t.hr_status}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <StatusBadge status={t.overall_status} />
+                                </td>
+                                <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
+                                  <button
+                                    onClick={() => openDetail(t)}
+                                    className="p-1.5 rounded-lg hover:bg-indigo-100 transition-colors"
+                                  >
+                                    <Eye className="w-4 h-4 text-indigo-500" />
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </main>
+            </>
+          ) : (
+            <>
+              {/* ─── Managed Leave Sub‑Tabs ─── */}
+              <div className="bg-transparent border-b border-gray-200 px-6">
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => { setMlActiveTab('my'); setMlStatusFilter('all'); }}
+                    className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-all ${mlActiveTab === 'my' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+                      }`}
+                  >
+                    <Edit3 className="w-4 h-4" />
+                    My Requests
+                    {mlCounts.my_open > 0 && (
+                      <span className="bg-blue-500 text-white text-[10px] rounded-full px-1.5 py-0.5 leading-none">{mlCounts.my_open}</span>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => { setMlActiveTab('tagged'); setMlStatusFilter('all'); }}
+                    className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-all ${mlActiveTab === 'tagged' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+                      }`}
+                  >
+                    <Tag className="w-4 h-4" />
+                    Tagged to Me
+                    {mlCounts.tagged_pending > 0 && (
+                      <span className="bg-orange-500 text-white text-[10px] rounded-full px-1.5 py-0.5 leading-none">{mlCounts.tagged_pending}</span>
+                    )}
+                  </button>
+                  {isHR && (
+                    <button
+                      onClick={() => { setMlActiveTab('hr'); setMlStatusFilter('all'); }}
+                      className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-all ${mlActiveTab === 'hr' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+                        }`}
+                    >
+                      <Shield className="w-4 h-4" />
+                      HR Approvals
+                      {mlCounts.hr_pending > 0 && (
+                        <span className="bg-red-500 text-white text-[10px] rounded-full px-1.5 py-0.5 leading-none">{mlCounts.hr_pending}</span>
+                      )}
+                    </button>
+                  )}
+                </div>
               </div>
-            )}
-          </div>
-        </main>
-        </>
-        )}
+
+              <main className="flex-1 overflow-y-auto p-6">
+                {/* Leave Balance Cards */}
+                <LeaveBalanceCards balance={leaveBalance} />
+
+                {/* Filters + New button */}
+                <div className="flex items-center justify-between flex-wrap gap-3 my-5">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Filter className="w-4 h-4 text-gray-400" />
+                    {['all', 'open', 'tagged_approved', 'tagged_rejected', 'hr_approved', 'hr_rejected', 'applied'].map(s => (
+                      <button
+                        key={s}
+                        onClick={() => setMlStatusFilter(s)}
+                        className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${mlStatusFilter === s
+                            ? 'bg-indigo-600 text-white shadow-sm'
+                            : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                          }`}
+                      >
+                        {s === 'all' ? 'All' : s.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => { fetchMlTickets(); fetchMlCounts(); fetchLeaveBalance(); }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" /> Refresh
+                    </button>
+                    <button
+                      onClick={() => setMlView('create')}
+                      className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
+                    >
+                      <Plus className="w-3.5 h-3.5" /> New Leave Request
+                    </button>
+                  </div>
+                </div>
+
+                {/* Managed Leave Table */}
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                  {mlLoading ? (
+                    <div className="flex items-center justify-center py-20">
+                      <div className="animate-spin rounded-full h-7 w-7 border-2 border-indigo-600 border-t-transparent" />
+                    </div>
+                  ) : mlTickets.length === 0 ? (
+                    <div className="py-16 text-center">
+                      <CalendarDays className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+                      <h3 className="text-base font-semibold text-gray-500">No leave tickets found</h3>
+                      <p className="text-sm text-gray-400 mt-1">
+                        {mlActiveTab === 'my'
+                          ? "You haven't submitted any leave requests yet."
+                          : mlActiveTab === 'tagged'
+                            ? 'No leave requests are tagged to you.'
+                            : 'No leave tickets to review.'}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="bg-gray-50 border-b border-gray-200">
+                            <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Ticket #</th>
+                            {mlActiveTab !== 'my' && (
+                              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Employee</th>
+                            )}
+                            <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Leave Type</th>
+                            <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Scenario</th>
+                            <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Dates</th>
+                            <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Days</th>
+                            <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Reviewer</th>
+                            <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">HR</th>
+                            <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                            <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">View</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                          {mlTickets.map((t) => (
+                            <tr
+                              key={t.id}
+                              className="hover:bg-indigo-50 border-b border-gray-100 cursor-pointer transition-all duration-200 hover:shadow-sm"
+                              onClick={() => openMlDetail(t)}
+                            >
+                              <td className="px-4 py-3">
+                                <span className="font-semibold text-indigo-700">{t.ticket_number}</span>
+                                <p className="text-[11px] text-gray-400 mt-0.5">
+                                  {new Date(t.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                </p>
+                              </td>
+                              {mlActiveTab !== 'my' && (
+                                <td className="px-4 py-3">
+                                  <p className="font-medium text-gray-900 text-xs">{t.employee_name}</p>
+                                </td>
+                              )}
+                              <td className="px-4 py-3">
+                                <LeaveTypeBadge type={t.leave_type} />
+                              </td>
+                              <td className="px-4 py-3">
+                                <span className="text-xs text-gray-600">
+                                  {t.leave_scenario === 'mark_absent_as_leave' ? 'Mark Absent' : 'Advance Leave'}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 text-xs text-gray-700">
+                                <span>{new Date(t.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                                {t.start_date !== t.end_date && (
+                                  <span> – {new Date(t.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                                )}
+                              </td>
+                              <td className="px-4 py-3 text-center">
+                                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold">
+                                  {t.total_days}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3">
+                                <div className="text-xs">
+                                  <p className="text-gray-800 font-medium">{t.tagged_employee_name}</p>
+                                  <p className={`text-[11px] font-semibold ${t.tagged_status === 'approved' ? 'text-green-600' :
+                                      t.tagged_status === 'rejected' ? 'text-red-600' : 'text-yellow-600'
+                                    }`}>
+                                    {t.tagged_status}
+                                  </p>
+                                </div>
+                              </td>
+                              <td className="px-4 py-3">
+                                <span className={`text-xs font-semibold ${t.hr_status === 'approved' ? 'text-green-600' :
+                                    t.hr_status === 'rejected' ? 'text-red-600' : 'text-yellow-600'
+                                  }`}>
+                                  {t.hr_status}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3">
+                                <StatusBadge status={t.overall_status} />
+                              </td>
+                              <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
+                                <button
+                                  onClick={() => openMlDetail(t)}
+                                  className="p-1.5 rounded-lg hover:bg-indigo-100 transition-colors"
+                                >
+                                  <Eye className="w-4 h-4 text-indigo-500" />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </main>
+            </>
+          )}
+        </div>
       </div>
-    </div>
     </>
   );
 };

@@ -64,7 +64,7 @@ const HRMyAttendance = () => {
   const [pendingCheckout, setPendingCheckout] = useState(null);
   const [isOverlapWindow, setIsOverlapWindow] = useState(false);
 
-  // ✅ NEW: Sync state variables
+  // NEW: Sync state variables
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState(null);
   const [deviceStatus, setDeviceStatus] = useState(null);
@@ -185,12 +185,28 @@ const HRMyAttendance = () => {
     return id;
   };
 
+  const getDeviceUserId = () => {
+    const deviceUserId = user?.device_user_id;
+
+    console.log("[INFO] Getting device user ID:", {
+      deviceUserId,
+      user,
+    });
+
+    if (!deviceUserId) {
+      console.warn("[WARNING] No device_user_id found in user object!");
+      return null;
+    }
+
+    return deviceUserId;
+  };
+
   // ✅ NEW: Check device status function
   const checkDeviceStatus = async () => {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        "http://localhost:5000/api/v1/zkTime/connect",
+        "http://100.114.9.93:5000/api/v1/zkTime/connect",
         {
           headers: { Authorization: `Bearer ${token}` },
         },
@@ -206,6 +222,7 @@ const HRMyAttendance = () => {
 
   const handleSyncWithDevice = async () => {
     const employeeId = getEmployeeId();
+    const deviceUserId = getDeviceUserId();
 
     if (!employeeId) {
       toast.error("Employee ID not found");
@@ -223,14 +240,33 @@ const HRMyAttendance = () => {
       return;
     }
 
+
+    // ✅ Check if device_user_id exists
+    if (!deviceUserId) {
+      toast.error("Device User ID not found. Please contact HR to set up device sync.");
+      return;
+    }
+
+    // ✅ Check if already synced today
+    if (hasSyncedToday) {
+      toast.info(
+        `Already synced today (${syncedDate}). Come back tomorrow for new sync.`,
+        { duration: 3000 }
+      );
+      return;
+    }
+
     setIsSyncing(true);
 
     try {
       const token = localStorage.getItem("token");
 
+      // ✅ Use deviceUserId for ZKTeco API
+      console.log(`📱 Syncing with device_user_id: ${deviceUserId}`);
+
       // Fetch device logs
       const deviceResponse = await fetch(
-        `http://localhost:5000/api/v1/zkTime/attendance/user/${employeeId}`,
+        `http://100.114.9.93:5000/api/v1/zkTime/attendance/user/${deviceUserId}`,
         { headers: { Authorization: `Bearer ${token}` } },
       );
 
@@ -520,7 +556,7 @@ const HRMyAttendance = () => {
         setAttendanceData(todayRecord);
         setIsCheckedIn(
           data.isCheckedIn ||
-            (todayRecord.check_in_time && !todayRecord.check_out_time),
+          (todayRecord.check_in_time && !todayRecord.check_out_time),
         );
       } else {
         console.warn("[WARNING] No attendance data received:", data);
@@ -1095,14 +1131,14 @@ const HRMyAttendance = () => {
     return chartData.length > 0
       ? chartData
       : [
-          {
-            date: "No Data",
-            hours: 0,
-            status: "N/A",
-            total: 0,
-            days_worked: 0,
-          },
-        ];
+        {
+          date: "No Data",
+          hours: 0,
+          status: "N/A",
+          total: 0,
+          days_worked: 0,
+        },
+      ];
   };
 
   const getStatusDistribution = () => {
@@ -1307,11 +1343,10 @@ const HRMyAttendance = () => {
               disabled={isSyncing || hasSyncedToday}
               className={`
         flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all duration-300
-        ${
-          isSyncing || hasSyncedToday
-            ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-            : "bg-indigo-500 hover:bg-indigo-600 text-white shadow-lg hover:shadow-indigo-500/25"
-        }
+        ${isSyncing || hasSyncedToday
+                  ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                  : "bg-indigo-500 hover:bg-indigo-600 text-white shadow-lg hover:shadow-indigo-500/25"
+                }
       `}
               title={
                 hasSyncedToday
@@ -1346,11 +1381,10 @@ const HRMyAttendance = () => {
             disabled={isSyncing || hasSyncedToday}
             className={`
       w-full flex items-center justify-center gap-2 py-2 rounded-xl font-medium transition-all duration-300
-      ${
-        isSyncing || hasSyncedToday
-          ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-          : "bg-indigo-500 text-white"
-      }
+      ${isSyncing || hasSyncedToday
+                ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                : "bg-indigo-500 text-white"
+              }
     `}
           >
             {isSyncing ? (
@@ -1381,11 +1415,10 @@ const HRMyAttendance = () => {
         {syncResult && (
           <div className="fixed top-20 right-6 z-50 animate-slide-in-right">
             <div
-              className={`rounded-xl shadow-lg p-4 flex items-center gap-3 ${
-                syncResult.success
-                  ? "bg-green-50 border border-green-200"
-                  : "bg-red-50 border border-red-200"
-              }`}
+              className={`rounded-xl shadow-lg p-4 flex items-center gap-3 ${syncResult.success
+                ? "bg-green-50 border border-green-200"
+                : "bg-red-50 border border-red-200"
+                }`}
             >
               {syncResult.success ? (
                 <CheckCircle className="w-5 h-5 text-green-500" />
@@ -1582,22 +1615,20 @@ const HRMyAttendance = () => {
               <div className="flex flex-wrap gap-2">
                 <button
                   onClick={() => setStatusFilter("All Status")}
-                  className={`px-6 py-3 rounded-full font-semibold transition-all text-sm shadow-md ${
-                    statusFilter === "All Status"
-                      ? "bg-[#349DFF] text-white shadow-lg scale-105"
-                      : "bg-white text-gray-700 border-2 border-gray-200 hover:border-blue-400"
-                  }`}
+                  className={`px-6 py-3 rounded-full font-semibold transition-all text-sm shadow-md ${statusFilter === "All Status"
+                    ? "bg-[#349DFF] text-white shadow-lg scale-105"
+                    : "bg-white text-gray-700 border-2 border-gray-200 hover:border-blue-400"
+                    }`}
                 >
                   All ({monthlyAttendance.length})
                 </button>
 
                 <button
                   onClick={() => setStatusFilter("Present")}
-                  className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${
-                    statusFilter === "Present"
-                      ? "bg-green-600 text-white"
-                      : "bg-white text-gray-700 hover:bg-gray-200"
-                  }`}
+                  className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${statusFilter === "Present"
+                    ? "bg-green-600 text-white"
+                    : "bg-white text-gray-700 hover:bg-gray-200"
+                    }`}
                 >
                   Present (
                   {
@@ -1609,11 +1640,10 @@ const HRMyAttendance = () => {
 
                 <button
                   onClick={() => setStatusFilter("Late")}
-                  className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${
-                    statusFilter === "Late"
-                      ? "bg-orange-600 text-white"
-                      : "bg-white text-gray-700 hover:bg-gray-200"
-                  }`}
+                  className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${statusFilter === "Late"
+                    ? "bg-orange-600 text-white"
+                    : "bg-white text-gray-700 hover:bg-gray-200"
+                    }`}
                 >
                   Late (
                   {monthlyAttendance.filter((r) => r.status === "Late").length})
@@ -1621,11 +1651,10 @@ const HRMyAttendance = () => {
 
                 <button
                   onClick={() => setStatusFilter("ML")}
-                  className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${
-                    statusFilter === "ML"
-                      ? "bg-blue-900 text-white"
-                      : "bg-white text-gray-700 hover:bg-gray-200"
-                  }`}
+                  className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${statusFilter === "ML"
+                    ? "bg-blue-900 text-white"
+                    : "bg-white text-gray-700 hover:bg-gray-200"
+                    }`}
                 >
                   ML (
                   {monthlyAttendance.filter((r) => r.status === "ML").length})
@@ -1633,11 +1662,10 @@ const HRMyAttendance = () => {
 
                 <button
                   onClick={() => setStatusFilter("Absent")}
-                  className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${
-                    statusFilter === "Absent"
-                      ? "bg-red-600 text-white"
-                      : "bg-white text-gray-700 hover:bg-gray-200"
-                  }`}
+                  className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${statusFilter === "Absent"
+                    ? "bg-red-600 text-white"
+                    : "bg-white text-gray-700 hover:bg-gray-200"
+                    }`}
                 >
                   Absent (
                   {
@@ -1649,11 +1677,10 @@ const HRMyAttendance = () => {
 
                 <button
                   onClick={() => setStatusFilter("Leave")}
-                  className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${
-                    statusFilter === "Leave"
-                      ? "bg-purple-600 text-white"
-                      : "bg-white text-gray-700 hover:bg-gray-200"
-                  }`}
+                  className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${statusFilter === "Leave"
+                    ? "bg-purple-600 text-white"
+                    : "bg-white text-gray-700 hover:bg-gray-200"
+                    }`}
                 >
                   Leave (
                   {monthlyAttendance.filter((r) => r.status === "Leave").length}
@@ -1742,17 +1769,16 @@ const HRMyAttendance = () => {
                         return (
                           <tr
                             key={record.id || `date-${record.date}`}
-                            className={`${
-                              isWeekend
-                                ? "bg-gray-100/50 hover:bg-gray-200"
-                                : record.is_absent
-                                  ? "bg-red-50 hover:bg-red-100"
-                                  : record.status === "ML"
-                                    ? "bg-blue-50 hover:bg-blue-100"
-                                    : index % 2 === 0
-                                      ? "bg-gray-50 hover:bg-gray-100"
-                                      : "bg-white hover:bg-gray-50"
-                            } transition-colors`}
+                            className={`${isWeekend
+                              ? "bg-gray-100/50 hover:bg-gray-200"
+                              : record.is_absent
+                                ? "bg-red-50 hover:bg-red-100"
+                                : record.status === "ML"
+                                  ? "bg-blue-50 hover:bg-blue-100"
+                                  : index % 2 === 0
+                                    ? "bg-gray-50 hover:bg-gray-100"
+                                    : "bg-white hover:bg-gray-50"
+                              } transition-colors`}
                           >
                             <td className="px-4 py-3 text-sm text-gray-700">
                               {new Date(
@@ -1800,22 +1826,21 @@ const HRMyAttendance = () => {
                                 </span>
                               ) : (
                                 <span
-                                  className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                                    record.status === "Present"
-                                      ? "bg-green-100 text-green-700"
-                                      : record.status === "Late"
-                                        ? "bg-orange-100 text-orange-700"
-                                        : record.status === "ML"
-                                          ? "bg-blue-900 text-white"
-                                          : record.status === "Absent"
-                                            ? "bg-red-100 text-red-700"
-                                            : record.status === "Paid Leave"
-                                              ? "bg-teal-100 text-teal-700"
-                                              : record.status ===
-                                                  "Uninformed Absent"
-                                                ? "bg-red-200 text-red-800"
-                                                : "bg-purple-100 text-purple-700"
-                                  }`}
+                                  className={`px-2 py-1 rounded-full text-xs font-semibold ${record.status === "Present"
+                                    ? "bg-green-100 text-green-700"
+                                    : record.status === "Late"
+                                      ? "bg-orange-100 text-orange-700"
+                                      : record.status === "ML"
+                                        ? "bg-blue-900 text-white"
+                                        : record.status === "Absent"
+                                          ? "bg-red-100 text-red-700"
+                                          : record.status === "Paid Leave"
+                                            ? "bg-teal-100 text-teal-700"
+                                            : record.status ===
+                                              "Uninformed Absent"
+                                              ? "bg-red-200 text-red-800"
+                                              : "bg-purple-100 text-purple-700"
+                                    }`}
                                 >
                                   {record.status === "Paid Leave"
                                     ? "PL"
@@ -1893,21 +1918,20 @@ const HRMyAttendance = () => {
                               {!isWeekend && (
                                 <button
                                   onClick={() => {
+                                    // ✅ FIX: Create date without timezone conversion
+                                    const year = selectedYear;
+                                    const month = String(selectedMonth).padStart(2, '0');
+                                    const day = String(record.date).padStart(2, '0');
+                                    const dateStr = `${year}-${month}-${day}`;
+
                                     const correctionCompatibleRecord = {
                                       ...record,
-                                      attendance_date: new Date(
-                                        selectedYear,
-                                        selectedMonth - 1,
-                                        record.date,
-                                      )
-                                        .toISOString()
-                                        .split("T")[0],
-                                      net_working_time_minutes:
-                                        record.hours * 60 + record.minutes,
+                                      attendance_date: dateStr, // ✅ Use direct string, no Date object
+                                      net_working_time_minutes: record.hours * 60 + record.minutes,
                                     };
-                                    setCorrectionRecord(
-                                      correctionCompatibleRecord,
-                                    );
+                                    console.log('📅 Correction Record Date:', dateStr);
+                                    console.log('📅 Full Record:', correctionCompatibleRecord);
+                                    setCorrectionRecord(correctionCompatibleRecord);
                                     setCorrectionModalOpen(true);
                                   }}
                                   className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 hover:border-blue-300 transition-all"
@@ -1982,11 +2006,10 @@ const HRMyAttendance = () => {
                           <button
                             key={page}
                             onClick={() => setCurrentPage(page)}
-                            className={`px-3 py-2 rounded-lg font-semibold transition-colors text-sm ${
-                              currentPage === page
-                                ? "bg-blue-500 text-white"
-                                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                            }`}
+                            className={`px-3 py-2 rounded-lg font-semibold transition-colors text-sm ${currentPage === page
+                              ? "bg-blue-500 text-white"
+                              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                              }`}
                           >
                             {page}
                           </button>

@@ -360,7 +360,6 @@ exports.verifyPasscode = async (req, res) => {
 exports.resetPasscode = async (req, res) => {
   const connection = await pool.getConnection();
   try {
-    const employeeId = req.user.employeeId; // ✅ Use employeeId
     const { favoriteMovie, newPasscode } = req.body;
 
     if (!favoriteMovie || !newPasscode) {
@@ -370,48 +369,96 @@ exports.resetPasscode = async (req, res) => {
       });
     }
 
-    // Get passcode using employee_id
-    const [rows] = await connection.query(
-      "SELECT id, favorite_movie FROM user_passcodes WHERE employee_id = ?",
-      [employeeId],
-    );
+    // Check if user is admin
+    const isAdmin = req.user.role === 'admin';
+    const employeeId = req.user.employeeId;
+    const userId = req.user.userId;
+
+    console.log('🔍 Reset Passcode Request:');
+    console.log('Is Admin:', isAdmin);
+    console.log('Employee ID:', employeeId);
+    console.log('User ID:', userId);
+
+    let query = '';
+    let params = [];
+    let identifier = '';
+
+    if (isAdmin) {
+      // ✅ ADMIN: Use admin_id column
+      query = "SELECT id, favorite_movie FROM user_passcodes WHERE admin_id = ?";
+      params = [userId];
+      identifier = `Admin ID: ${userId}`;
+      console.log('🔍 Looking for admin passcode with admin_id:', userId);
+    } else {
+      // ✅ EMPLOYEE: Use employee_id column
+      query = "SELECT id, favorite_movie FROM user_passcodes WHERE employee_id = ?";
+      params = [employeeId];
+      identifier = `Employee ID: ${employeeId}`;
+      console.log('🔍 Looking for employee passcode with employee_id:', employeeId);
+    }
+
+    const [rows] = await connection.query(query, params);
 
     if (rows.length === 0) {
+      console.log('❌ No passcode found for:', identifier);
       return res.status(404).json({
         success: false,
-        message: "Passcode not set.",
+        message: isAdmin ? "Admin passcode not set." : "Passcode not set.",
       });
     }
 
-    // Verify favorite movie
+    console.log('✅ Passcode found for:', identifier);
+    console.log('📝 Stored favorite movie:', rows[0].favorite_movie);
+    console.log('📝 Provided favorite movie:', favoriteMovie);
+
+    // Verify favorite movie (case-insensitive)
     if (rows[0].favorite_movie.toLowerCase() !== favoriteMovie.toLowerCase()) {
+      console.log('❌ Favorite movie does not match');
       return res.status(401).json({
         success: false,
         message: "Favorite movie does not match",
       });
     }
 
-    // Hash and update new passcode
+    console.log('✅ Favorite movie verified');
+
+    // Hash new passcode
     const salt = await bcrypt.genSalt(10);
     const newPasscodeHash = await bcrypt.hash(newPasscode, salt);
 
-    await connection.query(
-      `UPDATE user_passcodes 
-       SET passcode_hash = ?, failed_attempts = 0, locked_until = NULL, updated_at = NOW() 
-       WHERE employee_id = ?`,
-      [newPasscodeHash, employeeId],
-    );
+    // Update based on user type
+    let updateQuery = '';
+    let updateParams = [];
 
+    if (isAdmin) {
+      updateQuery = `UPDATE user_passcodes 
+                     SET passcode_hash = ?, failed_attempts = 0, locked_until = NULL, updated_at = NOW() 
+                     WHERE admin_id = ?`;
+      updateParams = [newPasscodeHash, userId];
+    } else {
+      updateQuery = `UPDATE user_passcodes 
+                     SET passcode_hash = ?, failed_attempts = 0, locked_until = NULL, updated_at = NOW() 
+                     WHERE employee_id = ?`;
+      updateParams = [newPasscodeHash, employeeId];
+    }
+
+    await connection.query(updateQuery, updateParams);
     await connection.commit();
+
+    console.log(`✅ Passcode reset successful for ${isAdmin ? 'Admin' : 'Employee'}:`, identifier);
 
     res.json({
       success: true,
       message: "Passcode reset successfully",
     });
+
   } catch (error) {
     await connection.rollback();
-    console.error("Error resetting passcode:", error);
-    res.status(500).json({ success: false, message: "Server error" });
+    console.error("❌ Error resetting passcode:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error: " + error.message
+    });
   } finally {
     connection.release();
   }

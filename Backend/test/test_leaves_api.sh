@@ -5,7 +5,7 @@
 # Use these commands to manually test the API endpoints
 # 
 # Prerequisites:
-# 1. Backend server running on http://localhost:5000
+# 1. Backend server running on http://100.114.9.93:5000
 # 2. Employee leaves data populated (run employee_leaves_QUICK_FIX.sql)
 # 3. Replace :EMPLOYEE_ID with an actual employee ID from database
 #
@@ -13,7 +13,7 @@
 # Or run individual commands below
 ##############################################################################
 
-BASE_URL="http://localhost:5000/api/v1"
+BASE_URL="http://100.114.9.93:5000/api/v1"
 EMPLOYEE_ID=1  # Change this to a valid employee ID from your database
 
 echo "=========================================="

@@ -7,6 +7,7 @@ import { endpoints } from "../../config/api";
 import { getPakistanDate } from "../../utils/timezone";
 import HrSidebar from "../../components/HrSidebar";
 import PagePreloader from "../../components/PagePreloader";
+import HRAttendanceSync from "../../components/HRAttendanceSync";
 import {
   DashboardHeader,
   RoleBasedNav,
@@ -82,7 +83,7 @@ const HRMyAttendance = () => {
   const getDaysInMonth = (month, year) => {
     return new Date(year, month, 0).getDate();
   };
-  
+
   const RECORDS_PER_PAGE = getDaysInMonth(selectedMonth, selectedYear);
 
   const getEmployeeId = () => {
@@ -248,7 +249,7 @@ const HRMyAttendance = () => {
         setAttendanceData(todayRecord);
         setIsCheckedIn(
           data.isCheckedIn ||
-            (todayRecord.check_in_time && !todayRecord.check_out_time),
+          (todayRecord.check_in_time && !todayRecord.check_out_time),
         );
       } else {
         console.warn("[WARNING] No attendance data received:", data);
@@ -788,14 +789,14 @@ const HRMyAttendance = () => {
     return chartData.length > 0
       ? chartData
       : [
-          {
-            date: "No Data",
-            hours: 0,
-            status: "N/A",
-            total: 0,
-            days_worked: 0,
-          },
-        ];
+        {
+          date: "No Data",
+          hours: 0,
+          status: "N/A",
+          total: 0,
+          days_worked: 0,
+        },
+      ];
   };
 
   const getStatusDistribution = () => {
@@ -943,27 +944,26 @@ const HRMyAttendance = () => {
               <div className="flex gap-4">
                 <button
                   onClick={() => setActiveTab("dashboard")}
-                  className={`flex items-center gap-2 px-4 py-3 font-semibold border-b-2 transition-all ${
-                    activeTab === "dashboard"
+                  className={`flex items-center gap-2 px-4 py-3 font-semibold border-b-2 transition-all ${activeTab === "dashboard"
                       ? "border-blue-500 text-blue-600"
                       : "border-transparent text-gray-500 hover:text-gray-700"
-                  }`}
+                    }`}
                 >
                   <Shield className="w-5 h-5" />
                   Attendance Dashboard
                 </button>
                 <button
                   onClick={() => setActiveTab("sheet")}
-                  className={`flex items-center gap-2 px-4 py-3 font-semibold border-b-2 transition-all ${
-                    activeTab === "sheet"
+                  className={`flex items-center gap-2 px-4 py-3 font-semibold border-b-2 transition-all ${activeTab === "sheet"
                       ? "border-blue-500 text-blue-600"
                       : "border-transparent text-gray-500 hover:text-gray-700"
-                  }`}
+                    }`}
                 >
                   <Table className="w-5 h-5" />
                   Attendance Sheet
                 </button>
               </div>
+              <HRAttendanceSync />
             </div>
             <main className="flex-1 overflow-y-auto p-6">
               {activeTab === "dashboard" && (
@@ -977,14 +977,13 @@ const HRMyAttendance = () => {
                           <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-2xl p-5">
                             <div className="flex items-center gap-4">
                               <div
-                                className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                                  attendanceData?.check_in_time &&
-                                  !attendanceData?.check_out_time
+                                className={`w-12 h-12 rounded-xl flex items-center justify-center ${attendanceData?.check_in_time &&
+                                    !attendanceData?.check_out_time
                                     ? "bg-green-100"
                                     : attendanceData?.check_out_time
                                       ? "bg-blue-100"
                                       : "bg-white"
-                                }`}
+                                  }`}
                               >
                                 <CheckCircle
                                   className={`w-6 h-6 ${getStatusColor()}`}
@@ -1081,7 +1080,7 @@ const HRMyAttendance = () => {
                                 <p className="text-lg font-bold text-red-600">
                                   {formatTimeDisplay(
                                     attendanceData?.total_inactivity_minutes ||
-                                      0,
+                                    0,
                                   )}
                                 </p>
                                 <p className="text-[10px] text-gray-500">
@@ -1096,64 +1095,64 @@ const HRMyAttendance = () => {
                               attendanceData?.dinner_inactivity_minutes > 0 ||
                               attendanceData?.washroom_inactivity_minutes > 0 ||
                               attendanceData?.prayer_inactivity_minutes >
-                                0) && (
-                              <div className="mt-3 pt-2 border-t border-red-200">
-                                <div className="flex flex-wrap gap-2 text-[10px]">
-                                  {attendanceData?.smoke_inactivity_minutes >
-                                    0 && (
-                                    <span className="flex items-center gap-1">
-                                      <span className="text-red-500">
-                                        Smoke:
-                                      </span>
-                                      <span className="font-medium">
-                                        {formatTimeDisplay(
-                                          attendanceData.smoke_inactivity_minutes,
-                                        )}
-                                      </span>
-                                    </span>
-                                  )}
-                                  {attendanceData?.dinner_inactivity_minutes >
-                                    0 && (
-                                    <span className="flex items-center gap-1">
-                                      <span className="text-red-500">
-                                        Dinner:
-                                      </span>
-                                      <span className="font-medium">
-                                        {formatTimeDisplay(
-                                          attendanceData.dinner_inactivity_minutes,
-                                        )}
-                                      </span>
-                                    </span>
-                                  )}
-                                  {attendanceData?.washroom_inactivity_minutes >
-                                    0 && (
-                                    <span className="flex items-center gap-1">
-                                      <span className="text-red-500">
-                                        Washroom:
-                                      </span>
-                                      <span className="font-medium">
-                                        {formatTimeDisplay(
-                                          attendanceData.washroom_inactivity_minutes,
-                                        )}
-                                      </span>
-                                    </span>
-                                  )}
-                                  {attendanceData?.prayer_inactivity_minutes >
-                                    0 && (
-                                    <span className="flex items-center gap-1">
-                                      <span className="text-red-500">
-                                        Prayer:
-                                      </span>
-                                      <span className="font-medium">
-                                        {formatTimeDisplay(
-                                          attendanceData.prayer_inactivity_minutes,
-                                        )}
-                                      </span>
-                                    </span>
-                                  )}
+                              0) && (
+                                <div className="mt-3 pt-2 border-t border-red-200">
+                                  <div className="flex flex-wrap gap-2 text-[10px]">
+                                    {attendanceData?.smoke_inactivity_minutes >
+                                      0 && (
+                                        <span className="flex items-center gap-1">
+                                          <span className="text-red-500">
+                                            Smoke:
+                                          </span>
+                                          <span className="font-medium">
+                                            {formatTimeDisplay(
+                                              attendanceData.smoke_inactivity_minutes,
+                                            )}
+                                          </span>
+                                        </span>
+                                      )}
+                                    {attendanceData?.dinner_inactivity_minutes >
+                                      0 && (
+                                        <span className="flex items-center gap-1">
+                                          <span className="text-red-500">
+                                            Dinner:
+                                          </span>
+                                          <span className="font-medium">
+                                            {formatTimeDisplay(
+                                              attendanceData.dinner_inactivity_minutes,
+                                            )}
+                                          </span>
+                                        </span>
+                                      )}
+                                    {attendanceData?.washroom_inactivity_minutes >
+                                      0 && (
+                                        <span className="flex items-center gap-1">
+                                          <span className="text-red-500">
+                                            Washroom:
+                                          </span>
+                                          <span className="font-medium">
+                                            {formatTimeDisplay(
+                                              attendanceData.washroom_inactivity_minutes,
+                                            )}
+                                          </span>
+                                        </span>
+                                      )}
+                                    {attendanceData?.prayer_inactivity_minutes >
+                                      0 && (
+                                        <span className="flex items-center gap-1">
+                                          <span className="text-red-500">
+                                            Prayer:
+                                          </span>
+                                          <span className="font-medium">
+                                            {formatTimeDisplay(
+                                              attendanceData.prayer_inactivity_minutes,
+                                            )}
+                                          </span>
+                                        </span>
+                                      )}
+                                  </div>
                                 </div>
-                              </div>
-                            )}
+                              )}
                           </div>
                         </div>
 
@@ -1186,8 +1185,8 @@ const HRMyAttendance = () => {
                               {!loading && (
                                 <div className="space-y-4">
                                   {isCheckedIn ||
-                                  (attendanceData?.check_in_time &&
-                                    !attendanceData?.check_out_time) ? (
+                                    (attendanceData?.check_in_time &&
+                                      !attendanceData?.check_out_time) ? (
                                     <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-4">
                                       <CheckCircle className="w-8 h-8 text-green-500 mx-auto mb-2" />
                                       <p className="text-green-700 font-semibold">
@@ -1227,12 +1226,11 @@ const HRMyAttendance = () => {
                                         attendanceData?.check_in_time ||
                                         attendanceData?.check_out_time
                                       }
-                                      className={`flex-1 py-3 px-6 rounded-xl font-semibold transition-all duration-300 ${
-                                        attendanceData?.check_in_time ||
-                                        attendanceData?.check_out_time
+                                      className={`flex-1 py-3 px-6 rounded-xl font-semibold transition-all duration-300 ${attendanceData?.check_in_time ||
+                                          attendanceData?.check_out_time
                                           ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                                           : "bg-green-500 hover:bg-green-600 text-white shadow-lg hover:shadow-green-500/25"
-                                      }`}
+                                        }`}
                                     >
                                       <LogIn className="w-5 h-5 inline mr-2" />
                                       Check In
@@ -1244,12 +1242,11 @@ const HRMyAttendance = () => {
                                         !attendanceData?.check_in_time ||
                                         !!attendanceData?.check_out_time
                                       }
-                                      className={`flex-1 py-3 px-6 rounded-xl font-semibold transition-all duration-300 ${
-                                        attendanceData?.check_in_time &&
-                                        !attendanceData?.check_out_time
+                                      className={`flex-1 py-3 px-6 rounded-xl font-semibold transition-all duration-300 ${attendanceData?.check_in_time &&
+                                          !attendanceData?.check_out_time
                                           ? "bg-blue-500 hover:bg-blue-600 text-white shadow-lg hover:shadow-blue-500/25"
                                           : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                                      }`}
+                                        }`}
                                     >
                                       <LogOut className="w-5 h-5 inline mr-2" />
                                       Check Out
@@ -1364,7 +1361,7 @@ const HRMyAttendance = () => {
                                       <div className="text-2xl font-bold text-gray-900">
                                         {formatTimeDisplay(
                                           attendanceData.total_break_duration_minutes ||
-                                            0,
+                                          0,
                                         )}
                                       </div>
                                       <div className="text-xs text-gray-500 mt-0.5">
@@ -1401,7 +1398,7 @@ const HRMyAttendance = () => {
                                           <span className="text-[10px] text-gray-400">
                                             {formatTimeDisplay(
                                               attendanceData?.smoke_break_duration_minutes ||
-                                                0,
+                                              0,
                                             )}{" "}
                                           </span>
                                         </div>
@@ -1434,15 +1431,15 @@ const HRMyAttendance = () => {
                                         <div className="flex items-center gap-2">
                                           <span className="text-sm font-bold text-purple-600">
                                             {attendanceData?.dinner_break_taken ||
-                                            (attendanceData?.dinner_break_duration_minutes ||
-                                              0) >= 45
+                                              (attendanceData?.dinner_break_duration_minutes ||
+                                                0) >= 45
                                               ? "1/1"
                                               : "0/1"}
                                           </span>
                                           <span className="text-[10px] text-gray-400">
                                             {formatTimeDisplay(
                                               attendanceData?.dinner_break_duration_minutes ||
-                                                0,
+                                              0,
                                             )}{" "}
                                             / 45m
                                           </span>
@@ -1457,8 +1454,8 @@ const HRMyAttendance = () => {
                                         />
                                       </div>
                                       {attendanceData?.dinner_break_taken ||
-                                      (attendanceData?.dinner_break_duration_minutes ||
-                                        0) >= 45 ? (
+                                        (attendanceData?.dinner_break_duration_minutes ||
+                                          0) >= 45 ? (
                                         <p className="text-[10px] text-green-600 mt-1.5 flex items-center gap-1">
                                           <CheckCircle className="w-3 h-3" />
                                           Dinner break completed
@@ -1468,8 +1465,8 @@ const HRMyAttendance = () => {
                                           {Math.max(
                                             0,
                                             45 -
-                                              (attendanceData?.dinner_break_duration_minutes ||
-                                                0),
+                                            (attendanceData?.dinner_break_duration_minutes ||
+                                              0),
                                           )}{" "}
                                           minutes remaining
                                         </p>
@@ -1477,14 +1474,14 @@ const HRMyAttendance = () => {
                                       {/* Show inactivity warning for dinner break */}
                                       {attendanceData?.dinner_inactivity_minutes >
                                         0 && (
-                                        <p className="text-[9px] text-red-500 mt-1.5 flex items-center gap-1">
-                                          <AlertCircle className="w-2.5 h-2.5" />
-                                          {formatTimeDisplay(
-                                            attendanceData.dinner_inactivity_minutes,
-                                          )}{" "}
-                                          inactivity (exceeded limit)
-                                        </p>
-                                      )}
+                                          <p className="text-[9px] text-red-500 mt-1.5 flex items-center gap-1">
+                                            <AlertCircle className="w-2.5 h-2.5" />
+                                            {formatTimeDisplay(
+                                              attendanceData.dinner_inactivity_minutes,
+                                            )}{" "}
+                                            inactivity (exceeded limit)
+                                          </p>
+                                        )}
                                     </div>
 
                                     {/* Washroom Break - No limit */}
@@ -1505,7 +1502,7 @@ const HRMyAttendance = () => {
                                           <span className="text-[10px] text-gray-400">
                                             {formatTimeDisplay(
                                               attendanceData?.washroom_break_duration_minutes ||
-                                                0,
+                                              0,
                                             )}
                                           </span>
                                         </div>
@@ -1530,7 +1527,7 @@ const HRMyAttendance = () => {
                                           <span className="text-[10px] text-gray-400">
                                             {formatTimeDisplay(
                                               attendanceData?.prayer_break_duration_minutes ||
-                                                0,
+                                              0,
                                             )}
                                           </span>
                                         </div>
@@ -1570,7 +1567,7 @@ const HRMyAttendance = () => {
                                         0;
                                       isLimitReached =
                                         attendanceData?.dinner_break_taken ===
-                                          true || dinnerDuration >= 45;
+                                        true || dinnerDuration >= 45;
                                       limitMessage = isLimitReached
                                         ? "Dinner break already taken today"
                                         : "";
@@ -1590,26 +1587,23 @@ const HRMyAttendance = () => {
                                           handleBreakStart(breakType.type)
                                         }
                                         disabled={isDisabled}
-                                        className={`group relative overflow-hidden rounded-xl transition-all duration-200 ${
-                                          isDisabled
+                                        className={`group relative overflow-hidden rounded-xl transition-all duration-200 ${isDisabled
                                             ? "bg-gray-50 cursor-not-allowed opacity-60"
                                             : "bg-white hover:bg-purple-50 cursor-pointer border border-gray-200 hover:border-purple-200"
-                                        }`}
+                                          }`}
                                       >
                                         <div className="p-3 text-center">
                                           <Icon
-                                            className={`w-5 h-5 mx-auto mb-1.5 transition-colors ${
-                                              isDisabled
+                                            className={`w-5 h-5 mx-auto mb-1.5 transition-colors ${isDisabled
                                                 ? "text-gray-400"
                                                 : "text-gray-500 group-hover:text-purple-600"
-                                            }`}
+                                              }`}
                                           />
                                           <div
-                                            className={`text-xs font-medium ${
-                                              isDisabled
+                                            className={`text-xs font-medium ${isDisabled
                                                 ? "text-gray-400"
                                                 : "text-gray-700 group-hover:text-purple-700"
-                                            }`}
+                                              }`}
                                           >
                                             {breakType.label}
                                           </div>
@@ -1683,7 +1677,7 @@ const HRMyAttendance = () => {
                                       const progress = Math.min(
                                         100,
                                         (elapsedSeconds / 60 / maxDuration) *
-                                          100,
+                                        100,
                                       );
                                       const remainingMinutes = Math.floor(
                                         remainingSeconds / 60,
@@ -1729,11 +1723,10 @@ const HRMyAttendance = () => {
                                             </div>
                                             <div className="w-full bg-gray-100 rounded-full h-1.5">
                                               <div
-                                                className={`h-full rounded-full transition-all duration-300 ${
-                                                  progress >= 100
+                                                className={`h-full rounded-full transition-all duration-300 ${progress >= 100
                                                     ? "bg-red-500"
                                                     : "bg-gradient-to-r from-amber-400 to-amber-500"
-                                                }`}
+                                                  }`}
                                                 style={{
                                                   width: `${Math.min(progress, 100)}%`,
                                                 }}
@@ -1776,11 +1769,10 @@ const HRMyAttendance = () => {
                               <div className="flex gap-3">
                                 <button
                                   onClick={() => setChartView("monthly")}
-                                  className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${
-                                    chartView === "monthly"
+                                  className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${chartView === "monthly"
                                       ? "bg-blue-500 text-white shadow-lg"
                                       : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                                  }`}
+                                    }`}
                                 >
                                   Monthly
                                 </button>
@@ -2041,11 +2033,10 @@ const HRMyAttendance = () => {
                       {/* All Status Button */}
                       <button
                         onClick={() => setStatusFilter("All Status")}
-                        className={`px-6 py-3 rounded-full font-semibold transition-all text-sm shadow-md ${
-                          statusFilter === "All Status"
+                        className={`px-6 py-3 rounded-full font-semibold transition-all text-sm shadow-md ${statusFilter === "All Status"
                             ? "bg-[#349DFF] text-white shadow-lg scale-105"
                             : "bg-white text-gray-700 border-2 border-gray-200 hover:border-blue-400"
-                        }`}
+                          }`}
                       >
                         All ({monthlyAttendance.length})
                       </button>
@@ -2053,11 +2044,10 @@ const HRMyAttendance = () => {
                       {/* Present Button */}
                       <button
                         onClick={() => setStatusFilter("Present")}
-                        className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${
-                          statusFilter === "Present"
+                        className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${statusFilter === "Present"
                             ? "bg-green-600 text-white"
                             : "bg-white text-gray-700 hover:bg-gray-200"
-                        }`}
+                          }`}
                       >
                         Present (
                         {
@@ -2070,11 +2060,10 @@ const HRMyAttendance = () => {
 
                       <button
                         onClick={() => setStatusFilter("Late")}
-                        className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${
-                          statusFilter === "Late"
+                        className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${statusFilter === "Late"
                             ? "bg-orange-600 text-white"
                             : "bg-white text-gray-700 hover:bg-gray-200"
-                        }`}
+                          }`}
                       >
                         Late (
                         {
@@ -2086,11 +2075,10 @@ const HRMyAttendance = () => {
 
                       <button
                         onClick={() => setStatusFilter("ML")}
-                        className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${
-                          statusFilter === "ML"
+                        className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${statusFilter === "ML"
                             ? "bg-blue-900 text-white"
                             : "bg-white text-gray-700 hover:bg-gray-200"
-                        }`}
+                          }`}
                       >
                         ML (
                         {
@@ -2102,11 +2090,10 @@ const HRMyAttendance = () => {
 
                       <button
                         onClick={() => setStatusFilter("Absent")}
-                        className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${
-                          statusFilter === "Absent"
+                        className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${statusFilter === "Absent"
                             ? "bg-red-600 text-white"
                             : "bg-white text-gray-700 hover:bg-gray-200"
-                        }`}
+                          }`}
                       >
                         Absent (
                         {
@@ -2118,11 +2105,10 @@ const HRMyAttendance = () => {
 
                       <button
                         onClick={() => setStatusFilter("Leave")}
-                        className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${
-                          statusFilter === "Leave"
+                        className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${statusFilter === "Leave"
                             ? "bg-purple-600 text-white"
                             : "bg-white text-gray-700 hover:bg-gray-200"
-                        }`}
+                          }`}
                       >
                         Leave (
                         {
@@ -2222,15 +2208,14 @@ const HRMyAttendance = () => {
                                     record.id ||
                                     `absent-${record.attendance_date}`
                                   }
-                                  className={`${
-                                    record.is_absent
+                                  className={`${record.is_absent
                                       ? "bg-red-50 hover:bg-red-100"
                                       : record.status === "ML"
                                         ? "bg-blue-50 hover:bg-blue-100"
                                         : index % 2 === 0
                                           ? "bg-gray-50 hover:bg-gray-100"
                                           : "bg-white hover:bg-gray-50"
-                                  } transition-colors`}
+                                    } transition-colors`}
                                 >
                                   <td className="px-4 py-3 text-sm text-gray-700">
                                     {parseAttendanceDate(
@@ -2262,8 +2247,7 @@ const HRMyAttendance = () => {
                                   </td>
                                   <td className="px-4 py-3 text-sm">
                                     <span
-                                      className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                                        record.status === "Present"
+                                      className={`px-2 py-1 rounded-full text-xs font-semibold ${record.status === "Present"
                                           ? "bg-green-100 text-green-700"
                                           : record.status === "Late"
                                             ? "bg-orange-100 text-orange-700"
@@ -2274,10 +2258,10 @@ const HRMyAttendance = () => {
                                                 : record.status === "Paid Leave"
                                                   ? "bg-teal-100 text-teal-700"
                                                   : record.status ===
-                                                      "Uninformed Absent"
+                                                    "Uninformed Absent"
                                                     ? "bg-red-200 text-red-800"
                                                     : "bg-purple-100 text-purple-700"
-                                      }`}
+                                        }`}
                                     >
                                       {record.status === "Paid Leave"
                                         ? "PL"
@@ -2428,11 +2412,10 @@ const HRMyAttendance = () => {
                               <button
                                 key={page}
                                 onClick={() => setCurrentPage(page)}
-                                className={`px-3 py-2 rounded-lg font-semibold transition-colors text-sm ${
-                                  currentPage === page
+                                className={`px-3 py-2 rounded-lg font-semibold transition-colors text-sm ${currentPage === page
                                     ? "bg-blue-500 text-white"
                                     : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                                }`}
+                                  }`}
                               >
                                 {page}
                               </button>

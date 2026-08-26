@@ -34,7 +34,8 @@ export const AuthProvider = ({ children }) => {
   const login = (userData, userRole, authToken = null) => {
     const completeUserData = {
       ...userData,
-      loginTime: new Date().toISOString()
+      loginTime: new Date().toISOString(),
+      device_user_id: userData.device_user_id || null
     };
     
     const normalizedRole = userRole?.toLowerCase() || 'employee';

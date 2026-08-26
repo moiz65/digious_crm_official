@@ -26,14 +26,14 @@ const io = socketIO(server, {
   cors: {
     origin: [
       "http://localhost:3000",
-      "http://localhost:5000",
+      "http://100.114.9.93:5000",
       "http://127.0.0.1:3000",
       "http://127.0.0.1:5000",
       "http://192.168.100.14:3000",
       "http://192.168.100.14:5000",
       "http://100.126.74.55:3000",
       "http://169.254.83.107:3000",
-      "http://100.118.172.21:5000",
+      "http://100.114.9.93:5000",
       "https://digious-crm-old-official.vercel.app"
 
     ],
@@ -87,15 +87,17 @@ const corsOptions = {
     // Base allowed origins - always allow localhost for development
     const allowedOrigins = [
       "http://localhost:3000",
-      "http://localhost:5000",
+      "http://100.114.9.93:5000",
       "http://127.0.0.1:3000",
       "http://127.0.0.1:5000",
       "http://192.168.100.14:3000",
       "http://192.168.100.14:5000",
       "http://100.126.74.55:3000",
       "http://100.126.74.55:5000",
-      "http://100.118.172.21:5000",
+      "http://100.114.9.93:5000",
       "http://100.118.172.21:3000",
+      "http://100.114.9.93:3000",
+      "http://100.114.9.93:5000",
       "http://169.254.83.107:3000",
     ];
 
@@ -205,6 +207,7 @@ const clientRoutes = require('./routes/clientRoutes');
 const zkTimeRoutes = require('./routes/zkTimeRoutes');
 const passcodeRoutes = require('./routes/passcodeRoutes');
 const chatRoutes = require('./routes/chatRoutes');
+const paymentTypes = require('./routes/paymentTypeRoutes');
 
 app.use(`/api/${process.env.API_VERSION}`, onboardingRoutes);
 app.use(`/api/${process.env.API_VERSION}/auth`, authRoutes);
@@ -234,6 +237,8 @@ app.use(`/api/${process.env.API_VERSION}/clients`, clientRoutes);
 app.use(`/api/${process.env.API_VERSION}/zkTime`, zkTimeRoutes);
 app.use(`/api/${process.env.API_VERSION}/passcode`, passcodeRoutes);
 app.use(`/api/${process.env.API_VERSION}/chat`, chatRoutes);
+app.use(`/api/${process.env.API_VERSION}/types`, paymentTypes);
+
 
 // 404 handler
 app.use((req, res) => {

@@ -25,11 +25,12 @@ import {
 
 import ProtectedModule from "../../components/ProtectedModule";
 import { usePasscode } from "../../context/PasscodeContext";
+import PaymentTypes from "./PaymentTypes";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 const API_BASE = process.env.REACT_APP_API_URL
   ? `${process.env.REACT_APP_API_URL}/api/${process.env.REACT_APP_API_VERSION || "v1"}`
-  : "http://localhost:5000/api/v1";
+  : "http://100.114.9.93:5000/api/v1";
 
 const formatCurrency = (amount) =>
   new Intl.NumberFormat("en-PK", {
@@ -145,6 +146,7 @@ const AdminExpense = () => {
   const [expenseForm, setExpenseForm] = useState({
     category_id: "",
     amount: "",
+    payment_type: "Bank Account", // ✅ Added
     note: "",
     expense_date: new Date().toISOString().slice(0, 10),
   });
@@ -155,10 +157,10 @@ const AdminExpense = () => {
 
   // Add state for individual value visibility (split into amount and count)
   const [showExpenseAmount, setShowExpenseAmount] = useState({
-    box1Amount: true,
-    box1Records: true,
-    box2Amount: true,
-    box2Records: true,
+    box1Amount: false,
+    box1Records: false,
+    box2Amount: false,
+    box2Records: false,
   });
 
   const toggleExpenseAmount = (key) => {
@@ -177,12 +179,35 @@ const AdminExpense = () => {
   const [catError, setCatError] = useState(null);
   const [catSuccess, setCatSuccess] = useState(null);
   const [catSearch, setCatSearch] = useState("");
+  // Add payment_type filter to the filters section
+  const [paymentTypeFilter, setPaymentTypeFilter] = useState("All");
+  const [paymentTypes, setPaymentTypes] = useState([]);
+
 
   // ─── Fetch categories (all, including inactive) ──────────────────────────
   const fetchCategories = useCallback(async () => {
     const data = await apiFetch(`${API_BASE}/expenses/categories`);
     if (data.success) setCategories(data.data || []);
   }, []);
+
+  // Fetch payment types from backend
+  const fetchPaymentTypes = useCallback(async () => {
+    try {
+      const data = await apiFetch(`${API_BASE}/types/payment-types?include_inactive=true`);
+      if (data.success) {
+        setPaymentTypes(data.data);
+      }
+    } catch (err) {
+      console.error('Error fetching payment types:', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    const loadData = async () => {
+      await Promise.all([fetchCategories(), fetchPaymentTypes()]);
+    };
+    loadData();
+  }, [fetchCategories, fetchPaymentTypes]);
 
   // ─── Fetch expenses ──────────────────────────────────────────────────────
   const fetchExpenses = useCallback(async () => {
@@ -213,7 +238,8 @@ const AdminExpense = () => {
 
   useEffect(() => {
     fetchCategories();
-  }, [fetchCategories]);
+  }, [fetchCategories, fetchPaymentTypes]);
+
   useEffect(() => {
     fetchExpenses();
   }, [fetchExpenses]);
@@ -290,19 +316,23 @@ const AdminExpense = () => {
       const body = {
         category_id: +expenseForm.category_id,
         amount: +expenseForm.amount,
-        note: expenseForm.note,
+        payment_type: expenseForm.payment_type || "Bank Account", // ✅ Default
+        note: expenseForm.note || "",
         expense_date:
           expenseForm.expense_date || new Date().toISOString().slice(0, 10),
       };
+
+      console.log("📤 Submitting expense:", body);
+
       const data = selectedExpense
         ? await apiFetch(`${API_BASE}/expenses/${selectedExpense.id}`, {
-            method: "PUT",
-            body: JSON.stringify(body),
-          })
+          method: "PUT",
+          body: JSON.stringify(body),
+        })
         : await apiFetch(`${API_BASE}/expenses`, {
-            method: "POST",
-            body: JSON.stringify(body),
-          });
+          method: "POST",
+          body: JSON.stringify(body),
+        });
       if (data.success) {
         await fetchExpenses();
         await fetchMonthlySummary();
@@ -327,10 +357,14 @@ const AdminExpense = () => {
   };
 
   const openEditExpense = (expense) => {
+    console.log("✏️ Editing expense:", expense);
+    console.log("Payment type from DB:", expense.payment_type);
+
     setSelectedExpense(expense);
     setExpenseForm({
       category_id: expense.category_id?.toString() || "",
       amount: expense.amount?.toString() || "",
+      payment_type: expense.payment_type || "Bank Account", // ✅ Default if null/undefined
       note: expense.note || "",
       expense_date: expense.expense_date
         ? expense.expense_date.slice(0, 10)
@@ -338,12 +372,14 @@ const AdminExpense = () => {
     });
     setShowExpenseModal(true);
   };
+
   const closeExpenseModal = () => {
     setShowExpenseModal(false);
     setSelectedExpense(null);
     setExpenseForm({
       category_id: "",
       amount: "",
+      payment_type: "Bank Account", // ✅ Default
       note: "",
       expense_date: new Date().toISOString().slice(0, 10),
     });
@@ -363,13 +399,13 @@ const AdminExpense = () => {
       };
       const data = selectedCat
         ? await apiFetch(`${API_BASE}/expenses/categories/${selectedCat.id}`, {
-            method: "PUT",
-            body: JSON.stringify(body),
-          })
+          method: "PUT",
+          body: JSON.stringify(body),
+        })
         : await apiFetch(`${API_BASE}/expenses/categories`, {
-            method: "POST",
-            body: JSON.stringify(body),
-          });
+          method: "POST",
+          body: JSON.stringify(body),
+        });
       if (data.success) {
         await fetchCategories();
         closeCatModal();
@@ -509,9 +545,9 @@ const AdminExpense = () => {
   const selMonthChange =
     prevMonthTotal > 0
       ? (
-          ((selectedMonthTotal - prevMonthTotal) / prevMonthTotal) *
-          100
-        ).toFixed(1)
+        ((selectedMonthTotal - prevMonthTotal) / prevMonthTotal) *
+        100
+      ).toFixed(1)
       : selectedMonthTotal > 0
         ? 100
         : 0;
@@ -535,6 +571,7 @@ const AdminExpense = () => {
   };
 
   // ─── Client-side filter ──────────────────────────────────────────────────
+  // Payment Type Filter - ensure it works with null values
   const filteredExpenses = expenses.filter((expense) => {
     const q = searchQuery
       .toLowerCase()
@@ -550,13 +587,17 @@ const AdminExpense = () => {
       expense.note?.toLowerCase().includes(q);
     const matchCat =
       selectedCategory === "All" || expense.category_name === selectedCategory;
-    // Use selected month when no custom range; skip date filter when searching
+    // ✅ FIX: Handle null/undefined payment_type
+    const expensePaymentType = expense.payment_type || "Bank Account";
+    const matchPaymentType =
+      paymentTypeFilter === "All" || expensePaymentType === paymentTypeFilter;
     const matchDate =
       q || isRangeSet
         ? true
         : expense.expense_date?.startsWith(selectedMonthPfx);
-    return matchSearch && matchCat && matchDate;
+    return matchSearch && matchCat && matchPaymentType && matchDate;
   });
+
   const filteredTotal = filteredExpenses.reduce(
     (s, e) => s + parseFloat(e.amount || 0),
     0,
@@ -568,6 +609,15 @@ const AdminExpense = () => {
       (c.description || "").toLowerCase().includes(catSearch.toLowerCase()),
   );
 
+  // Add payment types constant at the top of the file
+  const PAYMENT_TYPES = [
+    { value: 'Bank Account', label: 'Bank Account' },
+    { value: 'PayPal', label: 'PayPal' },
+    { value: 'Cash', label: 'Cash' },
+    { value: 'Credit Card', label: 'Credit Card' },
+  ];
+
+  // Update filteredExpenses to include payment_type filter
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar
@@ -627,43 +677,48 @@ const AdminExpense = () => {
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <button
-                    onClick={fetchExpenses}
-                    className="flex items-center gap-2 px-4 py-2.5 border rounded-xl font-semibold bg-white border-blue-200 text-blue-600 hover:bg-blue-50 transition"
-                  >
-                    <RefreshCw className="h-4 w-4" /> Refresh
-                  </button>
-                  {activeTab === "expenses" ? (
-                    <button
-                      onClick={() => {
-                        setSelectedExpense(null);
-                        setExpenseForm({
-                          category_id: "",
-                          amount: "",
-                          note: "",
-                          expense_date: new Date().toISOString().slice(0, 10),
-                        });
-                        setShowExpenseModal(true);
-                      }}
-                      className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition hover:scale-105"
-                    >
-                      <Plus className="h-4 w-4" /> Add Expense
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => {
-                        setSelectedCat(null);
-                        setCatForm({
-                          name: "",
-                          description: "",
-                          color: "#3B82F6",
-                        });
-                        setShowCatModal(true);
-                      }}
-                      className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition hover:scale-105"
-                    >
-                      <Plus className="h-4 w-4" /> Add Category
-                    </button>
+                  {activeTab !== "payment-types" && (
+                    <>
+                      <button
+                        onClick={fetchExpenses}
+                        className="flex items-center gap-2 px-4 py-2.5 border rounded-xl font-semibold bg-white border-blue-200 text-blue-600 hover:bg-blue-50 transition"
+                      >
+                        <RefreshCw className="h-4 w-4" /> Refresh
+                      </button>
+                      {activeTab === "expenses" ? (
+                        <button
+                          onClick={() => {
+                            setSelectedExpense(null);
+                            setExpenseForm({
+                              category_id: "",
+                              amount: "",
+                              payment_type: "Bank Account",
+                              note: "",
+                              expense_date: new Date().toISOString().slice(0, 10),
+                            });
+                            setShowExpenseModal(true);
+                          }}
+                          className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition hover:scale-105"
+                        >
+                          <Plus className="h-4 w-4" /> Add Expense
+                        </button>
+                      ) : activeTab === "categories" ? (
+                        <button
+                          onClick={() => {
+                            setSelectedCat(null);
+                            setCatForm({
+                              name: "",
+                              description: "",
+                              color: "#3B82F6",
+                            });
+                            setShowCatModal(true);
+                          }}
+                          className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition hover:scale-105"
+                        >
+                          <Plus className="h-4 w-4" /> Add Category
+                        </button>
+                      ) : null}
+                    </>
                   )}
                 </div>
               </div>
@@ -685,6 +740,15 @@ const AdminExpense = () => {
                     className={`text-xs px-2 py-0.5 rounded-full font-bold ${activeTab === "categories" ? "bg-white/20 text-white" : "bg-blue-100 text-blue-600"}`}
                   >
                     {categories.length}
+                  </span>
+                </button>
+                <button
+                  onClick={() => setActiveTab("payment-types")}
+                  className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-sm transition-all ${activeTab === "payment-types" ? "bg-blue-600 text-white shadow" : "text-slate-600 hover:bg-slate-100"}`}
+                >
+                  <DollarSign className="h-4 w-4" />Payment Types
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${activeTab === "payment-types" ? "bg-white/20 text-white" : "bg-blue-100 text-blue-600"}`}>
+                    {paymentTypes.length}
                   </span>
                 </button>
               </div>
@@ -743,7 +807,7 @@ const AdminExpense = () => {
                             ? isRangeSet
                               ? formatCurrency(filteredTotal)
                               : formatCurrency(selectedMonthTotal)
-                            : "••••"}
+                            : "****"}
                         </div>
                         <div className="flex items-center justify-between gap-1 text-blue-100 text-xs mt-2">
                           <div className="flex items-center gap-1">
@@ -752,7 +816,7 @@ const AdminExpense = () => {
                                 <Receipt className="h-3 w-3" />
                                 {showExpenseAmount.box1Records
                                   ? filteredExpenses.length
-                                  : "••"}{" "}
+                                  : "**"}{" "}
                                 records
                               </>
                             ) : (
@@ -764,7 +828,7 @@ const AdminExpense = () => {
                                 )}
                                 {showExpenseAmount.box1Records
                                   ? Math.abs(selMonthChange)
-                                  : "••"}
+                                  : "**"}
                                 % vs prev month
                               </>
                             )}
@@ -834,13 +898,13 @@ const AdminExpense = () => {
                             ? isRangeSet
                               ? filteredExpenses.length
                               : formatCurrency(prevMonthTotal)
-                            : "••••"}
+                            : "****"}
                         </div>
                         <div className="flex items-center justify-between gap-1 text-emerald-100 text-xs mt-2">
                           <div>
                             {isRangeSet
                               ? `${dateRange.from || "Start"} → ${dateRange.to || "End"}`
-                              : `${showExpenseAmount.box2Records ? expenses.filter((e) => e.expense_date?.startsWith(prevMonthPfx)).length : "••"} records`}
+                              : `${showExpenseAmount.box2Records ? expenses.filter((e) => e.expense_date?.startsWith(prevMonthPfx)).length : "**"} records`}
                           </div>
                           {!isRangeSet && (
                             <button
@@ -928,7 +992,7 @@ const AdminExpense = () => {
                       <Filter className="h-5 w-5 text-blue-600" />
                       <h3 className="font-bold text-slate-800">Filters</h3>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                       {/* Search with autocomplete */}
                       <div className="relative" ref={searchRef}>
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 pointer-events-none" />
@@ -1040,6 +1104,25 @@ const AdminExpense = () => {
                             <X className="h-4 w-4" />
                           </button>
                         )}
+                      </div>
+
+                      {/* Payment Type Filter - Clean dropdown */}
+                      <div>
+                        <select
+                          value={paymentTypeFilter}
+                          onChange={(e) => {
+                            console.log("🔍 Filtering by payment type:", e.target.value);
+                            setPaymentTypeFilter(e.target.value);
+                          }}
+                          className="w-full px-3 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 bg-white font-medium text-sm outline-none cursor-pointer"
+                        >
+                          <option value="All">All Payment Types</option>
+                          {PAYMENT_TYPES.map((type) => (
+                            <option key={type.value} value={type.value}>
+                              {type.label}
+                            </option>
+                          ))}
+                        </select>
                       </div>
                     </div>
                   </div>
@@ -1244,6 +1327,15 @@ const AdminExpense = () => {
                   </div>
                 </>
               )}
+
+              {/* ══════════════ PAYMENT TYPE TAB ══════════════ */}
+              {activeTab === "payment-types" && (
+                <PaymentTypes
+                  paymentTypes={paymentTypes}
+                  setPaymentTypes={setPaymentTypes}
+                  fetchPaymentTypes={fetchPaymentTypes}
+                />
+              )}
             </div>
           </main>
         </ProtectedModule>
@@ -1273,6 +1365,7 @@ const AdminExpense = () => {
           formData={expenseForm}
           setFormData={setExpenseForm}
           categories={categories}
+          paymentTypes={paymentTypes}
           saving={saving}
           error={error}
           onClose={closeExpenseModal}
@@ -1333,7 +1426,7 @@ const ExpenseTable = ({
         <table className="w-full min-w-[800px]">
           <thead className="bg-slate-100">
             <tr>
-              {["Expense", "Category", "Amount", "Note", "Actions"].map((h) => (
+              {["Expense", "Category", "Amount", "Payment Type", "Note", "Actions"].map((h) => (
                 <th
                   key={h}
                   className="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider"
@@ -1346,7 +1439,7 @@ const ExpenseTable = ({
           <tbody className="divide-y divide-slate-100">
             {data.length === 0 ? (
               <tr>
-                <td colSpan="5" className="py-16 text-center">
+                <td colSpan="6" className="py-16 text-center">
                   <Receipt className="h-10 w-10 text-slate-300 mx-auto mb-2" />
                   <p className="text-slate-500 font-medium">
                     No expense records
@@ -1376,9 +1469,9 @@ const ExpenseTable = ({
                       style={
                         expense.category_color
                           ? {
-                              background: expense.category_color + "22",
-                              color: expense.category_color,
-                            }
+                            background: expense.category_color + "22",
+                            color: expense.category_color,
+                          }
                           : { background: "#e5e7eb", color: "#374151" }
                       }
                     >
@@ -1387,6 +1480,12 @@ const ExpenseTable = ({
                   </td>
                   <td className="px-4 py-4 font-bold text-blue-600 text-base">
                     {formatCurrency(expense.amount)}
+                  </td>
+                  {/* ✅ Payment Type Column */}
+                  <td className="px-4 py-4">
+                    <span className="text-sm font-medium text-slate-700">
+                      {expense.payment_type || "N/A"}
+                    </span>
                   </td>
                   <td className="px-4 py-4 max-w-xs">
                     <span className="text-sm text-slate-600 line-clamp-2">
@@ -1445,6 +1544,13 @@ const ExpenseTable = ({
   );
 };
 
+const PAYMENT_TYPES = [
+  { value: 'Bank Account', label: 'Bank Account' },
+  { value: 'PayPal', label: 'PayPal' },
+  { value: 'Cash', label: 'Cash' },
+  { value: 'Credit Card', label: 'Credit Card' },
+];
+
 // ─── Expense Add/Edit Modal ───────────────────────────────────────────────────
 const ExpenseModal = ({
   expense,
@@ -1452,6 +1558,7 @@ const ExpenseModal = ({
   setFormData,
   categories,
   saving,
+  paymentTypes = [],
   error,
   onClose,
   onSubmit,
@@ -1459,6 +1566,7 @@ const ExpenseModal = ({
   const [catSearch, setCatSearch] = React.useState("");
   const [showCatDropdown, setShowCatDropdown] = React.useState(false);
   const catInputRef = React.useRef(null);
+  // const [paymentTypes, setPaymentTypes] = useState([]);
 
   const filteredCats = categories
     .filter(
@@ -1478,6 +1586,9 @@ const ExpenseModal = ({
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
+
+  // ✅ Debug: Check if paymentTypes are coming through
+  console.log("💰 Payment Types in Modal:", paymentTypes);
 
   return (
     <div
@@ -1518,7 +1629,7 @@ const ExpenseModal = ({
           {/* Category with Autocomplete */}
           <div ref={catInputRef}>
             <label className="block text-gray-700 font-medium mb-2">
-              Category <span className="text-blue-600">*</span>
+              Category <span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <input
@@ -1531,7 +1642,7 @@ const ExpenseModal = ({
                   setShowCatDropdown(true);
                 }}
                 onFocus={() => setShowCatDropdown(true)}
-                className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
                 required={!formData.category_id}
               />
               {(catSearch || !formData.category_id) && (
@@ -1548,7 +1659,7 @@ const ExpenseModal = ({
                 </button>
               )}
               {showCatDropdown && (catSearch || !formData.category_id) && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl z-50 overflow-hidden max-h-64 overflow-y-auto">
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-50 overflow-hidden max-h-48 overflow-y-auto">
                   {filteredCats.length === 0 ? (
                     <div className="px-4 py-3 text-slate-500 text-sm">
                       No categories found
@@ -1586,9 +1697,10 @@ const ExpenseModal = ({
             </div>
           </div>
 
+          {/* Amount */}
           <div>
             <label className="block text-gray-700 font-medium mb-2">
-              Amount <span className="text-blue-600">*</span>
+              Amount <span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <span className="absolute left-4 top-3 text-gray-500 font-medium text-sm">
@@ -1601,16 +1713,60 @@ const ExpenseModal = ({
                 onChange={(e) =>
                   setFormData({ ...formData, amount: e.target.value })
                 }
-                className="w-full pl-16 pr-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-16 pr-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
                 required
                 step="0.01"
                 min="0"
               />
             </div>
           </div>
+
+          {/* ✅ Payment Type Dropdown - Clean Design */}
           <div>
             <label className="block text-gray-700 font-medium mb-2">
-              Expense Date <span className="text-blue-600">*</span>
+              Payment Type <span className="text-red-500">*</span>
+            </label>
+            <div className="relative">
+              <select
+                value={formData.payment_type || "Bank Account"}
+                onChange={(e) => {
+                  setFormData({ ...formData, payment_type: e.target.value });
+                }}
+                className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 bg-white appearance-none cursor-pointer outline-none"
+                required
+              >
+                {paymentTypes && paymentTypes.length > 0 ? (
+                  paymentTypes.filter(pt => pt.is_active !== false).map((type) => (
+                    <option key={type.id} value={type.name}>
+                      {type.name}
+                    </option>
+                  ))
+                ) : (
+                  <>
+                    <option value="Bank Account">🏦 Bank Account</option>
+                    <option value="PayPal">💰 PayPal</option>
+                    <option value="Cash">💵 Cash</option>
+                    <option value="Credit Card">💳 Credit Card</option>
+                  </>
+                )}
+              </select>
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                <svg className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
+            {paymentTypes.length > 0 && (
+              <p className="text-xs text-slate-400 mt-1">
+                {paymentTypes.filter(pt => pt.is_active !== false).length} payment types available
+              </p>
+            )}
+          </div>
+
+          {/* Expense Date */}
+          <div>
+            <label className="block text-gray-700 font-medium mb-2">
+              Expense Date <span className="text-red-500">*</span>
             </label>
             <input
               type="date"
@@ -1618,13 +1774,12 @@ const ExpenseModal = ({
               onChange={(e) =>
                 setFormData({ ...formData, expense_date: e.target.value })
               }
-              className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
               required
             />
-            <p className="text-xs text-slate-400 mt-1">
-              Select any date — current, previous month, or earlier
-            </p>
           </div>
+
+          {/* Note */}
           <div>
             <label className="block text-gray-700 font-medium mb-2">Note</label>
             <textarea
@@ -1633,10 +1788,11 @@ const ExpenseModal = ({
               onChange={(e) =>
                 setFormData({ ...formData, note: e.target.value })
               }
-              className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 resize-none"
+              className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 resize-none outline-none"
               rows="3"
             />
           </div>
+
           <div className="flex gap-3 pt-2">
             <button
               type="button"
@@ -1658,6 +1814,7 @@ const ExpenseModal = ({
     </div>
   );
 };
+
 
 // ─── Expense View Modal ───────────────────────────────────────────────────────
 const ViewExpenseModal = ({ expense, onClose, onEdit }) => (
@@ -1706,9 +1863,9 @@ const ViewExpenseModal = ({ expense, onClose, onEdit }) => (
               style={
                 expense.category_color
                   ? {
-                      background: expense.category_color + "22",
-                      color: expense.category_color,
-                    }
+                    background: expense.category_color + "22",
+                    color: expense.category_color,
+                  }
                   : { background: "#e5e7eb", color: "#374151" }
               }
             >
@@ -1719,6 +1876,12 @@ const ViewExpenseModal = ({ expense, onClose, onEdit }) => (
             <p className="text-xs text-slate-500">Amount</p>
             <p className="text-xl font-bold text-blue-600">
               {formatCurrency(expense.amount)}
+            </p>
+          </div>
+          <div className="col-span-2">
+            <p className="text-xs text-slate-500 mb-1">Payment Type</p>
+            <p className="font-semibold text-slate-800">
+              {expense.payment_type || "Bank Account"}
             </p>
           </div>
         </div>

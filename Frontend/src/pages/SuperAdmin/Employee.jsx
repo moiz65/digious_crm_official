@@ -10,7 +10,7 @@ const Employee = () => {
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
-      <Sidebar 
+      <Sidebar
         isCollapsed={isSidebarCollapsed}
         setIsCollapsed={setIsSidebarCollapsed}
         activeItem={activeItem}
@@ -34,7 +34,7 @@ const Employee = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
-            
+
             <div className="flex items-center">
               <div className="w-8 h-8 bg-[#349dff] rounded-lg flex items-center justify-center mr-3">
                 <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -54,19 +54,19 @@ const Employee = () => {
 
         {/* Dashboard Content */}
         <main className="flex-1 overflow-y-auto">
-          <EmployeesProfile/>
+          <EmployeesProfile />
         </main>
       </div>
 
       {/* Mobile Sidebar Overlay */}
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-40 lg:hidden">
-          <div 
+          <div
             className="absolute inset-0 bg-black bg-opacity-50"
             onClick={() => setIsMobileMenuOpen(false)}
           />
           <div className="absolute inset-y-0 left-0 w-64 bg-white">
-            <Sidebar 
+            <Sidebar
               isCollapsed={false}
               setIsCollapsed={setIsMobileMenuOpen}
               activeItem={activeItem}

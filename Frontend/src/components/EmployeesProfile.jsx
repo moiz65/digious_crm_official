@@ -17,6 +17,7 @@ import {
   Trash2,
   Eye,
   Plus,
+  ArrowLeft,
   ChevronRight,
   Home,
   BarChart3,
@@ -73,6 +74,7 @@ import { endpoints } from "../config/api";
 import { format } from "date-fns";
 import { Copy } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import Employee_onboarding_compo from "../components/Employee_onboarding_compo";
 // import {
 //   Phone,
 //   Copy,
@@ -97,6 +99,7 @@ const EmployeeProfile = () => {
   const navigate = useNavigate();
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   // Fetch employees from API on component mount
   useEffect(() => {
@@ -238,7 +241,7 @@ const EmployeeProfile = () => {
       const currentMonth = currentDate.getMonth() + 1;
 
       const response = await fetch(
-        `${process.env.REACT_APP_API_URL || "http://100.118.172.21:5000"}/api/v1/sales-targets/${employeeId}?month=${currentMonth}&year=${currentYear}`,
+        `${process.env.REACT_APP_API_URL || "http://100.114.9.93:5000"}/api/v1/sales-targets/${employeeId}?month=${currentMonth}&year=${currentYear}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -492,36 +495,36 @@ const EmployeeProfile = () => {
       // Role-specific default metrics
       ...(employeeData.department === "Development"
         ? {
-            projects: Math.floor(Math.random() * 20) + 15,
-            projectdone: Math.floor(Math.random() * 200) + 100,
-            pullRequests: Math.floor(Math.random() * 50) + 20,
-            bugsFixed: Math.floor(Math.random() * 80) + 40,
-          }
+          projects: Math.floor(Math.random() * 20) + 15,
+          projectdone: Math.floor(Math.random() * 200) + 100,
+          pullRequests: Math.floor(Math.random() * 50) + 20,
+          bugsFixed: Math.floor(Math.random() * 80) + 40,
+        }
         : employeeData.department === "Sales"
           ? {
-              target: Math.floor(Math.random() * 100000) + 100000,
-              achieved: Math.floor(Math.random() * 150000) + 50000,
-              dealsClosed: Math.floor(Math.random() * 30) + 15,
-              newClients: Math.floor(Math.random() * 15) + 5,
-            }
+            target: Math.floor(Math.random() * 100000) + 100000,
+            achieved: Math.floor(Math.random() * 150000) + 50000,
+            dealsClosed: Math.floor(Math.random() * 30) + 15,
+            newClients: Math.floor(Math.random() * 15) + 5,
+          }
           : employeeData.department === "Human Resources"
             ? {
-                projects: Math.floor(Math.random() * 10) + 8,
-                candidates: Math.floor(Math.random() * 50) + 30,
-                interviews: Math.floor(Math.random() * 30) + 15,
-                hires: Math.floor(Math.random() * 10) + 5,
-              }
+              projects: Math.floor(Math.random() * 10) + 8,
+              candidates: Math.floor(Math.random() * 50) + 30,
+              interviews: Math.floor(Math.random() * 30) + 15,
+              hires: Math.floor(Math.random() * 10) + 5,
+            }
             : employeeData.department === "Design"
               ? {
-                  projects: Math.floor(Math.random() * 15) + 10,
-                  designs: Math.floor(Math.random() * 40) + 20,
-                  revisions: Math.floor(Math.random() * 20) + 5,
-                }
+                projects: Math.floor(Math.random() * 15) + 10,
+                designs: Math.floor(Math.random() * 40) + 20,
+                revisions: Math.floor(Math.random() * 20) + 5,
+              }
               : {
-                  projects: Math.floor(Math.random() * 15) + 10,
-                  done: Math.floor(Math.random() * 12) + 5,
-                  progress: Math.floor(Math.random() * 8) + 2,
-                }),
+                projects: Math.floor(Math.random() * 15) + 10,
+                done: Math.floor(Math.random() * 12) + 5,
+                progress: Math.floor(Math.random() * 8) + 2,
+              }),
       performance: ["Good", "Average", "Excellent"][
         Math.floor(Math.random() * 3)
       ],
@@ -719,8 +722,7 @@ const EmployeeProfile = () => {
 
   const handleExportAll = () => {
     toast.success(
-      `Exported all ${
-        filteredEmployees.length
+      `Exported all ${filteredEmployees.length
       } employees to ${exportFormat.toUpperCase()}`,
     );
   };
@@ -840,15 +842,23 @@ const EmployeeProfile = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-      {/* Background Effects */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-100 rounded-full mix-blend-multiply filter blur-3xl opacity-40 animate-pulse"></div>
-        <div className="absolute top-1/3 right-1/4 w-80 h-80 bg-cyan-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse"></div>
-        <div className="absolute bottom-1/4 left-1/3 w-72 h-72 bg-sky-100 rounded-full mix-blend-multiply filter blur-3xl opacity-25 animate-pulse"></div>
-      </div>
+      {showOnboarding ? (
+        <div className="bg-white overflow-y-auto">
 
-      {/* CSS Animation */}
-      <style>{`
+          {/* ✅ Render the Onboarding Component */}
+          <Employee_onboarding_compo />
+        </div>
+      ) : (
+        <>
+          {/* Background Effects */}
+          <div className="absolute inset-0 overflow-hidden">
+            <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-100 rounded-full mix-blend-multiply filter blur-3xl opacity-40 animate-pulse"></div>
+            <div className="absolute top-1/3 right-1/4 w-80 h-80 bg-cyan-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse"></div>
+            <div className="absolute bottom-1/4 left-1/3 w-72 h-72 bg-sky-100 rounded-full mix-blend-multiply filter blur-3xl opacity-25 animate-pulse"></div>
+          </div>
+
+          {/* CSS Animation */}
+          <style>{`
         @keyframes fadeIn {
           from {
             opacity: 0;
@@ -863,607 +873,609 @@ const EmployeeProfile = () => {
         .animate-fadeIn {
           animation: fadeIn 0.2s ease-out;
         }
-      `}</style>
+      `}
+          </style>
 
-      <div className="relative z-10 p-6">
-        {/* Breadcrumb and Header */}
-        <div className="mb-8">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Employee Profiles
-              </h1>
-              <div className="flex items-center gap-2 mt-1">
-                <p className="text-gray-600">
-                  Manage HR, Sales, Design, and Development teams
-                </p>
-                <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full border border-blue-200">
-                  Total: {employees.length} Employees
-                </span>
+          <div className="relative z-10 p-6">
+            {/* Breadcrumb and Header */}
+            <div className="mb-8">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900">
+                    Employee Profiles
+                  </h1>
+                  <div className="flex items-center gap-2 mt-1">
+                    <p className="text-gray-600">
+                      Manage HR, Sales, Design, and Development teams
+                    </p>
+                    <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full border border-blue-200">
+                      Total: {employees.length} Employees
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  {/* Export Dropdown */}
+                  <div className="relative export-dropdown-container">
+                    <button
+                      onClick={() => setShowExportDropdown(!showExportDropdown)}
+                      className="flex items-center gap-1 px-4 py-2 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition duration-200 shadow-sm"
+                    >
+                      <Download className="h-4 w-4" />
+                      Export
+                      <ChevronDown className="h-4 w-4" />
+                    </button>
+                    {showExportDropdown && (
+                      <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg z-50 animate-fadeIn">
+                        <div className="p-2">
+                          <button
+                            onClick={() => {
+                              handleExportAll();
+                              setShowExportDropdown(false);
+                            }}
+                            className="flex items-center gap-2 p-2 w-full text-left rounded-lg hover:bg-gray-100 transition duration-200"
+                          >
+                            <FileText className="h-4 w-4" />
+                            Export All
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (selectedEmployees.size > 0) {
+                                handleBulkAction("export");
+                                setShowExportDropdown(false);
+                              }
+                            }}
+                            disabled={selectedEmployees.size === 0}
+                            className={`flex items-center gap-2 p-2 w-full text-left rounded-lg transition duration-200 ${selectedEmployees.size === 0
+                              ? "opacity-50 cursor-not-allowed"
+                              : "hover:bg-gray-100"
+                              }`}
+                          >
+                            <Download className="h-4 w-4" />
+                            Export Selected ({selectedEmployees.size})
+                          </button>
+                          <div className="border-t border-gray-200 my-2"></div>
+                          <select
+                            value={exportFormat}
+                            onChange={(e) => setExportFormat(e.target.value)}
+                            className="w-full px-2 py-1 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#349dff]"
+                          >
+                            <option value="excel">Excel Format</option>
+                            <option value="pdf">PDF Format</option>
+                            <option value="csv">CSV Format</option>
+                          </select>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Add Employee Button */}
+                  <button
+                    onClick={() => setShowOnboarding(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-[#349dff] text-white rounded-xl hover:bg-[#2980db] transition duration-200 shadow-sm"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add Employee
+                  </button>
+                </div>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              {/* Export Dropdown */}
-              <div className="relative export-dropdown-container">
-                <button
-                  onClick={() => setShowExportDropdown(!showExportDropdown)}
-                  className="flex items-center gap-1 px-4 py-2 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition duration-200 shadow-sm"
-                >
-                  <Download className="h-4 w-4" />
-                  Export
-                  <ChevronDown className="h-4 w-4" />
-                </button>
-                {showExportDropdown && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg z-50 animate-fadeIn">
-                    <div className="p-2">
-                      <button
-                        onClick={() => {
-                          handleExportAll();
-                          setShowExportDropdown(false);
-                        }}
-                        className="flex items-center gap-2 p-2 w-full text-left rounded-lg hover:bg-gray-100 transition duration-200"
-                      >
-                        <FileText className="h-4 w-4" />
-                        Export All
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (selectedEmployees.size > 0) {
-                            handleBulkAction("export");
-                            setShowExportDropdown(false);
-                          }
-                        }}
-                        disabled={selectedEmployees.size === 0}
-                        className={`flex items-center gap-2 p-2 w-full text-left rounded-lg transition duration-200 ${
-                          selectedEmployees.size === 0
-                            ? "opacity-50 cursor-not-allowed"
-                            : "hover:bg-gray-100"
-                        }`}
-                      >
-                        <Download className="h-4 w-4" />
-                        Export Selected ({selectedEmployees.size})
-                      </button>
-                      <div className="border-t border-gray-200 my-2"></div>
+
+            {/* Breadcrumb */}
+            <div className="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm mb-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2 text-sm text-gray-600">
+                  <Home className="h-4 w-4" />
+                  <ChevronRight className="h-4 w-4" />
+                  <span>Employee</span>
+                  <ChevronRight className="h-4 w-4" />
+                  <span className="text-[#349dff] font-medium">
+                    Employee Profiles
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {selectedEmployees.size > 0 && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-gray-600">
+                        {selectedEmployees.size} selected
+                      </span>
                       <select
-                        value={exportFormat}
-                        onChange={(e) => setExportFormat(e.target.value)}
-                        className="w-full px-2 py-1 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#349dff]"
+                        value={bulkAction}
+                        onChange={(e) => handleBulkAction(e.target.value)}
+                        className="text-sm border border-gray-300 rounded-lg px-3 py-1 focus:outline-none focus:ring-2 focus:ring-[#349dff]"
                       >
-                        <option value="excel">Excel Format</option>
-                        <option value="pdf">PDF Format</option>
-                        <option value="csv">CSV Format</option>
+                        <option value="">Bulk Actions</option>
+                        <option value="activate">Activate Selected</option>
+                        <option value="deactivate">Deactivate Selected</option>
+                        <option value="export">Export Selected</option>
+                        <option value="delete">Delete Selected</option>
                       </select>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
-
-              {/* Add Employee Button */}
-              <button
-                onClick={() => navigate("/add-employees")}
-                className="flex items-center gap-2 px-4 py-2 bg-[#349dff] text-white rounded-xl hover:bg-[#2980db] transition duration-200 shadow-sm"
-              >
-                <Plus className="h-4 w-4" />
-                Add Employee
-              </button>
             </div>
-          </div>
-        </div>
 
-        {/* Breadcrumb */}
-        <div className="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm mb-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2 text-sm text-gray-600">
-              <Home className="h-4 w-4" />
-              <ChevronRight className="h-4 w-4" />
-              <span>Employee</span>
-              <ChevronRight className="h-4 w-4" />
-              <span className="text-[#349dff] font-medium">
-                Employee Profiles
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              {selectedEmployees.size > 0 && (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600">
-                    {selectedEmployees.size} selected
-                  </span>
-                  <select
-                    value={bulkAction}
-                    onChange={(e) => handleBulkAction(e.target.value)}
-                    className="text-sm border border-gray-300 rounded-lg px-3 py-1 focus:outline-none focus:ring-2 focus:ring-[#349dff]"
-                  >
-                    <option value="">Bulk Actions</option>
-                    <option value="activate">Activate Selected</option>
-                    <option value="deactivate">Deactivate Selected</option>
-                    <option value="export">Export Selected</option>
-                    <option value="delete">Delete Selected</option>
-                  </select>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          {stats.map((stat, index) => (
-            <div
-              key={index}
-              className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm hover:shadow-md transition-all duration-300"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div
-                    className={`p-3 rounded-full ${
-                      index === 0
-                        ? "bg-blue-100 text-blue-600"
-                        : index === 1
-                          ? "bg-green-100 text-green-600"
-                          : index === 2
-                            ? "bg-red-100 text-red-600"
-                            : "bg-purple-100 text-purple-600"
-                    }`}
-                  >
-                    <stat.icon className="h-6 w-6" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium text-gray-500 truncate">
-                      {stat.title}
-                    </p>
-                    <h4 className="text-2xl font-bold text-gray-900">
-                      {stat.value}
-                    </h4>
-                  </div>
-                </div>
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              {stats.map((stat, index) => (
                 <div
-                  className={`px-2 py-1 rounded-full text-xs ${stat.badgeColor}`}
+                  key={index}
+                  className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm hover:shadow-md transition-all duration-300"
                 >
-                  <div className="flex items-center gap-1">
-                    <TrendingUp className="h-3 w-3" />
-                    {stat.trend}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div
+                        className={`p-3 rounded-full ${index === 0
+                          ? "bg-blue-100 text-blue-600"
+                          : index === 1
+                            ? "bg-green-100 text-green-600"
+                            : index === 2
+                              ? "bg-red-100 text-red-600"
+                              : "bg-purple-100 text-purple-600"
+                          }`}
+                      >
+                        <stat.icon className="h-6 w-6" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-gray-500 truncate">
+                          {stat.title}
+                        </p>
+                        <h4 className="text-2xl font-bold text-gray-900">
+                          {stat.value}
+                        </h4>
+                      </div>
+                    </div>
+                    <div
+                      className={`px-2 py-1 rounded-full text-xs ${stat.badgeColor}`}
+                    >
+                      <div className="flex items-center gap-1">
+                        <TrendingUp className="h-3 w-3" />
+                        {stat.trend}
+                      </div>
+                    </div>
                   </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Search and Filter Section */}
+            <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm mb-6">
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div className="flex-1">
+                  <div className="relative">
+                    <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Search employees by name, email, role, or skills..."
+                      value={filters.search}
+                      onChange={(e) => handleSearch(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#349dff] focus:border-transparent"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  {/* Department Filter */}
+                  <select
+                    value={filters.department}
+                    onChange={(e) =>
+                      handleFilterChange("department", e.target.value)
+                    }
+                    className="px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#349dff] text-sm"
+                  >
+                    <option value="all">All Departments</option>
+                    {[...new Set(employees.map((e) => e.department))]
+                      .sort()
+                      .map((dept) => (
+                        <option key={dept} value={dept}>
+                          {dept}
+                        </option>
+                      ))}
+                  </select>
+
+                  {/* Status Filter */}
+                  <select
+                    value={filters.status}
+                    onChange={(e) => handleFilterChange("status", e.target.value)}
+                    className="px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#349dff] text-sm"
+                  >
+                    <option value="all">All Status</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                  </select>
+
+                  {/* Sort Options */}
+                  <select
+                    value={sortBy}
+                    onChange={(e) => handleSortChange(e.target.value)}
+                    className="px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#349dff] text-sm"
+                  >
+                    <option value="recent">Recently Added</option>
+                    <option value="id">ID (Ascending)</option>
+                    <option value="name">Name A-Z</option>
+                    <option value="attendance">Attendance</option>
+                    <option value="projects">Projects</option>
+                    <option value="performance">Performance</option>
+                    <option value="revenue">Revenue (Sales)</option>
+                    <option value="projectdones">Project Done (Dev)</option>
+                    <option value="hires">Hires (HR)</option>
+                    <option value="designs">Designs Created</option>
+                  </select>
+
+                  {/* Clear Filters Button */}
+                  {(filters.search ||
+                    filters.department !== "all" ||
+                    filters.status !== "all") && (
+                      <button
+                        onClick={clearFilters}
+                        className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900"
+                      >
+                        Clear Filters
+                      </button>
+                    )}
                 </div>
               </div>
             </div>
-          ))}
-        </div>
 
-        {/* Search and Filter Section */}
-        <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm mb-6">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search employees by name, email, role, or skills..."
-                  value={filters.search}
-                  onChange={(e) => handleSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#349dff] focus:border-transparent"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              {/* Department Filter */}
-              <select
-                value={filters.department}
-                onChange={(e) =>
-                  handleFilterChange("department", e.target.value)
-                }
-                className="px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#349dff] text-sm"
-              >
-                <option value="all">All Departments</option>
-                {[...new Set(employees.map((e) => e.department))]
-                  .sort()
-                  .map((dept) => (
-                    <option key={dept} value={dept}>
-                      {dept}
-                    </option>
-                  ))}
-              </select>
-
-              {/* Status Filter */}
-              <select
-                value={filters.status}
-                onChange={(e) => handleFilterChange("status", e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#349dff] text-sm"
-              >
-                <option value="all">All Status</option>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
-
-              {/* Sort Options */}
-              <select
-                value={sortBy}
-                onChange={(e) => handleSortChange(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#349dff] text-sm"
-              >
-                <option value="recent">Recently Added</option>
-                <option value="id">ID (Ascending)</option>
-                <option value="name">Name A-Z</option>
-                <option value="attendance">Attendance</option>
-                <option value="projects">Projects</option>
-                <option value="performance">Performance</option>
-                <option value="revenue">Revenue (Sales)</option>
-                <option value="projectdones">Project Done (Dev)</option>
-                <option value="hires">Hires (HR)</option>
-                <option value="designs">Designs Created</option>
-              </select>
-
-              {/* Clear Filters Button */}
-              {(filters.search ||
-                filters.department !== "all" ||
-                filters.status !== "all") && (
-                <button
-                  onClick={clearFilters}
-                  className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900"
-                >
-                  Clear Filters
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Employee Table */}
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="px-4 py-3 text-left">
-                    <button onClick={handleSelectAll} className="p-1">
-                      {selectedEmployees.size === filteredEmployees.length &&
-                      filteredEmployees.length > 0 ? (
-                        <CheckSquare className="h-4 w-4 text-[#349dff]" />
-                      ) : (
-                        <Square className="h-4 w-4 text-gray-400" />
-                      )}
-                    </button>
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Employee
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    ID
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Designation
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Department
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Contact
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Joining Date
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {sortedEmployees.length === 0 ? (
-                  <tr>
-                    <td colSpan="9" className="px-4 py-12 text-center">
-                      <div className="flex flex-col items-center gap-2">
-                        <Users className="h-10 w-10 text-gray-300" />
-                        <p className="text-gray-500 font-medium">
-                          No employees found
-                        </p>
-                        <p className="text-gray-400 text-sm">
-                          Try adjusting your filters
-                        </p>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  sortedEmployees.map((employee) => (
-                    <tr
-                      key={employee.id}
-                      className={`hover:bg-blue-50/40 transition-colors duration-150 ${
-                        selectedEmployees.has(employee.id)
-                          ? "bg-blue-50/60"
-                          : ""
-                      }`}
-                    >
-                      {/* Checkbox */}
-                      <td className="px-4 py-3">
-                        <button
-                          onClick={() => handleSelectEmployee(employee.id)}
-                          className="p-1"
-                        >
-                          {selectedEmployees.has(employee.id) ? (
+            {/* Employee Table */}
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-gray-50 border-b border-gray-200">
+                      <th className="px-4 py-3 text-left">
+                        <button onClick={handleSelectAll} className="p-1">
+                          {selectedEmployees.size === filteredEmployees.length &&
+                            filteredEmployees.length > 0 ? (
                             <CheckSquare className="h-4 w-4 text-[#349dff]" />
                           ) : (
                             <Square className="h-4 w-4 text-gray-400" />
                           )}
                         </button>
-                      </td>
-
-                      {/* Employee Name + Avatar */}
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          <div
-                            className="w-10 h-10 rounded-full border-2 border-blue-100 flex-shrink-0 overflow-hidden cursor-pointer hover:border-blue-300 transition duration-200"
-                            onClick={() => handleViewProfile(employee)}
-                          >
-                            {employee.profile_picture ? (
-                              <img
-                                src={employee.profile_picture}
-                                alt={employee.name}
-                                className="w-full h-full rounded-full object-cover"
-                                onError={(e) => {
-                                  e.target.style.display = "none";
-                                  e.target.nextSibling &&
-                                    (e.target.nextSibling.style.display =
-                                      "flex");
-                                }}
-                              />
-                            ) : null}
-                            <div
-                              className={`w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 rounded-full items-center justify-center ${
-                                employee.profile_picture ? "hidden" : "flex"
-                              }`}
-                            >
-                              <span className="text-gray-700 text-sm font-bold">
-                                {employee.name
-                                  .split(" ")
-                                  .map((n) => n[0])
-                                  .join("")}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="min-w-0">
-                            <button
-                              onClick={() => handleViewProfile(employee)}
-                              className="text-sm font-semibold text-gray-900 hover:text-[#349dff] transition duration-200 truncate block"
-                            >
-                              {employee.name}
-                            </button>
-                            <p className="text-xs text-gray-500 truncate">
-                              {employee.email}
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        Employee
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        ID
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        Designation
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        Department
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        Contact
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        Joining Date
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {sortedEmployees.length === 0 ? (
+                      <tr>
+                        <td colSpan="9" className="px-4 py-12 text-center">
+                          <div className="flex flex-col items-center gap-2">
+                            <Users className="h-10 w-10 text-gray-300" />
+                            <p className="text-gray-500 font-medium">
+                              No employees found
+                            </p>
+                            <p className="text-gray-400 text-sm">
+                              Try adjusting your filters
                             </p>
                           </div>
-                        </div>
-                      </td>
-
-                      {/* Employee ID */}
-                      <td className="px-4 py-3">
-                        <span className="text-sm text-gray-700 font-mono">
-                          {employee.username || employee.id}
-                        </span>
-                      </td>
-
-                      {/* Designation */}
-                      <td className="px-4 py-3">
-                        <span className="text-sm text-gray-700">
-                          {employee.designation || employee.role || "N/A"}
-                        </span>
-                      </td>
-
-                      {/* Department */}
-                      <td className="px-4 py-3">
-                        <span
-                          className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${
-                            employee.department === "Development"
-                              ? "bg-orange-100 text-orange-800"
-                              : employee.department === "Sales"
-                                ? "bg-green-100 text-green-800"
-                                : employee.department === "Human Resources"
-                                  ? "bg-blue-100 text-blue-800"
-                                  : employee.department === "Design"
-                                    ? "bg-purple-100 text-purple-800"
-                                    : "bg-gray-100 text-gray-800"
-                          }`}
-                        >
-                          {getRoleIcon(employee.role, employee.department)}
-                          {employee.department}
-                        </span>
-                      </td>
-
-                      {/* Contact */}
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          {employee.phone && (
-                            <button
-                              onClick={() => handleCall(employee.phone)}
-                              className="p-1.5 rounded-lg hover:bg-green-50 text-gray-400 hover:text-green-600 transition duration-200"
-                              title={employee.phone}
-                            >
-                              <Phone className="h-4 w-4" />
-                            </button>
-                          )}
-                          {employee.email && (
-                            <button
-                              onClick={() => handleSendEmail(employee.email)}
-                              className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition duration-200"
-                              title={employee.email}
-                            >
-                              <Mail className="h-4 w-4" />
-                            </button>
-                          )}
-                        </div>
-                      </td>
-
-                      {/* Joining Date */}
-                      <td className="px-4 py-3">
-                        <span className="text-sm text-gray-600">
-                          {employee.joiningDate
-                            ? new Date(employee.joiningDate).toLocaleDateString(
-                                "en-GB",
-                                {
-                                  day: "2-digit",
-                                  month: "short",
-                                  year: "numeric",
-                                },
-                              )
-                            : "N/A"}
-                        </span>
-                      </td>
-
-                      {/* Status */}
-                      <td className="px-4 py-3">
-                        <button
-                          onClick={() => handleToggleStatus(employee.id)}
-                          className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full cursor-pointer transition duration-200 ${
-                            employee.status === "active"
-                              ? "bg-green-100 text-green-700 hover:bg-green-200"
-                              : "bg-red-100 text-red-700 hover:bg-red-200"
-                          }`}
-                        >
-                          <span
-                            className={`w-1.5 h-1.5 rounded-full ${
-                              employee.status === "active"
-                                ? "bg-green-500"
-                                : "bg-red-500"
+                        </td>
+                      </tr>
+                    ) : (
+                      sortedEmployees.map((employee) => (
+                        <tr
+                          key={employee.id}
+                          className={`hover:bg-blue-50/40 transition-colors duration-150 ${selectedEmployees.has(employee.id)
+                            ? "bg-blue-50/60"
+                            : ""
                             }`}
-                          ></span>
-                          {employee.status === "active" ? "Active" : "Inactive"}
-                        </button>
-                      </td>
+                        >
+                          {/* Checkbox */}
+                          <td className="px-4 py-3">
+                            <button
+                              onClick={() => handleSelectEmployee(employee.id)}
+                              className="p-1"
+                            >
+                              {selectedEmployees.has(employee.id) ? (
+                                <CheckSquare className="h-4 w-4 text-[#349dff]" />
+                              ) : (
+                                <Square className="h-4 w-4 text-gray-400" />
+                              )}
+                            </button>
+                          </td>
 
-                      {/* Actions */}
-                      <td className="px-4 py-3">
-                        <div className="flex items-center justify-end gap-1">
-                          <button
-                            onClick={() => handleViewProfile(employee)}
-                            className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-blue-600 transition duration-200"
-                            title="View Profile"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => {
-                              setEditingEmployee(employee);
-                              setShowEditModal(true);
-                            }}
-                            className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-amber-600 transition duration-200"
-                            title="Edit"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteEmployee(employee.id)}
-                            className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600 transition duration-200"
-                            title="Delete"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+                          {/* Employee Name + Avatar */}
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-3">
+                              <div
+                                className="w-10 h-10 rounded-full border-2 border-blue-100 flex-shrink-0 overflow-hidden cursor-pointer hover:border-blue-300 transition duration-200"
+                                onClick={() => handleViewProfile(employee)}
+                              >
+                                {employee.profile_picture ? (
+                                  <img
+                                    src={employee.profile_picture}
+                                    alt={employee.name}
+                                    className="w-full h-full rounded-full object-cover"
+                                    onError={(e) => {
+                                      e.target.style.display = "none";
+                                      e.target.nextSibling &&
+                                        (e.target.nextSibling.style.display =
+                                          "flex");
+                                    }}
+                                  />
+                                ) : null}
+                                <div
+                                  className={`w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 rounded-full items-center justify-center ${employee.profile_picture ? "hidden" : "flex"
+                                    }`}
+                                >
+                                  <span className="text-gray-700 text-sm font-bold">
+                                    {employee.name
+                                      .split(" ")
+                                      .map((n) => n[0])
+                                      .join("")}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="min-w-0">
+                                <button
+                                  onClick={() => handleViewProfile(employee)}
+                                  className="text-sm font-semibold text-gray-900 hover:text-[#349dff] transition duration-200 truncate block"
+                                >
+                                  {employee.name}
+                                </button>
+                                <p className="text-xs text-gray-500 truncate">
+                                  {employee.email}
+                                </p>
+                              </div>
+                            </div>
+                          </td>
 
-        {/* Summary Footer */}
-        {sortedEmployees.length > 0 && (
-          <div className="mt-6 bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <Users className="h-5 w-5 text-blue-500" />
-                  <span className="text-sm text-gray-600">
-                    Showing{" "}
-                    <span className="font-semibold text-gray-900">
-                      {sortedEmployees.length}
-                    </span>{" "}
-                    of{" "}
-                    <span className="font-semibold text-gray-900">
-                      {employees.length}
-                    </span>{" "}
-                    employees
-                  </span>
-                </div>
-                <div className="h-4 w-px bg-gray-300"></div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                  <span className="text-sm text-gray-600">
-                    Active:{" "}
-                    <span className="font-semibold text-green-600">
-                      {employees.filter((e) => e.status === "active").length}
-                    </span>
-                  </span>
-                </div>
-                <div className="h-4 w-px bg-gray-300"></div>
-                <div className="flex items-center gap-2">
-                  <XCircle className="h-5 w-5 text-red-500" />
-                  <span className="text-sm text-gray-600">
-                    Inactive:{" "}
-                    <span className="font-semibold text-red-600">
-                      {employees.filter((e) => e.status === "inactive").length}
-                    </span>
-                  </span>
-                </div>
-              </div>
-              <div className="text-sm text-gray-500">
-                Last updated: {new Date().toLocaleTimeString()}
+                          {/* Employee ID */}
+                          <td className="px-4 py-3">
+                            <span className="text-sm text-gray-700 font-mono">
+                              {employee.username || employee.id}
+                            </span>
+                          </td>
+
+                          {/* Designation */}
+                          <td className="px-4 py-3">
+                            <span className="text-sm text-gray-700">
+                              {employee.designation || employee.role || "N/A"}
+                            </span>
+                          </td>
+
+                          {/* Department */}
+                          <td className="px-4 py-3">
+                            <span
+                              className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${employee.department === "Development"
+                                ? "bg-orange-100 text-orange-800"
+                                : employee.department === "Sales"
+                                  ? "bg-green-100 text-green-800"
+                                  : employee.department === "Human Resources"
+                                    ? "bg-blue-100 text-blue-800"
+                                    : employee.department === "Design"
+                                      ? "bg-purple-100 text-purple-800"
+                                      : "bg-gray-100 text-gray-800"
+                                }`}
+                            >
+                              {getRoleIcon(employee.role, employee.department)}
+                              {employee.department}
+                            </span>
+                          </td>
+
+                          {/* Contact */}
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2">
+                              {employee.phone && (
+                                <button
+                                  onClick={() => handleCall(employee.phone)}
+                                  className="p-1.5 rounded-lg hover:bg-green-50 text-gray-400 hover:text-green-600 transition duration-200"
+                                  title={employee.phone}
+                                >
+                                  <Phone className="h-4 w-4" />
+                                </button>
+                              )}
+                              {employee.email && (
+                                <button
+                                  onClick={() => handleSendEmail(employee.email)}
+                                  className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition duration-200"
+                                  title={employee.email}
+                                >
+                                  <Mail className="h-4 w-4" />
+                                </button>
+                              )}
+                            </div>
+                          </td>
+
+                          {/* Joining Date */}
+                          <td className="px-4 py-3">
+                            <span className="text-sm text-gray-600">
+                              {employee.joiningDate
+                                ? new Date(employee.joiningDate).toLocaleDateString(
+                                  "en-GB",
+                                  {
+                                    day: "2-digit",
+                                    month: "short",
+                                    year: "numeric",
+                                  },
+                                )
+                                : "N/A"}
+                            </span>
+                          </td>
+
+                          {/* Status */}
+                          <td className="px-4 py-3">
+                            <button
+                              onClick={() => handleToggleStatus(employee.id)}
+                              className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full cursor-pointer transition duration-200 ${employee.status === "active"
+                                ? "bg-green-100 text-green-700 hover:bg-green-200"
+                                : "bg-red-100 text-red-700 hover:bg-red-200"
+                                }`}
+                            >
+                              <span
+                                className={`w-1.5 h-1.5 rounded-full ${employee.status === "active"
+                                  ? "bg-green-500"
+                                  : "bg-red-500"
+                                  }`}
+                              ></span>
+                              {employee.status === "active" ? "Active" : "Inactive"}
+                            </button>
+                          </td>
+
+                          {/* Actions */}
+                          <td className="px-4 py-3">
+                            <div className="flex items-center justify-end gap-1">
+                              <button
+                                onClick={() => handleViewProfile(employee)}
+                                className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-blue-600 transition duration-200"
+                                title="View Profile"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setEditingEmployee(employee);
+                                  setShowEditModal(true);
+                                }}
+                                className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-amber-600 transition duration-200"
+                                title="Edit"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteEmployee(employee.id)}
+                                className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600 transition duration-200"
+                                title="Delete"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
-          </div>
-        )}
 
-        {/* Load More */}
-        <div className="text-center mt-8">
-          <button className="flex items-center gap-2 px-6 py-3 bg-[#349dff] text-white rounded-xl hover:bg-[#2980db] transition duration-200 shadow-sm mx-auto">
-            Load More
-          </button>
-        </div>
-      </div>
+            {/* Summary Footer */}
+            {sortedEmployees.length > 0 && (
+              <div className="mt-6 bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <Users className="h-5 w-5 text-blue-500" />
+                      <span className="text-sm text-gray-600">
+                        Showing{" "}
+                        <span className="font-semibold text-gray-900">
+                          {sortedEmployees.length}
+                        </span>{" "}
+                        of{" "}
+                        <span className="font-semibold text-gray-900">
+                          {employees.length}
+                        </span>{" "}
+                        employees
+                      </span>
+                    </div>
+                    <div className="h-4 w-px bg-gray-300"></div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-5 w-5 text-green-500" />
+                      <span className="text-sm text-gray-600">
+                        Active:{" "}
+                        <span className="font-semibold text-green-600">
+                          {employees.filter((e) => e.status === "active").length}
+                        </span>
+                      </span>
+                    </div>
+                    <div className="h-4 w-px bg-gray-300"></div>
+                    <div className="flex items-center gap-2">
+                      <XCircle className="h-5 w-5 text-red-500" />
+                      <span className="text-sm text-gray-600">
+                        Inactive:{" "}
+                        <span className="font-semibold text-red-600">
+                          {employees.filter((e) => e.status === "inactive").length}
+                        </span>
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    Last updated: {new Date().toLocaleTimeString()}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Load More */}
+            <div className="text-center mt-8">
+              <button className="flex items-center gap-2 px-6 py-3 bg-[#349dff] text-white rounded-xl hover:bg-[#2980db] transition duration-200 shadow-sm mx-auto">
+                Load More
+              </button>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Modals */}
-      {showAddModal && (
-        <AddEmployeeModal
-          onClose={() => setShowAddModal(false)}
-          onSave={handleAddEmployee}
-        />
-      )}
+      {
+        showAddModal && (
+          <AddEmployeeModal
+            onClose={() => setShowAddModal(false)}
+            onSave={handleAddEmployee}
+          />
+        )
+      }
 
-      {showEditModal && editingEmployee && (
-        <EditEmployeeModal
-          employee={editingEmployee}
-          onClose={() => {
-            setShowEditModal(false);
-            setEditingEmployee(null);
-          }}
-          onSave={handleEditEmployee}
-          onUpdateEmployee={handleUpdateEmployee}
-        />
-      )}
+      {
+        showEditModal && editingEmployee && (
+          <EditEmployeeModal
+            employee={editingEmployee}
+            onClose={() => {
+              setShowEditModal(false);
+              setEditingEmployee(null);
+            }}
+            onSave={handleEditEmployee}
+            onUpdateEmployee={handleUpdateEmployee}
+          />
+        )
+      }
 
-      {showProfileModal && selectedProfile && (
-        <ProfileDetailModal
-          employee={selectedProfile}
-          onClose={() => {
-            setShowProfileModal(false);
-            setSelectedProfile(null);
-          }}
-          onEdit={() => {
-            setShowProfileModal(false);
-            setEditingEmployee(selectedProfile);
-            setShowEditModal(true);
-          }}
-          onToggleStatus={() => handleToggleStatus(selectedProfile.id)}
-          onDelete={() => handleDeleteEmployee(selectedProfile.id)}
-          onSendEmail={() => handleSendEmail(selectedProfile.email)}
-          onCall={() => handleCall(selectedProfile.phone)}
-          onCopyEmail={() => handleCopyEmail(selectedProfile.email)}
-          onCopyPhone={() => handleCopyPhone(selectedProfile.phone)}
-        />
-      )}
-    </div>
+      {
+        showProfileModal && selectedProfile && (
+          <ProfileDetailModal
+            employee={selectedProfile}
+            onClose={() => {
+              setShowProfileModal(false);
+              setSelectedProfile(null);
+            }}
+            onEdit={() => {
+              setShowProfileModal(false);
+              setEditingEmployee(selectedProfile);
+              setShowEditModal(true);
+            }}
+            onToggleStatus={() => handleToggleStatus(selectedProfile.id)}
+            onDelete={() => handleDeleteEmployee(selectedProfile.id)}
+            onSendEmail={() => handleSendEmail(selectedProfile.email)}
+            onCall={() => handleCall(selectedProfile.phone)}
+            onCopyEmail={() => handleCopyEmail(selectedProfile.email)}
+            onCopyPhone={() => handleCopyPhone(selectedProfile.phone)}
+          />
+        )
+      }
+    </div >
   );
 };
 
@@ -2862,13 +2874,12 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
                       {salesHistory.map((row) => (
                         <tr
                           key={row.month}
-                          className={`${
-                            row.is_current
-                              ? "bg-blue-50/60"
-                              : row.is_future
-                                ? "bg-gray-50/40"
-                                : "bg-white"
-                          } hover:bg-gray-50 transition-colors`}
+                          className={`${row.is_current
+                            ? "bg-blue-50/60"
+                            : row.is_future
+                              ? "bg-gray-50/40"
+                              : "bg-white"
+                            } hover:bg-gray-50 transition-colors`}
                         >
                           <td className="px-4 py-2.5 font-medium text-gray-800">
                             {row.month_name}
@@ -3057,11 +3068,10 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
               <li className="mr-2" role="presentation">
                 <button
                   type="button"
-                  className={`px-4 py-3 text-sm font-medium rounded-t-lg ${
-                    activeTab === "basic"
-                      ? "text-blue-600 border-b-2 border-blue-600"
-                      : "text-gray-500 hover:text-gray-700"
-                  }`}
+                  className={`px-4 py-3 text-sm font-medium rounded-t-lg ${activeTab === "basic"
+                    ? "text-blue-600 border-b-2 border-blue-600"
+                    : "text-gray-500 hover:text-gray-700"
+                    }`}
                   onClick={() => setActiveTab("basic")}
                 >
                   Basic Information
@@ -3070,11 +3080,10 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
               <li className="mr-2" role="presentation">
                 <button
                   type="button"
-                  className={`px-4 py-3 text-sm font-medium rounded-t-lg ${
-                    activeTab === "salary"
-                      ? "text-blue-600 border-b-2 border-blue-600"
-                      : "text-gray-500 hover:text-gray-700"
-                  }`}
+                  className={`px-4 py-3 text-sm font-medium rounded-t-lg ${activeTab === "salary"
+                    ? "text-blue-600 border-b-2 border-blue-600"
+                    : "text-gray-500 hover:text-gray-700"
+                    }`}
                   onClick={() => setActiveTab("salary")}
                 >
                   Salary & Allowances
@@ -3083,11 +3092,10 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
               <li role="presentation">
                 <button
                   type="button"
-                  className={`px-4 py-3 text-sm font-medium rounded-t-lg ${
-                    activeTab === "resources"
-                      ? "text-blue-600 border-b-2 border-blue-600"
-                      : "text-gray-500 hover:text-gray-700"
-                  }`}
+                  className={`px-4 py-3 text-sm font-medium rounded-t-lg ${activeTab === "resources"
+                    ? "text-blue-600 border-b-2 border-blue-600"
+                    : "text-gray-500 hover:text-gray-700"
+                    }`}
                   onClick={() => setActiveTab("resources")}
                 >
                   Resources
@@ -3097,11 +3105,10 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
                 <li className="mr-2" role="presentation">
                   <button
                     type="button"
-                    className={`px-4 py-3 text-sm font-medium rounded-t-lg ${
-                      activeTab === "salesTarget"
-                        ? "text-blue-600 border-b-2 border-blue-600"
-                        : "text-gray-500 hover:text-gray-700"
-                    }`}
+                    className={`px-4 py-3 text-sm font-medium rounded-t-lg ${activeTab === "salesTarget"
+                      ? "text-blue-600 border-b-2 border-blue-600"
+                      : "text-gray-500 hover:text-gray-700"
+                      }`}
                     onClick={() => setActiveTab("salesTarget")}
                   >
                     Sales Target
@@ -3177,7 +3184,7 @@ const ProfileDetailModal = ({
       const currentMonth = currentDate.getMonth() + 1;
 
       const response = await fetch(
-        `${process.env.REACT_APP_API_URL || "http://100.118.172.21:5000"}/api/v1/sales-targets/${employeeId}?month=${currentMonth}&year=${currentYear}`,
+        `${process.env.REACT_APP_API_URL || "http://100.114.9.93:5000"}/api/v1/sales-targets/${employeeId}?month=${currentMonth}&year=${currentYear}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -3354,11 +3361,10 @@ const ProfileDetailModal = ({
                 <div className="text-sm text-blue-600">Revenue Achieved</div>
               </div>
               <div
-                className={`text-2xl font-bold ${
-                  employee.achieved >= employee.target
-                    ? "text-green-600"
-                    : "text-orange-600"
-                }`}
+                className={`text-2xl font-bold ${employee.achieved >= employee.target
+                  ? "text-green-600"
+                  : "text-orange-600"
+                  }`}
               >
                 ${(employee.achieved || 0).toLocaleString()}
               </div>
@@ -3850,7 +3856,7 @@ const ProfileDetailModal = ({
                         100,
                         Math.round(
                           (salesTarget.achieved / salesTarget.monthly_target) *
-                            100,
+                          100,
                         ),
                       )}
                       %

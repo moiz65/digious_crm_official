@@ -258,7 +258,7 @@ const EmployeeSalesPage = () => {
       const targetMonth = selectedDate.getMonth() + 1;
 
       const response = await fetch(
-        `${process.env.REACT_APP_API_URL || "http://100.118.172.21:5000"}/api/v1/sales-targets/${employeeId}?month=${targetMonth}&year=${targetYear}`,
+        `${process.env.REACT_APP_API_URL || "http://100.114.9.93:5000"}/api/v1/sales-targets/${employeeId}?month=${targetMonth}&year=${targetYear}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -294,7 +294,7 @@ const EmployeeSalesPage = () => {
   const merchants = [
     "Ziffs PayPal",
     "Stripe",
-    "Digious PayPal",
+    "CashApp",
     "Innovative PayPal",
     "Crypto",
     "Invoice",
@@ -847,7 +847,7 @@ const EmployeeSalesPage = () => {
           // Optional: Create category in categories table (if you want)
           try {
             const newCategoryResponse = await fetch(
-              `${process.env.REACT_APP_API_URL || "http://100.118.172.21:5000"}/api/v1/sales-categories`,
+              `${process.env.REACT_APP_API_URL || "http://100.114.9.93:5000"}/api/v1/sales-categories`,
               {
                 method: "POST",
                 headers: {
@@ -1136,7 +1136,7 @@ const EmployeeSalesPage = () => {
               {/* Total Sales */}
               <div className="col-span-2 sm:col-span-1">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Total Sales ($) *
+                  Total Sale Amount ($) *
                 </label>
                 <input
                   type="number"

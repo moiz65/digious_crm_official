@@ -3,7 +3,7 @@ const router = express.Router();
 const zkTimeController = require("./controllers/zkTimeController");
 
 // Device management
-// router.get("/connect", zkTimeController.connectDevice);
+router.get("/connect", zkTimeController.connectDevice);
 router.get("/device-info", zkTimeController.getDeviceInfo);
 router.get("/device-time", zkTimeController.getDeviceTime);
 router.get("/disconnect", zkTimeController.disconnectDevice);
@@ -21,5 +21,14 @@ router.get("/users/:userId", zkTimeController.getUserById);
 router.post("/users/create", zkTimeController.createUser);
 router.put("/users/:userId", zkTimeController.updateUser);
 router.delete("/users/:userId", zkTimeController.deleteUser);
+
+
+router.post("/sync-all", zkTimeController.syncAllEmployeesAttendance);
+// Get sync job status
+router.get("/sync-status/:jobId", zkTimeController.getSyncStatus);
+// Get sync job logs
+router.get("/sync-logs/:jobId", zkTimeController.getSyncLogs);
+// Get all sync jobs (history)
+router.get("/sync-jobs", zkTimeController.getSyncJobs);
 
 module.exports = router;

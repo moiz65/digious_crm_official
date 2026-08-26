@@ -1084,7 +1084,7 @@ const EmployeeAttendanceDashboard = () => {
                     )}
 
                     <div className="flex gap-4 mb-4">
-                      <button
+                      {/* <button
                         onClick={handleCheckIn}
                         disabled={
                           attendanceData?.check_in_time ||
@@ -1099,7 +1099,7 @@ const EmployeeAttendanceDashboard = () => {
                       >
                         <LogIn className="w-5 h-5 inline mr-2" />
                         Check In
-                      </button>
+                      </button> */}
 
                       <button
                         onClick={handleCheckOut}

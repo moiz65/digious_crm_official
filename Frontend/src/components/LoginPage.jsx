@@ -108,7 +108,8 @@ const LoginPage = () => {
           email: data.data.email,
           name: data.data.name,
           employeeId: data.data.employeeId,
-          department: data.data.department
+          department: data.data.department,
+          device_user_id: data.data.device_user_id
         }, userRole, data.data.token);
 
         // Collect additional device info in background (non-blocking)

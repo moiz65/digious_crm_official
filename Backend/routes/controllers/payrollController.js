@@ -609,9 +609,9 @@ const generatePayroll = async (req, res) => {
           casualFromAbsent +
           (unlinkedForThisMonth > 0
             ? Math.min(
-                parseInt(leaveBalance.casual_used) || 0,
-                unlinkedForThisMonth,
-              )
+              parseInt(leaveBalance.casual_used) || 0,
+              unlinkedForThisMonth,
+            )
             : 0);
         const sickLeaveDays = sickFromAbsent;
         const annualLeaveDays = annualFromAbsent;
@@ -1220,14 +1220,21 @@ const getMyPayslip = async (req, res) => {
 const editPayrollRecord = async (req, res) => {
   try {
     const { id } = req.params;
-    const { bonus, adjustment, adjustment_reason } = req.body;
+    const {
+      bonus,
+      adjustment,
+      adjustment_reason,
+      bonus_reason,
+      net_sales,
+      commission_percentage,
+      commission_amount_usd,
+      commission_amount_pkr,
+      dollar_conversion_rate,
+      month,
+      year
+    } = req.body;
 
-    // Validate inputs
-    const bonusVal = parseFloat(bonus) || 0;
-    const adjustmentVal = parseFloat(adjustment) || 0;
-    const reasonVal = adjustment_reason || null;
-
-    // Get current record to recalculate net salary
+    // Get current record
     const [existing] = await pool.query(
       "SELECT gross_salary, total_deductions, advance_deduction FROM payroll_records WHERE id = ?",
       [id],
@@ -1242,21 +1249,90 @@ const editPayrollRecord = async (req, res) => {
     const grossSalary = parseFloat(existing[0].gross_salary);
     const totalDeductions = parseFloat(existing[0].total_deductions);
     const advanceDeduction = parseFloat(existing[0].advance_deduction) || 0;
+
+    // Parse values
+    const bonusVal = parseFloat(bonus) || 0;
+    const adjustmentVal = parseFloat(adjustment) || 0;
+    const bonusReasonVal = bonus_reason || null;
+    const adjustmentReasonVal = adjustment_reason || null;
+
+    // Sales commission fields
+    const netSalesVal = parseFloat(net_sales) || 0;
+    const commissionPercentVal = parseFloat(commission_percentage) || 0;
+    const commissionUSDVal = parseFloat(commission_amount_usd) || 0;
+    const commissionPKRVal = parseFloat(commission_amount_pkr) || 0;
+    const dollarRateVal = parseFloat(dollar_conversion_rate) || 280;
+
+    // Calculate net salary: gross + bonus + adjustment + commission - deductions - advance
     const newNetSalary =
       grossSalary +
       bonusVal +
-      adjustmentVal -
+      adjustmentVal +
+      commissionPKRVal -
       totalDeductions -
       advanceDeduction;
 
-    const [result] = await pool.query(
-      `
-      UPDATE payroll_records 
-      SET bonus = ?, adjustment = ?, adjustment_reason = ?, net_salary = ?
-      WHERE id = ?
-    `,
-      [bonusVal, adjustmentVal, reasonVal, newNetSalary, id],
-    );
+    // ✅ Build update query dynamically with all fields
+    const fields = [];
+    const values = [];
+
+    // Always update bonus and adjustment
+    fields.push('bonus = ?');
+    values.push(bonusVal);
+
+    fields.push('adjustment = ?');
+    values.push(adjustmentVal);
+
+    fields.push('net_salary = ?');
+    values.push(newNetSalary);
+
+    // Optional fields
+    if (bonus_reason !== undefined) {
+      fields.push('bonus_reason = ?');
+      values.push(bonusReasonVal);
+    }
+
+    if (adjustment_reason !== undefined) {
+      fields.push('adjustment_reason = ?');
+      values.push(adjustmentReasonVal);
+    }
+
+    // ✅ Sales commission fields - ONLY if provided
+    if (net_sales !== undefined) {
+      fields.push('net_sales = ?');
+      values.push(netSalesVal);
+    }
+
+    if (commission_percentage !== undefined) {
+      fields.push('commission_percentage = ?');
+      values.push(commissionPercentVal);
+    }
+
+    if (commission_amount_usd !== undefined) {
+      fields.push('commission_amount_usd = ?');
+      values.push(commissionUSDVal);
+    }
+
+    if (commission_amount_pkr !== undefined) {
+      fields.push('commission_amount_pkr = ?');
+      values.push(commissionPKRVal);
+    }
+
+    if (dollar_conversion_rate !== undefined) {
+      fields.push('dollar_conversion_rate = ?');
+      values.push(dollarRateVal);
+    }
+
+    // Add id at the end
+    values.push(id);
+
+    const query = `UPDATE payroll_records SET ${fields.join(', ')} WHERE id = ?`;
+
+    console.log('📝 [editPayrollRecord] Query:', query);
+    console.log('📝 [editPayrollRecord] Values:', values);
+    console.log('📝 [editPayrollRecord] New Net Salary:', newNetSalary);
+
+    const [result] = await pool.query(query, values);
 
     if (result.affectedRows === 0) {
       return res
@@ -1264,15 +1340,36 @@ const editPayrollRecord = async (req, res) => {
         .json({ success: false, message: "Payroll record not found" });
     }
 
+    // ✅ Fetch updated record to return
+    const [updated] = await pool.query(
+      `SELECT 
+        pr.*,
+        eo.name AS employee_name,
+        eo.employee_id AS employee_code,
+        eo.department
+       FROM payroll_records pr
+       JOIN employee_onboarding eo ON eo.id = pr.employee_id
+       WHERE pr.id = ?`,
+      [id]
+    );
+
     return res.status(200).json({
       success: true,
       message: "Payroll record updated successfully",
       data: {
         id: parseInt(id),
         bonus: bonusVal,
+        bonus_reason: bonusReasonVal,
         adjustment: adjustmentVal,
-        adjustment_reason: reasonVal,
+        adjustment_reason: adjustmentReasonVal,
+        net_sales: netSalesVal,
+        commission_percentage: commissionPercentVal,
+        commission_amount_usd: commissionUSDVal,
+        commission_amount_pkr: commissionPKRVal,
+        dollar_conversion_rate: dollarRateVal,
         net_salary: newNetSalary,
+        employee_name: updated[0]?.employee_name,
+        department: updated[0]?.department,
       },
     });
   } catch (error) {
