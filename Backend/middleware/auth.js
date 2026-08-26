@@ -27,7 +27,7 @@ const authMiddleware = async (req, res, next) => {
     // Enhanced with better error handling and fallback
     try {
       console.log('🔐 [Auth Middleware] Checking session token in database...');
-      const [rows] = await pool.query(
+      const [rows] = await pool.query (
         `SELECT id, session_token, is_active FROM user_system_info WHERE session_token = ? LIMIT 1`,
         [token]
       );

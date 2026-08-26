@@ -15,7 +15,6 @@ const pool = require("./config/database");
 const app = express();
 const server = http.createServer(app);  // ✅ ONLY ADD THIS - create HTTP server
 
-
 // Serve static files for uploads
 app.use("/uploads", express.static("uploads"));
 

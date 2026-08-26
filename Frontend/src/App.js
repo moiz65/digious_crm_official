@@ -32,6 +32,7 @@ import AdminAdvances from "./pages/Admin/AdminAdvances";
 import AdminMemos from "./pages/Admin/AdminMemos";
 import Customer from "./pages/SuperAdmin/Customer";
 import Invoice from "./pages/SuperAdmin/Invoice";
+import RolesManagement from "./pages/Admin/RolesManagement";
 
 // HR Pages
 import HRDashboard from "./pages/HR/HRDashboard";
@@ -73,12 +74,12 @@ const ChatDashboardWrapper = () => {
     "/change-password",
     "/unauthorized",
   ];
-  
+
   // ✅ ONLY show ChatDashboard on non-public routes
   if (publicRoutes.includes(location.pathname)) {
     return null;
   }
-  
+
   return (
     <ProtectedRoute>
       <ChatDashboard />
@@ -423,11 +424,20 @@ function AppContent() {
             }
           />
 
+          <Route
+            path="/admin/roles"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <RolesManagement />
+              </ProtectedRoute>
+            }
+          />
+
           {/* Default redirect - LAST */}
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
-        
+
         {/* ✅ ChatDashboard ONLY on protected routes */}
         <ChatDashboardWrapper />
       </div>

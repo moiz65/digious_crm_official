@@ -334,7 +334,7 @@ exports.verifyPasscode = async (req, res) => {
     ).toString("base64");
 
     const responseMessage = isAdmin
-      ? "✅ Admin verified! (Default passcode: admin123)"
+      ? "✅ Admin verified!"
       : "Passcode verified successfully";
 
     res.json({
@@ -357,6 +357,7 @@ exports.verifyPasscode = async (req, res) => {
 };
 
 // Reset passcode
+// Reset passcode - FIXED for both Admin and Employee
 exports.resetPasscode = async (req, res) => {
   const connection = await pool.getConnection();
   try {
