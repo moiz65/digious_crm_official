@@ -2,7 +2,7 @@
   "name": "digiouscrm",
   "version": "0.1.0",
   "private": true,
-  "proxy": "http://100.114.9.93:5000",
+  "proxy": "http://100.118.172.21:5000",
   "dependencies": {
     "@babel/parser": "^7.28.5",
     "@testing-library/dom": "^10.4.1",

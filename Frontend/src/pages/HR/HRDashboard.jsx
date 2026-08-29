@@ -219,7 +219,7 @@ const HRDashboard = () => {
 
       // Fetch all active employees first
       const employeesRes = await fetch(
-        `${process.env.REACT_APP_API_URL || "http://100.114.9.93:5000"}/api/v1/employees?limit=1000`,
+        `${process.env.REACT_APP_API_URL || "http://100.118.172.21:5000"}/api/v1/employees?limit=1000`,
         { headers },
       );
       const employeesData = await employeesRes.json();
@@ -238,7 +238,7 @@ const HRDashboard = () => {
       const breakPromises = activeEmployees.map(async (employee) => {
         try {
           const breakRes = await fetch(
-            `${process.env.REACT_APP_API_URL || "http://100.114.9.93:5000"}/api/v1/attendance/ongoing-breaks/${employee.id}`,
+            `${process.env.REACT_APP_API_URL || "http://100.118.172.21:5000"}/api/v1/attendance/ongoing-breaks/${employee.id}`,
             { headers },
           );
           const breakData = await breakRes.json();

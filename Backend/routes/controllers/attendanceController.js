@@ -4156,89 +4156,81 @@ exports.fixCheckoutById = async (req, res) => {
 exports.getTodayAbsentEmployees = async (req, res) => {
   let connection;
   try {
-    const today = getLocalDateString(getPakistanDate());
+    const now = getPakistanDate();
+    const currentHour = now.getHours();
+    const currentMin = now.getMinutes();
+    const currentTotalMinutes = currentHour * 60 + currentMin;
+
+    // Match the ACTIVE SHIFT date logic used elsewhere:
+    // - 21:00 to 23:59 => shift belongs to today
+    // - 00:00 to 08:59 => shift belongs to yesterday
+    // - 09:00 to 20:59 => current day shift is active
+    let activeShiftDate = getLocalDateString(now);
+    if (currentTotalMinutes < 9 * 60) {
+      const yesterday = new Date(now);
+      yesterday.setDate(yesterday.getDate() - 1);
+      activeShiftDate = getLocalDateString(yesterday);
+    }
+
     connection = await pool.getConnection();
 
-    // Get all active employees
     const [allEmployees] = await connection.query(
-      `SELECT id, email, name, department, status 
-       FROM employee_onboarding 
+      `SELECT id, email, name, department, designation, status
+       FROM employee_onboarding
        WHERE status = 'Active'`,
     );
 
-    // Get employees who checked in today
-    const [checkedInToday] = await connection.query(
-      `SELECT DISTINCT employee_id FROM Employee_Attendance WHERE attendance_date = ?`,
-      [today],
+    const [absentRows] = await connection.query(
+      `SELECT e.id,
+              e.email,
+              e.name,
+              e.department,
+              e.designation AS position,
+              e.status
+       FROM employee_onboarding e
+       LEFT JOIN Employee_Attendance a
+         ON a.employee_id = e.id
+        AND a.attendance_date = ?
+        AND a.check_in_time IS NOT NULL
+       WHERE e.status = 'Active'
+         AND a.id IS NULL
+       ORDER BY e.name ASC`,
+      [activeShiftDate],
     );
 
-    const checkedInIds = new Set(checkedInToday.map((e) => e.employee_id));
+    const absentEmployees = absentRows.map((emp) => ({
+      id: emp.id,
+      employee_id: emp.id,
+      email: emp.email,
+      name: emp.name,
+      department: emp.department,
+      position: emp.position || "Employee",
+      absent_date: activeShiftDate,
+      reason_type: "No Check-in",
+      reason: "No Check-in",
+      is_approved: 0,
+      remarks: "System generated: no attendance check-in found",
+      created_at: new Date(),
+      updated_at: new Date(),
+    }));
 
-    // Find employees who haven't checked in
-    const absentEmployees = allEmployees.filter(
-      (emp) => !checkedInIds.has(emp.id),
-    );
-
-    // Auto-generate absent records for those who haven't checked in
-    for (const emp of absentEmployees) {
-      // Check if absent record already exists
-      const [existingAbsent] = await connection.query(
-        `SELECT id FROM Employee_Absent WHERE employee_id = ? AND absent_date = ?`,
-        [emp.id, today],
-      );
-
-      if (existingAbsent.length === 0) {
-        // Create absence record
-        await connection.query(
-          `INSERT INTO Employee_Absent 
-           (employee_id, email, name, absent_date, reason_type, reason, is_approved, remarks, created_at, updated_at) 
-           VALUES (?, ?, ?, ?, 'No Check-in', 'Auto-generated: Employee did not check in', 0, 'System auto-marked', NOW(), NOW())`,
-          [emp.id, emp.email, emp.name, today],
-        );
-      }
-    }
-
-    // Get all absent records for today with details
-    const [absenceRecords] = await connection.query(
-      `SELECT 
-        ea.id,
-        ea.employee_id,
-        ea.email,
-        ea.name,
-        ea.absent_date,
-        ea.reason_type,
-        ea.reason,
-        ea.is_approved,
-        ea.approved_by,
-        ea.remarks,
-        ea.created_at,
-        ea.updated_at,
-        eo.department,
-        eo.designation
-       FROM Employee_Absent ea
-       LEFT JOIN employee_onboarding eo ON ea.employee_id = eo.id
-       WHERE ea.absent_date = ?
-       ORDER BY ea.name ASC`,
-      [today],
-    );
+    const absentCount = absentEmployees.length;
+    const totalActiveEmployees = allEmployees.length;
+    const presentCount = totalActiveEmployees - absentCount;
 
     return res.status(200).json({
       success: true,
-      message: `Found ${absenceRecords.length} absent employee(s) for ${today}`,
-      date: today,
-      total_active_employees: allEmployees.length,
-      absent_count: absenceRecords.length,
-      present_count: allEmployees.length - absenceRecords.length,
-      absent_employees: absenceRecords,
+      message: `Found ${absentCount} absent employee(s) for ${activeShiftDate}`,
+      date: activeShiftDate,
+      total_active_employees: totalActiveEmployees,
+      absent_count: absentCount,
+      present_count: presentCount,
+      absent_employees: absentEmployees,
       summary: {
-        not_checked_in: absentEmployees.length,
-        no_check_in_records: absenceRecords.filter(
-          (a) => a.reason_type === "No Check-in",
-        ).length,
-        on_leave: absenceRecords.filter((a) => a.reason_type === "Leave")
-          .length,
-        medical_leave: absenceRecords.filter((a) => a.reason_type === "Medical")
-          .length,
+        not_checked_in: absentCount,
+        no_check_in_records: absentCount,
+        on_leave: 0,
+        medical_leave: 0,
       },
     });
   } catch (error) {

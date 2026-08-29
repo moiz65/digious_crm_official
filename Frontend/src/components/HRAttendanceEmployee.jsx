@@ -355,7 +355,7 @@ export const EmployeeDetailView = ({
         try {
             const token = localStorage.getItem("token");
             const response = await fetch(
-                `${process.env.REACT_APP_API_URL || "http://localhost:5000"}/api/v1/leaves/employee/${employee.id}/leaveBalance`,
+                `${process.env.REACT_APP_API_URL || "http://100.118.172.21:5000"}/api/v1/leaves/employee/${employee.id}/leaveBalance`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,

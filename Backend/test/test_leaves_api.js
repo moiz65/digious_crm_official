@@ -12,7 +12,7 @@
 const http = require('http');
 
 // Configuration
-const BASE_URL = 'http://100.114.9.93:5000';
+const BASE_URL = 'http://100.118.172.21:5000';
 const API_VERSION = 'v1';
 
 // Color codes for console output

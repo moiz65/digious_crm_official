@@ -2223,7 +2223,7 @@ const EmployeePersonalProfileV2 = ({ employeeId: propsEmployeeId, onBack }) => {
                             </div>
                             <div className="flex items-center gap-2 ml-3">
                               <a
-                                href={`http://100.114.9.93:5000/${doc.document_url}`}
+                                href={`http://100.118.172.21:5000/${doc.document_url}`}
                                 target="_blank"
                                 rel="noreferrer"
                                 className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition"
