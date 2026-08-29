@@ -105,7 +105,7 @@ const AttendanceManagement = () => {
   const fetchAllEmployees = useCallback(async () => {
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_API_URL || "http://100.118.172.21:5000"}/api/v1/employees?limit=1000`,
+        `${process.env.REACT_APP_API_URL || "http://100.114.9.93:5000"}/api/v1/employees?limit=1000`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -138,7 +138,7 @@ const AttendanceManagement = () => {
           try {
             const empId = employee.id || employee._id;
             const response = await fetch(
-              `${process.env.REACT_APP_API_URL || "http://100.118.172.21:5000"}/api/v1/attendance/today/${empId}`,
+              `${process.env.REACT_APP_API_URL || "http://100.114.9.93:5000"}/api/v1/attendance/today/${empId}`,
               {
                 headers: {
                   Authorization: `Bearer ${token}`,
@@ -247,7 +247,7 @@ const AttendanceManagement = () => {
       const m = month || detailMonth || selectedMonth;
       const y = year || detailYear || selectedYear;
 
-      const url = `${process.env.REACT_APP_API_URL || "http://100.118.172.21:5000"}/api/v1/attendance/monthly/${actualEmployeeId}?year=${y}&month=${m}`;
+      const url = `${process.env.REACT_APP_API_URL || "http://100.114.9.93:5000"}/api/v1/attendance/monthly/${actualEmployeeId}?year=${y}&month=${m}`;
 
       const response = await fetch(url, {
         headers: {

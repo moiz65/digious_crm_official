@@ -76,7 +76,7 @@ function resolveLog(log) {
     }
 
     const userSn = log.userSn ?? log.uid ?? log.sn ?? log.USER_SN ?? log.user_sn ?? "";
-    const deviceType = log.type ?? log.TYPE ?? log.punch_code ?? null;
+    const deviceType = log.state ?? log.STATE ?? log.punch ?? log.punch_code ?? null;
 
     return {
       raw_user_id: userId,
@@ -100,55 +100,26 @@ function toPakistanTime(recordTimeStr) {
   }
 
   try {
-    let timeStr = String(recordTimeStr).trim();
+    const date = recordTimeStr instanceof Date ? recordTimeStr : new Date(recordTimeStr);
+    if (isNaN(date.getTime())) return null;
 
-    // If it's already a Date object
-    if (recordTimeStr instanceof Date) {
-      const date = recordTimeStr;
-      const pad = (n) => String(n).padStart(2, "0");
-      const pkDate = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-      const pkTime = `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
-      return {
-        pkDatetime: `${pkDate} ${pkTime}`,
-        pkDate,
-        pkHour: date.getHours(),
-      };
-    }
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Karachi",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hourCycle: "h23",
+    }).formatToParts(date).reduce((values, part) => {
+      values[part.type] = part.value;
+      return values;
+    }, {});
 
-    // ============================================================
-    // ✅ NEW: Handle "Tue Jul 11 2023 20:56:04 GMT+0500" format
-    // ============================================================
-    // Try parsing with Date constructor - it handles this format!
-    const date = new Date(timeStr);
-    if (!isNaN(date.getTime())) {
-      const pad = (n) => String(n).padStart(2, "0");
-      const pkDate = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-      const pkTime = `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
-      return {
-        pkDatetime: `${pkDate} ${pkTime}`,
-        pkDate,
-        pkHour: date.getHours(),
-      };
-    }
-
-    // Try "YYYY-MM-DD HH:MM:SS" format
-    let match = timeStr.match(/(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})/);
-    if (match) {
-      const [, year, month, day, hour, minute, second] = match;
-      const dateObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(day),
-        parseInt(hour), parseInt(minute), parseInt(second));
-      const pad = (n) => String(n).padStart(2, "0");
-      const pkDate = `${dateObj.getFullYear()}-${pad(dateObj.getMonth() + 1)}-${pad(dateObj.getDate())}`;
-      const pkTime = `${pad(dateObj.getHours())}:${pad(dateObj.getMinutes())}:${pad(dateObj.getSeconds())}`;
-      return {
-        pkDatetime: `${pkDate} ${pkTime}`,
-        pkDate,
-        pkHour: dateObj.getHours(),
-      };
-    }
-
-    console.log(`⚠️ toPakistanTime: Cannot parse "${timeStr}"`);
-    return null;
+    const pkDate = `${parts.year}-${parts.month}-${parts.day}`;
+    const pkTime = `${parts.hour}:${parts.minute}:${parts.second}`;
+    return { pkDatetime: `${pkDate} ${pkTime}`, pkDate, pkHour: Number(parts.hour) };
 
   } catch (e) {
     console.log(`⚠️ toPakistanTime error:`, e.message);
@@ -160,16 +131,15 @@ function toPakistanTime(recordTimeStr) {
 // FIXED: getPunchType - With more type mappings
 // ============================================================
 function getPunchType(deviceType) {
-  // Handle both number and string types
   const typeMap = {
-    0: "check-out",
-    1: "check-in",
+    0: "check-in",
+    1: "check-out",
     2: "break-out",
     3: "break-in",
     4: "overtime-in",
     5: "overtime-out",
-    '0': "check-out",
-    '1': "check-in",
+    '0': "check-in",
+    '1': "check-out",
     '2': "break-out",
     '3': "break-in",
     '4': "overtime-in",
@@ -181,12 +151,6 @@ function getPunchType(deviceType) {
   };
 
   return typeMap[deviceType] ?? "unknown";
-}
-
-function inferNightShiftPunchType(hour) {
-  if (hour >= 18 && hour <= 23) return 'check-in';
-  if (hour >= 0 && hour <= 8) return 'check-out';
-  return null;
 }
 
 // ============================================================
@@ -217,28 +181,12 @@ function formatLog(log) {
       return null;
     }
 
-    // Get punch label - if null, default to 'check-in' or 'check-out' based on hour
+    // Use the device direction code; do not infer direction from time.
     let punchLabel = getPunchType(resolved.raw_type);
 
     if (punchLabel === 'unknown') {
-      if (log.punch_label) {
-        punchLabel = log.punch_label;
-      } else if (log.type === 1 || log.type === 'IN' || log.type === 'check-in') {
-        punchLabel = 'check-in';
-      } else if (log.type === 0 || log.type === 'OUT' || log.type === 'check-out') {
-        punchLabel = 'check-out';
-      } else {
-        const hour = pk.pkHour;
-        const nightShiftType = inferNightShiftPunchType(hour);
-        if (nightShiftType) {
-          punchLabel = nightShiftType;
-        } else if (hour >= 21 || (hour >= 0 && hour <= 3)) {
-          punchLabel = 'check-in';
-        } else if (hour >= 5 && hour <= 7) {
-          punchLabel = 'check-out';
-        } else {
-          punchLabel = 'unknown';
-        }
+      if (log.punch_label || log.punchLabel) {
+        punchLabel = log.punch_label || log.punchLabel;
       }
     }
 
@@ -264,18 +212,30 @@ function formatLog(log) {
 }
 
 function getTodayPakistan() {
-  const now = new Date();
-  const pad = (n) => String(n).padStart(2, "0");
-  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  return toPakistanTime(new Date()).pkDate;
+}
+
+function shiftDate(dateString, days) {
+  const [year, month, day] = dateString.split("-").map(Number);
+  const date = new Date(year, month - 1, day);
+  date.setDate(date.getDate() + days);
+  return [date.getFullYear(), date.getMonth() + 1, date.getDate()]
+    .map((value, index) => index === 0 ? String(value) : String(value).padStart(2, "0"))
+    .join("-");
+}
+
+function getAttendanceWorkDate(attendanceDate, punchTime) {
+  const hour = Number(punchTime?.split(":")[0]);
+  return hour >= 0 && hour <= 8
+    ? shiftDate(attendanceDate, -1)
+    : attendanceDate;
 }
 
 function getCurrentMonthDateRange() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth();
+  const [year, month] = getTodayPakistan().split("-").map(Number);
   const pad = (n) => String(n).padStart(2, "0");
-  const firstDay = `${year}-${pad(month + 1)}-01`;
-  const lastDay = `${year}-${pad(month + 1)}-${new Date(year, month + 1, 0).getDate()}`;
+  const firstDay = `${year}-${pad(month)}-01`;
+  const lastDay = `${year}-${pad(month)}-${new Date(year, month, 0).getDate()}`;
   return { from: firstDay, to: lastDay };
 }
 
@@ -328,7 +288,7 @@ function sleep(ms) {
 
 async function connectToDevice() {
   if (connectionLock) {
-    await sleep(500);
+    while (connectionLock) await sleep(100);
     if (isConnected && zkInstance) return { success: true };
   }
 
@@ -349,8 +309,8 @@ async function connectToDevice() {
         zkInstance = new Zkteco(
           zkConfig.ip,
           zkConfig.port,
-          zkConfig.inport,
           zkConfig.timeout,
+          zkConfig.inport,
         );
 
         await zkInstance.createSocket();
@@ -490,19 +450,16 @@ exports.getAttendanceByUserId = async (req, res) => {
     });
 
     if (from || to) {
-      const fromDate = from ? new Date(from) : null;
-      const toDate = to ? new Date(to) : null;
-
       userLogs = userLogs.filter((log) => {
         const resolved = resolveLog(log);
         if (!resolved?.raw_time) return false;
 
-        const logDate = new Date(resolved.raw_time);
-        if (isNaN(logDate.getTime())) return false;
+        const logDate = toPakistanTime(resolved.raw_time)?.pkDate;
+        if (!logDate) return false;
 
-        if (fromDate && toDate) return logDate >= fromDate && logDate <= toDate;
-        if (fromDate) return logDate >= fromDate;
-        if (toDate) return logDate <= toDate;
+        if (from && to) return logDate >= from && logDate <= to;
+        if (from) return logDate >= from;
+        if (to) return logDate <= to;
         return true;
       });
     }
@@ -808,19 +765,16 @@ async function getAttendanceByUserIdInternal(userId, from = null, to = null) {
     console.log(`🔍 [INTERNAL] Found ${userLogs.length} logs for user ${userId}`);
 
     if (from || to) {
-      const fromDate = from ? new Date(from) : null;
-      const toDate = to ? new Date(to) : null;
-
       userLogs = userLogs.filter((log) => {
         const resolved = resolveLog(log);
         if (!resolved?.raw_time) return false;
 
-        const logDate = new Date(resolved.raw_time);
-        if (isNaN(logDate.getTime())) return false;
+        const logDate = toPakistanTime(resolved.raw_time)?.pkDate;
+        if (!logDate) return false;
 
-        if (fromDate && toDate) return logDate >= fromDate && logDate <= toDate;
-        if (fromDate) return logDate >= fromDate;
-        if (toDate) return logDate <= toDate;
+        if (from && to) return logDate >= from && logDate <= to;
+        if (from) return logDate >= from;
+        if (to) return logDate <= to;
         return true;
       });
     }
@@ -1248,12 +1202,30 @@ async function processEmployeeAttendance(connection, jobId, employee, dateFrom, 
       return true;
     });
 
-    console.log(`📊 Found ${uniqueDeviceLogs.length} unique device records for employee ${employee.employee_id}`);
+    // Save punches in work-date order, with IN before OUT for each shift.
+    // This prevents an OUT received before its IN from being discarded.
+    const orderedDeviceLogs = uniqueDeviceLogs.sort((firstLog, secondLog) => {
+      const firstWorkDate = getAttendanceWorkDate(firstLog.punch_date_date, firstLog.punch_time);
+      const secondWorkDate = getAttendanceWorkDate(secondLog.punch_date_date, secondLog.punch_time);
+      if (firstWorkDate !== secondWorkDate) {
+        return firstWorkDate.localeCompare(secondWorkDate);
+      }
+
+      const firstIsCheckout = firstLog.punch_label === 'check-out';
+      const secondIsCheckout = secondLog.punch_label === 'check-out';
+      if (firstIsCheckout !== secondIsCheckout) {
+        return firstIsCheckout ? 1 : -1;
+      }
+
+      return String(firstLog.punch_time).localeCompare(String(secondLog.punch_time));
+    });
+
+    console.log(`📊 Found ${orderedDeviceLogs.length} unique device records for employee ${employee.employee_id}`);
 
     let syncedCount = 0;
     let failedCount = 0;
 
-    for (const log of uniqueDeviceLogs) {
+    for (const log of orderedDeviceLogs) {
       try {
         const saved = await saveAttendanceRecord(connection, employee, log, jobId);
         if (saved) {
@@ -1346,120 +1318,103 @@ async function fetchDeviceAttendanceFromCache(deviceUserId, dateFrom, dateTo) {
 async function saveAttendanceRecord(connection, employee, log, jobId) {
   try {
     const fullDateTime = log.attendance_time;
-    const deviceDate = log.punch_date_date || (fullDateTime ? String(fullDateTime).split(" ")[0] : null);
+    let deviceDate = log.punch_date_date;
+    let punchTime = log.punch_time;
 
-    if (!fullDateTime) return false;
-    if (!deviceDate) return false;
+    if (!fullDateTime && !punchTime) return false;
 
-    const [datePart, timePart] = String(fullDateTime).split(/\s+/);
-    const punchTime = timePart || log.punch_time || (typeof fullDateTime === 'string' && fullDateTime.includes(" ") ? fullDateTime.split(" ").slice(-1)[0] : null);
-
-    if (!punchTime) return false;
-
-    const [hour] = punchTime.split(":").map(Number);
+    // Extract date and time
     let attendanceDate = deviceDate;
-    if (hour >= 0 && hour <= 6) {
-      const date = new Date(deviceDate);
-      date.setDate(date.getDate() - 1);
-      attendanceDate = date.toISOString().split('T')[0];
+    if (!attendanceDate && fullDateTime) {
+      attendanceDate = fullDateTime.split(' ')[0];
+    }
+    if (!punchTime && fullDateTime) {
+      punchTime = fullDateTime.split(' ')[1];
     }
 
-    let punchType = 'IN';
+    if (!punchTime || !attendanceDate) return false;
+
+    const hour = parseInt(punchTime.split(':')[0]);
+
+    // Use the device-provided punch direction. This device maps 0 to IN and 1 to OUT.
+    let punchType = null;
+    let finalDate = attendanceDate;
+
     if (log.punch_label === 'check-in') {
       punchType = 'IN';
     } else if (log.punch_label === 'check-out') {
       punchType = 'OUT';
-    } else {
-      const nightShiftType = inferNightShiftPunchType(hour);
-      if (nightShiftType === 'check-in') {
-        punchType = 'IN';
-      } else if (nightShiftType === 'check-out') {
-        punchType = 'OUT';
-      } else if (hour >= 21 || (hour >= 0 && hour <= 3)) {
-        punchType = 'IN';
-      } else if (hour >= 5 && hour <= 7) {
-        punchType = 'OUT';
-      } else {
-        return false;
-      }
     }
 
+    if (!punchType) return false;
+
+    // Keep all early-morning punches with the previous night's shift.
+    if (hour <= 8) finalDate = getAttendanceWorkDate(attendanceDate, punchTime);
+
+    console.log(`📌 [DEBUG] Employee: ${employee.employee_id}, Hour: ${hour}, Type: ${punchType}, Date: ${finalDate} (original: ${attendanceDate})`);
+
+    // ============================================================
+    // CHECK EXISTING RECORD
+    // ============================================================
     const [existing] = await connection.query(
       `SELECT id, check_in_time, check_out_time FROM Employee_Attendance 
        WHERE employee_id = ? AND attendance_date = ?`,
-      [employee.id, attendanceDate]
+      [employee.id, finalDate]
     );
 
     if (existing.length > 0) {
       const record = existing[0];
 
-      if (punchType === 'IN' && record.check_in_time) {
-        const sameIn = String(record.check_in_time).trim() === String(punchTime).trim();
-        if (sameIn) {
-          console.log(`⏭️ Duplicate IN for employee ${employee.employee_id} on ${attendanceDate} at ${punchTime}`);
-          return false;
-        }
+      // Skip exact duplicate times
+      if (punchType === 'IN' && record.check_in_time === punchTime) {
+        console.log(`⏭️ Duplicate IN for ${employee.employee_id} on ${finalDate} at ${punchTime}`);
+        return false;
+      }
+      if (punchType === 'OUT' && record.check_out_time === punchTime) {
+        console.log(`⏭️ Duplicate OUT for ${employee.employee_id} on ${finalDate} at ${punchTime}`);
+        return false;
       }
 
-      if (punchType === 'OUT' && record.check_out_time) {
-        const sameOut = String(record.check_out_time).trim() === String(punchTime).trim();
-        if (sameOut) {
-          console.log(`⏭️ Duplicate OUT for employee ${employee.employee_id} on ${attendanceDate} at ${punchTime}`);
-          return false;
-        }
-      }
-
+      // Update missing field
       if (punchType === 'IN' && !record.check_in_time) {
+        console.log(`🔄 Updating IN for ${employee.employee_id} on ${finalDate} at ${punchTime}`);
         await connection.query(
           `UPDATE Employee_Attendance 
            SET check_in_time = ?, 
                device_info = 'ZKTeco Device',
                is_device_sync = 1
            WHERE employee_id = ? AND attendance_date = ?`,
-          [punchTime, employee.id, attendanceDate]
+          [punchTime, employee.id, finalDate]
         );
-
-        await updateAttendanceStatus(connection, employee.id, attendanceDate);
-
-        await connection.query(
-          `INSERT INTO attendance_sync_logs 
-           (job_id, employee_id, employee_code, status, record_date, punch_type, message)
-           VALUES (?, ?, ?, 'updated', ?, ?, 'Updated IN time from device')`,
-          [jobId, employee.id, employee.employee_id, attendanceDate, punchType]
-        );
+        await updateAttendanceStatus(connection, employee.id, finalDate);
+        await logSync(jobId, employee, finalDate, punchType, 'updated');
         return true;
       }
 
       if (punchType === 'OUT' && !record.check_out_time) {
+        console.log(`🔄 Updating OUT for ${employee.employee_id} on ${finalDate} at ${punchTime}`);
         await connection.query(
           `UPDATE Employee_Attendance 
            SET check_out_time = ?, 
                device_info = 'ZKTeco Device',
                is_device_sync = 1
            WHERE employee_id = ? AND attendance_date = ?`,
-          [punchTime, employee.id, attendanceDate]
+          [punchTime, employee.id, finalDate]
         );
-
-        const [rowAfterOut] = await connection.query(
-          `SELECT check_in_time, check_out_time FROM Employee_Attendance WHERE employee_id = ? AND attendance_date = ?`,
-          [employee.id, attendanceDate]
-        );
-        if (rowAfterOut[0]?.check_in_time) {
-          await updateAttendanceStatus(connection, employee.id, attendanceDate);
-          await recalculateWorkingHours(connection, employee.id, attendanceDate);
-        }
-
-        await connection.query(
-          `INSERT INTO attendance_sync_logs 
-           (job_id, employee_id, employee_code, status, record_date, punch_type, message)
-           VALUES (?, ?, ?, 'updated', ?, ?, 'Updated OUT time from device')`,
-          [jobId, employee.id, employee.employee_id, attendanceDate, punchType]
-        );
+        await recalculateWorkingHours(connection, employee.id, finalDate);
+        await updateAttendanceStatus(connection, employee.id, finalDate);
+        await logSync(jobId, employee, finalDate, punchType, 'updated');
         return true;
       }
 
+      console.log(`⏭️ Record already complete for ${employee.employee_id} on ${finalDate}`);
       return false;
     }
+
+    // ============================================================
+    // INSERT NEW RECORD
+    // ============================================================
+    console.log(`🆕 Inserting ${punchType} for ${employee.employee_id} on ${finalDate} at ${punchTime}`);
 
     await connection.query(
       `INSERT INTO Employee_Attendance 
@@ -1473,31 +1428,19 @@ async function saveAttendanceRecord(connection, employee, log, jobId) {
         employee.id,
         employee.email || null,
         employee.name || null,
-        attendanceDate,
+        finalDate,
         punchType === 'IN' ? punchTime : null,
         punchType === 'OUT' ? punchTime : null
       ]
     );
 
-    const [insertedRow] = await connection.query(
-      `SELECT check_in_time, check_out_time FROM Employee_Attendance WHERE employee_id = ? AND attendance_date = ?`,
-      [employee.id, attendanceDate]
-    );
-
-    if (insertedRow[0]?.check_in_time) {
-      await updateAttendanceStatus(connection, employee.id, attendanceDate);
-    }
-    if (insertedRow[0]?.check_in_time && insertedRow[0]?.check_out_time) {
-      await recalculateWorkingHours(connection, employee.id, attendanceDate);
+    // Update status and working hours
+    await updateAttendanceStatus(connection, employee.id, finalDate);
+    if (punchType === 'OUT') {
+      await recalculateWorkingHours(connection, employee.id, finalDate);
     }
 
-    await connection.query(
-      `INSERT INTO attendance_sync_logs 
-       (job_id, employee_id, employee_code, status, record_date, punch_type, message)
-       VALUES (?, ?, ?, 'inserted', ?, ?, 'New ${punchType} record from device')`,
-      [jobId, employee.id, employee.employee_id, attendanceDate, punchType]
-    );
-
+    await logSync(jobId, employee, finalDate, punchType, 'inserted');
     return true;
 
   } catch (error) {
@@ -1612,8 +1555,7 @@ async function updateAttendanceStatus(connection, employeeId, attendanceDate) {
 
     // ⭐ SHIFT CONSTANTS
     const shiftStart = 21 * 60;        // 9:00 PM
-    const mlAfterTime = 21 * 60 + 15;  // 9:15 PM
-    const lateAfterTime = 21 * 60 + 30; // 9:30 PM
+    const lateAfterTime = 21 * 60 + 15; // 9:15 PM grace period ends
     const sixAM = 6 * 60;              // 6:00 AM
     const nineAM = 9 * 60;             // 9:00 AM
     const midnight = 0;                // 12:00 AM
@@ -1644,23 +1586,14 @@ async function updateAttendanceStatus(connection, employeeId, attendanceDate) {
     // ============================================================
     // ⭐ 21:00 - 21:15 → Present (On time night shift)
     // ============================================================
-    else if (totalMinutes >= shiftStart && totalMinutes <= mlAfterTime) {
+    else if (totalMinutes >= shiftStart && totalMinutes <= lateAfterTime) {
       status = "Present";
       onTime = 1;
       lateByMinutes = 0;
       console.log(`✅ [Present] Night shift on time at ${checkInTime}`);
     }
     // ============================================================
-    // ⭐ 21:15 - 21:30 → ML (Marginal Late)
-    // ============================================================
-    else if (totalMinutes > mlAfterTime && totalMinutes <= lateAfterTime) {
-      status = "ML";
-      onTime = 0;
-      lateByMinutes = totalMinutes - mlAfterTime;
-      console.log(`🔵 [ML] Marginal Late at ${checkInTime} (${lateByMinutes}m)`);
-    }
-    // ============================================================
-    // ⭐ 21:30 - 23:59 → Late
+    // ⭐ 21:16 - 23:59 → Late
     // ============================================================
     else if (totalMinutes > lateAfterTime && totalMinutes <= 23 * 60 + 59) {
       status = "Late";
@@ -1674,8 +1607,8 @@ async function updateAttendanceStatus(connection, employeeId, attendanceDate) {
     else if (totalMinutes > sixAM && totalMinutes < nineAM) {
       status = "Late";
       onTime = 0;
-      // 9:30 PM (1410 min) se calculate karo
-      const previousDayLateAfter = 21 * 60 + 30; // 9:30 PM
+      // Calculate morning lateness from the 9:15 PM grace cutoff.
+      const previousDayLateAfter = lateAfterTime;
       lateByMinutes = (24 * 60 - previousDayLateAfter) + totalMinutes;
       console.log(`⏱️ [Late] Morning late at ${checkInTime} (${lateByMinutes}m)`);
     }

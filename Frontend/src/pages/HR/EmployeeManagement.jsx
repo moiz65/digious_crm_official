@@ -26,7 +26,7 @@ const EmployeeManagement = () => {
   const [activeItem, setActiveItem] = useState("employees");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterDept, setFilterDept] = useState("All");
-  const [filterStatus, setFilterStatus] = useState("All"); // New: Active/Inactive filter
+  const [filterStatus, setFilterStatus] = useState("Active"); // New: Active/Inactive filter
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);

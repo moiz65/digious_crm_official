@@ -390,9 +390,9 @@ export const RoleBasedNav = ({ role }) => {
       { id: 'my_attendance', label: 'My Attendance', path: '/hr/my-attendance', icon: Calendar, color: 'orange' },
       { id: 'employees', label: 'Team', path: '/hr/employee-management', icon: Users, color: 'purple' },
       { id: 'leaves', label: 'Leave Management', path: '/hr/attendance-corrections', icon: Calendar, color: 'green' },
-      { id: 'attendance', label: 'Attendance', path: '/hr/attendance', icon: ClipboardList, color: 'orange' },
+      { id: 'attendance', label: 'Attendance', path: '/hr/attendance/overview', icon: ClipboardList, color: 'orange' },
       { id: 'applications', label: 'Applications', path: '/hr/applications', icon: FileText, color: 'pink' },
-      { id: 'reports', label: 'Reports', path: '/hr/reports', icon: ChartBar, color: 'teal' }
+      // { id: 'reports', label: 'Reports', path: '/hr/reports', icon: ChartBar, color: 'teal' }
     ],
     employee: [
       { id: 'dashboard', label: 'My Dashboard', path: '/employee/dashboard', icon: LayoutDashboard, color: 'blue' },
@@ -434,7 +434,11 @@ export const RoleBasedNav = ({ role }) => {
         <div className="flex items-center space-x-1 overflow-x-auto scrollbar-hide">
           {items.map((item) => {
             const Icon = item.icon;
-            const isActive = location.pathname === item.path;
+            const isActive = item.id === 'attendance'
+              ? ['/hr/attendance/overview', '/hr/attendance/employee'].includes(location.pathname)
+              : item.id === 'applications' && role === 'hr'
+                ? ['/hr/applications', '/hr/applications-memos'].includes(location.pathname)
+              : location.pathname === item.path;
             const activeColor = getActiveColor(item.color);
             
             return (
@@ -513,7 +517,7 @@ export const MobileNav = ({ role, isOpen, onClose }) => {
       { id: 'my_attendance', label: 'My Attendance', path: '/hr/my-attendance', icon: Calendar, color: 'orange' },
       { id: 'employees', label: 'Team', path: '/hr/employee-management', icon: Users },
       { id: 'leaves', label: 'Leaves', path: '/hr/attendance-corrections', icon: Calendar },
-      { id: 'attendance', label: 'Attendance', path: '/hr/attendance', icon: ClipboardList },
+      { id: 'attendance', label: 'Attendance', path: '/hr/attendance/overview', icon: ClipboardList },
       { id: 'applications', label: 'Applications', path: '/hr/applications', icon: FileText },
     ],
     employee: [
@@ -545,7 +549,11 @@ export const MobileNav = ({ role, isOpen, onClose }) => {
           <div className="flex-1 py-4">
             {items.map((item) => {
               const Icon = item.icon;
-              const isActive = location.pathname === item.path;
+              const isActive = item.id === 'attendance'
+                ? ['/hr/attendance/overview', '/hr/attendance/employee'].includes(location.pathname)
+                : item.id === 'applications' && role === 'hr'
+                  ? ['/hr/applications', '/hr/applications-memos'].includes(location.pathname)
+                : location.pathname === item.path;
               
               return (
                 <button

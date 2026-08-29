@@ -224,11 +224,27 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
-          <Route
+          {/* <Route
             path="/hr/attendance"
             element={
               <ProtectedRoute requiredRole="hr">
-                <HrAttendance />
+                <HrAttendance initialTab="overview" />
+              </ProtectedRoute>
+            }
+          /> */}
+          <Route
+            path="/hr/attendance/employee"
+            element={
+              <ProtectedRoute requiredRole="hr">
+                <HrAttendance initialTab="employees" />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/hr/attendance/overview"
+            element={
+              <ProtectedRoute requiredRole="hr">
+                <HrAttendance initialTab="overview" />
               </ProtectedRoute>
             }
           />

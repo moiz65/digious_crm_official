@@ -3,7 +3,7 @@ import HrSidebar from '../../components/HrSidebar';
 
 import { HrAttendancePage } from '../../components/HrAttendancePage';
 
-const Attendance = () => {
+const Attendance = ({ initialTab = 'overview' }) => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [activeItem, setActiveItem] = useState('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -55,7 +55,7 @@ const Attendance = () => {
 
         {/* Dashboard Content */}
         <main className="flex-1 overflow-y-auto">
-          <HrAttendancePage/>
+          <HrAttendancePage initialTab={initialTab} />
         </main>
       </div>
 

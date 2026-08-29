@@ -372,8 +372,7 @@ exports.checkIn = async (req, res) => {
       // STATUS CALCULATION (Original Logic)
       // ============================================================
       const shiftStart = 21 * 60;
-      const mlAfterTime = 21 * 60 + 15;
-      const lateAfterTime = 21 * 60 + 30;
+      const lateAfterTime = 21 * 60 + 15;
       const sixAM = 6 * 60;
       const nineAMTime = 9 * 60;
 
@@ -382,36 +381,30 @@ exports.checkIn = async (req, res) => {
       let status = "Present";
       let onTime = 1;
 
-      if (checkInTotalMinutes >= nineAMTime && checkInTotalMinutes < shiftStart) {
+      if (checkInTotalMinutes >= 0 && checkInTotalMinutes <= sixAM) {
+        isLate = false;
+        status = "Half Day";
+        onTime = 0;
+        lateByMinutes = checkInTotalMinutes;
+        console.log(`🌙 Half Day check-in at ${checkInTime}`);
+      } else if (checkInTotalMinutes >= nineAMTime && checkInTotalMinutes < shiftStart) {
         isLate = false;
         status = "Present";
         onTime = 1;
         lateByMinutes = 0;
         console.log(`✅ Early Check In at ${checkInTime}`);
-      } else if (checkInTotalMinutes >= shiftStart && checkInTotalMinutes <= mlAfterTime) {
+      } else if (checkInTotalMinutes >= shiftStart && checkInTotalMinutes <= lateAfterTime) {
         isLate = false;
         status = "Present";
         onTime = 1;
         lateByMinutes = 0;
         console.log(`✅ On Time Check In at ${checkInTime}`);
-      } else if (checkInTotalMinutes > mlAfterTime && checkInTotalMinutes <= lateAfterTime) {
-        isLate = false;
-        lateByMinutes = checkInTotalMinutes - mlAfterTime;
-        status = "ML";
-        onTime = 0;
-        console.log(`🔵 Marginal Late (ML): ${lateByMinutes} minutes`);
       } else if (checkInTotalMinutes > lateAfterTime && checkInTotalMinutes <= 23 * 60 + 59) {
         isLate = true;
         lateByMinutes = checkInTotalMinutes - lateAfterTime;
         status = "Late";
         onTime = 0;
         console.log(`⏱️ Late: ${lateByMinutes} minutes`);
-      } else if (checkInTotalMinutes >= 0 && checkInTotalMinutes <= sixAM) {
-        isLate = true;
-        status = "Late";
-        onTime = 0;
-        lateByMinutes = 1440 - lateAfterTime + checkInTotalMinutes;
-        console.log(`⏱️ Late (Early Morning): ${lateByMinutes} minutes`);
       }
 
       // Create new attendance record with source tracking
@@ -492,6 +485,8 @@ exports.checkOut = async (req, res) => {
     const jwtUserId = req.user?.userId; // From JWT token (user_as_employees.id)
     const reqEmployeeId = req.body.employee_id; // From request body
     const checkOutTimeFromClient = req.body.check_out_time; // Time from frontend (in HH:MM:SS format)
+    const deviceAttendanceDate = req.body.attendance_date;
+    const isDeviceSync = req.body.is_device_sync || false;
 
     // Determine which employee_id to use - MUST use jwtEmployeeId (employee_onboarding.id) for FK consistency
     let employee_id = jwtEmployeeId || reqEmployeeId || jwtUserId;
@@ -541,9 +536,36 @@ exports.checkOut = async (req, res) => {
 
       let attendanceRecord, workDateStr;
 
+      // Device sync already knows the shift's work date, including night shifts.
+      if (isDeviceSync && deviceAttendanceDate) {
+        const [deviceRecord] = await connection.query(
+          `SELECT id, check_in_time, check_out_time, total_break_duration_minutes
+           FROM Employee_Attendance
+           WHERE employee_id = ? AND attendance_date = ? AND check_out_time IS NULL`,
+          [employee_id, deviceAttendanceDate],
+        );
+
+        if (deviceRecord.length > 0) {
+          attendanceRecord = deviceRecord;
+          workDateStr = deviceAttendanceDate;
+        } else {
+          console.log(
+            `⏭️ Device checkout skipped: no open attendance for employee ${employee_id} on ${deviceAttendanceDate}`,
+          );
+          return res.status(404).json({
+            success: false,
+            message: "No open attendance record for the device attendance date.",
+            data: {
+              employeeId: employee_id,
+              attendanceDate: deviceAttendanceDate,
+            },
+          });
+        }
+      }
+
       // For early morning hours (00:00 - 09:00), PRIORITIZE searching YESTERDAY first
       // This is because night shift employees check in on Day 1 evening and check out Day 2 morning
-      if (currentHour < 9) {
+      if (!attendanceRecord && currentHour < 9) {
         // Early morning - try YESTERDAY first
         const yesterdayDate = getPakistanYesterday();
         const yesterdayStr = getLocalDateString(yesterdayDate);
@@ -583,7 +605,7 @@ exports.checkOut = async (req, res) => {
             });
           }
         }
-      } else {
+      } else if (!attendanceRecord) {
         // Daytime hours (9 AM onwards) - try TODAY first
         const [attendanceRecordToday] = await connection.query(
           `SELECT id, check_in_time, total_break_duration_minutes FROM Employee_Attendance 
@@ -3894,8 +3916,7 @@ exports.fixStatusById = async (req, res) => {
     const checkInTotalMinutes = hour * 60 + min;
     const nineAM = 9 * 60; // 540 minutes
     const shiftStart = 21 * 60; // 1260 minutes
-    const mlAfterTime = 21 * 60 + 15; // 1275 minutes - ML boundary
-    const lateAfterTime = 21 * 60 + 30; // 1290 minutes - Late boundary
+    const lateAfterTime = 21 * 60 + 15; // 1275 minutes - grace boundary
 
     let newStatus = "Present";
     let newLateByMinutes = 0;
@@ -3909,32 +3930,24 @@ exports.fixStatusById = async (req, res) => {
       newOnTime = 1;
     } else if (
       checkInTotalMinutes >= shiftStart &&
-      checkInTotalMinutes <= mlAfterTime
+      checkInTotalMinutes <= lateAfterTime
     ) {
       // On time check-in (21:00 - 21:15)
       newStatus = "Present";
       newLateByMinutes = 0;
       newOnTime = 1;
     } else if (
-      checkInTotalMinutes > mlAfterTime &&
-      checkInTotalMinutes <= lateAfterTime
-    ) {
-      // Marginal Late (21:15 - 21:30)
-      newStatus = "ML";
-      newLateByMinutes = checkInTotalMinutes - mlAfterTime;
-      newOnTime = 0;
-    } else if (
       checkInTotalMinutes > lateAfterTime &&
       checkInTotalMinutes <= 23 * 60 + 59
     ) {
-      // Evening late (after 21:30)
+      // Evening late (after 21:15)
       newStatus = "Late";
       newLateByMinutes = checkInTotalMinutes - lateAfterTime;
       newOnTime = 0;
     } else if (checkInTotalMinutes >= 0 && checkInTotalMinutes <= 6 * 60) {
-      // Early morning - late
-      newStatus = "Late";
-      newLateByMinutes = 1440 - lateAfterTime + checkInTotalMinutes;
+      // Early morning - half day
+      newStatus = "Half Day";
+      newLateByMinutes = checkInTotalMinutes;
       newOnTime = 0;
     }
 

@@ -945,8 +945,8 @@ const HRMyAttendance = () => {
                 <button
                   onClick={() => setActiveTab("dashboard")}
                   className={`flex items-center gap-2 px-4 py-3 font-semibold border-b-2 transition-all ${activeTab === "dashboard"
-                      ? "border-blue-500 text-blue-600"
-                      : "border-transparent text-gray-500 hover:text-gray-700"
+                    ? "border-blue-500 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700"
                     }`}
                 >
                   <Shield className="w-5 h-5" />
@@ -955,8 +955,8 @@ const HRMyAttendance = () => {
                 <button
                   onClick={() => setActiveTab("sheet")}
                   className={`flex items-center gap-2 px-4 py-3 font-semibold border-b-2 transition-all ${activeTab === "sheet"
-                      ? "border-blue-500 text-blue-600"
-                      : "border-transparent text-gray-500 hover:text-gray-700"
+                    ? "border-blue-500 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700"
                     }`}
                 >
                   <Table className="w-5 h-5" />
@@ -978,11 +978,11 @@ const HRMyAttendance = () => {
                             <div className="flex items-center gap-4">
                               <div
                                 className={`w-12 h-12 rounded-xl flex items-center justify-center ${attendanceData?.check_in_time &&
-                                    !attendanceData?.check_out_time
-                                    ? "bg-green-100"
-                                    : attendanceData?.check_out_time
-                                      ? "bg-blue-100"
-                                      : "bg-white"
+                                  !attendanceData?.check_out_time
+                                  ? "bg-green-100"
+                                  : attendanceData?.check_out_time
+                                    ? "bg-blue-100"
+                                    : "bg-white"
                                   }`}
                               >
                                 <CheckCircle
@@ -1227,9 +1227,9 @@ const HRMyAttendance = () => {
                                         attendanceData?.check_out_time
                                       }
                                       className={`flex-1 py-3 px-6 rounded-xl font-semibold transition-all duration-300 ${attendanceData?.check_in_time ||
-                                          attendanceData?.check_out_time
-                                          ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                                          : "bg-green-500 hover:bg-green-600 text-white shadow-lg hover:shadow-green-500/25"
+                                        attendanceData?.check_out_time
+                                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                                        : "bg-green-500 hover:bg-green-600 text-white shadow-lg hover:shadow-green-500/25"
                                         }`}
                                     >
                                       <LogIn className="w-5 h-5 inline mr-2" />
@@ -1243,9 +1243,9 @@ const HRMyAttendance = () => {
                                         !!attendanceData?.check_out_time
                                       }
                                       className={`flex-1 py-3 px-6 rounded-xl font-semibold transition-all duration-300 ${attendanceData?.check_in_time &&
-                                          !attendanceData?.check_out_time
-                                          ? "bg-blue-500 hover:bg-blue-600 text-white shadow-lg hover:shadow-blue-500/25"
-                                          : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                                        !attendanceData?.check_out_time
+                                        ? "bg-blue-500 hover:bg-blue-600 text-white shadow-lg hover:shadow-blue-500/25"
+                                        : "bg-gray-100 text-gray-400 cursor-not-allowed"
                                         }`}
                                     >
                                       <LogOut className="w-5 h-5 inline mr-2" />
@@ -1588,21 +1588,21 @@ const HRMyAttendance = () => {
                                         }
                                         disabled={isDisabled}
                                         className={`group relative overflow-hidden rounded-xl transition-all duration-200 ${isDisabled
-                                            ? "bg-gray-50 cursor-not-allowed opacity-60"
-                                            : "bg-white hover:bg-purple-50 cursor-pointer border border-gray-200 hover:border-purple-200"
+                                          ? "bg-gray-50 cursor-not-allowed opacity-60"
+                                          : "bg-white hover:bg-purple-50 cursor-pointer border border-gray-200 hover:border-purple-200"
                                           }`}
                                       >
                                         <div className="p-3 text-center">
                                           <Icon
                                             className={`w-5 h-5 mx-auto mb-1.5 transition-colors ${isDisabled
-                                                ? "text-gray-400"
-                                                : "text-gray-500 group-hover:text-purple-600"
+                                              ? "text-gray-400"
+                                              : "text-gray-500 group-hover:text-purple-600"
                                               }`}
                                           />
                                           <div
                                             className={`text-xs font-medium ${isDisabled
-                                                ? "text-gray-400"
-                                                : "text-gray-700 group-hover:text-purple-700"
+                                              ? "text-gray-400"
+                                              : "text-gray-700 group-hover:text-purple-700"
                                               }`}
                                           >
                                             {breakType.label}
@@ -1724,8 +1724,8 @@ const HRMyAttendance = () => {
                                             <div className="w-full bg-gray-100 rounded-full h-1.5">
                                               <div
                                                 className={`h-full rounded-full transition-all duration-300 ${progress >= 100
-                                                    ? "bg-red-500"
-                                                    : "bg-gradient-to-r from-amber-400 to-amber-500"
+                                                  ? "bg-red-500"
+                                                  : "bg-gradient-to-r from-amber-400 to-amber-500"
                                                   }`}
                                                 style={{
                                                   width: `${Math.min(progress, 100)}%`,
@@ -1770,8 +1770,8 @@ const HRMyAttendance = () => {
                                 <button
                                   onClick={() => setChartView("monthly")}
                                   className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${chartView === "monthly"
-                                      ? "bg-blue-500 text-white shadow-lg"
-                                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                    ? "bg-blue-500 text-white shadow-lg"
+                                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                                     }`}
                                 >
                                   Monthly
@@ -2034,8 +2034,8 @@ const HRMyAttendance = () => {
                       <button
                         onClick={() => setStatusFilter("All Status")}
                         className={`px-6 py-3 rounded-full font-semibold transition-all text-sm shadow-md ${statusFilter === "All Status"
-                            ? "bg-[#349DFF] text-white shadow-lg scale-105"
-                            : "bg-white text-gray-700 border-2 border-gray-200 hover:border-blue-400"
+                          ? "bg-[#349DFF] text-white shadow-lg scale-105"
+                          : "bg-white text-gray-700 border-2 border-gray-200 hover:border-blue-400"
                           }`}
                       >
                         All ({monthlyAttendance.length})
@@ -2045,8 +2045,8 @@ const HRMyAttendance = () => {
                       <button
                         onClick={() => setStatusFilter("Present")}
                         className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${statusFilter === "Present"
-                            ? "bg-green-600 text-white"
-                            : "bg-white text-gray-700 hover:bg-gray-200"
+                          ? "bg-green-600 text-white"
+                          : "bg-white text-gray-700 hover:bg-gray-200"
                           }`}
                       >
                         Present (
@@ -2061,8 +2061,8 @@ const HRMyAttendance = () => {
                       <button
                         onClick={() => setStatusFilter("Late")}
                         className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${statusFilter === "Late"
-                            ? "bg-orange-600 text-white"
-                            : "bg-white text-gray-700 hover:bg-gray-200"
+                          ? "bg-orange-600 text-white"
+                          : "bg-white text-gray-700 hover:bg-gray-200"
                           }`}
                       >
                         Late (
@@ -2076,8 +2076,8 @@ const HRMyAttendance = () => {
                       <button
                         onClick={() => setStatusFilter("ML")}
                         className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${statusFilter === "ML"
-                            ? "bg-blue-900 text-white"
-                            : "bg-white text-gray-700 hover:bg-gray-200"
+                          ? "bg-blue-900 text-white"
+                          : "bg-white text-gray-700 hover:bg-gray-200"
                           }`}
                       >
                         ML (
@@ -2091,8 +2091,8 @@ const HRMyAttendance = () => {
                       <button
                         onClick={() => setStatusFilter("Absent")}
                         className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${statusFilter === "Absent"
-                            ? "bg-red-600 text-white"
-                            : "bg-white text-gray-700 hover:bg-gray-200"
+                          ? "bg-red-600 text-white"
+                          : "bg-white text-gray-700 hover:bg-gray-200"
                           }`}
                       >
                         Absent (
@@ -2106,8 +2106,8 @@ const HRMyAttendance = () => {
                       <button
                         onClick={() => setStatusFilter("Leave")}
                         className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${statusFilter === "Leave"
-                            ? "bg-purple-600 text-white"
-                            : "bg-white text-gray-700 hover:bg-gray-200"
+                          ? "bg-purple-600 text-white"
+                          : "bg-white text-gray-700 hover:bg-gray-200"
                           }`}
                       >
                         Leave (
@@ -2209,12 +2209,12 @@ const HRMyAttendance = () => {
                                     `absent-${record.attendance_date}`
                                   }
                                   className={`${record.is_absent
-                                      ? "bg-red-50 hover:bg-red-100"
-                                      : record.status === "ML"
-                                        ? "bg-blue-50 hover:bg-blue-100"
-                                        : index % 2 === 0
-                                          ? "bg-gray-50 hover:bg-gray-100"
-                                          : "bg-white hover:bg-gray-50"
+                                    ? "bg-red-50 hover:bg-red-100"
+                                    : record.status === "ML"
+                                      ? "bg-blue-50 hover:bg-blue-100"
+                                      : index % 2 === 0
+                                        ? "bg-gray-50 hover:bg-gray-100"
+                                        : "bg-white hover:bg-gray-50"
                                     } transition-colors`}
                                 >
                                   <td className="px-4 py-3 text-sm text-gray-700">
@@ -2248,19 +2248,19 @@ const HRMyAttendance = () => {
                                   <td className="px-4 py-3 text-sm">
                                     <span
                                       className={`px-2 py-1 rounded-full text-xs font-semibold ${record.status === "Present"
-                                          ? "bg-green-100 text-green-700"
-                                          : record.status === "Late"
-                                            ? "bg-orange-100 text-orange-700"
-                                            : record.status === "ML"
-                                              ? "bg-blue-900 text-white"
-                                              : record.status === "Absent"
-                                                ? "bg-red-100 text-red-700"
-                                                : record.status === "Paid Leave"
-                                                  ? "bg-teal-100 text-teal-700"
-                                                  : record.status ===
-                                                    "Uninformed Absent"
-                                                    ? "bg-red-200 text-red-800"
-                                                    : "bg-purple-100 text-purple-700"
+                                        ? "bg-green-100 text-green-700"
+                                        : record.status === "Late"
+                                          ? "bg-orange-100 text-orange-700"
+                                          : record.status === "ML"
+                                            ? "bg-blue-900 text-white"
+                                            : record.status === "Absent"
+                                              ? "bg-red-100 text-red-700"
+                                              : record.status === "Paid Leave"
+                                                ? "bg-teal-100 text-teal-700"
+                                                : record.status ===
+                                                  "Uninformed Absent"
+                                                  ? "bg-red-200 text-red-800"
+                                                  : "bg-purple-100 text-purple-700"
                                         }`}
                                     >
                                       {record.status === "Paid Leave"
@@ -2413,8 +2413,8 @@ const HRMyAttendance = () => {
                                 key={page}
                                 onClick={() => setCurrentPage(page)}
                                 className={`px-3 py-2 rounded-lg font-semibold transition-colors text-sm ${currentPage === page
-                                    ? "bg-blue-500 text-white"
-                                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                  ? "bg-blue-500 text-white"
+                                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                                   }`}
                               >
                                 {page}

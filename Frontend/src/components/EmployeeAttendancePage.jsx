@@ -200,7 +200,7 @@ const HRMyAttendance = () => {
 
     return deviceUserId;
   };
-
+   
   // ✅ NEW: Check device status function
   const checkDeviceStatus = async () => {
     try {
@@ -233,26 +233,14 @@ const HRMyAttendance = () => {
     if (hasSyncedToday) {
       toast.info(
         `Already synced today (${syncedDate}). Come back tomorrow for new sync.`,
-        {
-          duration: 3000,
-        },
+        { duration: 3000 }
       );
       return;
     }
-
 
     // ✅ Check if device_user_id exists
     if (!deviceUserId) {
       toast.error("Device User ID not found. Please contact HR to set up device sync.");
-      return;
-    }
-
-    // ✅ Check if already synced today
-    if (hasSyncedToday) {
-      toast.info(
-        `Already synced today (${syncedDate}). Come back tomorrow for new sync.`,
-        { duration: 3000 }
-      );
       return;
     }
 
@@ -261,19 +249,19 @@ const HRMyAttendance = () => {
     try {
       const token = localStorage.getItem("token");
 
-      // ✅ Use deviceUserId for ZKTeco API
       console.log(`📱 Syncing with device_user_id: ${deviceUserId}`);
 
       // Fetch device logs
       const deviceResponse = await fetch(
         `http://100.114.9.93:5000/api/v1/zkTime/attendance/user/${deviceUserId}`,
-        { headers: { Authorization: `Bearer ${token}` } },
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
       const deviceData = await deviceResponse.json();
 
       if (!deviceData.success) {
         toast.error("Failed to fetch device attendance");
+        setIsSyncing(false);
         return;
       }
 
@@ -281,13 +269,17 @@ const HRMyAttendance = () => {
 
       if (deviceLogs.length === 0) {
         toast.info("No attendance records found on device");
+        setIsSyncing(false);
         return;
       }
 
-      // Helper to correct night shift date (includes 6:00 AM)
+      // ============================================================
+      // ⭐ CORRECT DATE CORRECTION (00:00 - 08:59 → Previous Day)
+      // ============================================================
       const getCorrectedDate = (punchTimeStr, originalDateStr) => {
         const [hour] = punchTimeStr.split(":").map(Number);
-        if (hour >= 0 && hour <= 6) {
+        // 00:00 - 08:59 → Previous day (Night shift checkout)
+        if (hour >= 0 && hour <= 8) {
           const date = new Date(originalDateStr);
           date.setDate(date.getDate() - 1);
           const year = date.getFullYear();
@@ -302,84 +294,134 @@ const HRMyAttendance = () => {
       let skippedCount = 0;
       let syncedRecords = [];
 
-      for (const log of deviceLogs) {
-        const fullDateTime = log.attendance_time;
-        const deviceDate = log.punch_date_date;
-
-        if (!fullDateTime) {
-          skippedCount++;
-          continue;
-        }
-
-        const [datePart, timePart] = fullDateTime.split(" ");
-        const punchTime = timePart;
-        const correctedDate = getCorrectedDate(punchTime, deviceDate);
-
-        // Determine punch type
-        let punchType = "IN";
-        const hour = log.pakistan_hour;
-
-        if (log.punch_label === "check-in") {
-          punchType = "IN";
-        } else if (log.punch_label === "check-out") {
-          punchType = "OUT";
-        } else if (hour >= 21 || (hour >= 0 && hour <= 3)) {
-          punchType = "IN";
-        } else if (hour >= 5 && hour <= 7) {
-          punchType = "OUT";
-        } else {
-          skippedCount++;
-          continue;
-        }
-
-        // Save to database
-        let saveResponse;
-        const requestBody = {
-          employee_id: employeeId,
-          email: user?.email,
-          name: user?.name,
-          device_info: "ZKTeco Device",
-          is_device_sync: true,
-        };
-
-        if (punchType === "IN") {
-          requestBody.check_in_time = punchTime;
-          requestBody.attendance_date = correctedDate;
-          saveResponse = await fetch(endpoints.attendance.checkIn, {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(requestBody),
-          });
-        } else if (punchType === "OUT") {
-          requestBody.check_out_time = punchTime;
-          requestBody.attendance_date = correctedDate;
-          saveResponse = await fetch(endpoints.attendance.checkOut, {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(requestBody),
-          });
-        }
-
-        if (saveResponse && saveResponse.ok) {
-          savedCount++;
-          syncedRecords.push({
-            type: punchType,
-            time: punchTime,
-            date: correctedDate,
-          });
-        } else {
-          skippedCount++;
-        }
+      // ✅ Process logs in batches to avoid rate limiting
+      const BATCH_SIZE = 50;
+      const batches = [];
+      for (let i = 0; i < deviceLogs.length; i += BATCH_SIZE) {
+        batches.push(deviceLogs.slice(i, i + BATCH_SIZE));
       }
 
+      console.log(`📊 Total logs: ${deviceLogs.length}, Batches: ${batches.length}`);
+
+      for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
+        const batch = batches[batchIndex];
+        console.log(`📦 Processing batch ${batchIndex + 1}/${batches.length} (${batch.length} records)`);
+
+        // Process device punches sequentially so IN is saved before OUT.
+        const batchPromises = [];
+        for (const log of batch) {
+          const result = await (async () => {
+          const fullDateTime = log.attendance_time;
+          const deviceDate = log.punch_date_date;
+
+          if (!fullDateTime) {
+            skippedCount++;
+            return null;
+          }
+
+          const [, timePart] = fullDateTime.split(" ");
+          const punchTime = timePart;
+          let punchType = null;
+
+          if (log.punch_label === 'check-in') {
+            punchType = 'IN';
+          } else if (log.punch_label === 'check-out') {
+            punchType = 'OUT';
+          }
+
+          if (!punchType) {
+            skippedCount++;
+            console.log(`⚠️ Unknown device punch type, skipping time: ${punchTime}`);
+            return null;
+          }
+
+          // ⭐ Correct date for night shift
+          const correctedDate = getCorrectedDate(punchTime, deviceDate);
+
+          console.log(`📌 ${punchType} | Time: ${punchTime} | Date: ${correctedDate} (original: ${deviceDate})`);
+
+          // ⭐ Prepare request body
+          const requestBody = {
+            employee_id: employeeId,
+            email: user?.email,
+            name: user?.name,
+            device_info: "ZKTeco Device",
+            is_device_sync: true,
+            punch_type: punchType,  // ⭐ SEND PUNCH TYPE
+          };
+
+          let saveResponse;
+          let endpoint;
+
+          if (punchType === "IN") {
+            requestBody.check_in_time = punchTime;
+            requestBody.attendance_date = correctedDate;
+            endpoint = endpoints.attendance.checkIn;
+          } else if (punchType === "OUT") {
+            requestBody.check_out_time = punchTime;
+            requestBody.attendance_date = correctedDate;
+            endpoint = endpoints.attendance.checkOut;
+          }
+
+          try {
+            saveResponse = await fetch(endpoint, {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(requestBody),
+            });
+
+            const responseData = await saveResponse.json();
+
+            if (saveResponse.ok) {
+              return { success: true, type: punchType, time: punchTime, date: correctedDate };
+            } else {
+              console.log(`⚠️ Failed: ${responseData.message || 'Unknown error'}`);
+              return { success: false, type: punchType, time: punchTime, error: responseData.message };
+            }
+          } catch (err) {
+            console.error(`❌ Error saving ${punchType}:`, err.message);
+            return { success: false, type: punchType, time: punchTime, error: err.message };
+          }
+          })();
+          batchPromises.push(result);
+        }
+
+        // Wait for all promises in this batch
+        const batchResults = await Promise.all(batchPromises);
+
+        // Count results
+        for (const result of batchResults) {
+          if (result === null) {
+            // Already counted as skipped
+          } else if (result.success) {
+            savedCount++;
+            syncedRecords.push({
+              type: result.type,
+              time: result.time,
+              date: result.date,
+            });
+          } else {
+            skippedCount++;
+          }
+        }
+
+        // Small delay between batches
+        if (batchIndex < batches.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+
+        // Update progress
+        const progress = Math.round(((batchIndex + 1) / batches.length) * 100);
+        console.log(`📊 Progress: ${progress}% (${savedCount} saved, ${skippedCount} skipped)`);
+      }
+
+      // ============================================================
+      // ⭐ FINAL SUMMARY
+      // ============================================================
       if (savedCount > 0) {
-        // ✅ Store sync info in localStorage to persist across page refreshes
         const today = new Date().toISOString().split("T")[0];
         setHasSyncedToday(true);
         setSyncedDate(today);
@@ -389,11 +431,15 @@ const HRMyAttendance = () => {
             date: today,
             syncedAt: new Date().toISOString(),
             recordsCount: savedCount,
-          }),
+            skippedCount: skippedCount,
+          })
         );
 
         toast.success(`${savedCount} record(s) synced from device`);
+      } else {
+        toast.info(`No new records synced. ${skippedCount} skipped.`);
       }
+
       if (skippedCount > 0) {
         toast(`${skippedCount} record(s) skipped`, { icon: "ℹ️" });
       }
@@ -401,9 +447,10 @@ const HRMyAttendance = () => {
       // Refresh display
       await fetchTodayAttendance();
       await fetchMonthlyAttendance();
+
     } catch (error) {
-      console.error("Sync error:", error);
-      toast.error("Failed to sync with device");
+      console.error("❌ Sync error:", error);
+      toast.error("Failed to sync with device: " + error.message);
     } finally {
       setIsSyncing(false);
     }
@@ -1030,7 +1077,7 @@ const HRMyAttendance = () => {
 
         weekDays[dateStr] = {
           hours: hours,
-          status: record.status,
+          status: record.status === "ML" ? "Late" : record.status,
           raw_minutes: rawMinutes,
         };
       });
@@ -1115,7 +1162,7 @@ const HRMyAttendance = () => {
 
         monthDays[dateStr] = {
           hours: hours,
-          status: record.status,
+          status: record.status === "ML" ? "Late" : record.status,
           raw_minutes: rawMinutes,
         };
       });
@@ -1227,7 +1274,7 @@ const HRMyAttendance = () => {
           minutes: record.net_working_time_minutes
             ? record.net_working_time_minutes % 60
             : 0,
-          status: record.status || "Absent",
+          status: record.status === "ML" ? "Late" : (record.status || "Absent"),
           check_in_time: record.check_in_time,
           check_out_time: record.check_out_time,
           total_breaks_taken: record.total_breaks_taken || 0,
@@ -1650,14 +1697,14 @@ const HRMyAttendance = () => {
                 </button>
 
                 <button
-                  onClick={() => setStatusFilter("ML")}
-                  className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${statusFilter === "ML"
-                    ? "bg-blue-900 text-white"
+                  onClick={() => setStatusFilter("Half Day")}
+                  className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${statusFilter === "Half Day"
+                    ? "bg-blue-600 text-white"
                     : "bg-white text-gray-700 hover:bg-gray-200"
                     }`}
                 >
-                  ML (
-                  {monthlyAttendance.filter((r) => r.status === "ML").length})
+                  HD (
+                  {monthlyAttendance.filter((r) => r.status === "Half Day").length})
                 </button>
 
                 <button
@@ -1773,7 +1820,7 @@ const HRMyAttendance = () => {
                               ? "bg-gray-100/50 hover:bg-gray-200"
                               : record.is_absent
                                 ? "bg-red-50 hover:bg-red-100"
-                                : record.status === "ML"
+                                : record.status === "Half Day"
                                   ? "bg-blue-50 hover:bg-blue-100"
                                   : index % 2 === 0
                                     ? "bg-gray-50 hover:bg-gray-100"
@@ -1826,12 +1873,12 @@ const HRMyAttendance = () => {
                                 </span>
                               ) : (
                                 <span
-                                  className={`px-2 py-1 rounded-full text-xs font-semibold ${record.status === "Present"
+                                  className={`px-2 py-1 rounded-full text-xs font-bold ${record.status === "Present"
                                     ? "bg-green-100 text-green-700"
                                     : record.status === "Late"
                                       ? "bg-orange-100 text-orange-700"
-                                      : record.status === "ML"
-                                        ? "bg-blue-900 text-white"
+                                      : record.status === "Half Day"
+                                        ? "bg-blue-100 text-blue-700"
                                         : record.status === "Absent"
                                           ? "bg-red-100 text-red-700"
                                           : record.status === "Paid Leave"
@@ -1850,8 +1897,8 @@ const HRMyAttendance = () => {
                                         ? "P"
                                         : record.status === "Late"
                                           ? "L"
-                                          : record.status === "ML"
-                                            ? "ML"
+                                          : record.status === "Half Day"
+                                            ? "HD"
                                             : record.status === "Absent"
                                               ? "A"
                                               : record.status}
