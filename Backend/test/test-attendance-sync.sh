@@ -8,7 +8,7 @@
 # ============================================================
 
 # Configuration
-API_URL="http://localhost:5000/api/v1"
+API_URL="http://100.114.9.93:5000/api/v1"
 EMPLOYEE_ID="3"  # Your employee ID (Fatima Khan)
 TOKEN="your_jwt_token_here"  # Replace with your actual JWT token
 

@@ -30,7 +30,7 @@ const Employee_onboarding_compo = () => {
     try {
       setLoadingRoles(true);
       const token = localStorage.getItem('token');
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/v1/roles`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://100.114.9.93:5000'}/api/v1/roles`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -279,9 +279,9 @@ const Employee_onboarding_compo = () => {
     if (step === 2) {
       if (!formData.password || formData.password.length < 8) newErrors.password = 'Password must be at least 8 characters';
       if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
-      if (!formData.selectedRole) {
-        newErrors.selectedRole = 'Please select a role for the employee';
-      }
+      // if (!formData.selectedRole) {
+      //   newErrors.selectedRole = 'Please select a role for the employee';
+      // }
     }
     if (step === 3) {
       if (!formData.department) newErrors.department = 'Please select a department';
@@ -1169,77 +1169,7 @@ const Employee_onboarding_compo = () => {
                     </div>
 
                     {/* ✅ ROLE SELECTION - NEW SECTION */}
-                    <div className="col-span-2">
-                      <div className="bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-100 rounded-xl p-6">
-                        <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-3">
-                          <span className="w-1 h-6 bg-purple-500 rounded"></span>
-                          Role Assignment
-                        </h3>
-                        <p className="text-sm text-gray-600 mb-4">
-                          Assign a role to the employee to determine their access permissions in the system.
-                        </p>
-
-                        <div>
-                          <label className="block text-sm font-semibold text-slate-700 mb-2">
-                            Select Role <span className="text-red-500">*</span>
-                          </label>
-
-                          {loadingRoles ? (
-                            <div className="flex items-center gap-3 p-4 bg-white rounded-xl border border-gray-200">
-                              <RefreshCw className="w-5 h-5 text-blue-500 animate-spin" />
-                              <span className="text-gray-600">Loading roles...</span>
-                            </div>
-                          ) : (
-                            <select
-                              name="selectedRole"
-                              value={formData.selectedRole}
-                              onChange={handleInputChange}
-                              className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 transition-all ${errors.selectedRole ? 'border-red-400 focus:ring-red-400' : 'border-gray-300 focus:ring-purple-500 focus:border-purple-500'
-                                }`}
-                              required
-                            >
-                              <option value="">-- Select a Role --</option>
-                              {roles.map(role => (
-                                <option key={role.id} value={role.id}>
-                                  {role.name} {role.description ? `- ${role.description}` : ''}
-                                </option>
-                              ))}
-                            </select>
-                          )}
-
-                          {errors.selectedRole && (
-                            <p className="text-red-500 text-sm mt-2 font-medium">{errors.selectedRole}</p>
-                          )}
-
-                          <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                            <div className="flex items-start gap-2">
-                              <AlertCircle className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
-                              <p className="text-xs text-blue-700">
-                                <span className="font-semibold">Note:</span> The selected role will determine what modules and features the employee can access.
-                                Roles can be modified later in the Roles & Permissions section.
-                              </p>
-                            </div>
-                          </div>
-
-                          {/* Show role description if selected */}
-                          {formData.selectedRole && (
-                            <div className="mt-3 p-4 bg-green-50 rounded-xl border border-green-200">
-                              <div className="flex items-start gap-3">
-                                <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                                <div>
-                                  <p className="text-sm font-semibold text-green-800">
-                                    Role Selected: {roles.find(r => r.id === parseInt(formData.selectedRole))?.name || 'Unknown'}
-                                  </p>
-                                  <p className="text-xs text-green-700 mt-1">
-                                    {roles.find(r => r.id === parseInt(formData.selectedRole))?.description || 'No description available'}
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
+                    
                   </div>
                 </div>
               )}
@@ -1655,14 +1585,14 @@ const Employee_onboarding_compo = () => {
                     )}
 
                     {/* In Step 4 Review section - Add role display */}
-                    {formData.selectedRole && (
+                    {/* {formData.selectedRole && (
                       <div className="p-4 bg-gray-50 rounded-xl">
                         <p className="text-xs text-gray-600 font-medium uppercase tracking-wide">Assigned Role</p>
                         <p className="text-lg font-bold text-gray-900 mt-2">
                           {roles.find(r => r.id === parseInt(formData.selectedRole))?.name || 'Not assigned'}
                         </p>
                       </div>
-                    )}
+                    )} */}
 
                     {formData.dynamicResources.length > 0 && (
                       <div className="col-span-2 p-4 bg-gray-50 rounded-xl">

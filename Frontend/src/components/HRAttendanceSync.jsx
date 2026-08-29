@@ -22,7 +22,7 @@ const HRAttendanceSync = () => {
 
   const checkOngoingSync = async () => {
     try {
-      const response = await fetch('/api/v1/zkTime/sync-jobs', {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/v1/zkTime/sync-jobs`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
@@ -62,7 +62,7 @@ const HRAttendanceSync = () => {
       const firstDayOfMonth = `${year}-${month}-01`;
       const lastDayOfMonth = new Date(year, now.getMonth() + 1, 0).toISOString().split('T')[0];
 
-      const response = await fetch(`${process.env.REACT_APP_API_URL || ''}/api/v1/zkTime/sync-all`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/v1/zkTime/sync-all`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -95,7 +95,7 @@ const HRAttendanceSync = () => {
   const startPolling = (jobId) => {
     let interval = setInterval(async () => {
       try {
-        const response = await fetch(`/api/v1/zkTime/sync-status/${jobId}`, {
+        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/v1/zkTime/sync-status/${jobId}`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
           },

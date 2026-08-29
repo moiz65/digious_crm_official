@@ -9,7 +9,7 @@ import toast from 'react-hot-toast';
 
 const API_BASE = process.env.REACT_APP_API_URL
   ? `${process.env.REACT_APP_API_URL}/api/${process.env.REACT_APP_API_VERSION || "v1"}`
-  : "http://localhost:5000/api/v1";
+  : "http://http://100.114.9.93:5000/api/v1";
 
 const RolesManagement = () => {
   const [roles, setRoles] = useState([]);

@@ -200,7 +200,7 @@ const HRMyAttendance = () => {
 
     return deviceUserId;
   };
-
+   
   // ✅ NEW: Check device status function
   const checkDeviceStatus = async () => {
     try {

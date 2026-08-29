@@ -330,8 +330,8 @@ const PayrollManagements = () => {
                     }}
                     disabled={generating} // Only disable when generating, NOT based on month
                     className={`flex items-center gap-2 px-4 py-2.5 border rounded-xl font-semibold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed ${generating
-                      ? "bg-slate-50 border-slate-200 text-slate-400"
-                      : "bg-white border-blue-200 text-blue-600 hover:bg-blue-50"
+                        ? "bg-slate-50 border-slate-200 text-slate-400"
+                        : "bg-white border-blue-200 text-blue-600 hover:bg-blue-50"
                       }`}
                   >
                     <RefreshCw
@@ -1123,7 +1123,7 @@ const PaySlipModal = ({ payroll, onClose, onUpdateStatus, onEditPayroll }) => {
       const targetYear = payroll.year;
 
       const response = await fetch(
-        `${process.env.REACT_APP_API_URL || "http://100.118.172.21:5000"}/api/v1/sales-targets/${employeeId}?month=${targetMonth}&year=${targetYear}`,
+        `${process.env.REACT_APP_API_URL || "http://100.114.9.93:5000"}/api/v1/sales-targets/${employeeId}?month=${targetMonth}&year=${targetYear}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         },
@@ -1766,7 +1766,7 @@ const EditPayrollModal = ({ record, onClose, onSave }) => {
       const targetYear = payrollYear || new Date().getFullYear();
 
       const response = await fetch(
-        `${process.env.REACT_APP_API_URL || "http://100.118.172.21:5000"}/api/v1/sales-targets/${employeeId}?month=${targetMonth}&year=${targetYear}`,
+        `${process.env.REACT_APP_API_URL || "http://100.114.9.93:5000"}/api/v1/sales-targets/${employeeId}?month=${targetMonth}&year=${targetYear}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
