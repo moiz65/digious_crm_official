@@ -1215,15 +1215,6 @@ const getMyPayslip = async (req, res) => {
 // ──────────────────────────────────────────────
 // PUT /payroll/:id/edit
 // Edit bonus, adjustment, and adjustment_reason for a payroll record
-// Recalculates net_salary automatically
-// ──────────────────────────────────────────────
-// Backend/controllers/payrollController.js
-
-// ──────────────────────────────────────────────
-// PUT /payroll/:id/edit
-// Edit bonus, adjustment, and sales commission fields
-// Recalculates net_salary automatically
-// ──────────────────────────────────────────────
 const editPayrollRecord = async (req, res) => {
   try {
     const { id } = req.params;

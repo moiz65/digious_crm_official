@@ -22,4 +22,12 @@ router.post("/users/create", zkTimeController.createUser);
 router.put("/users/:userId", zkTimeController.updateUser);
 router.delete("/users/:userId", zkTimeController.deleteUser);
 
+router.post("/sync-all", zkTimeController.syncAllEmployeesAttendance);
+// Get sync job status
+router.get("/sync-status/:jobId", zkTimeController.getSyncStatus);
+// Get sync job logs
+router.get("/sync-logs/:jobId", zkTimeController.getSyncLogs);
+// Get all sync jobs (history)
+router.get("/sync-jobs", zkTimeController.getSyncJobs);
+
 module.exports = router;

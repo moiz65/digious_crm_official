@@ -1,4 +1,4 @@
-// AttendanceManagement.jsx - Updated with Employee Filter + Calendar Range
+// AttendanceManagement.jsx - Filter by Employee Status (Active/Inactive)
 import React, {
   useState,
   useEffect,
@@ -51,6 +51,16 @@ const formatMinutesShort = (mins) => {
   return `${h}h ${m}m`;
 };
 
+const formatDate = (dateStr) => {
+  if (!dateStr) return "-";
+  return new Date(dateStr).toLocaleDateString("en-US", {
+    weekday: "short",
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+};
+
 const AttendanceManagement = () => {
   // State Management
   const [attendanceData, setAttendanceData] = useState([]);
@@ -62,21 +72,29 @@ const AttendanceManagement = () => {
   const [selectedDepartment, setSelectedDepartment] =
     useState("All Departments");
   const [selectedStatus, setSelectedStatus] = useState("All");
-  const [selectedBreakStatus, setSelectedBreakStatus] = useState("All");
+  const [selectedActiveStatus, setSelectedActiveStatus] = useState("Active"); // Default: Active (based on employee.status)
 
   // Date States
-  const [viewMode, setViewMode] = useState("today"); // 'today' or 'monthly'
+  const [viewMode, setViewMode] = useState("today");
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+
+  // Monthly view states
+  const [selectedEmployeeForMonthly, setSelectedEmployeeForMonthly] = useState(null);
+  const [monthlyAttendanceRecords, setMonthlyAttendanceRecords] = useState([]);
+  const [showMonthlyDetail, setShowMonthlyDetail] = useState(false);
+  const [monthlyLoading, setMonthlyLoading] = useState(false);
+
+  // Monthly detail month/year selection
+  const [detailMonth, setDetailMonth] = useState(new Date().getMonth() + 1);
+  const [detailYear, setDetailYear] = useState(new Date().getFullYear());
 
   const [liveUpdates, setLiveUpdates] = useState(true);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [filteredRecords, setFilteredRecords] = useState(0);
   const [totalRecords, setTotalRecords] = useState(0);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 20;
   const [nowTime, setNowTime] = useState(Date.now());
 
   // Get user info for auth
@@ -97,6 +115,7 @@ const AttendanceManagement = () => {
       const result = await response.json();
       if (result.success && result.data) {
         setAllEmployees(result.data);
+        console.log("Fetched all employees:", result.data);
         return result.data;
       }
       return [];
@@ -113,16 +132,13 @@ const AttendanceManagement = () => {
       let attendanceRecords = [];
 
       if (viewMode === "today") {
-        // Fetch today's attendance for all employees
-        // For admin/HR view, we need all employees' today attendance
-        // Since your endpoint is per employee, we need to fetch for all employees
         const employees = await fetchAllEmployees();
 
-        // Fetch attendance for each employee (or use bulk endpoint if available)
         const attendancePromises = employees.map(async (employee) => {
           try {
+            const empId = employee.id || employee._id;
             const response = await fetch(
-              endpoints.attendance.today(employee.id),
+              `${process.env.REACT_APP_API_URL || "http://100.118.172.21:5000"}/api/v1/attendance/today/${empId}`,
               {
                 headers: {
                   Authorization: `Bearer ${token}`,
@@ -136,16 +152,19 @@ const AttendanceManagement = () => {
                 name: employee.name,
                 email: employee.email,
                 department: employee.department,
-                employee_id: employee.employee_id,
+                employee_id: employee.employee_id || employee.id,
+                _id: employee.id || employee._id,
+                employee_status: employee.status || "Active", // Add employee status
               };
             } else {
-              // No attendance record - mark as absent
               return {
                 id: `absent-${employee.id}`,
-                employee_id: employee.employee_id,
+                employee_id: employee.employee_id || employee.id,
+                _id: employee.id || employee._id,
                 name: employee.name,
                 email: employee.email,
                 department: employee.department,
+                employee_status: employee.status || "Active",
                 attendance_date: new Date().toISOString().split("T")[0],
                 check_in_time: null,
                 check_out_time: null,
@@ -171,69 +190,111 @@ const AttendanceManagement = () => {
 
         const results = await Promise.all(attendancePromises);
         attendanceRecords = results.filter((r) => r !== null);
+        setAttendanceData(attendanceRecords);
+        setTotalRecords(attendanceRecords.length);
+        setFilteredRecords(attendanceRecords.length);
       } else if (viewMode === "monthly") {
-        // Fetch monthly attendance for all employees
         const employees = await fetchAllEmployees();
-
-        const attendancePromises = employees.map(async (employee) => {
-          try {
-            const response = await fetch(
-              endpoints.attendance.monthly(
-                employee.id,
-                selectedYear,
-                selectedMonth,
-              ),
-              {
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                },
-              },
-            );
-            const result = await response.json();
-            if (result.success && result.data) {
-              // result.data is an array of attendance records for the month
-              return result.data.map((record) => ({
-                ...record,
-                name: employee.name,
-                email: employee.email,
-                department: employee.department,
-                employee_id: employee.id,
-              }));
-            }
-            return [];
-          } catch (err) {
-            console.error(
-              `Error fetching monthly attendance for ${employee.name}:`,
-              err,
-            );
-            return [];
-          }
-        });
-
-        const results = await Promise.all(attendancePromises);
-        attendanceRecords = results.flat();
+        setAllEmployees(employees);
+        setAttendanceData(employees.map(emp => ({
+          ...emp,
+          _id: emp.id || emp._id,
+          employee_status: emp.status || "Active",
+          total_present: 0,
+          total_absent: 0,
+          total_late: 0,
+          total_working_hours: 0,
+        })));
+        setTotalRecords(employees.length);
+        setFilteredRecords(employees.length);
       }
-
-      setAttendanceData(attendanceRecords);
-      setTotalRecords(attendanceRecords.length);
-      setFilteredRecords(attendanceRecords.length);
     } catch (error) {
       console.error("Error fetching attendance:", error);
       setAttendanceData([]);
     } finally {
       setLoading(false);
     }
-  }, [viewMode, selectedMonth, selectedYear, token, fetchAllEmployees]);
+  }, [viewMode, token, fetchAllEmployees]);
+
+  // Fetch monthly attendance for a specific employee
+  const fetchEmployeeMonthlyAttendance = useCallback(async (employee, month, year) => {
+    const employeeId = employee?._id || employee?.id;
+
+    let actualEmployeeId = employeeId;
+
+    if (!actualEmployeeId || actualEmployeeId === employee?.id) {
+      const foundEmployee = allEmployees.find(
+        emp => emp.employee_id === employee?.employee_id || emp.id === employee?._id
+      );
+      if (foundEmployee) {
+        actualEmployeeId = foundEmployee.id || foundEmployee._id;
+        console.log(`Found actual employee ID: ${actualEmployeeId} from employee_id: ${employee?.employee_id}`);
+      }
+    }
+
+    if (!actualEmployeeId) {
+      console.error("No employee ID found in:", employee);
+      setMonthlyAttendanceRecords([]);
+      setShowMonthlyDetail(true);
+      setMonthlyLoading(false);
+      return;
+    }
+
+    console.log(`Using employee ID: ${actualEmployeeId} for API call`);
+
+    setMonthlyLoading(true);
+    try {
+      const m = month || detailMonth || selectedMonth;
+      const y = year || detailYear || selectedYear;
+
+      const url = `${process.env.REACT_APP_API_URL || "http://100.118.172.21:5000"}/api/v1/attendance/monthly/${actualEmployeeId}?year=${y}&month=${m}`;
+
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const result = await response.json();
+      console.log("Monthly attendance response:", result);
+
+      if (result.success && result.data) {
+        let records = [];
+        if (Array.isArray(result.data)) {
+          records = result.data;
+        } else if (result.data.attendance) {
+          records = result.data.attendance;
+        } else if (result.data.records) {
+          records = result.data.records;
+        } else {
+          records = [result.data];
+        }
+        setMonthlyAttendanceRecords(records.filter(r => r !== null && r !== undefined));
+        setShowMonthlyDetail(true);
+      } else {
+        console.warn("No attendance data found or API error:", result);
+        setMonthlyAttendanceRecords([]);
+        setShowMonthlyDetail(true);
+      }
+    } catch (error) {
+      console.error("Error fetching monthly attendance:", error);
+      setMonthlyAttendanceRecords([]);
+      setShowMonthlyDetail(true);
+    } finally {
+      setMonthlyLoading(false);
+    }
+  }, [selectedMonth, selectedYear, detailMonth, detailYear, token, allEmployees]);
 
   // Initial fetch and auto-refresh
   useEffect(() => {
     fetchAttendance();
 
-    if (autoRefresh) {
+    if (autoRefresh && viewMode === "today") {
       const interval = setInterval(fetchAttendance, 30000);
       return () => clearInterval(interval);
     }
-  }, [fetchAttendance, autoRefresh, viewMode, selectedMonth, selectedYear]);
+  }, [fetchAttendance, autoRefresh, viewMode]);
 
   // Get unique departments
   const departments = useMemo(() => {
@@ -250,7 +311,7 @@ const AttendanceManagement = () => {
     return () => clearInterval(interval);
   }, [liveUpdates]);
 
-  // Filter data
+  // Filter data - Active/Inactive filter based on employee.status field
   const filteredData = useMemo(() => {
     return attendanceData.filter((record) => {
       const matchesSearch =
@@ -267,13 +328,14 @@ const AttendanceManagement = () => {
         selectedDepartment === "All Departments" ||
         record.department === selectedDepartment;
 
-      const isAbsent =
-        !record.check_in_time ||
-        record.status === "Absent" ||
-        record.is_absent === true;
-
+      // Status filter for today view only
       let matchesStatus = selectedStatus === "All";
-      if (selectedStatus !== "All") {
+      if (viewMode === "today" && selectedStatus !== "All") {
+        const isAbsent =
+          !record.check_in_time ||
+          record.status === "Absent" ||
+          record.is_absent === true;
+
         if (selectedStatus === "Absent") {
           matchesStatus = isAbsent;
         } else if (selectedStatus === "Late") {
@@ -288,20 +350,22 @@ const AttendanceManagement = () => {
         } else {
           matchesStatus = record.status === selectedStatus;
         }
+      } else if (viewMode === "monthly") {
+        matchesStatus = true;
       }
 
-      let matchesBreakStatus = selectedBreakStatus === "All";
-      if (selectedBreakStatus !== "All") {
-        const hasTakenBreaks = (record.total_breaks_taken || 0) > 0;
-        matchesBreakStatus =
-          selectedBreakStatus === "On Break" ? hasTakenBreaks : !hasTakenBreaks;
+      // Active/Inactive filter - Based on employee.status field
+      let matchesActiveStatus = selectedActiveStatus === "All";
+      if (selectedActiveStatus !== "All") {
+        const employeeStatus = record.employee_status || "Active";
+        matchesActiveStatus = employeeStatus === selectedActiveStatus;
       }
 
       return (
         matchesSearch &&
         matchesDepartment &&
         matchesStatus &&
-        matchesBreakStatus
+        matchesActiveStatus
       );
     });
   }, [
@@ -309,7 +373,8 @@ const AttendanceManagement = () => {
     searchQuery,
     selectedDepartment,
     selectedStatus,
-    selectedBreakStatus,
+    selectedActiveStatus,
+    viewMode,
   ]);
 
   useEffect(() => {
@@ -320,22 +385,24 @@ const AttendanceManagement = () => {
   const stats = useMemo(() => {
     const s = attendanceData.reduce(
       (acc, r) => {
-        const isAbsent =
-          !r.check_in_time || r.status === "Absent" || r.is_absent === true;
+        if (viewMode === "today") {
+          const isAbsent =
+            !r.check_in_time || r.status === "Absent" || r.is_absent === true;
 
-        if (r.status === "Present" && r.check_in_time) acc.present++;
-        if (isAbsent) acc.absent++;
-        if (
-          r.check_out_time === null &&
-          r.status === "Present" &&
-          r.check_in_time
-        )
-          acc.active++;
-        if (r.check_out_time !== null || isAbsent) acc.inactive++;
-        acc.totalBreaks += r.total_breaks_taken || 0;
-        acc.totalWorkMinutes += r.net_working_time_minutes || 0;
-        if (r.late_by_minutes > 0) acc.late++;
-        if (r.on_time === 1) acc.onTime++;
+          if (r.status === "Present" && r.check_in_time) acc.present++;
+          if (isAbsent) acc.absent++;
+          if (
+            r.check_out_time === null &&
+            r.status === "Present" &&
+            r.check_in_time
+          )
+            acc.active++;
+          if (r.check_out_time !== null || isAbsent) acc.inactive++;
+          acc.totalBreaks += r.total_breaks_taken || 0;
+          acc.totalWorkMinutes += r.net_working_time_minutes || 0;
+          if (r.late_by_minutes > 0) acc.late++;
+          if (r.on_time === 1) acc.onTime++;
+        }
         return acc;
       },
       {
@@ -355,7 +422,7 @@ const AttendanceManagement = () => {
         ? (s.totalWorkMinutes / attendanceData.length / 60).toFixed(1)
         : "0.0";
     return s;
-  }, [attendanceData]);
+  }, [attendanceData, viewMode]);
 
   // Navigation functions
   const goToPreviousDay = () => {
@@ -407,6 +474,26 @@ const AttendanceManagement = () => {
     }
   };
 
+  const handleViewMonthlyAttendance = (employee) => {
+    console.log("Employee data:", employee);
+    console.log("ID fields - id:", employee?.id, "_id:", employee?._id, "employee_id:", employee?.employee_id);
+
+    setSelectedEmployeeForMonthly(employee);
+    const month = selectedMonth;
+    const year = selectedYear;
+    setDetailMonth(month);
+    setDetailYear(year);
+    fetchEmployeeMonthlyAttendance(employee, month, year);
+  };
+
+  const handleDetailMonthChange = (month, year) => {
+    setDetailMonth(month);
+    setDetailYear(year);
+    if (selectedEmployeeForMonthly) {
+      fetchEmployeeMonthlyAttendance(selectedEmployeeForMonthly, month, year);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
       <div className="p-8 max-w-[1600px] mx-auto">
@@ -428,68 +515,58 @@ const AttendanceManagement = () => {
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          {/* <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-5 text-white shadow-xl">
-            <div className="flex items-center justify-between mb-3">
-              <div className="p-2 bg-white/20 rounded-lg">
-                <UserCheck className="h-6 w-6" />
-              </div>
-              <div className="text-right">
-                <div className="text-3xl font-bold">{stats.present}</div>
-                <div className="text-emerald-100 text-xs">Present</div>
+        {/* Stats Cards - Only show for today view */}
+        {viewMode === "today" && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div className="bg-gradient-to-br from-rose-500 to-red-600 rounded-2xl p-5 text-white shadow-xl">
+              <div className="flex items-center justify-between mb-3">
+                <div className="p-2 bg-white/20 rounded-lg">
+                  <UserX className="h-6 w-6" />
+                </div>
+                <div className="text-right">
+                  <div className="text-3xl font-bold">{stats.absent}</div>
+                  <div className="text-rose-100 text-xs">Absent</div>
+                </div>
               </div>
             </div>
-          </div> */}
 
-          <div className="bg-gradient-to-br from-rose-500 to-red-600 rounded-2xl p-5 text-white shadow-xl">
-            <div className="flex items-center justify-between mb-3">
-              <div className="p-2 bg-white/20 rounded-lg">
-                <UserX className="h-6 w-6" />
+            <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-5 text-white shadow-xl">
+              <div className="flex items-center justify-between mb-3">
+                <div className="p-2 bg-white/20 rounded-lg">
+                  <CheckCircle className="h-6 w-6" />
+                </div>
+                <div className="text-right">
+                  <div className="text-3xl font-bold">{stats.onTime}</div>
+                  <div className="text-blue-100 text-xs">On Time</div>
+                </div>
               </div>
-              <div className="text-right">
-                <div className="text-3xl font-bold">{stats.absent}</div>
-                <div className="text-rose-100 text-xs">Absent</div>
+            </div>
+
+            <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-5 text-white shadow-xl">
+              <div className="flex items-center justify-between mb-3">
+                <div className="p-2 bg-white/20 rounded-lg">
+                  <AlertCircle className="h-6 w-6" />
+                </div>
+                <div className="text-right">
+                  <div className="text-3xl font-bold">{stats.late}</div>
+                  <div className="text-amber-100 text-xs">Late</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-5 text-white shadow-xl">
+              <div className="flex items-center justify-between mb-3">
+                <div className="p-2 bg-white/20 rounded-lg">
+                  <Activity className="h-6 w-6" />
+                </div>
+                <div className="text-right">
+                  <div className="text-3xl font-bold">{stats.active}</div>
+                  <div className="text-indigo-100 text-xs">Active</div>
+                </div>
               </div>
             </div>
           </div>
-
-          <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-5 text-white shadow-xl">
-            <div className="flex items-center justify-between mb-3">
-              <div className="p-2 bg-white/20 rounded-lg">
-                <CheckCircle className="h-6 w-6" />
-              </div>
-              <div className="text-right">
-                <div className="text-3xl font-bold">{stats.onTime}</div>
-                <div className="text-blue-100 text-xs">On Time</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-5 text-white shadow-xl">
-            <div className="flex items-center justify-between mb-3">
-              <div className="p-2 bg-white/20 rounded-lg">
-                <AlertCircle className="h-6 w-6" />
-              </div>
-              <div className="text-right">
-                <div className="text-3xl font-bold">{stats.late}</div>
-                <div className="text-amber-100 text-xs">Late</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-5 text-white shadow-xl">
-            <div className="flex items-center justify-between mb-3">
-              <div className="p-2 bg-white/20 rounded-lg">
-                <Activity className="h-6 w-6" />
-              </div>
-              <div className="text-right">
-                <div className="text-3xl font-bold">{stats.active}</div>
-                <div className="text-indigo-100 text-xs">Active</div>
-              </div>
-            </div>
-          </div>
-        </div>
+        )}
 
         {/* Main Filters Section */}
         <div className="bg-white rounded-2xl p-6 shadow-lg border border-slate-200 mb-6">
@@ -503,46 +580,55 @@ const AttendanceManagement = () => {
             </div>
 
             <div className="flex items-center gap-3">
-              <label className="flex items-center gap-2 text-sm text-slate-700 bg-slate-50 px-3 py-2 rounded-lg">
-                <input
-                  type="checkbox"
-                  checked={liveUpdates}
-                  onChange={(e) => setLiveUpdates(e.target.checked)}
-                  className="rounded border-slate-300 text-blue-600"
-                />
-                <span className="font-medium">Live Updates</span>
-              </label>
-              <label className="flex items-center gap-2 text-sm text-slate-700 bg-slate-50 px-3 py-2 rounded-lg">
-                <input
-                  type="checkbox"
-                  checked={autoRefresh}
-                  onChange={(e) => setAutoRefresh(e.target.checked)}
-                  className="rounded border-slate-300 text-blue-600"
-                />
-                <span className="font-medium">Auto Refresh</span>
-              </label>
+              {viewMode === "today" && (
+                <>
+                  <label className="flex items-center gap-2 text-sm text-slate-700 bg-slate-50 px-3 py-2 rounded-lg">
+                    <input
+                      type="checkbox"
+                      checked={liveUpdates}
+                      onChange={(e) => setLiveUpdates(e.target.checked)}
+                      className="rounded border-slate-300 text-blue-600"
+                    />
+                    <span className="font-medium">Live Updates</span>
+                  </label>
+                  <label className="flex items-center gap-2 text-sm text-slate-700 bg-slate-50 px-3 py-2 rounded-lg">
+                    <input
+                      type="checkbox"
+                      checked={autoRefresh}
+                      onChange={(e) => setAutoRefresh(e.target.checked)}
+                      className="rounded border-slate-300 text-blue-600"
+                    />
+                    <span className="font-medium">Auto Refresh</span>
+                  </label>
+                </>
+              )}
             </div>
           </div>
 
           {/* View Mode Toggle */}
           <div className="mb-6 flex gap-2">
             <button
-              onClick={() => setViewMode("today")}
-              className={`px-4 py-2 rounded-lg font-semibold transition-all ${
-                viewMode === "today"
-                  ? "bg-blue-600 text-white shadow-md"
-                  : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-              }`}
+              onClick={() => {
+                setViewMode("today");
+                setShowMonthlyDetail(false);
+              }}
+              className={`px-4 py-2 rounded-lg font-semibold transition-all ${viewMode === "today"
+                ? "bg-blue-600 text-white shadow-md"
+                : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                }`}
             >
               Today's Attendance
             </button>
             <button
-              onClick={() => setViewMode("monthly")}
-              className={`px-4 py-2 rounded-lg font-semibold transition-all ${
-                viewMode === "monthly"
-                  ? "bg-blue-600 text-white shadow-md"
-                  : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-              }`}
+              onClick={() => {
+                setViewMode("monthly");
+                setShowMonthlyDetail(false);
+                fetchAttendance();
+              }}
+              className={`px-4 py-2 rounded-lg font-semibold transition-all ${viewMode === "monthly"
+                ? "bg-blue-600 text-white shadow-md"
+                : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                }`}
             >
               Monthly Attendance
             </button>
@@ -550,57 +636,95 @@ const AttendanceManagement = () => {
 
           {/* Date Navigation */}
           {viewMode === "today" ? (
-            <div className="flex items-center gap-2"></div>
-          ) : (
             <div className="mb-6 p-4 bg-slate-50 rounded-xl">
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
                   <Calendar className="h-5 w-5 text-blue-600" />
                   <span className="text-sm font-semibold text-slate-700">
-                    {viewMode === "today" || "Select Month:"}
+                    Today's Date:
                   </span>
                 </div>
-
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={goToPreviousMonth}
+                    onClick={goToPreviousDay}
                     className="p-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50"
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </button>
-                  <select
-                    value={selectedMonth}
-                    onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                    className="px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white"
-                  >
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((m) => (
-                      <option key={m} value={m}>
-                        {new Date(2024, m - 1).toLocaleDateString("en-US", {
-                          month: "long",
-                        })}
-                      </option>
-                    ))}
-                  </select>
-                  <select
-                    value={selectedYear}
-                    onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                    className="px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white"
-                  >
-                    {[2023, 2024, 2025, 2026].map((y) => (
-                      <option key={y} value={y}>
-                        {y}
-                      </option>
-                    ))}
-                  </select>
+                  <span className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium">
+                    {selectedDate.toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </span>
                   <button
-                    onClick={goToNextMonth}
+                    onClick={goToNextDay}
                     className="p-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50"
                   >
                     <ChevronRight className="h-4 w-4" />
                   </button>
+                  <button
+                    onClick={() => setSelectedDate(new Date())}
+                    className="px-3 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700"
+                  >
+                    Today
+                  </button>
                 </div>
               </div>
             </div>
+          ) : (
+            <>
+            </>
+            // <div className="mb-6 p-4 bg-slate-50 rounded-xl">
+            //   <div className="flex flex-wrap items-center justify-between gap-4">
+            //     <div className="flex items-center gap-2">
+            //       <Calendar className="h-5 w-5 text-blue-600" />
+            //       <span className="text-sm font-semibold text-slate-700">
+            //         Select Month:
+            //       </span>
+            //     </div>
+
+            //     <div className="flex items-center gap-2">
+            //       <button
+            //         onClick={goToPreviousMonth}
+            //         className="p-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50"
+            //       >
+            //         <ChevronLeft className="h-4 w-4" />
+            //       </button>
+            //       <select
+            //         value={selectedMonth}
+            //         onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+            //         className="px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white"
+            //       >
+            //         {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((m) => (
+            //           <option key={m} value={m}>
+            //             {new Date(2024, m - 1).toLocaleDateString("en-US", {
+            //               month: "long",
+            //             })}
+            //           </option>
+            //         ))}
+            //       </select>
+            //       <select
+            //         value={selectedYear}
+            //         onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+            //         className="px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white"
+            //       >
+            //         {[2023, 2024, 2025, 2026].map((y) => (
+            //           <option key={y} value={y}>
+            //             {y}
+            //           </option>
+            //         ))}
+            //       </select>
+            //       <button
+            //         onClick={goToNextMonth}
+            //         className="p-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50"
+            //       >
+            //         <ChevronRight className="h-4 w-4" />
+            //       </button>
+            //     </div>
+            //   </div>
+            // </div>
           )}
 
           {/* Search and Filters */}
@@ -609,7 +733,7 @@ const AttendanceManagement = () => {
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
               <input
                 type="text"
-                placeholder="Search by employee name, email, or ID..."
+                placeholder={viewMode === "today" ? "Search by employee name, email, or ID..." : "Search employees by name, email, or ID..."}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-12 pr-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white font-medium"
@@ -635,50 +759,75 @@ const AttendanceManagement = () => {
               </select>
             </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">
-                Status
-              </label>
-              <select
-                value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 bg-white font-medium"
-              >
-                <option>All</option>
-                <option>Present</option>
-                <option>Absent</option>
-                <option>Late</option>
-                <option>ML</option>
-                <option>Leave</option>
-              </select>
-            </div>
+            {viewMode === "today" && (
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Attendance Status
+                </label>
+                <select
+                  value={selectedStatus}
+                  onChange={(e) => setSelectedStatus(e.target.value)}
+                  className="w-full px-3 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 bg-white font-medium"
+                >
+                  <option>All</option>
+                  <option>Present</option>
+                  <option>Absent</option>
+                  <option>Late</option>
+                  <option>ML</option>
+                  <option>Leave</option>
+                </select>
+              </div>
+            )}
 
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-2">
-                Break Status
+                Employee Status
               </label>
               <select
-                value={selectedBreakStatus}
-                onChange={(e) => setSelectedBreakStatus(e.target.value)}
+                value={selectedActiveStatus}
+                onChange={(e) => setSelectedActiveStatus(e.target.value)}
                 className="w-full px-3 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 bg-white font-medium"
               >
-                <option>All</option>
-                <option>On Break</option>
-                <option>Not On Break</option>
+                <option value="All">All</option>
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
               </select>
             </div>
           </div>
         </div>
 
-        {/* Attendance Table */}
-        <AttendanceTable
-          data={filteredData}
-          loading={loading}
-          onViewDetails={setSelectedEmployee}
-          currentPage={currentPage}
-          setCurrentPage={setCurrentPage}
-          itemsPerPage={itemsPerPage}
-        />
+        {/* Attendance Table or Employee List - No Pagination */}
+        {viewMode === "today" ? (
+          <AttendanceTable
+            data={filteredData}
+            loading={loading}
+            onViewDetails={setSelectedEmployee}
+          />
+        ) : (
+          <>
+            {showMonthlyDetail ? (
+              <MonthlyAttendanceDetail
+                employee={selectedEmployeeForMonthly}
+                records={monthlyAttendanceRecords}
+                loading={monthlyLoading}
+                onBack={() => {
+                  setShowMonthlyDetail(false);
+                  setMonthlyAttendanceRecords([]);
+                  setSelectedEmployeeForMonthly(null);
+                }}
+                detailMonth={detailMonth}
+                detailYear={detailYear}
+                onMonthChange={handleDetailMonthChange}
+              />
+            ) : (
+              <EmployeeList
+                employees={filteredData}
+                loading={loading}
+                onViewMonthly={handleViewMonthlyAttendance}
+              />
+            )}
+          </>
+        )}
 
         {/* Employee Detail Modal */}
         {selectedEmployee && (
@@ -693,155 +842,174 @@ const AttendanceManagement = () => {
   );
 };
 
-// Attendance Overview Card Component
-const AttendanceOverviewCard = ({ stats, totalEmployees, dateDisplay }) => {
-  const chartRef = useRef(null);
-  const chartInstance = useRef(null);
-
-  useEffect(() => {
-    if (chartRef.current) {
-      if (chartInstance.current) {
-        chartInstance.current.destroy();
-      }
-
-      const ctx = chartRef.current.getContext("2d");
-
-      const data = {
-        labels: ["Present", "Absent", "On Time", "Late"],
-        datasets: [
-          {
-            data: [stats.present, stats.absent, stats.onTime, stats.late],
-            backgroundColor: [
-              "rgba(16, 185, 129, 0.8)",
-              "rgba(239, 68, 68, 0.8)",
-              "rgba(16, 185, 129, 0.8)",
-              "rgba(251, 146, 60, 0.8)",
-            ],
-            borderColor: ["#10B981", "#EF4444", "#3B82F6", "#FB923C"],
-            borderWidth: 3,
-            hoverOffset: 20,
-          },
-        ],
-      };
-
-      chartInstance.current = new Chart(ctx, {
-        type: "doughnut",
-        data: data,
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          cutout: "70%",
-          plugins: {
-            legend: {
-              display: false,
-            },
-            tooltip: {
-              backgroundColor: "rgba(0, 0, 0, 0.8)",
-              padding: 12,
-              titleFont: { size: 14, weight: "bold" },
-              bodyFont: { size: 13 },
-              borderColor: "rgba(255, 255, 255, 0.2)",
-              borderWidth: 1,
-            },
-          },
-          animation: {
-            animateScale: true,
-            animateRotate: true,
-          },
-        },
-      });
-    }
-
-    return () => {
-      if (chartInstance.current) {
-        chartInstance.current.destroy();
-      }
-    };
-  }, [stats]);
+// Employee List Component - No Pagination
+const EmployeeList = ({
+  employees,
+  loading,
+  onViewMonthly,
+}) => {
+  if (loading) {
+    return (
+      <PagePreloader
+        loading={true}
+        variant="table"
+        message="Loading employees..."
+      />
+    );
+  }
 
   return (
-    <div className="bg-white rounded-2xl p-6 shadow-lg border border-slate-200">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="p-2 bg-blue-100 rounded-xl">
-          <BarChart3 className="h-6 w-6 text-blue-600" />
-        </div>
-        <div className="flex-1">
-          <h3 className="text-lg font-bold text-slate-800">
-            Attendance Overview
-          </h3>
-          <p className="text-sm text-slate-600">{dateDisplay}</p>
-        </div>
-      </div>
-
-      <div className="flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50 rounded-2xl p-6">
-        <div className="relative w-64 h-64">
-          <canvas ref={chartRef} />
-          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-            <div className="text-center">
-              <div className="text-sm font-semibold text-slate-600">Total</div>
-              <div className="text-4xl font-bold text-slate-800">
-                {totalEmployees}
-              </div>
-              <div className="text-sm text-slate-500 mt-1">Employees</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Legend */}
-      <div className="grid grid-cols-2 gap-3 mt-6">
-        {/* <div className="flex items-center gap-3 p-3 bg-emerald-50 rounded-xl">
-          <div className="w-3 h-3 bg-emerald-500 rounded-full"></div>
-          <div>
-            <div className="text-xs text-slate-600">Present</div>
-            <div className="text-lg font-bold text-slate-800">
-              {stats.present}
-            </div>
-          </div>
-        </div> */}
-        <div className="flex items-center gap-3 p-3 bg-rose-50 rounded-xl">
-          <div className="w-3 h-3 bg-rose-500 rounded-full"></div>
-          <div>
-            <div className="text-xs text-slate-600">Absent</div>
-            <div className="text-lg font-bold text-slate-800">
-              {stats.absent}
-            </div>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-xl">
-          <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-          <div>
-            <div className="text-xs text-slate-600">On Time</div>
-            <div className="text-lg font-bold text-slate-800">
-              {stats.onTime}
-            </div>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 p-3 bg-amber-50 rounded-xl">
-          <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
-          <div>
-            <div className="text-xs text-slate-600">Late</div>
-            <div className="text-lg font-bold text-slate-800">{stats.late}</div>
-          </div>
+    <div className="space-y-4">
+      <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gradient-to-r from-slate-50 to-slate-100">
+              <tr>
+                <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
+                  Emp ID
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
+                  Employee
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
+                  Department
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
+                  Email
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200">
+              {employees.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="px-6 py-8 text-center text-slate-500">
+                    No employees found
+                  </td>
+                </tr>
+              ) : (
+                employees.map((employee) => (
+                  <tr
+                    key={employee.id || employee._id}
+                    className="hover:bg-slate-50 transition-colors"
+                  >
+                    <td className="px-6 py-4 text-sm text-slate-700">
+                      {employee.employee_id || employee.id || "-"}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                          {employee.name?.charAt(0) || "U"}
+                        </div>
+                        <div>
+                          <div className="font-semibold text-slate-800">
+                            {employee.name || "Unknown"}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-700">
+                      {employee.department || "-"}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-700">
+                      {employee.email || "-"}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${employee.employee_status === "Active"
+                          ? "bg-emerald-100 text-emerald-700"
+                          : employee.employee_status === "Inactive"
+                            ? "bg-rose-100 text-rose-700"
+                            : "bg-slate-100 text-slate-700"
+                          }`}
+                      >
+                        {employee.employee_status || "Active"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <button
+                        onClick={() => onViewMonthly(employee)}
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg transition-colors"
+                      >
+                        <Eye className="h-4 w-4" />
+                        <span className="text-sm font-medium">View Attendance</span>
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
   );
 };
 
-// Attendance Table Component
-// Attendance Table Component (keep as is from previous code)
-const AttendanceTable = ({
-  data,
+// Monthly Attendance Detail Component
+const MonthlyAttendanceDetail = ({
+  employee,
+  records,
   loading,
-  onViewDetails,
-  currentPage,
-  setCurrentPage,
-  itemsPerPage,
+  onBack,
+  detailMonth,
+  detailYear,
+  onMonthChange,
 }) => {
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [data.length, setCurrentPage]);
+  const stats = useMemo(() => {
+    if (!records || records.length === 0) {
+      return { present: 0, absent: 0, late: 0, totalWorkMinutes: 0, avgHours: "0.0" };
+    }
+
+    const s = records.reduce(
+      (acc, r) => {
+        if (r.status === "Present" || r.status === "Present (Late)") {
+          acc.present++;
+        }
+        if (r.status === "Absent") acc.absent++;
+        if (r.status === "Present (Late)" || r.late_by_minutes > 0) acc.late++;
+        acc.totalWorkMinutes += r.net_working_time_minutes || 0;
+        return acc;
+      },
+      {
+        present: 0,
+        absent: 0,
+        late: 0,
+        totalWorkMinutes: 0,
+      },
+    );
+    s.avgHours = records.length > 0 ? (s.totalWorkMinutes / records.length / 60).toFixed(1) : "0.0";
+    return s;
+  }, [records]);
+
+  const handleMonthChange = (month) => {
+    onMonthChange(month, detailYear);
+  };
+
+  const handleYearChange = (year) => {
+    onMonthChange(detailMonth, year);
+  };
+
+  const goToPreviousMonth = () => {
+    if (detailMonth === 1) {
+      onMonthChange(12, detailYear - 1);
+    } else {
+      onMonthChange(detailMonth - 1, detailYear);
+    }
+  };
+
+  const goToNextMonth = () => {
+    if (detailMonth === 12) {
+      onMonthChange(1, detailYear + 1);
+    } else {
+      onMonthChange(detailMonth + 1, detailYear);
+    }
+  };
 
   if (loading) {
     return (
@@ -853,9 +1021,225 @@ const AttendanceTable = ({
     );
   }
 
-  const totalPages = Math.ceil(data.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedData = data.slice(startIndex, startIndex + itemsPerPage);
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <button
+          onClick={onBack}
+          className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+        >
+          <ChevronLeft className="h-5 w-5" />
+          <span>Back to Employees</span>
+        </button>
+        <h2 className="text-xl font-bold text-slate-800">
+          {employee?.name}'s Attendance
+        </h2>
+      </div>
+
+      <div className="bg-white rounded-2xl p-4 shadow-lg border border-slate-200">
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Calendar className="h-5 w-5 text-blue-600" />
+            <span className="font-semibold text-slate-700">Select Month:</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={goToPreviousMonth}
+              className="p-2 bg-slate-100 border border-slate-200 rounded-lg hover:bg-slate-200"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <select
+              value={detailMonth}
+              onChange={(e) => handleMonthChange(parseInt(e.target.value))}
+              className="px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white"
+            >
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((m) => (
+                <option key={m} value={m}>
+                  {new Date(2024, m - 1).toLocaleDateString("en-US", {
+                    month: "long",
+                  })}
+                </option>
+              ))}
+            </select>
+            <select
+              value={detailYear}
+              onChange={(e) => handleYearChange(parseInt(e.target.value))}
+              className="px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white"
+            >
+              {[2023, 2024, 2025, 2026].map((y) => (
+                <option key={y} value={y}>
+                  {y}
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={goToNextMonth}
+              className="p-2 bg-slate-100 border border-slate-200 rounded-lg hover:bg-slate-200"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+          <span className="text-sm text-slate-500 ml-auto">
+            Showing {records.length} records
+          </span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+        <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-4 text-white shadow-xl">
+          <div className="flex items-center justify-between">
+            <div className="p-2 bg-white/20 rounded-lg">
+              <UserCheck className="h-5 w-5" />
+            </div>
+            <div className="text-right">
+              <div className="text-2xl font-bold">{stats.present}</div>
+              <div className="text-emerald-100 text-xs">Present</div>
+            </div>
+          </div>
+        </div>
+        <div className="bg-gradient-to-br from-rose-500 to-red-600 rounded-2xl p-4 text-white shadow-xl">
+          <div className="flex items-center justify-between">
+            <div className="p-2 bg-white/20 rounded-lg">
+              <UserX className="h-5 w-5" />
+            </div>
+            <div className="text-right">
+              <div className="text-2xl font-bold">{stats.absent}</div>
+              <div className="text-rose-100 text-xs">Absent</div>
+            </div>
+          </div>
+        </div>
+        <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-4 text-white shadow-xl">
+          <div className="flex items-center justify-between">
+            <div className="p-2 bg-white/20 rounded-lg">
+              <AlertCircle className="h-5 w-5" />
+            </div>
+            <div className="text-right">
+              <div className="text-2xl font-bold">{stats.late}</div>
+              <div className="text-amber-100 text-xs">Late</div>
+            </div>
+          </div>
+        </div>
+        <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-4 text-white shadow-xl">
+          <div className="flex items-center justify-between">
+            <div className="p-2 bg-white/20 rounded-lg">
+              <Clock className="h-5 w-5" />
+            </div>
+            <div className="text-right">
+              <div className="text-2xl font-bold">{stats.avgHours}h</div>
+              <div className="text-indigo-100 text-xs">Avg Hours</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gradient-to-r from-slate-50 to-slate-100">
+              <tr>
+                <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
+                  Date
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
+                  Check In
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
+                  Check Out
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
+                  Working Hours
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
+                  Breaks
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
+                  Status
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200">
+              {records.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="px-6 py-8 text-center text-slate-500">
+                    No attendance records found for this period
+                  </td>
+                </tr>
+              ) : (
+                records.map((record) => (
+                  <tr
+                    key={record.id || record._id}
+                    className="hover:bg-slate-50 transition-colors"
+                  >
+                    <td className="px-6 py-4 text-sm text-slate-700">
+                      {formatDate(record.attendance_date)}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-700">
+                      {record.check_in_time ? formatTimeShort(record.check_in_time) : "-"}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-700">
+                      {record.check_out_time ? formatTimeShort(record.check_out_time) : "-"}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-700 font-medium">
+                      {formatMinutesShort(record.net_working_time_minutes || 0)}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-700">
+                      <div className="flex items-center gap-2">
+                        <Coffee className="h-4 w-4 text-blue-600" />
+                        <span>
+                          {record.total_breaks_taken || 0}
+                          {record.total_break_duration_minutes > 0 &&
+                            ` (${record.total_break_duration_minutes}m)`}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${record.status === "Present" || record.status === "Present (Late)"
+                          ? "bg-emerald-100 text-emerald-700"
+                          : record.status === "Absent"
+                            ? "bg-rose-100 text-rose-700"
+                            : record.status === "Late" || record.status === "Present (Late)"
+                              ? "bg-amber-100 text-amber-700"
+                              : record.status === "ML"
+                                ? "bg-blue-900 text-white"
+                                : "bg-slate-100 text-slate-700"
+                          }`}
+                      >
+                        {record.status || "Unknown"}
+                      </span>
+                      {record.late_by_minutes > 0 && (
+                        <span className="ml-2 text-xs text-amber-600">
+                          ({record.late_by_minutes}m late)
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Attendance Table Component - No Pagination
+const AttendanceTable = ({
+  data,
+  loading,
+  onViewDetails,
+}) => {
+  if (loading) {
+    return (
+      <PagePreloader
+        loading={true}
+        variant="table"
+        message="Loading attendance records..."
+      />
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -883,80 +1267,89 @@ const AttendanceTable = ({
                   Status
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
+                  Employee Status
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
-              {paginatedData.map((record) => (
-                <tr
-                  key={record.id}
-                  className="hover:bg-slate-50 transition-colors"
-                >
-                  <td className="px-6 py-4 text-sm text-slate-700">
-                    {record.employee_id || "-"}
+              {data.length === 0 ? (
+                <tr>
+                  <td colSpan="8" className="px-6 py-8 text-center text-slate-500">
+                    No attendance records found
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                        {record.name?.charAt(0) || "U"}
-                      </div>
-                      <div>
-                        <div className="font-semibold text-slate-800">
-                          {record.name || "Unknown"}
+                </tr>
+              ) : (
+                data.map((record) => (
+                  <tr
+                    key={record.id || record._id}
+                    className="hover:bg-slate-50 transition-colors"
+                  >
+                    <td className="px-6 py-4 text-sm text-slate-700">
+                      {record.employee_id || "-"}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                          {record.name?.charAt(0) || "U"}
                         </div>
-                        <div className="text-sm text-slate-500">
-                          {record.email || "Unknown"}
+                        <div>
+                          <div className="font-semibold text-slate-800">
+                            {record.name || "Unknown"}
+                          </div>
+                          <div className="text-sm text-slate-500">
+                            {record.email || "Unknown"}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-slate-700">
-                    {record.attendance_date
-                      ? new Date(record.attendance_date).toLocaleDateString(
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-700">
+                      {record.attendance_date
+                        ? new Date(record.attendance_date).toLocaleDateString(
                           "en-CA",
                         )
-                      : "-"}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 text-sm">
-                        <LogIn className="h-4 w-4 text-emerald-600" />
-                        <span className="text-slate-700">
-                          {record.check_in_time
-                            ? formatTimeShort(record.check_in_time)
-                            : "—"}
+                        : "-"}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-sm">
+                          <LogIn className="h-4 w-4 text-emerald-600" />
+                          <span className="text-slate-700">
+                            {record.check_in_time
+                              ? formatTimeShort(record.check_in_time)
+                              : "—"}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                          <LogOut className="h-4 w-4 text-blue-600" />
+                          <span className="text-slate-700">
+                            {record.check_out_time
+                              ? formatTimeShort(record.check_out_time)
+                              : "—"}
+                          </span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <div className="p-2 bg-blue-50 rounded-lg">
+                          <Coffee className="h-4 w-4 text-blue-600" />
+                        </div>
+                        <span className="text-sm font-semibold text-slate-800">
+                          {record.total_breaks_taken || 0}
                         </span>
                       </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <LogOut className="h-4 w-4 text-blue-600" />
-                        <span className="text-slate-700">
-                          {record.check_out_time
-                            ? formatTimeShort(record.check_out_time)
-                            : "—"}
-                        </span>
+                      <div className="text-xs text-slate-500 mt-1">
+                        {(record.total_break_duration_minutes || 0) > 0
+                          ? `${record.total_break_duration_minutes}m`
+                          : "0m"}
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <div className="p-2 bg-blue-50 rounded-lg">
-                        <Coffee className="h-4 w-4 text-blue-600" />
-                      </div>
-                      <span className="text-sm font-semibold text-slate-800">
-                        {record.total_breaks_taken || 0}
-                      </span>
-                    </div>
-                    <div className="text-xs text-slate-500 mt-1">
-                      {(record.total_break_duration_minutes || 0) > 0
-                        ? `${record.total_break_duration_minutes}m`
-                        : "0m"}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
-                        record.status === "Present"
+                    </td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${record.status === "Present"
                           ? "bg-emerald-100 text-emerald-700"
                           : record.status === "Absent"
                             ? "bg-rose-100 text-rose-700"
@@ -965,55 +1358,39 @@ const AttendanceTable = ({
                               : record.status === "ML"
                                 ? "bg-blue-900 text-white"
                                 : "bg-slate-100 text-slate-700"
-                      }`}
-                    >
-                      {record.status || "Unknown"}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <button
-                      onClick={() => onViewDetails(record)}
-                      className="flex items-center gap-2 px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg"
-                    >
-                      <Eye className="h-4 w-4" />
-                      <span className="text-sm font-medium">View</span>
-                    </button>
-                  </td>
-                </tr>
-              ))}
+                          }`}
+                      >
+                        {record.status || "Unknown"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${record.employee_status === "Active"
+                          ? "bg-emerald-100 text-emerald-700"
+                          : record.employee_status === "Inactive"
+                            ? "bg-rose-100 text-rose-700"
+                            : "bg-slate-100 text-slate-700"
+                          }`}
+                      >
+                        {record.employee_status || "Active"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <button
+                        onClick={() => onViewDetails(record)}
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg"
+                      >
+                        <Eye className="h-4 w-4" />
+                        <span className="text-sm font-medium">View</span>
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
       </div>
-
-      {data.length > itemsPerPage && (
-        <div className="flex items-center justify-between p-4 bg-white rounded-2xl shadow-lg border border-slate-200">
-          <div className="text-sm text-slate-600">
-            Showing {startIndex + 1} to{" "}
-            {Math.min(startIndex + itemsPerPage, data.length)} of {data.length}{" "}
-            records
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              className="px-4 py-2 border rounded-lg disabled:opacity-50 hover:bg-slate-50"
-            >
-              Previous
-            </button>
-            <span className="px-4 py-2 bg-blue-600 text-white rounded-lg">
-              {currentPage}
-            </span>
-            <button
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-              className="px-4 py-2 border rounded-lg disabled:opacity-50 hover:bg-slate-50"
-            >
-              Next
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

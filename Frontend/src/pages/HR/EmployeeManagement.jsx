@@ -11,7 +11,8 @@ import {
 } from "../../components/DashboardComponents";
 import { 
   Users, Search, Plus, Edit, Trash2, Eye, Download,
-  Mail, Phone, MapPin, Calendar, Briefcase, X, Loader
+  Mail, Phone, MapPin, Calendar, Briefcase, X, Loader,
+  UserCheck, UserX
 } from 'lucide-react';
 import { generateTablePDF, exportToCSV } from '../../utils/pdfExport';
 import toast from 'react-hot-toast';
@@ -25,15 +26,14 @@ const EmployeeManagement = () => {
   const [activeItem, setActiveItem] = useState("employees");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterDept, setFilterDept] = useState("All");
+  const [filterStatus, setFilterStatus] = useState("Active"); // New: Active/Inactive filter
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editFormData, setEditFormData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
   const [isSaving, setIsSaving] = useState(false);
-  const itemsPerPage = 10;
 
   const [employees, setEmployees] = useState([]);
 
@@ -69,25 +69,19 @@ const EmployeeManagement = () => {
     ...new Set(employees.map((emp) => emp.department || "N/A")),
   ];
 
+  // Get unique statuses
+  const statuses = ["All", "Active", "Inactive"];
+
   const filteredEmployees = employees.filter((emp) => {
     const term = searchTerm.toLowerCase();
     const matchesSearch =
       (emp.name || "").toLowerCase().includes(term) ||
-      (emp.email || "").toLowerCase().includes(term);
+      (emp.email || "").toLowerCase().includes(term) ||
+      (emp.employee_id || "").toLowerCase().includes(term);
     const matchesDept = filterDept === "All" || emp.department === filterDept;
-    return matchesSearch && matchesDept;
+    const matchesStatus = filterStatus === "All" || emp.status === filterStatus;
+    return matchesSearch && matchesDept && matchesStatus;
   });
-
-  // Reset to page 1 when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, filterDept]);
-
-  // Pagination logic
-  const totalPages = Math.ceil(filteredEmployees.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedEmployees = filteredEmployees.slice(startIndex, endIndex);
 
   const handleDeleteEmployee = async (id) => {
     if (await confirmDialog('Are you sure you want to delete this employee?')) {
@@ -98,6 +92,7 @@ const EmployeeManagement = () => {
 
         if (response.ok) {
           setEmployees(employees.filter((emp) => emp.id !== id));
+          toast.success("Employee deleted successfully!");
         } else {
           toast.error("Failed to delete employee");
         }
@@ -110,8 +105,7 @@ const EmployeeManagement = () => {
 
   const handleExportPDF = () => {
     try {
-      // Always export all employees
-      const dataToExport = employees;
+      const dataToExport = filteredEmployees;
 
       if (dataToExport.length === 0) {
         toast.error("No employees to export");
@@ -149,8 +143,7 @@ const EmployeeManagement = () => {
 
   const handleExportCSV = () => {
     try {
-      // Always export all employees
-      const dataToExport = employees;
+      const dataToExport = filteredEmployees;
 
       if (dataToExport.length === 0) {
         toast.error("No employees to export");
@@ -184,15 +177,12 @@ const EmployeeManagement = () => {
 
   const handleViewDetails = async (employee) => {
     try {
-      // Fetch full employee details including resources and all onboarding data
       const response = await fetch(`${API_URL}/employees/${employee.id}`);
       const data = await response.json();
 
       if (data.success && data.data) {
-        // Merge the full data with the existing employee
         const fullEmployee = {
           ...data.data,
-          // Flatten resources from nested object for easier display
           laptop: data.data.resources?.laptop || false,
           laptop_serial: data.data.resources?.laptop_serial || null,
           charger: data.data.resources?.charger || false,
@@ -224,11 +214,9 @@ const EmployeeManagement = () => {
 
   const handleEditEmployee = (employee) => {
     const formData = { ...employee };
-    // Ensure allowances is properly initialized as array
     if (!formData.allowances) {
       formData.allowances = [];
     }
-    // Ensure dynamic resources mapping is available
     if (!formData.dynamicResources && !formData.dynamic_resources) {
       formData.dynamicResources = [];
       formData.dynamic_resources = [];
@@ -238,7 +226,6 @@ const EmployeeManagement = () => {
       formData.dynamicResources = formData.dynamic_resources;
     }
 
-    // Prepare temp input fields
     formData.newAllowanceName = "";
     formData.newAllowanceAmount = "";
     formData.newResourceName = "";
@@ -255,7 +242,6 @@ const EmployeeManagement = () => {
     }));
   };
 
-  // Add / remove allowances
   const addAllowance = () => {
     const name = (editFormData?.newAllowanceName || "").trim();
     const amount = Number(editFormData?.newAllowanceAmount || 0);
@@ -278,7 +264,6 @@ const EmployeeManagement = () => {
     handleEditFormChange("allowances", list);
   };
 
-  // Add / remove dynamic resources
   const addDynamicResource = () => {
     const name = (editFormData?.newResourceName || "").trim();
     const serial = (editFormData?.newResourceSerial || "").trim();
@@ -309,17 +294,14 @@ const EmployeeManagement = () => {
   const handleSaveEmployee = async () => {
     try {
       setIsSaving(true);
-      // Normalize allowances to expected backend shape
       const normalizedAllowances = (editFormData.allowances || []).map((a) => ({
         allowance_name: a.allowance_name || a.name,
         allowance_amount: Number(a.allowance_amount || a.amount || 0),
       }));
 
-      // Ensure dynamic_resources key is included for backend
       const dynamicResourcesPayload =
         editFormData.dynamic_resources || editFormData.dynamicResources || [];
 
-      // Normalize dynamic resources to backend expected shape and filter empty names
       const normalizedDynamicResources = (dynamicResourcesPayload || [])
         .map((r) => ({
           resource_name: r.resource_name || r.name || r.resourceName || "",
@@ -364,6 +346,25 @@ const EmployeeManagement = () => {
     }
   };
 
+  // Get status badge color
+  const getStatusBadge = (status) => {
+    const statusMap = {
+      'Active': 'bg-green-100 text-green-700',
+      'Inactive': 'bg-red-100 text-red-700',
+      'On Leave': 'bg-yellow-100 text-yellow-700',
+      'Terminated': 'bg-gray-100 text-gray-700',
+    };
+    return statusMap[status] || 'bg-gray-100 text-gray-700';
+  };
+
+  // Get status icon
+  const getStatusIcon = (status) => {
+    if (status === 'Active') {
+      return <UserCheck className="w-3 h-3 mr-1" />;
+    }
+    return <UserX className="w-3 h-3 mr-1" />;
+  };
+
   return (
     <div className="flex h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <HrSidebar
@@ -380,26 +381,12 @@ const EmployeeManagement = () => {
           subtitle="Manage and organize your team members"
         />
         <RoleBasedNav role={role} />
-        {/* <div className="bg-white border-b border-gray-200 px-8 py-6 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-4xl font-bold text-gray-900">
-                Employee Management
-              </h1>
-              <p className="text-gray-500 text-base mt-2">
-                Manage and organize your team members
-              </p>
-            </div>
-            <div className="flex gap-3"></div>
-          </div>
-        </div> */}
 
         {/* Main Content */}
         <div className="flex-1 overflow-y-auto px-4 py-10 md:px-8">
           <div className="w-full max-w-full mx-auto">
             {/* Stats Cards */}
             <div className="mb-12">
-              {/* <h3 className="text-3xl font-bold text-gray-900 capitalize mb-6">Overview</h3> */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-2xl p-6">
                   <div className="flex items-start justify-between">
@@ -428,7 +415,23 @@ const EmployeeManagement = () => {
                       </p>
                     </div>
                     <div className="p-4 rounded-2xl bg-gradient-to-br from-green-500 to-green-600 shadow-lg">
-                      <Users className="w-7 h-7 text-white" />
+                      <UserCheck className="w-7 h-7 text-white" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-br from-red-50 to-red-100 border border-red-200 rounded-2xl p-6">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-red-800">
+                        Inactive Staff
+                      </p>
+                      <p className="text-3xl font-bold text-red-900 mt-4">
+                        {employees.filter((e) => e.status === "Inactive").length}
+                      </p>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-gradient-to-br from-red-500 to-red-600 shadow-lg">
+                      <UserX className="w-7 h-7 text-white" />
                     </div>
                   </div>
                 </div>
@@ -448,33 +451,6 @@ const EmployeeManagement = () => {
                     </div>
                   </div>
                 </div>
-
-                <div className="bg-gradient-to-br from-amber-50 to-amber-100 border border-amber-200 rounded-2xl p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-amber-800">
-                        New This Month
-                      </p>
-                      <p className="text-4xl font-bold text-amber-900 mt-4">
-                        {
-                          employees.filter((e) => {
-                            const joinDate = new Date(
-                              e.join_date || e.joinDate,
-                            );
-                            const now = new Date();
-                            return (
-                              joinDate.getMonth() === now.getMonth() &&
-                              joinDate.getFullYear() === now.getFullYear()
-                            );
-                          }).length
-                        }
-                      </p>
-                    </div>
-                    <div className="p-4 rounded-2xl bg-gradient-to-br from-orange-500 to-orange-600 shadow-lg">
-                      <Calendar className="w-7 h-7 text-white" />
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
 
@@ -485,13 +461,13 @@ const EmployeeManagement = () => {
                   <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                   <input
                     type="text"
-                    placeholder="Search employees by name or email..."
+                    placeholder="Search employees by name, email or ID..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900"
                   />
                 </div>
-                <div className="flex gap-3">
+                <div className="flex flex-wrap gap-3">
                   <select
                     value={filterDept}
                     onChange={(e) => setFilterDept(e.target.value)}
@@ -503,6 +479,19 @@ const EmployeeManagement = () => {
                       </option>
                     ))}
                   </select>
+                  
+                  <select
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                    className="px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-medium"
+                  >
+                    {statuses.map((status) => (
+                      <option key={status} value={status}>
+                        {status}
+                      </option>
+                    ))}
+                  </select>
+
                   <div className="flex gap-2">
                     <button
                       onClick={handleExportPDF}
@@ -532,7 +521,7 @@ const EmployeeManagement = () => {
               </div>
             </div>
 
-            {/* Employee Table */}
+            {/* Employee Table - No Pagination */}
             <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100 hover:shadow-md transition-shadow duration-300">
               <div className="overflow-x-auto">
                 <table className="w-full">
@@ -576,7 +565,7 @@ const EmployeeManagement = () => {
                           </div>
                         </td>
                       </tr>
-                    ) : paginatedEmployees.length === 0 ? (
+                    ) : filteredEmployees.length === 0 ? (
                       <tr>
                         <td colSpan="8" className="py-12 px-7 text-center">
                           <span className="text-gray-500">
@@ -585,7 +574,7 @@ const EmployeeManagement = () => {
                         </td>
                       </tr>
                     ) : (
-                      paginatedEmployees.map((employee) => (
+                      filteredEmployees.map((employee) => (
                         <tr
                           key={employee.id}
                           className="hover:bg-blue-50 transition-colors duration-150 group"
@@ -598,7 +587,7 @@ const EmployeeManagement = () => {
                           <td className="py-5 px-7">
                             <div className="flex items-center gap-4">
                               <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-md">
-                                {employee.name.charAt(0)}
+                                {employee.name?.charAt(0) || "U"}
                               </div>
                               <div>
                                 <p className="font-semibold text-gray-900 text-sm">
@@ -638,12 +627,13 @@ const EmployeeManagement = () => {
                             </p>
                           </td>
                           <td className="py-5 px-7">
-                            <span className="px-4 py-2 bg-green-100 text-green-700 rounded-lg text-xs font-bold capitalize tracking-wide">
+                            <span className={`inline-flex items-center px-4 py-2 rounded-lg text-xs font-bold capitalize tracking-wide ${getStatusBadge(employee.status)}`}>
+                              {getStatusIcon(employee.status)}
                               {employee.status || "Active"}
                             </span>
                           </td>
                           <td className="py-5 px-7">
-                            <div className="flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                            <div className="flex items-center justify-center gap-2">
                               <button
                                 onClick={() => handleViewDetails(employee)}
                                 className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-all font-medium"
@@ -652,9 +642,7 @@ const EmployeeManagement = () => {
                                 <Eye className="w-5 h-5" />
                               </button>
                               <button
-                                onClick={() =>
-                                  handleDeleteEmployee(employee.id)
-                                }
+                                onClick={() => handleDeleteEmployee(employee.id)}
                                 className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-all font-medium"
                                 title="Delete"
                               >
@@ -669,79 +657,14 @@ const EmployeeManagement = () => {
                 </table>
               </div>
 
-              {/* Pagination Controls */}
+              {/* Show total count instead of pagination */}
               {filteredEmployees.length > 0 && (
                 <div className="flex items-center justify-between px-7 py-6 bg-gray-50 border-t border-gray-100">
                   <div className="text-sm text-gray-600 font-medium">
-                    Showing{" "}
-                    <span className="font-bold text-gray-900">
-                      {startIndex + 1}
-                    </span>{" "}
-                    to{" "}
-                    <span className="font-bold text-gray-900">
-                      {Math.min(endIndex, filteredEmployees.length)}
-                    </span>{" "}
-                    of{" "}
-                    <span className="font-bold text-gray-900">
-                      {filteredEmployees.length}
-                    </span>{" "}
-                    employees
+                    Showing <span className="font-bold text-gray-900">{filteredEmployees.length}</span> employees
                   </div>
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() =>
-                        setCurrentPage((prev) => Math.max(prev - 1, 1))
-                      }
-                      disabled={currentPage === 1}
-                      className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                    >
-                      Previous
-                    </button>
-                    <div className="flex items-center gap-2">
-                      {Array.from(
-                        { length: Math.min(5, totalPages) },
-                        (_, i) => {
-                          const pageNum = i + 1;
-                          return (
-                            <button
-                              key={pageNum}
-                              onClick={() => setCurrentPage(pageNum)}
-                              className={`px-3 py-2 rounded-lg font-medium transition-all ${
-                                currentPage === pageNum
-                                  ? "bg-blue-500 text-white shadow-md"
-                                  : "border border-gray-300 text-gray-700 hover:bg-gray-100"
-                              }`}
-                            >
-                              {pageNum}
-                            </button>
-                          );
-                        },
-                      )}
-                      {totalPages > 5 && (
-                        <>
-                          <span className="text-gray-400 px-2">...</span>
-                          <button
-                            onClick={() => setCurrentPage(totalPages)}
-                            className={`px-3 py-2 rounded-lg font-medium transition-all ${
-                              currentPage === totalPages
-                                ? "bg-blue-500 text-white shadow-md"
-                                : "border border-gray-300 text-gray-700 hover:bg-gray-100"
-                            }`}
-                          >
-                            {totalPages}
-                          </button>
-                        </>
-                      )}
-                    </div>
-                    <button
-                      onClick={() =>
-                        setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                      }
-                      disabled={currentPage === totalPages}
-                      className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                    >
-                      Next
-                    </button>
+                  <div className="text-sm text-gray-500">
+                    Total: <span className="font-bold text-gray-900">{employees.length}</span> employees
                   </div>
                 </div>
               )}
@@ -763,9 +686,7 @@ const EmployeeManagement = () => {
         </div>
       </div>
 
-      {/* Add Employee modal removed; use Onboard Employee page instead */}
-
-      {/* Employee Details Modal */}
+      {/* Employee Details Modal - Same as before */}
       {showDetailsModal && selectedEmployee && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
           <div className="bg-white rounded-2xl w-full max-w-5xl shadow-2xl max-h-[95vh] overflow-y-auto">
@@ -791,7 +712,7 @@ const EmployeeManagement = () => {
               {/* Top Summary */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                 <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-2xl flex items-center justify-center text-white text-3xl sm:text-4xl font-bold shadow-lg shrink-0">
-                  {selectedEmployee.name.charAt(0)}
+                  {selectedEmployee.name?.charAt(0) || "U"}
                 </div>
                 <div className="flex-1">
                   <h3 className="text-2xl sm:text-3xl font-bold text-slate-800">
@@ -801,18 +722,20 @@ const EmployeeManagement = () => {
                     {selectedEmployee.sub_department || ""}
                   </p>
                   <div className="flex flex-wrap gap-2 mt-3">
-                    <span className="inline-block px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs sm:text-sm font-semibold">
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs sm:text-sm font-semibold ${getStatusBadge(selectedEmployee.status)}`}>
+                      {getStatusIcon(selectedEmployee.status)}
                       {isEditMode ? (
                         <select
                           value={editFormData.status || "Active"}
                           onChange={(e) =>
                             handleEditFormChange("status", e.target.value)
                           }
-                          className="bg-green-100 text-green-700 border-0 outline-none cursor-pointer font-semibold"
+                          className={`bg-transparent border-0 outline-none cursor-pointer font-semibold ${getStatusBadge(editFormData.status || "Active")}`}
                         >
-                          <option>Active</option>
-                          <option>Inactive</option>
-                          <option>On Leave</option>
+                          <option value="Active">Active</option>
+                          <option value="Inactive">Inactive</option>
+                          <option value="On Leave">On Leave</option>
+                          <option value="Terminated">Terminated</option>
                         </select>
                       ) : (
                         selectedEmployee.status || "Active"
@@ -825,9 +748,8 @@ const EmployeeManagement = () => {
                 </div>
               </div>
 
-              {/* Compact Grid - 3 columns on desktop, 2 on tablet, 1 on mobile */}
+              {/* Compact Grid - Same as before */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                {/* Contact Information */}
                 <CompactField
                   icon={Mail}
                   label="Email"
@@ -864,8 +786,6 @@ const EmployeeManagement = () => {
                   onChange={(val) => handleEditFormChange("join_date", val)}
                   type="date"
                 />
-
-                {/* Employment Details */}
                 <CompactField
                   icon={Briefcase}
                   label="Department"
@@ -894,8 +814,6 @@ const EmployeeManagement = () => {
                     onChange={(val) => handleEditFormChange("designation", val)}
                   />
                 )}
-
-                {/* Personal Information */}
                 {selectedEmployee.cnic && (
                   <CompactField
                     label="CNIC"
@@ -905,8 +823,6 @@ const EmployeeManagement = () => {
                     onChange={(val) => handleEditFormChange("cnic", val)}
                   />
                 )}
-
-                {/* New: Date of Birth */}
                 <CompactField
                   icon={Calendar}
                   label="Date of Birth"
@@ -922,8 +838,6 @@ const EmployeeManagement = () => {
                   onChange={(val) => handleEditFormChange("dob", val)}
                   type="date"
                 />
-
-                {/* CNIC Issue & Expiry */}
                 <CompactField
                   label="CNIC Issue"
                   value={
@@ -964,14 +878,11 @@ const EmployeeManagement = () => {
                   }
                   type="date"
                 />
-
-                {/* CNIC Document Status */}
                 <CompactField
                   label="CNIC Status"
                   value={selectedEmployee.cnic_document_status || "N/A"}
                   isEditMode={false}
                 />
-
                 {selectedEmployee.emergency_contact && (
                   <CompactField
                     label="Emergency Contact"
@@ -993,8 +904,6 @@ const EmployeeManagement = () => {
                     onChange={(val) => handleEditFormChange("address", val)}
                   />
                 )}
-
-                {/* Financial Information */}
                 {selectedEmployee.bank_account && (
                   <CompactField
                     label="Bank Account"
@@ -1027,13 +936,13 @@ const EmployeeManagement = () => {
                 )}
               </div>
 
-              {/* Allowances Section - HR can add/remove allowances */}
+              {/* Allowances Section */}
               <div className="col-span-1 sm:col-span-2 lg:col-span-3">
                 <div className="p-4 bg-white rounded-lg border border-gray-100">
                   <div className="flex items-center justify-between mb-3">
                     <h4 className="font-semibold text-gray-900">Allowances</h4>
                     {isEditMode && (
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <input
                           type="text"
                           placeholder="Name"
@@ -1044,7 +953,7 @@ const EmployeeManagement = () => {
                               e.target.value,
                             )
                           }
-                          className="px-3 py-2 border rounded"
+                          className="px-3 py-2 border rounded text-sm"
                         />
                         <input
                           type="number"
@@ -1056,12 +965,12 @@ const EmployeeManagement = () => {
                               e.target.value,
                             )
                           }
-                          className="px-3 py-2 border rounded w-36"
+                          className="px-3 py-2 border rounded w-36 text-sm"
                         />
                         <button
                           type="button"
                           onClick={addAllowance}
-                          className="px-3 py-2 bg-green-500 text-white rounded"
+                          className="px-3 py-2 bg-green-500 text-white rounded text-sm hover:bg-green-600"
                         >
                           Add
                         </button>
@@ -1091,15 +1000,13 @@ const EmployeeManagement = () => {
                           </p>
                         </div>
                         {isEditMode && (
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => removeAllowance(idx)}
-                              className="text-red-500"
-                            >
-                              Remove
-                            </button>
-                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removeAllowance(idx)}
+                            className="text-red-500 hover:text-red-700 text-sm"
+                          >
+                            Remove
+                          </button>
                         )}
                       </div>
                     ))}
@@ -1116,7 +1023,7 @@ const EmployeeManagement = () => {
                 </div>
               </div>
 
-              {/* Dynamic Resources Section - HR can allocate resources */}
+              {/* Dynamic Resources Section */}
               <div className="col-span-1 sm:col-span-2 lg:col-span-3">
                 <div className="p-4 bg-white rounded-lg border border-gray-100">
                   <div className="flex items-center justify-between mb-3">
@@ -1124,7 +1031,7 @@ const EmployeeManagement = () => {
                       Resources (Dynamic)
                     </h4>
                     {isEditMode && (
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <input
                           type="text"
                           placeholder="Resource Name"
@@ -1135,7 +1042,7 @@ const EmployeeManagement = () => {
                               e.target.value,
                             )
                           }
-                          className="px-3 py-2 border rounded"
+                          className="px-3 py-2 border rounded text-sm"
                         />
                         <input
                           type="text"
@@ -1147,12 +1054,12 @@ const EmployeeManagement = () => {
                               e.target.value,
                             )
                           }
-                          className="px-3 py-2 border rounded w-36"
+                          className="px-3 py-2 border rounded w-36 text-sm"
                         />
                         <button
                           type="button"
                           onClick={addDynamicResource}
-                          className="px-3 py-2 bg-green-500 text-white rounded"
+                          className="px-3 py-2 bg-green-500 text-white rounded text-sm hover:bg-green-600"
                         >
                           Allocate
                         </button>
@@ -1184,15 +1091,13 @@ const EmployeeManagement = () => {
                           )}
                         </div>
                         {isEditMode && (
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => removeDynamicResource(idx)}
-                              className="text-red-500"
-                            >
-                              Remove
-                            </button>
-                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removeDynamicResource(idx)}
+                            className="text-red-500 hover:text-red-700 text-sm"
+                          >
+                            Remove
+                          </button>
                         )}
                       </div>
                     ))}
@@ -1209,7 +1114,7 @@ const EmployeeManagement = () => {
                 </div>
               </div>
 
-              {/* Action Buttons - Sticky Footer */}
+              {/* Action Buttons */}
               <div className="sticky bottom-0 flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 mt-6 pt-4 border-t border-gray-200 bg-white">
                 {!isEditMode ? (
                   <>
@@ -1287,20 +1192,6 @@ const CompactField = ({
         />
       ) : (
         <p className="text-slate-800 font-semibold text-sm">{value || "—"}</p>
-      )}
-    </div>
-  );
-};
-
-// Helper Component: Resource Item Display
-const ResourceItem = ({ name, serial }) => {
-  return (
-    <div className="p-2.5 sm:p-3 bg-white rounded-lg border border-amber-200 hover:border-amber-400 transition text-center">
-      <p className="text-xs sm:text-sm font-bold text-amber-900">{name}</p>
-      {serial && (
-        <p className="text-xs text-amber-700 mt-1 truncate" title={serial}>
-          {serial}
-        </p>
       )}
     </div>
   );
