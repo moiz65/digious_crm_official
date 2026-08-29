@@ -1,7 +1,7 @@
 // API Configuration Utility
 // Centralized API endpoint configuration
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || "http://100.114.9.93:5000";
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://100.118.172.21:5000";
 const API_VERSION = process.env.REACT_APP_API_VERSION || "v1";
 const API_PREFIX = `/api/${API_VERSION}`;
 const SOCKET_URL = process.env.REACT_APP_SOCKET_URL || API_BASE_URL;

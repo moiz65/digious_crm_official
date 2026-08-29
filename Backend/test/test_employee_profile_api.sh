@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Employee Profile API Test Suite
-# Base URL: http://100.114.9.93:5000/api/v1/employees
+# Base URL: http://100.118.172.21:5000/api/v1/employees
 
-BASE_URL="http://100.114.9.93:5000/api/v1/employees"
+BASE_URL="http://100.118.172.21:5000/api/v1/employees"
 EMPLOYEE_ID=1
 
 echo "================================================"

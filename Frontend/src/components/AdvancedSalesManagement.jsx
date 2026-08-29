@@ -240,7 +240,7 @@ const AdvancedSalesManagement = () => {
   useEffect(() => {
     const token = localStorage.getItem("token");
     fetch(
-      `${process.env.REACT_APP_API_URL || "http://100.114.9.93:5000"}/api/v1/employees`,
+      `${process.env.REACT_APP_API_URL || "http://100.118.172.21:5000"}/api/v1/employees`,
       {
         headers: { Authorization: `Bearer ${token}` },
       },

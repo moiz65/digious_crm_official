@@ -33,7 +33,7 @@ export const DashboardHeader = ({ title, subtitle }) => {
         const employeeId = user?.employeeId || user?.id;
         
         // Fetch employee details from your employees API
-        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://100.114.9.93:5000'}/api/v1/employees/${employeeId}`, {
+        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://100.118.172.21:5000'}/api/v1/employees/${employeeId}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -211,7 +211,7 @@ export const ProfileImage = ({
       
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://100.114.9.93:5000'}/api/v1/employees/${employeeId}`, {
+        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://100.118.172.21:5000'}/api/v1/employees/${employeeId}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -297,7 +297,7 @@ export const LogoWithProfile = ({ title, subtitle }) => {
       
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://100.114.9.93:5000'}/api/v1/employees/${employeeId}`, {
+        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://100.118.172.21:5000'}/api/v1/employees/${employeeId}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'

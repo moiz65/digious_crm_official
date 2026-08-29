@@ -190,7 +190,7 @@ const EmployeeProfile = () => {
   const [selectedEmployees, setSelectedEmployees] = useState(new Set());
   const [filters, setFilters] = useState({
     department: "all",
-    status: "all",
+    status: "active",
     search: "",
   });
   const [sortBy, setSortBy] = useState("recent");
@@ -241,7 +241,7 @@ const EmployeeProfile = () => {
       const currentMonth = currentDate.getMonth() + 1;
 
       const response = await fetch(
-        `${process.env.REACT_APP_API_URL || "http://100.114.9.93:5000"}/api/v1/sales-targets/${employeeId}?month=${currentMonth}&year=${currentYear}`,
+        `${process.env.REACT_APP_API_URL || "http://100.118.172.21:5000"}/api/v1/sales-targets/${employeeId}?month=${currentMonth}&year=${currentYear}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -739,7 +739,7 @@ const EmployeeProfile = () => {
   const clearFilters = () => {
     setFilters({
       department: "all",
-      status: "all",
+      status: "active",
       search: "",
     });
   };
@@ -1085,7 +1085,7 @@ const EmployeeProfile = () => {
                   </select>
 
                   {/* Sort Options */}
-                  <select
+                  {/* <select
                     value={sortBy}
                     onChange={(e) => handleSortChange(e.target.value)}
                     className="px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#349dff] text-sm"
@@ -1100,10 +1100,10 @@ const EmployeeProfile = () => {
                     <option value="projectdones">Project Done (Dev)</option>
                     <option value="hires">Hires (HR)</option>
                     <option value="designs">Designs Created</option>
-                  </select>
+                  </select> */}
 
                   {/* Clear Filters Button */}
-                  {(filters.search ||
+                  {/* {(filters.search ||
                     filters.department !== "all" ||
                     filters.status !== "all") && (
                       <button
@@ -1112,7 +1112,7 @@ const EmployeeProfile = () => {
                       >
                         Clear Filters
                       </button>
-                    )}
+                    )} */}
                 </div>
               </div>
             </div>
@@ -2142,7 +2142,7 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
   };
 
   const departments = [
-    "Human Resources",
+    "HR",
     "Sales",
     "Supporting Staff",
     "Production",
@@ -2156,7 +2156,8 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
     "Sr. Sales Executive",
     "HR Intern",
     "HR Manager",
-    "Jr. sales executive",
+    "Sales Executive",
+    "Business Unit Head",
     "Bidder",
     "Team Lead Sales",
     "Team Lead Development",
@@ -2168,6 +2169,7 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
     "SEO Speacialist",
     "Social Media Marketer",
     "Office Boy",
+    "Support Staff",
     "Sr. Developer",
     "Jr.Developer",
   ];
@@ -3184,7 +3186,7 @@ const ProfileDetailModal = ({
       const currentMonth = currentDate.getMonth() + 1;
 
       const response = await fetch(
-        `${process.env.REACT_APP_API_URL || "http://100.114.9.93:5000"}/api/v1/sales-targets/${employeeId}?month=${currentMonth}&year=${currentYear}`,
+        `${process.env.REACT_APP_API_URL || "http://100.118.172.21:5000"}/api/v1/sales-targets/${employeeId}?month=${currentMonth}&year=${currentYear}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

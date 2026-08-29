@@ -30,7 +30,7 @@ const Employee_onboarding_compo = () => {
     try {
       setLoadingRoles(true);
       const token = localStorage.getItem('token');
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://100.114.9.93:5000'}/api/v1/roles`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://100.118.172.21:5000'}/api/v1/roles`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -47,12 +47,35 @@ const Employee_onboarding_compo = () => {
   };
 
   const departments = [
-    "Human Resources",
+    "HR",
     "Sales",
     "Supporting Staff",
     "Production",
     "Digital Marketing",
     "Operations",
+  ];
+  const designations = [
+    "Internee",
+    "Operations Manager",
+    "Sr. Sales Executive",
+    "HR Intern",
+    "HR Manager",
+    "Sales Executive",
+    "Bidder",
+    "Team Lead Sales",
+    "Team Lead Development",
+    "Production Manager",
+    "Business Unit Head",
+    "Sr. Graphics Designer",
+    "Jr. Graphics Designer",
+    "Animation Artist",
+    "SEO Executive",
+    "SEO Speacialist",
+    "Social Media Marketer",
+    "Office Boy",
+    "Support Staff",
+    "Sr. Developer",
+    "Jr.Developer",
   ];
 
   const [formData, setFormData] = useState({
@@ -1169,7 +1192,7 @@ const Employee_onboarding_compo = () => {
                     </div>
 
                     {/* ✅ ROLE SELECTION - NEW SECTION */}
-                    
+
                   </div>
                 </div>
               )}
@@ -1237,15 +1260,30 @@ const Employee_onboarding_compo = () => {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-2">Designation</label>
-                        <input
+                        <label for="designation" className="block text-sm font-semibold text-slate-700 mb-2">Designation</label>
+                        {/* <input
                           type="text"
                           name="designation"
                           value={formData.designation}
                           onChange={handleInputChange}
                           placeholder="e.g. Senior Manager"
                           className="w-full px-4 py-3 border border-blue-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
+                        /> */}
+                        <select
+                          name="designation"
+                          value={formData.designation}
+                          onChange={handleInputChange}
+                          className={`w-full px-3 py-2.5 border rounded-xl focus:outline-none focus:ring-2 ${errors.designation ? 'border-red-500 focus:ring-red-500' : 'border-blue-200 focus:ring-blue-500'
+                            } custom_select_for_height text-sm leading-tight`}
+                          size={1}
+                          style={{ maxHeight: '42px' }}
+                        >
+                          <option value="">Select Designation</option>
+                          {designations.map(designation => (
+                            <option key={designation} value={designation}>{designation}</option>
+                          ))}
+                        </select>
+                        {errors.designation && <p className="text-red-500 text-sm mt-1">{errors.designation}</p>}
                       </div>
                     </div>
                   </div>

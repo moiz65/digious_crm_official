@@ -144,14 +144,14 @@ export function SuperAdminDashboard() {
 
       // Fetch employees
       const employeesRes = await fetch(
-        `${process.env.REACT_APP_API_URL || "http://100.114.9.93:5000"}/api/v1/employees?limit=1000`,
+        `${process.env.REACT_APP_API_URL || "http://100.118.172.21:5000"}/api/v1/employees?limit=1000`,
         { headers },
       );
       const employeesData = await employeesRes.json();
 
       // Fetch today's attendance
       const attendanceRes = await fetch(
-        `${process.env.REACT_APP_API_URL || "http://100.114.9.93:5000"}/api/v1/attendance/all?limit=1000`,
+        `${process.env.REACT_APP_API_URL || "http://100.118.172.21:5000"}/api/v1/attendance/all?limit=1000`,
         { headers },
       );
       const attendanceData = await attendanceRes.json();
@@ -160,7 +160,7 @@ export function SuperAdminDashboard() {
       // FIX 1: Fetch and filter sales for current month ONLY
       // ============================================================
       const salesRes = await fetch(
-        `${process.env.REACT_APP_API_URL || "http://100.114.9.93:5000"}/api/v1/sales`,
+        `${process.env.REACT_APP_API_URL || "http://100.118.172.21:5000"}/api/v1/sales`,
         { headers },
       );
       const salesDataRes = await salesRes.json();
@@ -211,7 +211,7 @@ export function SuperAdminDashboard() {
       // FIX 2: Fetch and filter expenses for current month ONLY
       // ============================================================
       const expensesRes = await fetch(
-        `${process.env.REACT_APP_API_URL || "http://100.114.9.93:5000"}/api/v1/expenses?limit=10000`,
+        `${process.env.REACT_APP_API_URL || "http://100.118.172.21:5000"}/api/v1/expenses?limit=10000`,
         { headers },
       );
       const expensesData = await expensesRes.json();
@@ -247,7 +247,7 @@ export function SuperAdminDashboard() {
         .map(async (emp) => {
           try {
             const targetRes = await fetch(
-              `${process.env.REACT_APP_API_URL || "http://100.114.9.93:5000"}/api/v1/sales-targets/${emp.id}?month=${currentMonth}&year=${currentYear}`,
+              `${process.env.REACT_APP_API_URL || "http://100.118.172.21:5000"}/api/v1/sales-targets/${emp.id}?month=${currentMonth}&year=${currentYear}`,
               { headers },
             );
             const targetData = await targetRes.json();
@@ -318,7 +318,7 @@ export function SuperAdminDashboard() {
     try {
       const token = localStorage.getItem("token");
       const res = await fetch(
-        `${process.env.REACT_APP_API_URL || "http://100.114.9.93:5000"}/api/v1/projects?limit=100`,
+        `${process.env.REACT_APP_API_URL || "http://100.118.172.21:5000"}/api/v1/projects?limit=100`,
         {
           headers: { Authorization: `Bearer ${token}` },
         },
@@ -340,7 +340,7 @@ export function SuperAdminDashboard() {
 
       // Fetch all active employees first
       const employeesRes = await fetch(
-        `${process.env.REACT_APP_API_URL || "http://100.114.9.93:5000"}/api/v1/employees?limit=1000`,
+        `${process.env.REACT_APP_API_URL || "http://100.118.172.21:5000"}/api/v1/employees?limit=1000`,
         { headers },
       );
       const employeesData = await employeesRes.json();
@@ -359,7 +359,7 @@ export function SuperAdminDashboard() {
       const breakPromises = activeEmployees.map(async (employee) => {
         try {
           const breakRes = await fetch(
-            `${process.env.REACT_APP_API_URL || "http://100.114.9.93:5000"}/api/v1/attendance/ongoing-breaks/${employee.id}`,
+            `${process.env.REACT_APP_API_URL || "http://100.118.172.21:5000"}/api/v1/attendance/ongoing-breaks/${employee.id}`,
             { headers },
           );
           const breakData = await breakRes.json();
