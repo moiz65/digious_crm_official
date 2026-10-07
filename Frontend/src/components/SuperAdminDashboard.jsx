@@ -185,7 +185,7 @@ export function SuperAdminDashboard() {
 
       // 2. ✅ Fetch absent employees directly from backend
       const absentRes = await fetch(
-        `${process.env.REACT_APP_API_URL || "http://100.118.172.21:5000"}/api/v1/attendance/absent-today`,
+        `${process.env.REACT_APP_API_URL || "http://100.114.9.93:5000"}/api/v1/attendance/absent-today`,
         { headers },
       );
       const absentData = await absentRes.json();
