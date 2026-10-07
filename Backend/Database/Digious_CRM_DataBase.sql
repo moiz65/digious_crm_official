@@ -6777,6 +6777,7 @@ CREATE TABLE `expenses` (
   `category_id` int(11) DEFAULT NULL,
   `category_name` varchar(100) NOT NULL COMMENT 'Denormalized snapshot at time of entry',
   `amount` decimal(12,2) NOT NULL,
+  `payment_type` varchar(50) NOT NULL DEFAULT 'Bank Account',
   `note` text DEFAULT NULL,
   `expense_date` date NOT NULL,
   `expense_time` time NOT NULL,

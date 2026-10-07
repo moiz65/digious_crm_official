@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { confirmDialog } from '../utils/confirm';
-import { 
+import {
   FileText,
   ClipboardList,
   Settings,
@@ -15,7 +15,10 @@ import {
   DollarSign,
   TrendingUp,
   Users,
+  Award,
+  Calendar,
   RefreshCw,
+  Trophy,
   MessageSquare,
   CreditCard,
   Wallet,
@@ -26,7 +29,7 @@ import {
   X,
   Menu,
   ChevronLeft,
-  Receipt 
+  Receipt
 } from 'lucide-react';
 
 const Sidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) => {
@@ -34,7 +37,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) => 
   const navigate = useNavigate();
   const sidebarRef = useRef(null);
   const { logoutNoCheckout } = useAuth();
-  
+
   // By default koi bhi dropdown open nahi hoga
   const [expandedItems, setExpandedItems] = useState(new Set());
   const [closingItems, setClosingItems] = useState(new Set());
@@ -42,11 +45,11 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) => 
   const menuItems = [
     // Dashboard
     { id: 'dashboard', label: 'Dashboard', icon: BarChart3, path: '/dashboard' },
-    
+
     // Operations
-    { 
-      id: 'operations', 
-      label: 'Operations', 
+    {
+      id: 'operations',
+      label: 'Operations',
       icon: Briefcase,
       children: [
         { id: 'attendance', label: 'Attendance', icon: SheetIcon, path: '/attendance' },
@@ -56,11 +59,10 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) => 
         { id: 'employee-feedback', label: 'Employee Feedback', icon: MessageSquare, path: '/employee-feedback' },
       ]
     },
-    
     // Finance
-    { 
-      id: 'finance', 
-      label: 'Finance', 
+    {
+      id: 'finance',
+      label: 'Finance',
       icon: DollarSign,
       children: [
         { id: 'payroll', label: 'Payroll', icon: CreditCard, path: '/admin/payroll' },
@@ -68,34 +70,37 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) => 
         { id: 'advances', label: 'Advances & Loans', icon: Banknote, path: '/admin/advances' },
       ]
     },
-    
     // Business Development
-    { 
-      id: 'business-development', 
-      label: 'Business & Insights', 
+    {
+      id: 'business-development',
+      label: 'Business & Insights',
       icon: TrendingUp,
       children: [
         { id: 'sales', label: 'Sales', icon: TrendingUp, path: '/admin/sales' },
         { id: 'customers', label: 'Customers', icon: Users, path: '/admin/customers' },
         { id: 'leads', label: 'Leads', icon: Phone, path: '/admin/leads' },
+        { id: 'sales-tiers', label: 'Sales Tiers', icon: Award, path: '/admin/sales-tiers' },
+        { id: 'sales-quarters', label: 'Sales Quarters', icon: Calendar, path: '/admin/sales-quarters' },
+        { id: 'sales-performance', label: 'Performance', icon: Trophy, path: '/admin/sales-performance' },
+        { id: 'sales-employees', label: 'Sales Employees', icon: Users, path: '/admin/sales-employees' },
       ]
     },
-    
+
     // Projects
     { id: 'projects', label: 'Projects', icon: ClipboardList, path: '/projects' },
-    
+
     // Invoice
-    { 
-      id: 'invoice', 
-      label: 'Invoice', 
+    {
+      id: 'invoice',
+      label: 'Invoice',
       icon: Receipt,
       path: '/admin/invoice'
     },
-    
+
     // System Settings
-    { 
-      id: 'settings', 
-      label: 'Settings', 
+    {
+      id: 'settings',
+      label: 'Settings',
       icon: Settings,
       children: [
         { id: 'user-roles', label: 'Roles & Permissions', icon: Shield, path: '/admin/roles' },
@@ -113,11 +118,11 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) => 
     if (item.path) {
       return location.pathname === item.path || activeItem === item.id;
     }
-    
+
     if (item.children) {
       return item.children.some(child => isChildActive(child));
     }
-    
+
     return activeItem === item.id;
   };
 
@@ -152,12 +157,12 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) => 
   // Auto-expand current active item
   useEffect(() => {
     const currentPath = location.pathname;
-    
+
     // Find which parent item contains the current path
-    const activeParent = menuItems.find(item => 
+    const activeParent = menuItems.find(item =>
       item.children && item.children.some(child => currentPath.startsWith(child.path))
     );
-    
+
     if (activeParent) {
       // Smooth open for active parent
       setExpandedItems(prev => {
@@ -176,7 +181,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) => 
         newSet.add(itemId);
         return newSet;
       });
-      
+
       setTimeout(() => {
         setExpandedItems(prev => {
           const newSet = new Set(prev);
@@ -265,21 +270,19 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) => 
           title={isCollapsed ? item.label : ""}
         >
           <div className="flex items-center">
-            <Icon className={`h-5 w-5 ${isCollapsed ? '' : 'mr-3'} ${
-              isActive ? 'text-white' : 'text-blue-500 group-hover:text-blue-600'
-            }`} />
+            <Icon className={`h-5 w-5 ${isCollapsed ? '' : 'mr-3'} ${isActive ? 'text-white' : 'text-blue-500 group-hover:text-blue-600'
+              }`} />
             {!isCollapsed && (
               <span className={`font-semibold ${isActive ? 'text-white' : 'text-slate-800 group-hover:text-blue-800'}`}>
                 {item.label}
               </span>
             )}
           </div>
-          
+
           {!isCollapsed && hasChildren && (
-            <ChevronRight 
-              className={`h-4 w-4 transition-transform duration-300 ${
-                isExpanded ? 'rotate-90' : ''
-              } ${isActive ? 'text-white/80' : 'text-slate-500'}`} 
+            <ChevronRight
+              className={`h-4 w-4 transition-transform duration-300 ${isExpanded ? 'rotate-90' : ''
+                } ${isActive ? 'text-white/80' : 'text-slate-500'}`}
             />
           )}
 
@@ -291,14 +294,14 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) => 
 
         {/* Render children if expanded and not collapsed */}
         {!isCollapsed && hasChildren && (
-          <div 
+          <div
             className={`
               overflow-hidden transition-all duration-300 ease-in-out
-              ${isExpanded 
-                ? 'max-h-96 opacity-100 translate-y-0' 
+              ${isExpanded
+                ? 'max-h-96 opacity-100 translate-y-0'
                 : isClosing
-                ? 'max-h-0 opacity-0 -translate-y-4'
-                : 'max-h-0 opacity-0'
+                  ? 'max-h-0 opacity-0 -translate-y-4'
+                  : 'max-h-0 opacity-0'
               }
             `}
           >
@@ -306,7 +309,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) => 
               {item.children.map((child) => {
                 const ChildIcon = child.icon;
                 const isChildActiveValue = isChildActive(child);
-                
+
                 return (
                   <button
                     key={child.id}
@@ -348,14 +351,14 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) => 
 
       {/* Mobile Overlay */}
       {!isCollapsed && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-300"
           onClick={() => setIsCollapsed(true)}
         />
       )}
 
       {/* Sidebar */}
-      <div 
+      <div
         ref={sidebarRef}
         className={`
           fixed lg:static inset-y-0 left-0 z-50
@@ -380,7 +383,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) => 
                   <p className="text-xs text-gray-600 truncate">Administrator</p>
                 </div>
               </div>
-              
+
               <div className="flex items-center space-x-2">
                 {/* Desktop Toggle Button */}
                 <button
@@ -390,7 +393,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) => 
                 >
                   <ChevronLeft className="h-4 w-4 text-slate-600" />
                 </button>
-                
+
                 {/* Mobile Close Button */}
                 <button
                   onClick={() => setIsCollapsed(true)}
@@ -402,19 +405,19 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) => 
             </div>
           ) : (
             <div className="flex flex-col items-center space-y-4">
-              <div 
+              <div
                 className="w-12 h-12 bg-gradient-to-br from-[#349dff] to-[#1e87e6] rounded-xl flex items-center justify-center text-white font-semibold text-lg shadow-lg shadow-blue-500/30 cursor-pointer"
                 onClick={() => setIsCollapsed(false)}
                 title="Expand sidebar"
               >
                 SA
               </div>
-              
+
               <div className="flex flex-col items-center space-y-2">
                 <button className="relative p-2.5 rounded-xl bg-white/80 backdrop-blur-sm border border-blue-200/40 hover:bg-white transition-all duration-300 shadow-md hover:shadow-lg group">
                   <Bell className="h-5 w-5 text-slate-600 group-hover:text-blue-600 transition-colors" />
                 </button>
-                
+
                 {/* Desktop Expand Button (only visible when collapsed) */}
                 <button
                   onClick={() => setIsCollapsed(false)}
@@ -437,7 +440,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) => 
 
         {/* Logout Button */}
         <div className="p-4 border-t border-blue-200/40">
-          <button 
+          <button
             onClick={handleLogout}
             className={`
               w-full flex items-center rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-300 group
@@ -452,7 +455,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) => 
               {!isCollapsed && <span>Logout</span>}
             </div>
           </button>
-          
+
           {/* Version info for expanded view */}
           {!isCollapsed && (
             <div className="mt-4 text-center">

@@ -241,9 +241,15 @@ function getCurrentMonthDateRange() {
 
 function normalizeSyncDateRange(dateFrom, dateTo) {
   const currentMonth = getCurrentMonthDateRange();
+  const todayStr = getTodayPakistan();
+
+  const clampToToday = (value) => {
+    if (!value) return value;
+    return value > todayStr ? todayStr : value;
+  };
 
   if (!dateFrom && !dateTo) {
-    return { from: currentMonth.from, to: currentMonth.to };
+    return { from: currentMonth.from, to: clampToToday(currentMonth.to) };
   }
 
   if (dateFrom && !dateTo) {
@@ -254,9 +260,9 @@ function normalizeSyncDateRange(dateFrom, dateTo) {
       const pad = (n) => String(n).padStart(2, "0");
       const firstDay = `${year}-${pad(month + 1)}-01`;
       const lastDay = `${year}-${pad(month + 1)}-${new Date(year, month + 1, 0).getDate()}`;
-      return { from: firstDay, to: lastDay };
+      return { from: firstDay, to: clampToToday(lastDay) };
     }
-    return { from: currentMonth.from, to: currentMonth.to };
+    return { from: currentMonth.from, to: clampToToday(currentMonth.to) };
   }
 
   if (!dateFrom && dateTo) {
@@ -266,12 +272,12 @@ function normalizeSyncDateRange(dateFrom, dateTo) {
       const month = end.getMonth();
       const pad = (n) => String(n).padStart(2, "0");
       const firstDay = `${year}-${pad(month + 1)}-01`;
-      return { from: firstDay, to: dateTo };
+      return { from: firstDay, to: clampToToday(dateTo) };
     }
-    return { from: currentMonth.from, to: currentMonth.to };
+    return { from: currentMonth.from, to: clampToToday(currentMonth.to) };
   }
 
-  return { from: dateFrom, to: dateTo };
+  return { from: dateFrom, to: clampToToday(dateTo) };
 }
 
 function extractLogsArray(response) {

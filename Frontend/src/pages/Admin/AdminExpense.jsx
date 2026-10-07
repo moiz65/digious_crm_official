@@ -1572,8 +1572,7 @@ const ExpenseModal = ({
     .filter(
       (c) =>
         c.is_active && c.name.toLowerCase().includes(catSearch.toLowerCase()),
-    )
-    .slice(0, 8);
+    );
   const selectedCatName = formData.category_id
     ? categories.find((c) => c.id === +formData.category_id)?.name
     : "";
@@ -1658,7 +1657,7 @@ const ExpenseModal = ({
                   <X className="h-4 w-4" />
                 </button>
               )}
-              {showCatDropdown && (catSearch || !formData.category_id) && (
+              {showCatDropdown && (
                 <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-50 overflow-hidden max-h-48 overflow-y-auto">
                   {filteredCats.length === 0 ? (
                     <div className="px-4 py-3 text-slate-500 text-sm">

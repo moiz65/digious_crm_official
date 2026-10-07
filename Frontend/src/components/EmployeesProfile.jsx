@@ -17,6 +17,7 @@ import {
   Trash2,
   Eye,
   Plus,
+  AlertCircle,
   ArrowLeft,
   ChevronRight,
   Home,
@@ -1855,28 +1856,21 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
     lastName: employee.name.split(" ").slice(1).join(" "),
     employeeId: `EMP-${String(employee.id).padStart(4, "0")}`,
     about: `Experienced ${employee.role} in the ${employee.department} department.`,
-    // Profile image
     profile_picture: employee.profile_picture || "",
     profileImageFile: null,
     profileImagePreview: employee.profile_picture || "",
-
-    // Allowances (array format)
     allowances: employee.allowances || [
       {
         allowance_name: employee.allowance_name || "",
         allowance_amount: employee.allowance_amount || 0,
       },
     ],
-
-    // Resources
     resources: employee.resources || [
       {
         resource_name: employee.resource_name || "",
         resource_serial: employee.resource_serial || "",
       },
     ],
-
-    // Other fields
     base_salary: employee.base_salary || 0,
     total_salary: employee.total_salary || 0,
     cnic: employee.cnic || "",
@@ -1899,6 +1893,9 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
     employee.profile_picture || "",
   );
 
+  // Check if employee is Sales
+  const isSalesEmployee = employee.department === "Sales";
+
   // Sales target state
   const [salesTarget, setSalesTarget] = useState({
     monthly_target: employee.target || 0,
@@ -1914,6 +1911,142 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
     new Date().getFullYear(),
   );
 
+  // Tier state
+  const [employeeTier, setEmployeeTier] = useState(null);
+  const [targetMode, setTargetMode] = useState("manual");
+  const [tierLoading, setTierLoading] = useState(false);
+  const [savingTierAuto, setSavingTierAuto] = useState(false);
+
+  // All tiers + selected tier
+  const [allTiers, setAllTiers] = useState([]);
+  const [selectedTierId, setSelectedTierId] = useState("");
+  const [tiersLoading, setTiersLoading] = useState(false);
+  const [tierSaving, setTierSaving] = useState(false);
+
+  // ═══════════════════════════════════════════════════════════
+  // FETCH ALL TIERS
+  // ═══════════════════════════════════════════════════════════
+  const fetchAllTiers = async () => {
+    try {
+      setTiersLoading(true);
+      const token = localStorage.getItem("token");
+      const res = await fetch(
+        `${process.env.REACT_APP_API_URL || "http://100.118.172.21:5000"}/api/v1/sales-tiers/tiers`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const data = await res.json();
+      if (data.success) {
+        setAllTiers(data.data || []);
+      }
+    } catch (err) {
+      console.error("Error fetching tiers:", err);
+    } finally {
+      setTiersLoading(false);
+    }
+  };
+
+  // ═══════════════════════════════════════════════════════════
+  // FETCH EMPLOYEE'S CURRENT TIER
+  // ═══════════════════════════════════════════════════════════
+  const fetchEmployeeTier = async () => {
+    try {
+      setTierLoading(true);
+      const token = localStorage.getItem("token");
+      const now = new Date();
+      const month = now.getMonth() + 1;
+      const year = now.getFullYear();
+
+      const res = await fetch(
+        `${process.env.REACT_APP_API_URL || "http://100.118.172.21:5000"}/api/v1/sales-targets/${employee.id}?month=${month}&year=${year}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const data = await res.json();
+
+      if (data.success && data.data.tier) {
+        setEmployeeTier({
+          id: data.data.tier.id,
+          name: data.data.tier.name,
+          level: data.data.tier.level,
+          monthly_target_usd: parseFloat(data.data.tier.monthly_target_usd),
+          quarterly_target_usd: parseFloat(data.data.tier.quarterly_target_usd),
+          base_salary_pkr: parseFloat(data.data.tier.base_salary_pkr),
+          color: data.data.tier.color,
+        });
+        setSelectedTierId(data.data.tier.id.toString());
+      } else {
+        setEmployeeTier(null);
+        setSelectedTierId("");
+      }
+    } catch (err) {
+      console.error("Error fetching employee tier:", err);
+    } finally {
+      setTierLoading(false);
+    }
+  };
+
+  // ═══════════════════════════════════════════════════════════
+  // HANDLE TIER SAVE (from dropdown)
+  // ═══════════════════════════════════════════════════════════
+  const handleTierSave = async () => {
+    if (!selectedTierId) {
+      toast.error("Please select a tier");
+      return;
+    }
+
+    // Check if same tier selected
+    if (employeeTier && parseInt(selectedTierId) === employeeTier.id) {
+      toast.info("Same tier already assigned");
+      return;
+    }
+
+    setTierSaving(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(
+        `${process.env.REACT_APP_API_URL || "http://100.118.172.21:5000"}/api/v1/sales-tiers/employees`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            employee_id: employee.id,
+            tier_id: parseInt(selectedTierId),
+            joined_date: new Date().toISOString().split("T")[0],
+          }),
+        }
+      );
+
+      const data = await res.json();
+      if (data.success) {
+        toast.success(`✅ Tier "${data.data.tier_name}" assigned successfully!`);
+
+        // Refresh tier info
+        await fetchEmployeeTier();
+
+        // Notify parent
+        if (onUpdateEmployee) {
+          onUpdateEmployee({
+            ...employee,
+            tier_id: parseInt(selectedTierId),
+            tier_name: data.data.tier_name,
+          });
+        }
+      } else {
+        toast.error(data.message || "Failed to assign tier");
+      }
+    } catch (err) {
+      console.error("Error assigning tier:", err);
+      toast.error("Failed to assign tier");
+    } finally {
+      setTierSaving(false);
+    }
+  };
+
+  // ═══════════════════════════════════════════════════════════
+  // FETCH SALES HISTORY
+  // ═══════════════════════════════════════════════════════════
   const fetchSalesHistory = async (year) => {
     setSalesHistoryLoading(true);
     try {
@@ -1921,7 +2054,7 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
         endpoints.salesTargets.history(employee.id, year),
         {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        },
+        }
       );
       const data = await response.json();
       if (data.success) setSalesHistory(data.data || []);
@@ -1932,13 +2065,28 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
     }
   };
 
-  // Fetch history whenever user switches to salesTarget tab
   useEffect(() => {
     if (activeTab === "salesTarget") fetchSalesHistory(selectedHistoryYear);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, selectedHistoryYear]);
 
-  // Add this function to convert file to base64
+  // ═══════════════════════════════════════════════════════════
+  // FETCH TIERS + TIER ON TAB CHANGE
+  // ═══════════════════════════════════════════════════════════
+  useEffect(() => {
+    if (
+      (activeTab === "salary" || activeTab === "salesTarget") &&
+      isSalesEmployee
+    ) {
+      fetchAllTiers();
+      fetchEmployeeTier();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, isSalesEmployee, employee.id]);
+
+  // ═══════════════════════════════════════════════════════════
+  // CONVERT FILE TO BASE64
+  // ═══════════════════════════════════════════════════════════
   const convertFileToBase64 = (file) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -1948,6 +2096,9 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
     });
   };
 
+  // ═══════════════════════════════════════════════════════════
+  // HANDLE SUBMIT
+  // ═══════════════════════════════════════════════════════════
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -1956,11 +2107,22 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
       let profilePictureBase64 =
         formData.profile_picture || employee.profile_picture;
 
-      // Convert new image file to base64 if exists
       if (profileImageFile) {
         profilePictureBase64 = await convertFileToBase64(profileImageFile);
       }
-      // Prepare form data for API (with allowance IDs)
+
+      // ⭐ Base salary logic: If tier assigned, use tier's base salary
+      const hasTier = !!employeeTier;
+      const finalBaseSalary =
+        hasTier && isSalesEmployee
+          ? parseFloat(employeeTier.base_salary_pkr)
+          : parseFloat(formData.base_salary) || 0;
+
+      const totalAllowances = formData.allowances.reduce(
+        (sum, a) => sum + (parseFloat(a.allowance_amount) || 0),
+        0
+      );
+
       const updatedEmployee = {
         name: `${formData.firstName} ${formData.lastName}`,
         email: employee.email,
@@ -1972,45 +2134,29 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
         department: formData.department,
         status: formData.status,
         join_date: formData.join_date,
-        profile_picture: profilePictureBase64, // Use the base64 string
-
-        // salary
+        profile_picture: profilePictureBase64,
         salary: {
-          base_salary: parseFloat(formData.base_salary) || 0,
-          total_salary: parseFloat(formData.total_salary) || 0,
+          base_salary: finalBaseSalary,
+          total_salary: finalBaseSalary + totalAllowances,
         },
-
-        // allowances WITH IDs for existing ones
         allowances: formData.allowances.map((a) => ({
-          id: a.id || null, // Send existing ID or null for new
+          id: a.id || null,
           allowance_name: a.allowance_name,
           allowance_amount: parseFloat(a.allowance_amount) || 0,
         })),
-
-        // dynamic resources
         dynamic_resources: formData.resources.map((dr) => ({
           resource_name: dr.resource_name || "",
           resource_serial: dr.resource_serial || "",
         })),
       };
 
-      console.log("Sending to API:", {
-        ...updatedEmployee,
-        profile_picture: profilePictureBase64
-          ? "BASE64_IMAGE_PRESENT"
-          : "NO_IMAGE",
-      });
-
-      // Call API to update employee
       const response = await fetch(
         `${endpoints.employees.base}/${employee.id}`,
         {
           method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(updatedEmployee),
-        },
+        }
       );
 
       const data = await response.json();
@@ -2018,7 +2164,6 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
       if (data.success) {
         toast.success("Employee details updated successfully!");
 
-        // Update local state with new profile picture URL if returned
         if (data.profile_picture_url) {
           setProfileImagePreview(data.profile_picture_url);
           setFormData((prev) => ({
@@ -2032,6 +2177,8 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
           ...data.employee,
           ...updatedEmployee,
           name: `${formData.firstName} ${formData.lastName}`,
+          base_salary: finalBaseSalary,
+          total_salary: finalBaseSalary + totalAllowances,
           profile_picture:
             data.profile_picture_url ||
             data.employee?.profile_picture ||
@@ -2039,7 +2186,7 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
         });
       } else {
         toast.error(
-          "Failed to update employee: " + (data.message || "Unknown error"),
+          "Failed to update employee: " + (data.message || "Unknown error")
         );
       }
     } catch (error) {
@@ -2050,33 +2197,14 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
     }
   };
 
-  const uploadProfileImage = async (employeeId, file) => {
-    const formData = new FormData();
-    formData.append("profile_picture", file);
-
-    try {
-      const response = await fetch(
-        `${endpoints.employees.base}/${employeeId}/profile-picture`,
-        {
-          method: "POST",
-          body: formData,
-        },
-      );
-
-      const data = await response.json();
-      return data.success;
-    } catch (error) {
-      console.error("Error uploading profile image:", error);
-      return false;
-    }
-  };
-
+  // ═══════════════════════════════════════════════════════════
+  // PROFILE IMAGE HANDLER
+  // ═══════════════════════════════════════════════════════════
   const handleProfileImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       setProfileImageFile(file);
 
-      // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
         setProfileImagePreview(reader.result);
@@ -2089,6 +2217,9 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
     }
   };
 
+  // ═══════════════════════════════════════════════════════════
+  // ALLOWANCES HANDLERS
+  // ═══════════════════════════════════════════════════════════
   const handleAddAllowance = () => {
     setFormData((prev) => ({
       ...prev,
@@ -2110,11 +2241,14 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
     setFormData((prev) => ({
       ...prev,
       allowances: prev.allowances.map((allowance, i) =>
-        i === index ? { ...allowance, [field]: value } : allowance,
+        i === index ? { ...allowance, [field]: value } : allowance
       ),
     }));
   };
 
+  // ═══════════════════════════════════════════════════════════
+  // RESOURCES HANDLERS
+  // ═══════════════════════════════════════════════════════════
   const handleAddResource = () => {
     setFormData((prev) => ({
       ...prev,
@@ -2136,11 +2270,14 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
     setFormData((prev) => ({
       ...prev,
       resources: prev.resources.map((resource, i) =>
-        i === index ? { ...resource, [field]: value } : resource,
+        i === index ? { ...resource, [field]: value } : resource
       ),
     }));
   };
 
+  // ═══════════════════════════════════════════════════════════
+  // CONSTANTS
+  // ═══════════════════════════════════════════════════════════
   const departments = [
     "HR",
     "Sales",
@@ -2174,6 +2311,9 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
     "Jr.Developer",
   ];
 
+  // ═══════════════════════════════════════════════════════════
+  // RENDER BASIC INFO TAB
+  // ═══════════════════════════════════════════════════════════
   const renderBasicInfoTab = () => (
     <>
       <div className="modal-body pb-0 px-6 pt-6">
@@ -2181,23 +2321,21 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
           <div className="col-span-12">
             <div className="flex items-center flex-wrap gap-3 bg-gray-50 w-full rounded-2xl p-4 mb-6">
               <div className="flex items-center justify-center w-24 h-24 rounded-full border-2 border-dashed border-gray-300 mr-4 flex-shrink-0">
-                {/* SHOW ACTUAL PROFILE PICTURE OR INITIALS */}
                 {profileImagePreview ? (
                   <img
                     src={profileImagePreview}
                     alt="Profile Preview"
                     className="w-20 h-20 rounded-full object-cover"
                     onError={(e) => {
-                      // If image fails to load, show initials
                       e.target.style.display = "none";
                       const initialsDiv = e.target.parentElement;
                       initialsDiv.innerHTML = `
-                      <div class="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center">
-                        <span class="text-gray-700 text-2xl font-bold">
-                          ${formData.firstName?.[0] || ""}${formData.lastName?.[0] || ""}
-                        </span>
-                      </div>
-                    `;
+                        <div class="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center">
+                          <span class="text-gray-700 text-2xl font-bold">
+                            ${formData.firstName?.[0] || ""}${formData.lastName?.[0] || ""}
+                          </span>
+                        </div>
+                      `;
                     }}
                   />
                 ) : employee.profile_picture ? (
@@ -2206,16 +2344,15 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
                     alt={employee.name}
                     className="w-20 h-20 rounded-full object-cover"
                     onError={(e) => {
-                      // If image fails to load, show initials
                       e.target.style.display = "none";
                       const initialsDiv = e.target.parentElement;
                       initialsDiv.innerHTML = `
-                      <div class="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center">
-                        <span class="text-gray-700 text-2xl font-bold">
-                          ${formData.firstName?.[0] || ""}${formData.lastName?.[0] || ""}
-                        </span>
-                      </div>
-                    `;
+                        <div class="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center">
+                          <span class="text-gray-700 text-2xl font-bold">
+                            ${formData.firstName?.[0] || ""}${formData.lastName?.[0] || ""}
+                          </span>
+                        </div>
+                      `;
                     }}
                   />
                 ) : (
@@ -2323,7 +2460,6 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
                 <input
                   type="date"
                   value={(() => {
-                    // Direct conversion in input value
                     const dateValue =
                       employee.joiningDate || employee.join_date;
 
@@ -2334,10 +2470,7 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
                       if (isNaN(date.getTime())) return "";
 
                       const year = date.getFullYear();
-                      const month = String(date.getMonth() + 1).padStart(
-                        2,
-                        "0",
-                      );
+                      const month = String(date.getMonth() + 1).padStart(2, "0");
                       const day = String(date.getDate()).padStart(2, "0");
 
                       return `${year}-${month}-${day}`;
@@ -2468,7 +2601,6 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
             </div>
           </div>
 
-          {/* Status field - removed Experience */}
           <div className="grid grid-cols-1 md:grid-cols-1 gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -2492,134 +2624,305 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
     </>
   );
 
-  const renderSalaryTab = () => (
-    <>
-      <div className="modal-body pb-0 px-6 pt-6">
-        <div className="space-y-6">
-          {/* Base Salary */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Base Salary (PKR) <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="number"
-                value={formData.base_salary}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    base_salary: e.target.value,
-                    total_salary:
-                      parseFloat(e.target.value || 0) +
-                      formData.allowances.reduce(
-                        (sum, allowance) =>
-                          sum + (parseFloat(allowance.allowance_amount) || 0),
-                        0,
-                      ),
-                  }))
-                }
-                required
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Total Salary (PKR)
-              </label>
-              <input
-                type="number"
-                value={formData.total_salary}
-                readOnly
-                className="w-full px-4 py-3 border border-gray-300 bg-gray-50 rounded-xl"
-              />
-              <p className="text-sm text-gray-500 mt-1">
-                Base Salary + Allowances
-              </p>
-            </div>
-          </div>
+  // ═══════════════════════════════════════════════════════════
+  // RENDER SALARY TAB (with tier-based base salary)
+  // ═══════════════════════════════════════════════════════════
+  const renderSalaryTab = () => {
+    const hasTier = !!employeeTier;
+    const totalAllowances = formData.allowances.reduce(
+      (sum, a) => sum + (parseFloat(a.allowance_amount) || 0),
+      0
+    );
+    const displayBaseSalary = hasTier && isSalesEmployee
+      ? parseFloat(employeeTier.base_salary_pkr)
+      : parseFloat(formData.base_salary) || 0;
+    const displayTotalSalary = displayBaseSalary + totalAllowances;
 
-          {/* Allowances */}
-          <div>
-            <div className="flex justify-between items-center mb-4">
-              <h4 className="font-semibold text-gray-900">Allowances</h4>
-              <button
-                type="button"
-                onClick={handleAddAllowance}
-                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition duration-200 text-sm"
-              >
-                <Plus className="h-4 w-4" />
-                Add Allowance
-              </button>
-            </div>
+    return (
+      <>
+        <div className="modal-body pb-0 px-6 pt-6">
+          <div className="space-y-6">
+            {/* ⭐ TIER SECTION (Only for Sales employees) */}
+            {isSalesEmployee && (
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-2xl p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                    <Award className="h-5 w-5 text-blue-600" />
+                    Employee Tier
+                  </h4>
+                  {hasTier && (
+                    <span
+                      className="text-xs px-3 py-1 rounded-full font-bold text-white"
+                      style={{ background: employeeTier.color }}
+                    >
+                      LEVEL {employeeTier.level}
+                    </span>
+                  )}
+                </div>
 
-            {formData.allowances.map((allowance, index) => (
-              <div key={index} className="flex items-end gap-4 mb-4">
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Allowance Name
-                  </label>
-                  <input
-                    type="text"
-                    value={allowance.allowance_name}
-                    onChange={(e) =>
-                      handleAllowanceChange(
-                        index,
-                        "allowance_name",
-                        e.target.value,
-                      )
-                    }
-                    placeholder="e.g., Travel Allowance"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Amount (PKR)
-                  </label>
-                  <input
-                    type="number"
-                    value={allowance.allowance_amount}
-                    onChange={(e) => {
-                      handleAllowanceChange(
-                        index,
-                        "allowance_amount",
-                        e.target.value,
-                      );
-                      // Update total salary
-                      const totalAllowances = formData.allowances.reduce(
-                        (sum, a, i) =>
-                          sum +
-                          (i === index
-                            ? parseFloat(e.target.value || 0)
-                            : parseFloat(a.allowance_amount || 0)),
-                        0,
-                      );
-                      setFormData((prev) => ({
-                        ...prev,
-                        total_salary:
-                          parseFloat(prev.base_salary || 0) + totalAllowances,
-                      }));
-                    }}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-                {formData.allowances.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveAllowance(index)}
-                    className="px-4 py-3 bg-red-100 text-red-600 rounded-xl hover:bg-red-200 transition duration-200"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+                {tierLoading || tiersLoading ? (
+                  <div className="text-center py-3 text-gray-400">
+                    <RefreshCw className="h-4 w-4 animate-spin inline mr-2" />
+                    Loading tiers...
+                  </div>
+                ) : (
+                  <>
+                    {/* Tier Dropdown */}
+                    <div className="mb-3">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Select Tier
+                      </label>
+                      <select
+                        value={selectedTierId}
+                        onChange={(e) => setSelectedTierId(e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                      >
+                        <option value="">-- No Tier (Basic Salary) --</option>
+                        {allTiers
+                          .filter((t) => t.is_active)
+                          .sort((a, b) => a.level - b.level)
+                          .map((tier) => (
+                            <option key={tier.id} value={tier.id}>
+                              {tier.name} — Rs{" "}
+                              {parseFloat(
+                                tier.base_salary_pkr
+                              ).toLocaleString()}{" "}
+                              / $
+                              {parseFloat(
+                                tier.monthly_target_usd
+                              ).toLocaleString()}
+                              /mo
+                            </option>
+                          ))}
+                      </select>
+                    </div>
+
+                    {/* Tier Preview */}
+                    {selectedTierId &&
+                      (() => {
+                        const selectedTier = allTiers.find(
+                          (t) => t.id === parseInt(selectedTierId)
+                        );
+                        if (!selectedTier) return null;
+                        return (
+                          <div
+                            className="rounded-xl p-3 text-white text-sm flex items-center justify-between mb-3"
+                            style={{
+                              background: `linear-gradient(135deg, ${selectedTier.color}, ${selectedTier.color}dd)`,
+                            }}
+                          >
+                            <div>
+                              <p className="font-bold">{selectedTier.name}</p>
+                              <p className="text-white/80 text-xs">
+                                Level {selectedTier.level}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-xs text-white/80">
+                                Base Salary
+                              </p>
+                              <p className="font-bold">
+                                Rs{" "}
+                                {parseFloat(
+                                  selectedTier.base_salary_pkr
+                                ).toLocaleString()}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })()}
+
+                    {/* Info Message */}
+                    {hasTier ? (
+                      <div className="bg-blue-100 border border-blue-300 rounded-lg p-3 mb-3">
+                        <p className="text-xs text-blue-800">
+                          🔒 <strong>Base salary is locked</strong> — It's
+                          automatically taken from the assigned tier. To change
+                          base salary, change tier or remove tier assignment.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="bg-amber-100 border border-amber-300 rounded-lg p-3 mb-3">
+                        <p className="text-xs text-amber-800">
+                          💡 <strong>No tier assigned</strong> — You can
+                          manually set the base salary below.
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Save Tier Button */}
+                    {selectedTierId &&
+                      (!employeeTier ||
+                        parseInt(selectedTierId) !== employeeTier.id) && (
+                        <button
+                          type="button"
+                          onClick={handleTierSave}
+                          disabled={tierSaving}
+                          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium text-sm disabled:opacity-50"
+                        >
+                          {tierSaving ? (
+                            <>
+                              <RefreshCw className="h-4 w-4 animate-spin" />
+                              Saving Tier...
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle className="h-4 w-4" />
+                              Save Tier Assignment
+                            </>
+                          )}
+                        </button>
+                      )}
+                  </>
                 )}
               </div>
-            ))}
+            )}
+
+            {/* ⭐ BASE SALARY (Disabled if tier assigned) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2 flex-wrap">
+                  Base Salary (PKR) <span className="text-red-500">*</span>
+                  {hasTier && isSalesEmployee && (
+                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-semibold flex items-center gap-1">
+                      <Lock className="w-3 h-3" />
+                      From Tier
+                    </span>
+                  )}
+                </label>
+                <input
+                  type="number"
+                  value={displayBaseSalary}
+                  onChange={(e) => {
+                    if (!hasTier || !isSalesEmployee) {
+                      const newBaseSalary = e.target.value;
+                      const newTotalSalary =
+                        parseFloat(newBaseSalary || 0) + totalAllowances;
+                      setFormData((prev) => ({
+                        ...prev,
+                        base_salary: newBaseSalary,
+                        total_salary: newTotalSalary,
+                      }));
+                    }
+                  }}
+                  readOnly={hasTier && isSalesEmployee}
+                  disabled={hasTier && isSalesEmployee}
+                  required
+                  className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${hasTier && isSalesEmployee
+                      ? "bg-gray-100 border-gray-300 text-gray-600 cursor-not-allowed"
+                      : "bg-white border-gray-300"
+                    }`}
+                />
+                {hasTier && isSalesEmployee && (
+                  <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                    <Lock className="w-3 h-3" />
+                    Base salary managed by "{employeeTier.name}" tier
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Total Salary (PKR)
+                </label>
+                <input
+                  type="number"
+                  value={displayTotalSalary}
+                  readOnly
+                  className="w-full px-4 py-3 border border-gray-300 bg-gray-50 rounded-xl"
+                />
+                <p className="text-sm text-gray-500 mt-1">
+                  Base Salary + Allowances
+                </p>
+              </div>
+            </div>
+
+            {/* ⭐ ALLOWANCES (always editable) */}
+            <div>
+              <div className="flex justify-between items-center mb-4">
+                <h4 className="font-semibold text-gray-900">Allowances</h4>
+                <button
+                  type="button"
+                  onClick={handleAddAllowance}
+                  className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition duration-200 text-sm"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Allowance
+                </button>
+              </div>
+
+              {formData.allowances.map((allowance, index) => (
+                <div key={index} className="flex items-end gap-4 mb-4">
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Allowance Name
+                    </label>
+                    <input
+                      type="text"
+                      value={allowance.allowance_name}
+                      onChange={(e) =>
+                        handleAllowanceChange(
+                          index,
+                          "allowance_name",
+                          e.target.value
+                        )
+                      }
+                      placeholder="e.g., Travel Allowance"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Amount (PKR)
+                    </label>
+                    <input
+                      type="number"
+                      value={allowance.allowance_amount}
+                      onChange={(e) => {
+                        handleAllowanceChange(
+                          index,
+                          "allowance_amount",
+                          e.target.value
+                        );
+                        const newAllowances = formData.allowances.map((a, i) =>
+                          i === index
+                            ? { ...a, allowance_amount: e.target.value }
+                            : a
+                        );
+                        const newTotalAllowances = newAllowances.reduce(
+                          (sum, a) =>
+                            sum + (parseFloat(a.allowance_amount) || 0),
+                          0
+                        );
+                        setFormData((prev) => ({
+                          ...prev,
+                          total_salary:
+                            displayBaseSalary + newTotalAllowances,
+                        }));
+                      }}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                  {formData.allowances.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveAllowance(index)}
+                      className="px-4 py-3 bg-red-100 text-red-600 rounded-xl hover:bg-red-200 transition duration-200"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
-    </>
-  );
+      </>
+    );
+  };
 
+  // ═══════════════════════════════════════════════════════════
+  // RENDER RESOURCES TAB
+  // ═══════════════════════════════════════════════════════════
   const renderResourcesTab = () => (
     <>
       <div className="modal-body pb-0 px-6 pt-6">
@@ -2666,7 +2969,7 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
                     handleResourceChange(
                       index,
                       "resource_serial",
-                      e.target.value,
+                      e.target.value
                     )
                   }
                   placeholder="Serial number"
@@ -2692,7 +2995,77 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
     </>
   );
 
+  // ═══════════════════════════════════════════════════════════
+  // AUTO-SAVE when switching to "Use Tier Target"
+  // ═══════════════════════════════════════════════════════════
+  const handleUseTierTarget = async () => {
+    if (!employeeTier) {
+      toast.error("No tier assigned to this employee");
+      return;
+    }
+
+    setTargetMode("tier");
+    setSalesTarget((prev) => ({
+      ...prev,
+      monthly_target: employeeTier.monthly_target_usd,
+    }));
+
+    try {
+      setSavingTierAuto(true);
+      const now = new Date();
+      const res = await fetch(endpoints.salesTargets.set(employee.id), {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({
+          month: now.getMonth() + 1,
+          year: now.getFullYear(),
+          use_tier_target: true,
+          notes: salesTarget.notes || "",
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        toast.success(
+          `✅ Target set from "${employeeTier.name}" tier ($${employeeTier.monthly_target_usd})`
+        );
+        fetchSalesHistory(selectedHistoryYear);
+
+        if (onUpdateEmployee) {
+          onUpdateEmployee({
+            ...employee,
+            target: employeeTier.monthly_target_usd,
+          });
+        }
+      } else {
+        toast.error(data.message || "Failed to save tier target");
+      }
+    } catch (err) {
+      console.error("Auto-save tier target error:", err);
+      toast.error("Failed to auto-save target");
+    } finally {
+      setSavingTierAuto(false);
+    }
+  };
+
+  const handleManualOverride = () => {
+    setTargetMode("manual");
+  };
+
   const handleSalesTargetSave = async () => {
+    if (targetMode !== "manual") return;
+
+    if (
+      !salesTarget.monthly_target ||
+      parseFloat(salesTarget.monthly_target) <= 0
+    ) {
+      toast.error("Please enter a valid target amount");
+      return;
+    }
+
     setSalesTargetLoading(true);
     try {
       const now = new Date();
@@ -2713,18 +3086,19 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
       if (data.success) {
         setSalesTargetSaved(true);
         setTimeout(() => setSalesTargetSaved(false), 3000);
-        // Refresh history so the current month row updates
         fetchSalesHistory(selectedHistoryYear);
-        // Update the card in the parent without closing the modal
+
         if (onUpdateEmployee) {
           onUpdateEmployee({
             ...employee,
             target: parseFloat(salesTarget.monthly_target) || 0,
           });
         }
+
+        toast.success("Custom target saved");
       } else {
         toast.error(
-          "Failed to save target: " + (data.message || "Unknown error"),
+          "Failed to save target: " + (data.message || "Unknown error")
         );
       }
     } catch (error) {
@@ -2735,37 +3109,210 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
     }
   };
 
+  // ═══════════════════════════════════════════════════════════
+  // RENDER SALES TARGET TAB
+  // ═══════════════════════════════════════════════════════════
   const renderSalesTargetTab = () => {
     const achieved = parseFloat(employee.achieved) || 0;
-    const target = parseFloat(salesTarget.monthly_target) || 0;
-    const remaining = target - achieved;
+    const tierTarget = employeeTier?.monthly_target_usd || 0;
+    const manualTarget = parseFloat(salesTarget.monthly_target) || 0;
+
+    const activeTarget = targetMode === "tier" ? tierTarget : manualTarget;
+    const remaining = activeTarget - achieved;
     const progressPercent =
-      target > 0 ? Math.min((achieved / target) * 100, 100) : 0;
+      activeTarget > 0 ? Math.min((achieved / activeTarget) * 100, 100) : 0;
 
     return (
       <>
         <div className="modal-body pb-0 px-6 pt-6">
           <div className="space-y-6">
-            {/* Target Overview Cards */}
+            {/* TIER INFO CARD */}
+            {tierLoading ? (
+              <div className="text-center py-4 text-gray-400">
+                <RefreshCw className="h-5 w-5 animate-spin inline mr-2" />
+                Loading tier info...
+              </div>
+            ) : employeeTier ? (
+              <div
+                className="rounded-2xl p-5 text-white shadow-lg"
+                style={{
+                  background: `linear-gradient(135deg, ${employeeTier.color}, ${employeeTier.color}dd)`,
+                }}
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Award className="h-6 w-6" />
+                    <h4 className="font-bold text-lg">
+                      Assigned Tier: {employeeTier.name}
+                    </h4>
+                  </div>
+                  <span className="text-xs bg-white/20 px-3 py-1 rounded-full font-semibold">
+                    LEVEL {employeeTier.level}
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-4 text-sm">
+                  <div>
+                    <p className="text-white/70 text-xs">Base Salary</p>
+                    <p className="font-bold text-lg">
+                      Rs {employeeTier.base_salary_pkr.toLocaleString()}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-white/70 text-xs">Monthly Target</p>
+                    <p className="font-bold text-lg">
+                      ${employeeTier.monthly_target_usd.toLocaleString()}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-white/70 text-xs">Quarterly Target</p>
+                    <p className="font-bold text-lg">
+                      ${employeeTier.quarterly_target_usd.toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-amber-50 border-2 border-dashed border-amber-300 rounded-2xl p-5 text-center">
+                <AlertCircle className="h-10 w-10 text-amber-500 mx-auto mb-2" />
+                <h4 className="font-semibold text-amber-900 mb-1">
+                  No Tier Assigned
+                </h4>
+                <p className="text-sm text-amber-700">
+                  Go to <strong>Salary & Allowances</strong> tab to assign a
+                  tier first.
+                </p>
+              </div>
+            )}
+
+            {/* TARGET SOURCE SELECTOR */}
+            <div className="bg-gray-50 border border-gray-200 rounded-2xl p-5">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                  <Target className="h-5 w-5 text-blue-600" />
+                  Target Source
+                </h4>
+                {savingTierAuto && (
+                  <span className="text-xs text-blue-600 flex items-center gap-1">
+                    <RefreshCw className="h-3 w-3 animate-spin" />
+                    Saving...
+                  </span>
+                )}
+              </div>
+
+              <div className="space-y-3">
+                {/* Option 1: Use Tier Target */}
+                <label
+                  className={`flex items-start gap-3 p-4 border-2 rounded-xl cursor-pointer transition-all ${targetMode === "tier"
+                      ? "border-blue-500 bg-blue-50"
+                      : "border-gray-200 bg-white hover:border-gray-300"
+                    } ${!employeeTier ? "opacity-50 cursor-not-allowed" : ""}`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (employeeTier && targetMode !== "tier") {
+                      handleUseTierTarget();
+                    }
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="target_source"
+                    checked={targetMode === "tier"}
+                    onChange={() => { }}
+                    disabled={!employeeTier}
+                    className="mt-1"
+                  />
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Award className="h-4 w-4 text-blue-600" />
+                      <span className="font-semibold text-gray-800">
+                        Use Tier Target
+                      </span>
+                      {employeeTier && (
+                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-semibold">
+                          ${employeeTier.monthly_target_usd}/mo
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-600">
+                      Auto-saves immediately. Updates automatically when tier
+                      changes.
+                    </p>
+                  </div>
+                  {targetMode === "tier" && (
+                    <CheckCircle className="h-5 w-5 text-blue-600 mt-1" />
+                  )}
+                </label>
+
+                {/* Option 2: Manual Override */}
+                <label
+                  className={`flex items-start gap-3 p-4 border-2 rounded-xl cursor-pointer transition-all ${targetMode === "manual"
+                      ? "border-purple-500 bg-purple-50"
+                      : "border-gray-200 bg-white hover:border-gray-300"
+                    }`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (targetMode !== "manual") {
+                      handleManualOverride();
+                    }
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="target_source"
+                    checked={targetMode === "manual"}
+                    onChange={() => { }}
+                    className="mt-1"
+                  />
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Edit className="h-4 w-4 text-purple-600" />
+                      <span className="font-semibold text-gray-800">
+                        Manual Override
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-600">
+                      Set a custom target for this month only
+                    </p>
+                  </div>
+                  {targetMode === "manual" && (
+                    <CheckCircle className="h-5 w-5 text-purple-600 mt-1" />
+                  )}
+                </label>
+              </div>
+            </div>
+
+            {/* Overview Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-center">
                 <p className="text-xs text-blue-600 font-medium mb-1">
                   Monthly Target
                 </p>
                 <p className="text-2xl font-bold text-blue-700">
-                  ${target > 0 ? target.toLocaleString() : "0"}
+                  ${activeTarget > 0 ? activeTarget.toLocaleString() : "0"}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {targetMode === "tier" ? "From Tier" : "Manual"}
                 </p>
               </div>
               <div
-                className={`border rounded-xl p-4 text-center ${achieved >= target && target > 0 ? "bg-green-50 border-green-200" : "bg-orange-50 border-orange-200"}`}
+                className={`border rounded-xl p-4 text-center ${achieved >= activeTarget && activeTarget > 0
+                    ? "bg-green-50 border-green-200"
+                    : "bg-orange-50 border-orange-200"
+                  }`}
               >
                 <p
-                  className={`text-xs font-medium mb-1 ${achieved >= target && target > 0 ? "text-green-600" : "text-orange-600"}`}
+                  className={`text-xs font-medium mb-1 ${achieved >= activeTarget && activeTarget > 0
+                      ? "text-green-600"
+                      : "text-orange-600"
+                    }`}
                 >
                   Achieved
                 </p>
                 <p
-                  className={`text-2xl font-bold ${achieved >= target && target > 0 ? "text-green-700" : "text-orange-700"}`}
+                  className={`text-2xl font-bold ${achieved >= activeTarget && activeTarget > 0
+                      ? "text-green-700"
+                      : "text-orange-700"
+                    }`}
                 >
                   ${achieved.toLocaleString()}
                 </p>
@@ -2774,15 +3321,20 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
                 </p>
               </div>
               <div
-                className={`border rounded-xl p-4 text-center ${remaining <= 0 ? "bg-green-50 border-green-200" : "bg-gray-50 border-gray-200"}`}
+                className={`border rounded-xl p-4 text-center ${remaining <= 0
+                    ? "bg-green-50 border-green-200"
+                    : "bg-gray-50 border-gray-200"
+                  }`}
               >
                 <p
-                  className={`text-xs font-medium mb-1 ${remaining <= 0 ? "text-green-600" : "text-gray-600"}`}
+                  className={`text-xs font-medium mb-1 ${remaining <= 0 ? "text-green-600" : "text-gray-600"
+                    }`}
                 >
                   Remaining
                 </p>
                 <p
-                  className={`text-2xl font-bold ${remaining <= 0 ? "text-green-700" : "text-gray-700"}`}
+                  className={`text-2xl font-bold ${remaining <= 0 ? "text-green-700" : "text-gray-700"
+                    }`}
                 >
                   {remaining <= 0
                     ? "Target Met!"
@@ -2792,7 +3344,7 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
             </div>
 
             {/* Progress Bar */}
-            {target > 0 && (
+            {activeTarget > 0 && (
               <div>
                 <div className="flex justify-between text-sm text-gray-600 mb-2">
                   <span>Progress</span>
@@ -2800,7 +3352,12 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-3">
                   <div
-                    className={`h-3 rounded-full transition-all duration-500 ${progressPercent >= 100 ? "bg-green-500" : progressPercent >= 50 ? "bg-blue-500" : "bg-orange-500"}`}
+                    className={`h-3 rounded-full transition-all duration-500 ${progressPercent >= 100
+                        ? "bg-green-500"
+                        : progressPercent >= 50
+                          ? "bg-blue-500"
+                          : "bg-orange-500"
+                      }`}
                     style={{ width: `${Math.min(progressPercent, 100)}%` }}
                   ></div>
                 </div>
@@ -2817,10 +3374,9 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => {
-                      const y = selectedHistoryYear - 1;
-                      setSelectedHistoryYear(y);
-                    }}
+                    onClick={() =>
+                      setSelectedHistoryYear(selectedHistoryYear - 1)
+                    }
                     className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500"
                   >
                     &#8249;
@@ -2830,10 +3386,9 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
                   </span>
                   <button
                     type="button"
-                    onClick={() => {
-                      const y = selectedHistoryYear + 1;
-                      setSelectedHistoryYear(y);
-                    }}
+                    onClick={() =>
+                      setSelectedHistoryYear(selectedHistoryYear + 1)
+                    }
                     disabled={selectedHistoryYear >= new Date().getFullYear()}
                     className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 disabled:opacity-30"
                   >
@@ -2852,22 +3407,22 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="bg-gray-50 border-b border-gray-200">
-                        <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                        <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase">
                           Month
                         </th>
-                        <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                        <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 uppercase">
                           Target
                         </th>
-                        <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                        <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 uppercase">
                           Achieved
                         </th>
-                        <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                        <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 uppercase">
                           Remaining
                         </th>
-                        <th className="px-4 py-2.5 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                        <th className="px-4 py-2.5 text-center text-xs font-semibold text-gray-500 uppercase">
                           Sales
                         </th>
-                        <th className="px-4 py-2.5 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                        <th className="px-4 py-2.5 text-center text-xs font-semibold text-gray-500 uppercase">
                           Status
                         </th>
                       </tr>
@@ -2877,10 +3432,10 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
                         <tr
                           key={row.month}
                           className={`${row.is_current
-                            ? "bg-blue-50/60"
-                            : row.is_future
-                              ? "bg-gray-50/40"
-                              : "bg-white"
+                              ? "bg-blue-50/60"
+                              : row.is_future
+                                ? "bg-gray-50/40"
+                                : "bg-white"
                             } hover:bg-gray-50 transition-colors`}
                         >
                           <td className="px-4 py-2.5 font-medium text-gray-800">
@@ -2894,7 +3449,7 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
                           <td className="px-4 py-2.5 text-right">
                             {row.target_set ? (
                               <span className="text-gray-800 font-medium">
-                                {formatSalesAmount(row.monthly_target)}
+                                ${(row.monthly_target || 0).toLocaleString()}
                               </span>
                             ) : (
                               <span className="text-gray-400 text-xs">
@@ -2913,7 +3468,7 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
                                     : "text-gray-400"
                                 }
                               >
-                                {formatSalesAmount(row.achieved ?? 0)}
+                                ${(row.achieved || 0).toLocaleString()}
                               </span>
                             )}
                           </td>
@@ -2926,7 +3481,7 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
                               </span>
                             ) : (
                               <span className="text-orange-600 font-medium">
-                                {formatSalesAmount(row.remaining)}
+                                ${(row.remaining || 0).toLocaleString()}
                               </span>
                             )}
                           </td>
@@ -2966,76 +3521,94 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
               )}
             </div>
 
-            {/* Set Target Form */}
+            {/* Save Section */}
             <div className="border-t border-gray-200 pt-4">
-              <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <Target className="h-5 w-5 text-blue-600" />
-                Set Monthly Target
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Target Amount ($) <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    value={salesTarget.monthly_target}
-                    onChange={(e) =>
-                      setSalesTarget((prev) => ({
-                        ...prev,
-                        monthly_target: e.target.value,
-                      }))
-                    }
-                    min="0"
-                    step="100"
-                    placeholder="e.g., 50000"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
+              {targetMode === "tier" ? (
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-center">
+                  <div className="flex items-center justify-center gap-2 text-blue-700 mb-1">
+                    <CheckCircle className="h-5 w-5" />
+                    <span className="font-semibold">
+                      Target is managed by tier
+                    </span>
+                  </div>
+                  <p className="text-xs text-blue-600">
+                    Changes to <strong>"{employeeTier?.name}"</strong> tier will
+                    automatically reflect here.
+                  </p>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Notes (Optional)
-                  </label>
-                  <input
-                    type="text"
-                    value={salesTarget.notes}
-                    onChange={(e) =>
-                      setSalesTarget((prev) => ({
-                        ...prev,
-                        notes: e.target.value,
-                      }))
-                    }
-                    placeholder="e.g., Q1 target, special focus on enterprise"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-              </div>
-              <div className="mt-4 flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={handleSalesTargetSave}
-                  disabled={salesTargetLoading}
-                  className="px-6 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition duration-200 text-sm flex items-center gap-2 disabled:opacity-50"
-                >
-                  {salesTargetLoading ? (
-                    <>
-                      <RefreshCw className="h-4 w-4 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="h-4 w-4" />
-                      Save Target
-                    </>
-                  )}
-                </button>
-                {salesTargetSaved && (
-                  <span className="text-sm text-green-600 flex items-center gap-1">
-                    <CheckCircle className="h-4 w-4" />
-                    Target saved successfully!
-                  </span>
-                )}
-              </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Custom Target Amount ($){" "}
+                        <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        value={salesTarget.monthly_target}
+                        onChange={(e) =>
+                          setSalesTarget((prev) => ({
+                            ...prev,
+                            monthly_target: e.target.value,
+                          }))
+                        }
+                        min="0"
+                        step="100"
+                        placeholder="e.g., 5000"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Notes (Optional)
+                      </label>
+                      <input
+                        type="text"
+                        value={salesTarget.notes}
+                        onChange={(e) =>
+                          setSalesTarget((prev) => ({
+                            ...prev,
+                            notes: e.target.value,
+                          }))
+                        }
+                        placeholder="e.g., Q3 special target"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={handleSalesTargetSave}
+                      disabled={
+                        salesTargetLoading ||
+                        !salesTarget.monthly_target ||
+                        parseFloat(salesTarget.monthly_target) <= 0
+                      }
+                      className="px-6 py-2.5 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition duration-200 text-sm flex items-center gap-2 disabled:opacity-50"
+                    >
+                      {salesTargetLoading ? (
+                        <>
+                          <RefreshCw className="h-4 w-4 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="h-4 w-4" />
+                          Save Custom Target
+                        </>
+                      )}
+                    </button>
+                    {salesTargetSaved && (
+                      <span className="text-sm text-green-600 flex items-center gap-1">
+                        <CheckCircle className="h-4 w-4" />
+                        Custom target saved!
+                      </span>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -3043,10 +3616,13 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
     );
   };
 
+  // ═══════════════════════════════════════════════════════════
+  // MAIN RENDER
+  // ═══════════════════════════════════════════════════════════
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center p-6 border-b border-gray-200 sticky top-0 bg-white">
+        <div className="flex justify-between items-center p-6 border-b border-gray-200 sticky top-0 bg-white z-10">
           <div className="flex items-center">
             <h4 className="text-lg font-semibold text-gray-900 mr-3">
               Edit Employee
@@ -3066,13 +3642,16 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
 
         <form onSubmit={handleSubmit}>
           <div className="px-6 pt-6">
-            <ul className="flex border-b border-gray-200" role="tablist">
+            <ul
+              className="flex border-b border-gray-200 flex-wrap"
+              role="tablist"
+            >
               <li className="mr-2" role="presentation">
                 <button
                   type="button"
                   className={`px-4 py-3 text-sm font-medium rounded-t-lg ${activeTab === "basic"
-                    ? "text-blue-600 border-b-2 border-blue-600"
-                    : "text-gray-500 hover:text-gray-700"
+                      ? "text-blue-600 border-b-2 border-blue-600"
+                      : "text-gray-500 hover:text-gray-700"
                     }`}
                   onClick={() => setActiveTab("basic")}
                 >
@@ -3083,8 +3662,8 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
                 <button
                   type="button"
                   className={`px-4 py-3 text-sm font-medium rounded-t-lg ${activeTab === "salary"
-                    ? "text-blue-600 border-b-2 border-blue-600"
-                    : "text-gray-500 hover:text-gray-700"
+                      ? "text-blue-600 border-b-2 border-blue-600"
+                      : "text-gray-500 hover:text-gray-700"
                     }`}
                   onClick={() => setActiveTab("salary")}
                 >
@@ -3095,21 +3674,21 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
                 <button
                   type="button"
                   className={`px-4 py-3 text-sm font-medium rounded-t-lg ${activeTab === "resources"
-                    ? "text-blue-600 border-b-2 border-blue-600"
-                    : "text-gray-500 hover:text-gray-700"
+                      ? "text-blue-600 border-b-2 border-blue-600"
+                      : "text-gray-500 hover:text-gray-700"
                     }`}
                   onClick={() => setActiveTab("resources")}
                 >
                   Resources
                 </button>
               </li>
-              {employee.department === "Sales" && (
+              {isSalesEmployee && (
                 <li className="mr-2" role="presentation">
                   <button
                     type="button"
                     className={`px-4 py-3 text-sm font-medium rounded-t-lg ${activeTab === "salesTarget"
-                      ? "text-blue-600 border-b-2 border-blue-600"
-                      : "text-gray-500 hover:text-gray-700"
+                        ? "text-blue-600 border-b-2 border-blue-600"
+                        : "text-gray-500 hover:text-gray-700"
                       }`}
                     onClick={() => setActiveTab("salesTarget")}
                   >
@@ -3124,7 +3703,9 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
             {activeTab === "basic" && renderBasicInfoTab()}
             {activeTab === "salary" && renderSalaryTab()}
             {activeTab === "resources" && renderResourcesTab()}
-            {activeTab === "salesTarget" && renderSalesTargetTab()}
+            {activeTab === "salesTarget" &&
+              isSalesEmployee &&
+              renderSalesTargetTab()}
           </div>
 
           <div className="modal-footer flex justify-center p-6 border-t border-gray-200 sticky bottom-0 bg-white">

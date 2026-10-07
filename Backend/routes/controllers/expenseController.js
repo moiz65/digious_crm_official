@@ -41,6 +41,7 @@ const ensureTables = async () => {
       category_id   INT(11)       DEFAULT NULL,
       category_name VARCHAR(100)  NOT NULL,
       amount        DECIMAL(12,2) NOT NULL,
+      payment_type  VARCHAR(50)   NOT NULL DEFAULT 'Bank Account',
       note          TEXT          DEFAULT NULL,
       expense_date  DATE          NOT NULL,
       expense_time  TIME          NOT NULL,
@@ -55,6 +56,21 @@ const ensureTables = async () => {
         ON DELETE SET NULL ON UPDATE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   `);
+
+  const [paymentTypeColumn] = await pool.query(
+    `SELECT COUNT(*) AS count
+     FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE()
+       AND TABLE_NAME = 'expenses'
+       AND COLUMN_NAME = 'payment_type'`
+  );
+  if (paymentTypeColumn[0].count === 0) {
+    await pool.query(
+      `ALTER TABLE expenses
+       ADD COLUMN payment_type VARCHAR(50) NOT NULL DEFAULT 'Bank Account'
+       AFTER amount`
+    );
+  }
 };
 
 // Run once at module load
@@ -243,20 +259,11 @@ exports.createExpense = async (req, res) => {
     const expense_date = req.body.expense_date || now.toISOString().slice(0, 10);
     const expense_time = req.body.expense_time || now.toTimeString().slice(0, 8);
 
-    // ✅ FIX: Use payment_type as is, default only if empty
-    let finalPaymentType = "Bank Account"; // Default
-
-    // Check if payment_type exists and is a valid non-empty string
-    if (payment_type !== undefined && payment_type !== null && payment_type !== '') {
-      // Check if it's a valid payment type
-      const validPaymentTypes = ['Bank Account', 'PayPal', 'Cash', 'Credit Card'];
-      if (validPaymentTypes.includes(payment_type)) {
-        finalPaymentType = payment_type;
-      } else {
-        console.log("⚠️ Invalid payment_type:", payment_type, "using default");
-        finalPaymentType = "Bank Account";
-      }
-    }
+    // Keep custom payment types created in the payment-type manager.
+    const finalPaymentType =
+      typeof payment_type === 'string' && payment_type.trim()
+        ? payment_type.trim()
+        : 'Bank Account';
 
     console.log("✅ [createExpense] Final payment_type:", finalPaymentType);
 

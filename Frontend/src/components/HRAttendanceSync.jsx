@@ -56,11 +56,31 @@ const HRAttendanceSync = () => {
       
       console.log("📤 Sending sync request with HR User ID:", userId);
       
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const firstDayOfMonth = `${year}-${month}-01`;
-      const lastDayOfMonth = new Date(year, now.getMonth() + 1, 0).toISOString().split('T')[0];
+      const getPakistanDateParts = (date = new Date()) => {
+        const format = new Intl.DateTimeFormat('en-CA', {
+          timeZone: 'Asia/Karachi',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hourCycle: 'h23',
+        });
+
+        const parts = format.formatToParts(date).reduce((acc, part) => {
+          if (part.type !== 'literal') acc[part.type] = part.value;
+          return acc;
+        }, {});
+
+        return {
+          year: Number(parts.year),
+          month: Number(parts.month),
+          day: Number(parts.day),
+          fullDate: `${parts.year}-${parts.month}-${parts.day}`,
+        };
+      };
+
+      const pkNow = getPakistanDateParts();
+      const firstDayOfMonth = `${pkNow.year}-${String(pkNow.month).padStart(2, '0')}-01`;
+      const lastDayOfMonth = `${pkNow.year}-${String(pkNow.month).padStart(2, '0')}-${new Date(pkNow.year, pkNow.month, 0).getDate()}`;
 
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://100.118.172.21:5000'}/api/v1/zkTime/sync-all`, {
         method: 'POST',

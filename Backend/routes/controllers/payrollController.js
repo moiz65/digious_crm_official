@@ -279,6 +279,7 @@ const generatePayroll = async (req, res) => {
         eo.name,
         eo.department,
         eo.email,
+        DATE_FORMAT(eo.join_date, '%Y-%m-%d') AS join_date,
         COALESCE(es.base_salary, 0) AS base_salary,
         COALESCE(
           (SELECT SUM(ea.allowance_amount * ea.exchange_rate) FROM employee_allowances ea WHERE ea.employee_id = eo.id),
@@ -434,39 +435,117 @@ const generatePayroll = async (req, res) => {
       approvedLeaveMap[l.employee_id] = l;
     });
 
-    // 3c. Get total absent records (for raw absent days)
+    // 3c. Count absent dates from attendance and absence records without
+    // double-counting days represented in both tables.
     let totalAbsents;
     if (isCurrentMonth && cutoffDate) {
       [totalAbsents] = await pool.query(
         `
         SELECT 
           employee_id,
-          COUNT(*) AS total_absent_records
-        FROM Employee_Absent
-        WHERE YEAR(absent_date) = ? AND MONTH(absent_date) = ?
-          AND DAY(absent_date) <= ?
-        GROUP BY employee_id
+          absent_date
+        FROM (
+          SELECT employee_id, DATE_FORMAT(attendance_date, '%Y-%m-%d') AS absent_date
+          FROM Employee_Attendance
+          WHERE YEAR(attendance_date) = ? AND MONTH(attendance_date) = ?
+            AND DAY(attendance_date) <= ?
+            AND status IN ('Absent', 'Uninformed Absent')
+          UNION
+          SELECT employee_id, DATE_FORMAT(absent_date, '%Y-%m-%d') AS absent_date
+          FROM Employee_Absent
+          WHERE YEAR(absent_date) = ? AND MONTH(absent_date) = ?
+            AND DAY(absent_date) <= ?
+        ) AS absent_dates
       `,
-        [yearNum, monthNum, cutoffDate],
+        [yearNum, monthNum, cutoffDate, yearNum, monthNum, cutoffDate],
       );
     } else {
       [totalAbsents] = await pool.query(
         `
         SELECT 
           employee_id,
-          COUNT(*) AS total_absent_records
-        FROM Employee_Absent
-        WHERE YEAR(absent_date) = ? AND MONTH(absent_date) = ?
-        GROUP BY employee_id
+          absent_date
+        FROM (
+          SELECT employee_id, DATE_FORMAT(attendance_date, '%Y-%m-%d') AS absent_date
+          FROM Employee_Attendance
+          WHERE YEAR(attendance_date) = ? AND MONTH(attendance_date) = ?
+            AND status IN ('Absent', 'Uninformed Absent')
+          UNION
+          SELECT employee_id, DATE_FORMAT(absent_date, '%Y-%m-%d') AS absent_date
+          FROM Employee_Absent
+          WHERE YEAR(absent_date) = ? AND MONTH(absent_date) = ?
+        ) AS absent_dates
+      `,
+        [yearNum, monthNum, yearNum, monthNum],
+      );
+    }
+
+    let recordedAttendanceDates;
+    if (isCurrentMonth && cutoffDate) {
+      [recordedAttendanceDates] = await pool.query(
+        `
+        SELECT employee_id, DATE_FORMAT(attendance_date, '%Y-%m-%d') AS attendance_date
+        FROM Employee_Attendance
+        WHERE YEAR(attendance_date) = ? AND MONTH(attendance_date) = ?
+          AND DAY(attendance_date) <= ?
+      `,
+        [yearNum, monthNum, cutoffDate],
+      );
+    } else {
+      [recordedAttendanceDates] = await pool.query(
+        `
+        SELECT employee_id, DATE_FORMAT(attendance_date, '%Y-%m-%d') AS attendance_date
+        FROM Employee_Attendance
+        WHERE YEAR(attendance_date) = ? AND MONTH(attendance_date) = ?
       `,
         [yearNum, monthNum],
       );
     }
 
     const totalAbsentMap = {};
+    const absentDateMap = {};
     totalAbsents.forEach((a) => {
-      totalAbsentMap[a.employee_id] = a.total_absent_records;
+      if (!absentDateMap[a.employee_id]) {
+        absentDateMap[a.employee_id] = new Set();
+      }
+      absentDateMap[a.employee_id].add(a.absent_date);
     });
+
+    const attendanceDateMap = {};
+    recordedAttendanceDates.forEach((a) => {
+      if (!attendanceDateMap[a.employee_id]) {
+        attendanceDateMap[a.employee_id] = new Set();
+      }
+      attendanceDateMap[a.employee_id].add(a.attendance_date);
+    });
+
+    // Match the existing absence-generation rule: weekdays after joining date.
+    const absenceCutoffDay =
+      isCurrentMonth && cutoffDate
+        ? cutoffDate
+        : new Date(yearNum, monthNum, 0).getDate();
+    for (const emp of employees) {
+      const joinDate = emp.join_date;
+      if (!joinDate) continue;
+
+      const absentDates = absentDateMap[emp.id] || new Set();
+      const attendanceDates = attendanceDateMap[emp.id] || new Set();
+      for (let day = 1; day <= absenceCutoffDay; day++) {
+        const date = new Date(Date.UTC(yearNum, monthNum - 1, day));
+        if (date.getUTCDay() === 0 || date.getUTCDay() === 6) continue;
+
+        const dateString = `${yearNum}-${String(monthNum).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+        if (
+          dateString >= joinDate &&
+          !attendanceDates.has(dateString) &&
+          !absentDates.has(dateString)
+        ) {
+          absentDates.add(dateString);
+        }
+      }
+
+      totalAbsentMap[emp.id] = absentDates.size;
+    }
 
     // 3d. Get employee_leaves yearly balances
     const [leaveBalances] = await pool.query(`

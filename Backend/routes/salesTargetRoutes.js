@@ -19,6 +19,7 @@ router.get('/summary', authMiddleware, ctrl.getTargetsSummary);
 
 // ── Per-employee target ──
 router.get('/:employeeId/history', authMiddleware, ctrl.getTargetHistory);
+router.get('/quarter-summary/:employeeId', authMiddleware, ctrl.getQuarterSummary);
 router.get('/:employeeId', authMiddleware, ctrl.getTarget);
 router.put('/:employeeId', authMiddleware, ctrl.setTarget);
 

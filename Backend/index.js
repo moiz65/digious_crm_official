@@ -207,6 +207,7 @@ const zkTimeRoutes = require('./routes/zkTimeRoutes');
 const passcodeRoutes = require('./routes/passcodeRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const paymentTypes = require('./routes/paymentTypeRoutes');
+const salesTiersRoutes = require('./routes/salesTiers');
 
 app.use(`/api/${process.env.API_VERSION}`, onboardingRoutes);
 app.use(`/api/${process.env.API_VERSION}/auth`, authRoutes);
@@ -237,6 +238,7 @@ app.use(`/api/${process.env.API_VERSION}/zkTime`, zkTimeRoutes);
 app.use(`/api/${process.env.API_VERSION}/passcode`, passcodeRoutes);
 app.use(`/api/${process.env.API_VERSION}/chat`, chatRoutes);
 app.use(`/api/${process.env.API_VERSION}/types`, paymentTypes);
+app.use('/api/v1/sales-tiers', salesTiersRoutes);
 
 
 // 404 handler
@@ -419,56 +421,59 @@ async function removeAbsenceWhenAttendanceExists() {
 const attendanceController = require("./routes/controllers/attendanceController");
 const checkoutMissingController = require("./routes/controllers/checkoutMissingController");
 
+// AUTO-CHECKOUT DISABLED:
+// The 9:00 AM automatic checkout trigger has been turned off.
+// If you want to re-enable later, restore these schedule blocks.
 // Schedule auto-checkout for 9:00 AM every day (Pakistan timezone)
 // Using RecurrenceRule with explicit timezone to ensure correct firing
-const autoCheckoutRule = new schedule.RecurrenceRule();
-autoCheckoutRule.hour = 9;
-autoCheckoutRule.minute = 0;
-autoCheckoutRule.tz = 'Asia/Karachi';
-const autoCheckoutJob = schedule.scheduleJob(autoCheckoutRule, async () => {
-  console.log('\n⏰ SCHEDULED JOB: Auto-checkout triggered at 9:00 AM');
-  try {
-    const result = await attendanceController.autoCheckoutExpiredSessions(
-      null,
-      null,
-    );
-    if (result.success) {
-      console.log(
-        `✅ Scheduled auto-checkout completed: ${result.processedCount} records processed`,
-      );
-    } else {
-      console.error("❌ Scheduled auto-checkout failed:", result.error);
-    }
-  } catch (error) {
-    console.error("❌ Scheduled auto-checkout error:", error);
-  }
-});
+// const autoCheckoutRule = new schedule.RecurrenceRule();
+// autoCheckoutRule.hour = 9;
+// autoCheckoutRule.minute = 0;
+// autoCheckoutRule.tz = 'Asia/Karachi';
+// const autoCheckoutJob = schedule.scheduleJob(autoCheckoutRule, async () => {
+//   console.log('\n⏰ SCHEDULED JOB: Auto-checkout triggered at 9:00 AM');
+//   try {
+//     const result = await attendanceController.autoCheckoutExpiredSessions(
+//       null,
+//       null,
+//     );
+//     if (result.success) {
+//       console.log(
+//         `✅ Scheduled auto-checkout completed: ${result.processedCount} records processed`,
+//       );
+//     } else {
+//       console.error("❌ Scheduled auto-checkout failed:", result.error);
+//     }
+//   } catch (error) {
+//     console.error("❌ Scheduled auto-checkout error:", error);
+//   }
+// });
 
-// Schedule checkout missing detection for 9:01 AM every day (Pakistan timezone)
-// This runs 1 minute after auto-checkout to capture any remaining missing checkouts
-const checkoutMissingRule = new schedule.RecurrenceRule();
-checkoutMissingRule.hour = 9;
-checkoutMissingRule.minute = 1;
-checkoutMissingRule.tz = 'Asia/Karachi';
-const checkoutMissingJob = schedule.scheduleJob(checkoutMissingRule, async () => {
-  console.log('\n⏰ SCHEDULED JOB: Checkout missing detection triggered at 9:01 AM');
-  let connection;
-  try {
-    const connection = await pool.getConnection();
-
-    // Call the stored procedure
-    const [results] = await connection.query("CALL ProcessMissingCheckouts()");
-    const summary = results[0][0];
-
-    console.log(
-      `✅ Scheduled checkout missing detection completed: ${summary.records_moved} records moved`,
-    );
-
-    connection.release();
-  } catch (error) {
-    console.error("❌ Scheduled checkout missing detection error:", error);
-  }
-});
+// AUTO-CHECKOUT MISSING DETECTION DISABLED:
+// This job used to run at 9:01 AM after the auto-checkout job.
+// const checkoutMissingRule = new schedule.RecurrenceRule();
+// checkoutMissingRule.hour = 9;
+// checkoutMissingRule.minute = 1;
+// checkoutMissingRule.tz = 'Asia/Karachi';
+// const checkoutMissingJob = schedule.scheduleJob(checkoutMissingRule, async () => {
+//   console.log('\n⏰ SCHEDULED JOB: Checkout missing detection triggered at 9:01 AM');
+//   let connection;
+//   try {
+//     const connection = await pool.getConnection();
+//
+//     // Call the stored procedure
+//     const [results] = await connection.query("CALL ProcessMissingCheckouts()");
+//     const summary = results[0][0];
+//
+//     console.log(
+//       `✅ Scheduled checkout missing detection completed: ${summary.records_moved} records moved`,
+//     );
+//
+//     connection.release();
+//   } catch (error) {
+//     console.error("❌ Scheduled checkout missing detection error:", error);
+//   }
+// });
 
 // Schedule daily auto-mark absent at 11:59 PM Pakistan Time
 const dailyAbsentRule = new schedule.RecurrenceRule();
@@ -520,30 +525,29 @@ server.listen(PORT, "0.0.0.0", async () => {
     removeAbsenceWhenAttendanceExists();
   }, 5000);
 
-  // Run auto-checkout on startup if current PKT time is past 9 AM
-  // This handles the case where the server was down at 9 AM and needs to catch up
-  // SAFE: Only checks out records from previous days + today's early-morning (before 9 AM)
-  //       check-ins. Today's active daytime/evening workers are never touched.
-  setTimeout(async () => {
-    try {
-      const pkNow = getPakistanDate();
-      const pkHour = pkNow.getHours();
-      const pkMin = pkNow.getMinutes();
-      if (pkHour >= 9) {
-        console.log(`\n⏰ STARTUP: Current PKT time ${pkHour}:${String(pkMin).padStart(2, '0')} is past 9 AM — running auto-checkout catch-up (last 7 days)...`);
-        const result = await attendanceController.autoCheckoutExpiredSessions(null, null);
-        if (result.success) {
-          console.log(`✅ Startup auto-checkout completed: ${result.processedCount} records processed`);
-        } else {
-          console.log(`ℹ️ Startup auto-checkout: ${result.reason || result.error || 'no records'}`);
-        }
-      } else {
-        console.log(`ℹ️ STARTUP: Current PKT hour is ${pkHour}:${String(pkMin).padStart(2, '0')} (before 9 AM) — skipping auto-checkout`);
-      }
-    } catch (err) {
-      console.error('❌ Startup auto-checkout error:', err.message);
-    }
-  }, 3000);
+  // AUTO-CHECKOUT STARTUP CATCH-UP DISABLED:
+  // This block used to run the 9:00 AM auto-checkout on server startup if the time was already past 9 AM.
+  // It has been disabled to prevent automatic checkouts from firing when the backend restarts.
+  // setTimeout(async () => {
+  //   try {
+  //     const pkNow = getPakistanDate();
+  //     const pkHour = pkNow.getHours();
+  //     const pkMin = pkNow.getMinutes();
+  //     if (pkHour >= 9) {
+  //       console.log(`\n⏰ STARTUP: Current PKT time ${pkHour}:${String(pkMin).padStart(2, '0')} is past 9 AM — running auto-checkout catch-up (last 7 days)...`);
+  //       const result = await attendanceController.autoCheckoutExpiredSessions(null, null);
+  //       if (result.success) {
+  //         console.log(`✅ Startup auto-checkout completed: ${result.processedCount} records processed`);
+  //       } else {
+  //         console.log(`ℹ️ Startup auto-checkout: ${result.reason || result.error || 'no records'}`);
+  //       }
+  //     } else {
+  //       console.log(`ℹ️ STARTUP: Current PKT hour is ${pkHour}:${String(pkMin).padStart(2, '0')} (before 9 AM) — skipping auto-checkout`);
+  //     }
+  //   } catch (err) {
+  //     console.error('❌ Startup auto-checkout error:', err.message);
+  //   }
+  // }, 3000);
 
   // Schedule daily auto-mark absent job
   // Runs every day at 11:59 PM Pakistan Time to mark employees who didn't check in during the day

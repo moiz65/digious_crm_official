@@ -1834,7 +1834,7 @@ const HRAttendanceEmployee = ({
                                 <div className="flex items-center space-x-4">
                                     <div className="text-center">
                                         <div className="text-lg font-bold text-green-600">{empStats.present}</div>
-                                        <div className="text-xs text-gray-600">Present</div>
+                                        <div className="text-xs text-gray-600">Working Days</div>
                                     </div>
                                     <div className="text-center">
                                         <div className="text-lg font-bold text-orange-600">{empStats.leave}</div>

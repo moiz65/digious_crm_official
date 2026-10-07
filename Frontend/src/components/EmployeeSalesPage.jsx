@@ -104,6 +104,10 @@ const EmployeeSalesPage = () => {
   const [targetLoading, setTargetLoading] = useState(false);
   const [showStats, setShowStats] = useState(false);
 
+  // Add new state
+  const [quarterTarget, setQuarterTarget] = useState(null);
+  const [quarterLoading, setQuarterLoading] = useState(false);
+
   // Get user info from localStorage
   const user = JSON.parse(localStorage.getItem("userInfo") || "{}");
   const role = user?.role || "employee";
@@ -281,11 +285,59 @@ const EmployeeSalesPage = () => {
     }
   }, [selectedDate]); // Re-fetch when date changes
 
+
   // Call fetchSalesTarget in useEffect
   useEffect(() => {
     fetchSales();
     fetchSalesTarget(); // Add this
   }, [fetchSales, fetchSalesTarget, selectedDate, dateRange]);
+
+  // Fetch quarterly summary
+  const fetchQuarterTarget = useCallback(async () => {
+    setQuarterLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const userInfo = JSON.parse(localStorage.getItem("user") || "{}");
+      const employeeId = userInfo.employeeId || userInfo.id;
+
+      if (!employeeId) {
+        console.warn("No employee ID found");
+        return;
+      }
+
+      const currentYear = selectedDate.getFullYear();
+      const currentQuarter = Math.ceil((selectedDate.getMonth() + 1) / 3);
+
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL || "http://100.118.172.21:5000"}/api/v1/sales-targets/quarter-summary/${employeeId}?year=${currentYear}&quarter=${currentQuarter}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const result = await response.json();
+      if (result.success && result.data) {
+        setQuarterTarget(result.data);
+      } else {
+        setQuarterTarget(null);
+      }
+    } catch (err) {
+      console.error("Failed to fetch quarter target:", err);
+      setQuarterTarget(null);
+    } finally {
+      setQuarterLoading(false);
+    }
+  }, [selectedDate]);
+
+  // Call it in the useEffect
+  useEffect(() => {
+    fetchSales();
+    fetchSalesTarget();
+    fetchQuarterTarget(); // ⭐ Add this
+  }, [fetchSales, fetchSalesTarget, fetchQuarterTarget, selectedDate, dateRange]);
 
   // Status options
   const statuses = ["completed", "in-progress", "pending", "cancelled"];
@@ -649,7 +701,6 @@ const EmployeeSalesPage = () => {
   );
 
   // Calculate totals
-  // Calculate totals - already using upfrontPayment
   const totals = filteredData.reduce(
     (acc, item) => ({
       totalSales: acc.totalSales + item.totalSales,
@@ -934,6 +985,8 @@ const EmployeeSalesPage = () => {
         });
         setIsCreatingNewCategory(false);
         await fetchSales(); // Refresh from API
+        await fetchSalesTarget();
+        await fetchQuarterTarget();
         toast.success("Sale added successfully!");
       } catch (err) {
         console.error("Failed to create sale:", err);
@@ -1183,9 +1236,9 @@ const EmployeeSalesPage = () => {
                   value={
                     formData.totalSales && formData.upfrontPayment
                       ? (
-                          parseFloat(formData.totalSales) -
-                          parseFloat(formData.upfrontPayment)
-                        ).toFixed(2)
+                        parseFloat(formData.totalSales) -
+                        parseFloat(formData.upfrontPayment)
+                      ).toFixed(2)
                       : "0.00"
                   }
                 />
@@ -1366,7 +1419,7 @@ const EmployeeSalesPage = () => {
                             Math.round(
                               (totals.upfrontPayment /
                                 salesTarget.monthly_target) *
-                                100,
+                              100,
                             ),
                           )}
                           %
@@ -1413,6 +1466,94 @@ const EmployeeSalesPage = () => {
                   )}
                 </div>
 
+                {/* ⭐ NEW: Quarterly Target Card */}
+                <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-2xl p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center">
+                      <div className="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center">
+                        <TrendingUp className="w-6 h-6 text-purple-600" />
+                      </div>
+                      <div className="ml-4">
+                        <h3 className="text-sm font-medium text-purple-800">
+                          Quarter {quarterTarget?.quarter_name || "Q"} {quarterTarget?.year || ""} Target
+                        </h3>
+                        <div className="flex items-baseline gap-2 flex-wrap">
+                          <p className="text-xl font-bold text-purple-600">
+                            ${(quarterTarget?.achieved || 0).toLocaleString()}
+                          </p>
+                          {quarterTarget?.quarterly_target > 0 && (
+                            <>
+                              <span className="text-purple-400 text-lg">/</span>
+                              <p className="text-lg font-semibold text-purple-400">
+                                ${quarterTarget.quarterly_target.toLocaleString()}
+                              </p>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Progress Section */}
+                  {quarterLoading ? (
+                    <div className="flex justify-center">
+                      <Loader2 className="w-4 h-4 text-purple-500 animate-spin" />
+                    </div>
+                  ) : quarterTarget?.quarterly_target > 0 ? (
+                    <div className="mt-2">
+                      <div className="flex justify-between text-xs text-purple-700 mb-1">
+                        <span>Quarterly Progress</span>
+                        <span>
+                          {Math.min(
+                            100,
+                            Math.round(
+                              (quarterTarget.achieved / quarterTarget.quarterly_target) * 100
+                            )
+                          )}
+                          %
+                        </span>
+                      </div>
+                      <div className="w-full bg-purple-200 rounded-full h-2.5">
+                        <div
+                          className={`h-2.5 rounded-full transition-all duration-500 ${quarterTarget.exceeded
+                            ? "bg-green-500"
+                            : "bg-purple-600"
+                            }`}
+                          style={{
+                            width: `${Math.min(
+                              100,
+                              (quarterTarget.achieved / quarterTarget.quarterly_target) * 100
+                            )}%`,
+                          }}
+                        />
+                      </div>
+
+                      {quarterTarget.exceeded ? (
+                        <p className="text-xs text-green-600 mt-2 font-medium">
+                          🎉 Quarter target exceeded by $
+                          {Math.abs(quarterTarget.remaining).toLocaleString()}!
+                        </p>
+                      ) : (
+                        <p className="text-xs text-purple-600 mt-2">
+                          ${quarterTarget.remaining.toLocaleString()} remaining •{" "}
+                          {quarterTarget.days_remaining} days left
+                        </p>
+                      )}
+
+                      {/* {quarterTarget.tier && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          From <strong>{quarterTarget.tier.name}</strong> tier •{" "}
+                          {quarterTarget.sales_count} sale{quarterTarget.sales_count !== 1 ? "s" : ""} this quarter
+                        </p>
+                      )} */}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500 mt-2">
+                      No quarterly target set. Assign a tier to see targets.
+                    </p>
+                  )}
+                </div>
+
                 {/* Paid Amount */}
                 <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-2xl p-6">
                   <div className="flex items-center justify-between mb-4">
@@ -1454,7 +1595,7 @@ const EmployeeSalesPage = () => {
                 </div>
 
                 {/* Completed Sales */}
-                <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-2xl p-6">
+                {/* <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-2xl p-6">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center">
                       <div className="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center">
@@ -1471,7 +1612,8 @@ const EmployeeSalesPage = () => {
                     </div>
                   </div>
                   <p className="text-sm text-gray-500">Successful projects</p>
-                </div>
+                </div> */}
+
               </div>
             )}
           </div>
@@ -1562,11 +1704,10 @@ const EmployeeSalesPage = () => {
                       setDateRange("daily");
                       setSelectedDate(new Date());
                     }}
-                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-                      dateRange === "daily"
-                        ? "bg-white text-blue-600 shadow-sm"
-                        : "text-gray-600 hover:text-gray-900"
-                    }`}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${dateRange === "daily"
+                      ? "bg-white text-blue-600 shadow-sm"
+                      : "text-gray-600 hover:text-gray-900"
+                      }`}
                   >
                     Daily
                   </button>
@@ -1575,21 +1716,19 @@ const EmployeeSalesPage = () => {
                       setDateRange("monthly");
                       setSelectedDate(new Date());
                     }}
-                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-                      dateRange === "monthly"
-                        ? "bg-white text-blue-600 shadow-sm"
-                        : "text-gray-600 hover:text-gray-900"
-                    }`}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${dateRange === "monthly"
+                      ? "bg-white text-blue-600 shadow-sm"
+                      : "text-gray-600 hover:text-gray-900"
+                      }`}
                   >
                     Monthly
                   </button>
                   <button
                     onClick={() => setShowDatePicker(!showDatePicker)}
-                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-                      dateRange === "custom"
-                        ? "bg-white text-blue-600 shadow-sm"
-                        : "text-gray-600 hover:text-gray-900"
-                    }`}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${dateRange === "custom"
+                      ? "bg-white text-blue-600 shadow-sm"
+                      : "text-gray-600 hover:text-gray-900"
+                      }`}
                   >
                     Custom
                   </button>
@@ -1847,22 +1986,21 @@ const EmployeeSalesPage = () => {
                           ) : (
                             // Normal view mode
                             <span
-                              className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 w-fit ${
-                                getCategoryDetails(
-                                  item.category,
-                                  item.categoryName,
-                                ).color
-                              }`}
+                              className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 w-fit ${getCategoryDetails(
+                                item.category,
+                                item.categoryName,
+                              ).color
+                                }`}
                             >
                               <CategoryIcon className="w-3 h-3" />
                               {item.categoryName ||
                                 (item.category !== "other"
                                   ? getCategoryDetails(item.category).name
                                   : item.category
-                                      ?.replace(/-/g, " ")
-                                      .replace(/\b\w/g, (l) =>
-                                        l.toUpperCase(),
-                                      ))}
+                                    ?.replace(/-/g, " ")
+                                    .replace(/\b\w/g, (l) =>
+                                      l.toUpperCase(),
+                                    ))}
                             </span>
                           )}
                         </td>
@@ -2099,11 +2237,10 @@ const EmployeeSalesPage = () => {
                       <button
                         key={page}
                         onClick={() => setCurrentPage(page)}
-                        className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-                          currentPage === page
-                            ? "bg-blue-600 text-white"
-                            : "bg-white border border-gray-200 hover:bg-gray-50"
-                        }`}
+                        className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${currentPage === page
+                          ? "bg-blue-600 text-white"
+                          : "bg-white border border-gray-200 hover:bg-gray-50"
+                          }`}
                       >
                         {page}
                       </button>
@@ -2124,7 +2261,7 @@ const EmployeeSalesPage = () => {
             )}
           </div>
         </div>
-        
+
       </ProtectedModule>
 
       <AddSaleModal />

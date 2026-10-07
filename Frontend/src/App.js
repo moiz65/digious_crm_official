@@ -33,6 +33,10 @@ import AdminMemos from "./pages/Admin/AdminMemos";
 import Customer from "./pages/SuperAdmin/Customer";
 import Invoice from "./pages/SuperAdmin/Invoice";
 import RolesManagement from "./pages/Admin/RolesManagement";
+import AdminSalesTiers from "./pages/SuperAdmin/AdminSalesTiers";
+import AdminSalesQuarters from "./pages/SuperAdmin/AdminSalesQuarters";
+import AdminSalesPerformance from "./pages/SuperAdmin/AdminSalesPerformance";
+import SalesEmployeeAssignment from "./pages/SuperAdmin/SalesEmployeeAssignment";
 
 // HR Pages
 import HRDashboard from "./pages/HR/HRDashboard";
@@ -48,6 +52,7 @@ import HrReportsManagement from "./pages/HR/HrReportsManagement";
 import HrSettings from "./pages/HR/HrSettings";
 import AttendanceAdjustment from "./pages/HR/AttendanceAdjustment";
 
+
 // Employee Pages
 import ProductionDashboard from "./pages/Employees/ProductionDashboard";
 import EmployeeAttendance from "./pages/Employees/EmployeeAtt";
@@ -62,6 +67,7 @@ import AttendanceCorrectionPage from "./components/AttendanceCorrectionPage";
 import { PasscodeProvider } from "../src/context/PasscodeContext";
 import { ChatProvider } from "../src/context/ChatContext";
 import ChatDashboard from "./components/ChatDashboard";
+
 
 // ✅ Wrapper component for ChatDashboard
 const ChatDashboardWrapper = () => {
@@ -115,6 +121,46 @@ function AppContent() {
               <ProtectedRoute requiredRole="admin">
                 <PasscodeProvider>
                   <AdminSalesManagement />
+                </PasscodeProvider>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/sales-tiers"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <PasscodeProvider>
+                  <AdminSalesTiers />
+                </PasscodeProvider>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/sales-quarters"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <PasscodeProvider>
+                  <AdminSalesQuarters />
+                </PasscodeProvider>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/sales-performance"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <PasscodeProvider>
+                  <AdminSalesPerformance />
+                </PasscodeProvider>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/sales-employees"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <PasscodeProvider>
+                  <SalesEmployeeAssignment />
                 </PasscodeProvider>
               </ProtectedRoute>
             }
