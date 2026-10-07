@@ -242,7 +242,7 @@ const EmployeeProfile = () => {
       const currentMonth = currentDate.getMonth() + 1;
 
       const response = await fetch(
-        `${process.env.REACT_APP_API_URL || "http://100.118.172.21:5000"}/api/v1/sales-targets/${employeeId}?month=${currentMonth}&year=${currentYear}`,
+        `${process.env.REACT_APP_API_URL || "http://localhost:5000"}/api/v1/sales-targets/${employeeId}?month=${currentMonth}&year=${currentYear}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -1931,7 +1931,7 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
       setTiersLoading(true);
       const token = localStorage.getItem("token");
       const res = await fetch(
-        `${process.env.REACT_APP_API_URL || "http://100.118.172.21:5000"}/api/v1/sales-tiers/tiers`,
+        `${process.env.REACT_APP_API_URL || "http://localhost:5000"}/api/v1/sales-tiers/tiers`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const data = await res.json();
@@ -1957,7 +1957,7 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
       const year = now.getFullYear();
 
       const res = await fetch(
-        `${process.env.REACT_APP_API_URL || "http://100.118.172.21:5000"}/api/v1/sales-targets/${employee.id}?month=${month}&year=${year}`,
+        `${process.env.REACT_APP_API_URL || "http://localhost:5000"}/api/v1/sales-targets/${employee.id}?month=${month}&year=${year}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const data = await res.json();
@@ -2003,7 +2003,7 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
     try {
       const token = localStorage.getItem("token");
       const res = await fetch(
-        `${process.env.REACT_APP_API_URL || "http://100.118.172.21:5000"}/api/v1/sales-tiers/employees`,
+        `${process.env.REACT_APP_API_URL || "http://localhost:5000"}/api/v1/sales-tiers/employees`,
         {
           method: "POST",
           headers: {
@@ -3767,7 +3767,7 @@ const ProfileDetailModal = ({
       const currentMonth = currentDate.getMonth() + 1;
 
       const response = await fetch(
-        `${process.env.REACT_APP_API_URL || "http://100.118.172.21:5000"}/api/v1/sales-targets/${employeeId}?month=${currentMonth}&year=${currentYear}`,
+        `${process.env.REACT_APP_API_URL || "http://localhost:5000"}/api/v1/sales-targets/${employeeId}?month=${currentMonth}&year=${currentYear}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

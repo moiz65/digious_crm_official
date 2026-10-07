@@ -206,7 +206,7 @@ const HRMyAttendance = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        "http://100.114.9.93:5000/api/v1/zkTime/connect",
+        `${process.env.REACT_APP_API_URL || "http://localhost:5000"}/api/v1/zkTime/connect`,
         {
           headers: { Authorization: `Bearer ${token}` },
         },
@@ -253,7 +253,7 @@ const HRMyAttendance = () => {
 
       // Fetch device logs
       const deviceResponse = await fetch(
-        `http://100.114.9.93:5000/api/v1/zkTime/attendance/user/${deviceUserId}`,
+        `${process.env.REACT_APP_API_URL || "http://localhost:5000"}/api/v1/zkTime/attendance/user/${deviceUserId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 

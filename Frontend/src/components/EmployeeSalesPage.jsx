@@ -262,7 +262,7 @@ const EmployeeSalesPage = () => {
       const targetMonth = selectedDate.getMonth() + 1;
 
       const response = await fetch(
-        `${process.env.REACT_APP_API_URL || "http://100.118.172.21:5000"}/api/v1/sales-targets/${employeeId}?month=${targetMonth}&year=${targetYear}`,
+        `${process.env.REACT_APP_API_URL || "http://localhost:5000"}/api/v1/sales-targets/${employeeId}?month=${targetMonth}&year=${targetYear}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -309,7 +309,7 @@ const EmployeeSalesPage = () => {
       const currentQuarter = Math.ceil((selectedDate.getMonth() + 1) / 3);
 
       const response = await fetch(
-        `${process.env.REACT_APP_API_URL || "http://100.118.172.21:5000"}/api/v1/sales-targets/quarter-summary/${employeeId}?year=${currentYear}&quarter=${currentQuarter}`,
+        `${process.env.REACT_APP_API_URL || "http://localhost:5000"}/api/v1/sales-targets/quarter-summary/${employeeId}?year=${currentYear}&quarter=${currentQuarter}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -898,7 +898,7 @@ const EmployeeSalesPage = () => {
           // Optional: Create category in categories table (if you want)
           try {
             const newCategoryResponse = await fetch(
-              `${process.env.REACT_APP_API_URL || "http://100.118.172.21:5000"}/api/v1/sales-categories`,
+              `${process.env.REACT_APP_API_URL || "http://localhost:5000"}/api/v1/sales-categories`,
               {
                 method: "POST",
                 headers: {

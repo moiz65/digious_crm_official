@@ -1,6 +1,6 @@
 module.exports = {
     cors: {
-        origin: ['http://localhost:3000', 'http://100.118.172.21:5000'],
+        origin: ['http://localhost:3000', 'http://localhost:5000'],
         credentials: true,
         methods: ['GET', 'POST']
     },

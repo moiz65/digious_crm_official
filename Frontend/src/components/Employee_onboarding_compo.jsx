@@ -30,7 +30,7 @@ const Employee_onboarding_compo = () => {
     try {
       setLoadingRoles(true);
       const token = localStorage.getItem('token');
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://100.118.172.21:5000'}/api/v1/roles`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/v1/roles`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
