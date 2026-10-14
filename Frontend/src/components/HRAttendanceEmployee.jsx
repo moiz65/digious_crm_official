@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { endpoints } from "../config/api";
+import toast from "react-hot-toast";
 import BreakSummary from "./BreakSummary";
 import {
     Calendar,
@@ -497,6 +498,7 @@ export const EmployeeDetailView = ({
     const [selectedHistoryMonth, setSelectedHistoryMonth] = useState(
         () => monthKeys[0] || null,
     );
+    const [historyCalendar, setHistoryCalendar] = useState(holidays || []);
 
     // Keep selectedHistoryMonth in sync when new data loads for this employee
     useEffect(() => {
@@ -508,6 +510,38 @@ export const EmployeeDetailView = ({
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [employee.id, monthKeys[0]]);
+
+    useEffect(() => {
+        if (!selectedHistoryMonth) return;
+        const selectedDate = new Date(`1 ${selectedHistoryMonth}`);
+        if (Number.isNaN(selectedDate.getTime())) return;
+
+        let isCurrentSelection = true;
+        fetch(
+            endpoints.companyCalendar.byMonth(
+                selectedDate.getFullYear(),
+                selectedDate.getMonth() + 1,
+            ),
+        )
+            .then(async (response) => {
+                const result = await response.json();
+                if (!response.ok || !result.success) {
+                    throw new Error(result.message || "Failed to load calendar");
+                }
+                if (isCurrentSelection) setHistoryCalendar(result.data || []);
+            })
+            .catch((error) => {
+                console.error("Failed to load company calendar for employee history:", error);
+                if (isCurrentSelection) {
+                    setHistoryCalendar([]);
+                    toast.error(`Unable to load company calendar: ${error.message}`);
+                }
+            });
+
+        return () => {
+            isCurrentSelection = false;
+        };
+    }, [selectedHistoryMonth]);
 
     // Count working weekdays in a month up to today (for accurate count display)
     const getMonthWorkingCount = (monthKey) => {
@@ -534,7 +568,14 @@ export const EmployeeDetailView = ({
         let count = 0;
         for (let d = 1; d <= limit; d++) {
             const dow = new Date(year, monthIndex, d).getDay();
-            if (dow !== 0 && dow !== 6) count++;
+            const dateString = `${year}-${String(monthIndex + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+            const calendarEntry = historyCalendar.find(
+                (entry) => entry.date === dateString,
+            );
+            if (calendarEntry?.type === "holiday") continue;
+            if (calendarEntry?.type === "working" || (dow !== 0 && dow !== 6)) {
+                count++;
+            }
         }
         return count;
     };
@@ -862,13 +903,23 @@ export const EmployeeDetailView = ({
                                                         );
 
                                                     const { day, dateStr, rec } = cell;
+                                                    const calendarEntry = historyCalendar.find(
+                                                        (holiday) => holiday.date === dateStr,
+                                                    );
+                                                    const isHoliday =
+                                                        calendarEntry?.type === "holiday";
+                                                    const isWeekend =
+                                                        (new Date(dateStr).getDay() === 0 ||
+                                                            new Date(dateStr).getDay() === 6) &&
+                                                        calendarEntry?.type !== "working";
                                                     // Filter matching logic
                                                     const matchesFilter = (() => {
                                                         if (monthStatusFilter === "all") return true;
                                                         if (monthStatusFilter === "not-recorded")
-                                                            return !rec;
+                                                            return !rec && !isHoliday;
                                                         if (monthStatusFilter === "unexplained")
                                                             return (
+                                                                !isHoliday &&
                                                                 rec &&
                                                                 ((rec.status === "absent" &&
                                                                     (!rec.notes ||
@@ -879,12 +930,17 @@ export const EmployeeDetailView = ({
                                                             );
                                                         if (monthStatusFilter === "paid_leave")
                                                             return (
-                                                                rec &&
-                                                                (rec.status === "Paid Leave" ||
+                                                                isHoliday ||
+                                                                (rec &&
+                                                                    (rec.status === "Paid Leave" ||
                                                                     rec.status === "paid leave" ||
-                                                                    rec.status === "leave")
+                                                                    rec.status === "leave"))
                                                             );
-                                                        return rec && rec.status === monthStatusFilter;
+                                                        return (
+                                                            !isHoliday &&
+                                                            rec &&
+                                                            rec.status === monthStatusFilter
+                                                        );
                                                     })();
 
                                                     if (!matchesFilter && showOnlyMatches) {
@@ -895,12 +951,6 @@ export const EmployeeDetailView = ({
                                                             />
                                                         );
                                                     }
-                                                    const isHoliday = holidays.some(
-                                                        (h) => h.date === dateStr,
-                                                    );
-                                                    const isWeekend =
-                                                        new Date(dateStr).getDay() === 0 ||
-                                                        new Date(dateStr).getDay() === 6;
                                                     const isUnexplained =
                                                         rec &&
                                                         rec.status === "absent" &&
@@ -908,15 +958,15 @@ export const EmployeeDetailView = ({
 
                                                     const status = rec ? rec.status : "not-recorded";
                                                     const getBadge = () => {
+                                                        if (isHoliday)
+                                                            return {
+                                                                text: "PL",
+                                                                color: "bg-teal-500 text-white",
+                                                            };
                                                         if (isWeekend)
                                                             return {
                                                                 text: "Off",
                                                                 color: "bg-gray-400 text-white",
-                                                            };
-                                                        if (isHoliday)
-                                                            return {
-                                                                text: "Hol",
-                                                                color: "bg-purple-500 text-white",
                                                             };
                                                         if (isUnexplained)
                                                             return {
@@ -984,7 +1034,9 @@ export const EmployeeDetailView = ({
                                                     const badge = getBadge();
 
                                                     // Build hover tooltip with check-in/check-out times
-                                                    const tooltipText = rec
+                                                    const tooltipText = isHoliday
+                                                        ? `${dateStr}: Paid company holiday - ${calendarEntry.name}`
+                                                        : rec
                                                         ? `${dateStr}: ${status}${rec.checkIn && rec.checkIn !== "-" ? ` | In: ${rec.checkIn}` : ""}${rec.checkOut && rec.checkOut !== "-" ? ` | Out: ${rec.checkOut}` : ""}`
                                                         : `${dateStr}: ${status}`;
 

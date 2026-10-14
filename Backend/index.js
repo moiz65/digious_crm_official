@@ -11,6 +11,10 @@ const {
   getPakistanDateString,
 } = require("./utils/timezone");
 const pool = require("./config/database");
+const {
+  getCompanyCalendarEntries,
+  isWeekendDate,
+} = require("./utils/companyCalendar");
 
 const app = express();
 const server = http.createServer(app);  // ✅ ONLY ADD THIS - create HTTP server
@@ -185,6 +189,7 @@ const onboardingRoutes = require('./routes/onboarding');
 const authRoutes = require('./routes/auth');
 const userSystemInfoRoutes = require('./routes/userSystemInfo');
 const attendanceRoutes = require('./routes/attendance');
+const companyCalendarRoutes = require('./routes/companyCalendarRoutes');
 const rulesRoutes = require('./routes/rules');
 const activitiesRoutes = require('./routes/activities');
 const employeeProfileRoutes = require('./routes/employeeProfile');
@@ -213,6 +218,7 @@ app.use(`/api/${process.env.API_VERSION}`, onboardingRoutes);
 app.use(`/api/${process.env.API_VERSION}/auth`, authRoutes);
 app.use(`/api/${process.env.API_VERSION}/system-info`, userSystemInfoRoutes);
 app.use(`/api/${process.env.API_VERSION}/attendance`, attendanceRoutes);
+app.use(`/api/${process.env.API_VERSION}/company-calendar`, companyCalendarRoutes);
 app.use(`/api/${process.env.API_VERSION}/activities`, activitiesRoutes);
 app.use(`/api/${process.env.API_VERSION}/rules`, rulesRoutes);
 app.use(`/api/${process.env.API_VERSION}/employees`, employeeProfileRoutes);
@@ -297,6 +303,19 @@ async function autoMarkAbsentOnStartup() {
 
     for (const dateToProcess of datesToProcess) {
       console.log(`\n📅 Processing date: ${dateToProcess}`);
+      const calendarEntries = await getCompanyCalendarEntries(
+        dateToProcess,
+        dateToProcess,
+        connection,
+      );
+      const calendarType = calendarEntries[0]?.type;
+      if (
+        calendarType === "holiday" ||
+        (calendarType !== "working" && isWeekendDate(dateToProcess))
+      ) {
+        console.log(`   ⏭️  Skipping scheduled day off: ${dateToProcess}`);
+        continue;
+      }
 
       // Get all active employees
       const [allEmployees] = await connection.query(
@@ -558,6 +577,20 @@ server.listen(PORT, "0.0.0.0", async () => {
       const today = getPakistanDateString();
 
       console.log(`🔍 Processing date: ${today}`);
+      const calendarEntries = await getCompanyCalendarEntries(
+        today,
+        today,
+        connection,
+      );
+      const calendarType = calendarEntries[0]?.type;
+      if (
+        calendarType === "holiday" ||
+        (calendarType !== "working" && isWeekendDate(today))
+      ) {
+        console.log(`⏭️ Skipping scheduled day off: ${today}`);
+        connection.release();
+        return;
+      }
 
       // Get all active employees
       const [allEmployees] = await connection.query(

@@ -66,6 +66,7 @@ import AttendanceCorrectionPage from "./components/AttendanceCorrectionPage";
 
 import { PasscodeProvider } from "../src/context/PasscodeContext";
 import { ChatProvider } from "../src/context/ChatContext";
+import DesktopNotificationManager from "./components/DesktopNotificationManager";
 import ChatDashboard from "./components/ChatDashboard";
 
 
@@ -417,6 +418,16 @@ function AppContent() {
             }
           />
           <Route
+            path="/employee/hr/profile"
+            element={
+              <ProtectedRoute requiredRole="hr">
+                <PasscodeProvider>
+                  <EmployeeDetails />
+                </PasscodeProvider>
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/employee/applications"
             element={
               <ProtectedRoute requiredRole="employee">
@@ -436,6 +447,16 @@ function AppContent() {
             path="/employee/payroll"
             element={
               <ProtectedRoute requiredRole="employee">
+                <PasscodeProvider>
+                  <EmployeePayroll />
+                </PasscodeProvider>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/employee/hr/payroll"
+            element={
+              <ProtectedRoute requiredRole="hr">
                 <PasscodeProvider>
                   <EmployeePayroll />
                 </PasscodeProvider>
@@ -502,6 +523,7 @@ function AppContent() {
 
         {/* ✅ ChatDashboard ONLY on protected routes */}
         <ChatDashboardWrapper />
+        <DesktopNotificationManager />
       </div>
     </ChatProvider>
   );

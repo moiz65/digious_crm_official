@@ -19,6 +19,11 @@
  */
 
 const pool = require("../../config/database");
+const {
+  ensureCompanyCalendarTable,
+  getCompanyCalendarEntries,
+  isWeekendDate,
+} = require("../../utils/companyCalendar");
 
 // ──────────────────────────────────────────────
 // HELPER: Ensure payroll_records table exists
@@ -270,6 +275,18 @@ const generatePayroll = async (req, res) => {
     }
 
     await ensurePayrollTable();
+    await ensureCompanyCalendarTable();
+    const monthStart = `${yearNum}-${String(monthNum).padStart(2, "0")}-01`;
+    const monthEnd = `${yearNum}-${String(monthNum).padStart(2, "0")}-${String(
+      isCurrentMonth ? cutoffDate : getDaysInMonth(yearNum, monthNum),
+    ).padStart(2, "0")}`;
+    const companyCalendarEntries = await getCompanyCalendarEntries(
+      monthStart,
+      monthEnd,
+    );
+    const calendarTypes = new Map(
+      companyCalendarEntries.map((entry) => [entry.date, entry.type]),
+    );
 
     // 1. Get all active employees
     const [employees] = await pool.query(`
@@ -297,6 +314,25 @@ const generatePayroll = async (req, res) => {
         .json({ success: false, message: "No active employees found" });
     }
 
+    const [paidHolidayAttendanceRows] = await pool.query(
+      `SELECT ea.employee_id,
+              DATE_FORMAT(ea.attendance_date, '%Y-%m-%d') AS calendar_date
+       FROM Employee_Attendance ea
+       INNER JOIN company_calendar cc
+         ON cc.calendar_date = ea.attendance_date
+        AND cc.day_type = 'holiday'
+       WHERE ea.attendance_date BETWEEN ? AND ?
+         AND ea.status = 'Paid Leave'`,
+      [monthStart, monthEnd],
+    );
+    const paidHolidayDatesByEmployee = new Map();
+    paidHolidayAttendanceRows.forEach((row) => {
+      if (!paidHolidayDatesByEmployee.has(row.employee_id)) {
+        paidHolidayDatesByEmployee.set(row.employee_id, new Set());
+      }
+      paidHolidayDatesByEmployee.get(row.employee_id).add(row.calendar_date);
+    });
+
     // 2. Get attendance summary with cutoff date for current month
     let attendanceSummary;
     if (isCurrentMonth && cutoffDate) {
@@ -304,7 +340,7 @@ const generatePayroll = async (req, res) => {
         `
     SELECT 
       employee_id,
-      SUM(CASE WHEN status IN ('Present', 'Late') AND DAY(attendance_date) <= ? THEN 1 ELSE 0 END) AS present_days,
+      SUM(CASE WHEN status = 'Present' AND DAY(attendance_date) <= ? THEN 1 ELSE 0 END) AS present_days,
       SUM(CASE WHEN status = 'Absent' AND DAY(attendance_date) <= ? THEN 1 ELSE 0 END) AS absent_days,
       SUM(CASE WHEN status = 'Late' AND DAY(attendance_date) <= ? THEN 1 ELSE 0 END) AS late_days,
       SUM(CASE WHEN status IN ('Leave', 'Paid Leave') AND DAY(attendance_date) <= ? THEN 1 ELSE 0 END) AS leave_days,
@@ -331,7 +367,7 @@ const generatePayroll = async (req, res) => {
         `
     SELECT 
       employee_id,
-      SUM(CASE WHEN status IN ('Present', 'Late') THEN 1 ELSE 0 END) AS present_days,
+      SUM(CASE WHEN status = 'Present' THEN 1 ELSE 0 END) AS present_days,
       SUM(CASE WHEN status = 'Absent' THEN 1 ELSE 0 END) AS absent_days,
       SUM(CASE WHEN status = 'Late' THEN 1 ELSE 0 END) AS late_days,
       SUM(CASE WHEN status IN ('Leave', 'Paid Leave') THEN 1 ELSE 0 END) AS leave_days,
@@ -391,19 +427,18 @@ const generatePayroll = async (req, res) => {
         SELECT 
           employee_id,
           COUNT(*) AS paid_absent_days,
-          SUM(CASE WHEN leave_type_key = 'casual' THEN 1 ELSE 0 END) AS casual_leave_days,
-          SUM(CASE WHEN leave_type_key = 'sick' THEN 1 ELSE 0 END) AS sick_leave_days,
-          SUM(CASE WHEN leave_type_key = 'annual' THEN 1 ELSE 0 END) AS annual_leave_days,
-          SUM(CASE WHEN (reason_type IN ('Leave', 'Medical', 'Sick', 'Paid Leave') OR is_approved = 1) AND DAY(absent_date) <= ? THEN 1 ELSE 0 END) AS approved_leave_days
-        FROM Employee_Absent
-        WHERE YEAR(absent_date) = ? AND MONTH(absent_date) = ?
-          AND DAY(absent_date) <= ?
+          SUM(CASE WHEN (ea.reason_type IN ('Leave', 'Medical', 'Sick', 'Paid Leave') OR ea.is_approved = 1) AND DAY(ea.absent_date) <= ? THEN 1 ELSE 0 END) AS approved_leave_days
+        FROM Employee_Absent ea
+        LEFT JOIN company_calendar cc ON cc.calendar_date = ea.absent_date
+        WHERE YEAR(ea.absent_date) = ? AND MONTH(ea.absent_date) = ?
+          AND DAY(ea.absent_date) <= ?
+          AND (cc.calendar_date IS NULL OR cc.day_type = 'working')
           AND (
-            reason_type IN ('Leave', 'Medical', 'Sick', 'Paid Leave')
-            OR leave_type_key IS NOT NULL
-            OR is_approved = 1
+            ea.reason_type IN ('Leave', 'Medical', 'Sick', 'Paid Leave')
+            OR ea.leave_type_key IS NOT NULL
+            OR ea.is_approved = 1
           )
-        GROUP BY employee_id
+        GROUP BY ea.employee_id
       `,
         [cutoffDate, yearNum, monthNum, cutoffDate],
       );
@@ -413,18 +448,17 @@ const generatePayroll = async (req, res) => {
         SELECT 
           employee_id,
           COUNT(*) AS paid_absent_days,
-          SUM(CASE WHEN leave_type_key = 'casual' THEN 1 ELSE 0 END) AS casual_leave_days,
-          SUM(CASE WHEN leave_type_key = 'sick' THEN 1 ELSE 0 END) AS sick_leave_days,
-          SUM(CASE WHEN leave_type_key = 'annual' THEN 1 ELSE 0 END) AS annual_leave_days,
-          SUM(CASE WHEN reason_type IN ('Leave', 'Medical', 'Sick', 'Paid Leave') OR is_approved = 1 THEN 1 ELSE 0 END) AS approved_leave_days
-        FROM Employee_Absent
-        WHERE YEAR(absent_date) = ? AND MONTH(absent_date) = ?
+          SUM(CASE WHEN ea.reason_type IN ('Leave', 'Medical', 'Sick', 'Paid Leave') OR ea.is_approved = 1 THEN 1 ELSE 0 END) AS approved_leave_days
+        FROM Employee_Absent ea
+        LEFT JOIN company_calendar cc ON cc.calendar_date = ea.absent_date
+        WHERE YEAR(ea.absent_date) = ? AND MONTH(ea.absent_date) = ?
+          AND (cc.calendar_date IS NULL OR cc.day_type = 'working')
           AND (
-            reason_type IN ('Leave', 'Medical', 'Sick', 'Paid Leave')
-            OR leave_type_key IS NOT NULL
-            OR is_approved = 1
+            ea.reason_type IN ('Leave', 'Medical', 'Sick', 'Paid Leave')
+            OR ea.leave_type_key IS NOT NULL
+            OR ea.is_approved = 1
           )
-        GROUP BY employee_id
+        GROUP BY ea.employee_id
       `,
         [yearNum, monthNum],
       );
@@ -433,6 +467,47 @@ const generatePayroll = async (req, res) => {
     const approvedLeaveMap = {};
     approvedLeaves.forEach((l) => {
       approvedLeaveMap[l.employee_id] = l;
+    });
+
+    const [categorizedPaidLeaves] = await pool.query(
+      `
+      SELECT employee_id,
+        SUM(CASE WHEN leave_type_key = 'casual' THEN 1 ELSE 0 END) AS casual_leave_days,
+        SUM(CASE WHEN leave_type_key = 'sick' THEN 1 ELSE 0 END) AS sick_leave_days,
+        SUM(CASE WHEN leave_type_key = 'annual' THEN 1 ELSE 0 END) AS annual_leave_days
+      FROM (
+        SELECT ea.employee_id, DATE(ea.absent_date) AS leave_date, ea.leave_type_key
+        FROM Employee_Absent ea
+        LEFT JOIN company_calendar cc ON cc.calendar_date = ea.absent_date
+        WHERE ea.absent_date BETWEEN ? AND ?
+          AND ea.leave_type_key IN ('casual', 'sick', 'annual')
+          AND (ea.reason_type IN ('Leave', 'Medical', 'Sick', 'Paid Leave') OR ea.is_approved = 1)
+          AND (cc.calendar_date IS NULL OR cc.day_type = 'working')
+
+        UNION
+
+        SELECT ea.employee_id, DATE(ea.attendance_date) AS leave_date,
+          CASE
+            WHEN LOWER(COALESCE(ea.remarks, '')) LIKE '%(casual)%' THEN 'casual'
+            WHEN LOWER(COALESCE(ea.remarks, '')) LIKE '%(sick)%' THEN 'sick'
+            WHEN LOWER(COALESCE(ea.remarks, '')) LIKE '%(annual)%' THEN 'annual'
+          END AS leave_type_key
+        FROM Employee_Attendance ea
+        WHERE ea.attendance_date BETWEEN ? AND ?
+          AND ea.status = 'Paid Leave'
+          AND (
+            LOWER(COALESCE(ea.remarks, '')) LIKE '%(casual)%'
+            OR LOWER(COALESCE(ea.remarks, '')) LIKE '%(sick)%'
+            OR LOWER(COALESCE(ea.remarks, '')) LIKE '%(annual)%'
+          )
+      ) typed_paid_leaves
+      GROUP BY employee_id
+    `,
+      [monthStart, monthEnd, monthStart, monthEnd],
+    );
+    const categorizedPaidLeaveMap = {};
+    categorizedPaidLeaves.forEach((leave) => {
+      categorizedPaidLeaveMap[leave.employee_id] = leave;
     });
 
     // 3c. Count absent dates from attendance and absence records without
@@ -445,16 +520,23 @@ const generatePayroll = async (req, res) => {
           employee_id,
           absent_date
         FROM (
-          SELECT employee_id, DATE_FORMAT(attendance_date, '%Y-%m-%d') AS absent_date
-          FROM Employee_Attendance
-          WHERE YEAR(attendance_date) = ? AND MONTH(attendance_date) = ?
-            AND DAY(attendance_date) <= ?
-            AND status IN ('Absent', 'Uninformed Absent')
+          SELECT ea.employee_id, DATE_FORMAT(ea.attendance_date, '%Y-%m-%d') AS absent_date
+          FROM Employee_Attendance ea
+          LEFT JOIN company_calendar cc ON cc.calendar_date = ea.attendance_date
+          WHERE YEAR(ea.attendance_date) = ? AND MONTH(ea.attendance_date) = ?
+            AND DAY(ea.attendance_date) <= ?
+            AND ea.status IN ('Absent', 'Uninformed Absent')
+            AND (cc.day_type = 'working' OR (cc.calendar_date IS NULL AND WEEKDAY(ea.attendance_date) < 5))
           UNION
-          SELECT employee_id, DATE_FORMAT(absent_date, '%Y-%m-%d') AS absent_date
-          FROM Employee_Absent
-          WHERE YEAR(absent_date) = ? AND MONTH(absent_date) = ?
-            AND DAY(absent_date) <= ?
+          SELECT ea.employee_id, DATE_FORMAT(ea.absent_date, '%Y-%m-%d') AS absent_date
+          FROM Employee_Absent ea
+          LEFT JOIN company_calendar cc ON cc.calendar_date = ea.absent_date
+          WHERE YEAR(ea.absent_date) = ? AND MONTH(ea.absent_date) = ?
+            AND DAY(ea.absent_date) <= ?
+            AND COALESCE(ea.is_approved, 0) = 0
+            AND COALESCE(ea.reason_type, '') NOT IN ('Leave', 'Medical', 'Sick', 'Paid Leave')
+            AND ea.leave_type_key IS NULL
+            AND (cc.day_type = 'working' OR (cc.calendar_date IS NULL AND WEEKDAY(ea.absent_date) < 5))
         ) AS absent_dates
       `,
         [yearNum, monthNum, cutoffDate, yearNum, monthNum, cutoffDate],
@@ -466,14 +548,21 @@ const generatePayroll = async (req, res) => {
           employee_id,
           absent_date
         FROM (
-          SELECT employee_id, DATE_FORMAT(attendance_date, '%Y-%m-%d') AS absent_date
-          FROM Employee_Attendance
-          WHERE YEAR(attendance_date) = ? AND MONTH(attendance_date) = ?
-            AND status IN ('Absent', 'Uninformed Absent')
+          SELECT ea.employee_id, DATE_FORMAT(ea.attendance_date, '%Y-%m-%d') AS absent_date
+          FROM Employee_Attendance ea
+          LEFT JOIN company_calendar cc ON cc.calendar_date = ea.attendance_date
+          WHERE YEAR(ea.attendance_date) = ? AND MONTH(ea.attendance_date) = ?
+            AND ea.status IN ('Absent', 'Uninformed Absent')
+            AND (cc.day_type = 'working' OR (cc.calendar_date IS NULL AND WEEKDAY(ea.attendance_date) < 5))
           UNION
-          SELECT employee_id, DATE_FORMAT(absent_date, '%Y-%m-%d') AS absent_date
-          FROM Employee_Absent
-          WHERE YEAR(absent_date) = ? AND MONTH(absent_date) = ?
+          SELECT ea.employee_id, DATE_FORMAT(ea.absent_date, '%Y-%m-%d') AS absent_date
+          FROM Employee_Absent ea
+          LEFT JOIN company_calendar cc ON cc.calendar_date = ea.absent_date
+          WHERE YEAR(ea.absent_date) = ? AND MONTH(ea.absent_date) = ?
+            AND COALESCE(ea.is_approved, 0) = 0
+            AND COALESCE(ea.reason_type, '') NOT IN ('Leave', 'Medical', 'Sick', 'Paid Leave')
+            AND ea.leave_type_key IS NULL
+            AND (cc.day_type = 'working' OR (cc.calendar_date IS NULL AND WEEKDAY(ea.absent_date) < 5))
         ) AS absent_dates
       `,
         [yearNum, monthNum, yearNum, monthNum],
@@ -488,6 +577,7 @@ const generatePayroll = async (req, res) => {
         FROM Employee_Attendance
         WHERE YEAR(attendance_date) = ? AND MONTH(attendance_date) = ?
           AND DAY(attendance_date) <= ?
+          AND (check_in_time IS NOT NULL OR status IN ('Leave', 'Paid Leave'))
       `,
         [yearNum, monthNum, cutoffDate],
       );
@@ -497,6 +587,7 @@ const generatePayroll = async (req, res) => {
         SELECT employee_id, DATE_FORMAT(attendance_date, '%Y-%m-%d') AS attendance_date
         FROM Employee_Attendance
         WHERE YEAR(attendance_date) = ? AND MONTH(attendance_date) = ?
+          AND (check_in_time IS NOT NULL OR status IN ('Leave', 'Paid Leave'))
       `,
         [yearNum, monthNum],
       );
@@ -519,7 +610,7 @@ const generatePayroll = async (req, res) => {
       attendanceDateMap[a.employee_id].add(a.attendance_date);
     });
 
-    // Match the existing absence-generation rule: weekdays after joining date.
+    // Match the company schedule: weekdays by default, with calendar overrides.
     const absenceCutoffDay =
       isCurrentMonth && cutoffDate
         ? cutoffDate
@@ -531,10 +622,14 @@ const generatePayroll = async (req, res) => {
       const absentDates = absentDateMap[emp.id] || new Set();
       const attendanceDates = attendanceDateMap[emp.id] || new Set();
       for (let day = 1; day <= absenceCutoffDay; day++) {
-        const date = new Date(Date.UTC(yearNum, monthNum - 1, day));
-        if (date.getUTCDay() === 0 || date.getUTCDay() === 6) continue;
-
         const dateString = `${yearNum}-${String(monthNum).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+        const calendarType = calendarTypes.get(dateString);
+        if (
+          calendarType === "holiday" ||
+          (calendarType !== "working" && isWeekendDate(dateString))
+        ) {
+          continue;
+        }
         if (
           dateString >= joinDate &&
           !attendanceDates.has(dateString) &&
@@ -547,49 +642,7 @@ const generatePayroll = async (req, res) => {
       totalAbsentMap[emp.id] = absentDates.size;
     }
 
-    // 3d. Get employee_leaves yearly balances
-    const [leaveBalances] = await pool.query(`
-      SELECT 
-        employee_id,
-        COALESCE(casual_leaves_used, 0) AS casual_used,
-        COALESCE(sick_leaves_used, 0) AS sick_used,
-        COALESCE(annual_leaves_used, 0) AS annual_used,
-        COALESCE(casual_leaves_total, 8) AS casual_total,
-        COALESCE(sick_leaves_total, 8) AS sick_total,
-        COALESCE(annual_leaves_total, 12) AS annual_total
-      FROM employee_leaves
-    `);
-
-    const leaveBalanceMap = {};
-    leaveBalances.forEach((l) => {
-      leaveBalanceMap[l.employee_id] = l;
-    });
-
-    // 3e. Count yearly paid absences
-    const [yearlyPaidAbsents] = await pool.query(
-      `
-      SELECT 
-        employee_id,
-        COUNT(*) AS yearly_paid_count
-      FROM Employee_Absent
-      WHERE YEAR(absent_date) = ?
-        AND MONTH(absent_date) <= ?
-        AND (
-          reason_type IN ('Leave', 'Medical', 'Sick', 'Paid Leave')
-          OR leave_type_key IS NOT NULL
-          OR is_approved = 1
-        )
-      GROUP BY employee_id
-    `,
-      [yearNum, monthNum],
-    );
-
-    const yearlyPaidMap = {};
-    yearlyPaidAbsents.forEach((a) => {
-      yearlyPaidMap[a.employee_id] = a.yearly_paid_count;
-    });
-
-    // 3f. Get advance installments
+    // 3d. Get advance installments
     let advanceInstallmentMap = {};
     try {
       const [advInstallments] = await pool.query(
@@ -636,14 +689,21 @@ const generatePayroll = async (req, res) => {
         const attendance = attendanceMap[emp.id] || {};
         const detailed = detailedMap[emp.id] || {};
         const approvedLeave = approvedLeaveMap[emp.id] || {};
-        const leaveBalance = leaveBalanceMap[emp.id] || {};
+        const categorizedPaidLeave = categorizedPaidLeaveMap[emp.id] || {};
+        const companyHolidayDays = emp.join_date
+          ? companyCalendarEntries.filter(
+              (entry) =>
+                entry.type === "holiday" &&
+                entry.date >= String(emp.join_date).slice(0, 10),
+            ).length
+          : 0;
+        const companyHolidayAttendanceDays =
+          paidHolidayDatesByEmployee.get(emp.id)?.size || 0;
 
         // Get attendance data
-        const viewPresentDays = parseInt(attendance.present_days) || 0;
+        const presentDays = parseInt(attendance.present_days) || 0;
         const lateDays = parseInt(attendance.late_days) || 0;
-        const presentDays = viewPresentDays + lateDays;
         const rawAbsentDays = parseInt(totalAbsentMap[emp.id]) || 0;
-        const leaveDays = parseInt(attendance.leave_days) || 0;
         const halfDays = parseInt(attendance.half_days) || 0;
         const paidLeaveDaysFromAttendance =
           parseInt(detailed.paid_leave_days) || 0;
@@ -659,39 +719,27 @@ const generatePayroll = async (req, res) => {
 
         // Paid leave days from Employee_Absent
         const markedPaidDays = parseInt(approvedLeave.approved_leave_days) || 0;
-        const casualFromAbsent = parseInt(approvedLeave.casual_leave_days) || 0;
-        const sickFromAbsent = parseInt(approvedLeave.sick_leave_days) || 0;
-        const annualFromAbsent = parseInt(approvedLeave.annual_leave_days) || 0;
+        const casualFromAbsent =
+          parseInt(categorizedPaidLeave.casual_leave_days) || 0;
+        const sickFromAbsent =
+          parseInt(categorizedPaidLeave.sick_leave_days) || 0;
+        const annualFromAbsent =
+          parseInt(categorizedPaidLeave.annual_leave_days) || 0;
 
-        // Unlinked leaves
-        const totalLeavesUsedYear =
-          (parseInt(leaveBalance.casual_used) || 0) +
-          (parseInt(leaveBalance.sick_used) || 0) +
-          (parseInt(leaveBalance.annual_used) || 0);
-        const yearlyPaidInAbsent = parseInt(yearlyPaidMap[emp.id]) || 0;
-        const unlinkedLeaves = Math.max(
+        // Paid leave is recorded separately; it must not erase missed check-in workdays.
+        const attendancePaidLeaveDays = Math.max(
           0,
-          totalLeavesUsedYear - yearlyPaidInAbsent,
+          paidLeaveDaysFromAttendance - companyHolidayAttendanceDays,
         );
-
-        // Calculate paid vs unpaid
-        const rawUnpaid = Math.max(0, totalAbsentDays - markedPaidDays);
-        const unlinkedForThisMonth = Math.min(unlinkedLeaves, rawUnpaid);
-        const totalPaidLeaveDays = markedPaidDays + unlinkedForThisMonth;
-        const unpaidAbsentDays = Math.max(
-          0,
-          totalAbsentDays - totalPaidLeaveDays,
+        const employeePaidLeaveDays = Math.max(
+          markedPaidDays,
+          attendancePaidLeaveDays,
         );
+        const totalPaidLeaveDays = employeePaidLeaveDays + companyHolidayDays;
+        const unpaidAbsentDays = rawAbsentDays;
 
         // Leave type breakdown
-        const casualLeaveDays =
-          casualFromAbsent +
-          (unlinkedForThisMonth > 0
-            ? Math.min(
-              parseInt(leaveBalance.casual_used) || 0,
-              unlinkedForThisMonth,
-            )
-            : 0);
+        const casualLeaveDays = casualFromAbsent;
         const sickLeaveDays = sickFromAbsent;
         const annualLeaveDays = annualFromAbsent;
 
@@ -699,7 +747,7 @@ const generatePayroll = async (req, res) => {
         const lateDeductionDays = Math.floor(lateDays / 3);
 
         // Calculate deductions
-        const absentDeduction = unpaidAbsentDays * dailyRate;
+        const absentDeduction = (unpaidAbsentDays + halfDaysToAbsent) * dailyRate;
         const lateDeduction = lateDeductionDays * dailyRate;
         const totalDeductions = absentDeduction + lateDeduction;
 
@@ -726,8 +774,13 @@ const generatePayroll = async (req, res) => {
           );
         }
         if (totalPaidLeaveDays > 0) {
+          const leaveBreakdown = [
+            casualLeaveDays > 0 ? `${casualLeaveDays} casual` : null,
+            sickLeaveDays > 0 ? `${sickLeaveDays} sick` : null,
+            annualLeaveDays > 0 ? `${annualLeaveDays} annual` : null,
+          ].filter(Boolean);
           noteParts.push(
-            `Paid leaves: ${totalPaidLeaveDays} (${casualLeaveDays > 0 ? casualLeaveDays + " casual" : ""}${sickLeaveDays > 0 ? (casualLeaveDays > 0 ? ", " : "") + sickLeaveDays + " sick" : ""}${annualLeaveDays > 0 ? (casualLeaveDays > 0 || sickLeaveDays > 0 ? ", " : "") + annualLeaveDays + " annual" : ""})`,
+            `Paid leaves: ${totalPaidLeaveDays}${leaveBreakdown.length > 0 ? ` (${leaveBreakdown.join(", ")})` : ""}`,
           );
         } else if (totalAbsentDays > 0) {
           noteParts.push(`Unpaid absences: ${unpaidAbsentDays}`);
@@ -755,9 +808,9 @@ const generatePayroll = async (req, res) => {
           present_days: presentDays,
           absent_days: unpaidAbsentDays,
           late_days: lateDays,
-          leave_days: totalPaidLeaveDays,
+          leave_days: employeePaidLeaveDays,
           half_days: halfDays,
-          paid_leave_days: paidLeaveDaysFromAttendance + totalPaidLeaveDays,
+          paid_leave_days: totalPaidLeaveDays,
           late_deduction_days: lateDeductionDays,
           absent_deduction: absentDeduction,
           late_deduction: lateDeduction,
@@ -781,9 +834,22 @@ const generatePayroll = async (req, res) => {
       }
     }
 
-    // 6. Delete old payroll records
+    if (errors.length > 0 || payrollRecords.length !== employees.length) {
+      console.error("Payroll calculation failed; saved payroll was not changed:", errors);
+      return res.status(500).json({
+        success: false,
+        message: "Payroll calculation failed. Existing payroll records were left unchanged.",
+        errors,
+      });
+    }
+
+    // Replace the selected month atomically so a failed insert cannot erase saved payroll.
+    const connection = await pool.getConnection();
+    let insertedCount = 0;
     try {
-      const [deductedInsts] = await pool.query(
+      await connection.beginTransaction();
+
+      const [deductedInsts] = await connection.query(
         `SELECT ai.id, ai.advance_id, ai.amount
          FROM advance_installments ai
          WHERE ai.year = ? AND ai.month = ? AND ai.status = 'deducted'`,
@@ -791,7 +857,7 @@ const generatePayroll = async (req, res) => {
       );
 
       for (const inst of deductedInsts) {
-        await pool.query(
+        await connection.query(
           `UPDATE employee_advances 
            SET total_repaid = total_repaid - ?, 
                remaining_balance = remaining_balance + ?,
@@ -801,30 +867,20 @@ const generatePayroll = async (req, res) => {
         );
       }
 
-      await pool.query(
+      await connection.query(
         `UPDATE advance_installments
          SET status = 'pending', payroll_record_id = NULL, deducted_at = NULL
          WHERE year = ? AND month = ? AND status = 'deducted'`,
         [yearNum, monthNum],
       );
 
-      await pool.query(
+      await connection.query(
         `DELETE FROM payroll_records WHERE month = ? AND year = ?`,
         [monthNum, yearNum],
       );
-    } catch (delError) {
-      console.log(
-        "Note: Error deleting old payroll records:",
-        delError.message,
-      );
-    }
 
-    // 7. Insert new payroll records
-    let insertedCount = 0;
-
-    for (const record of payrollRecords) {
-      try {
-        const [result] = await pool.query(
+      for (const record of payrollRecords) {
+        const [result] = await connection.query(
           `INSERT INTO payroll_records 
             (employee_id, month, year, pay_period_start, pay_period_end, days_in_month, issue_date,
              base_salary, daily_rate, total_allowances,
@@ -867,13 +923,22 @@ const generatePayroll = async (req, res) => {
           ],
         );
 
-        if (result.affectedRows > 0) insertedCount++;
-      } catch (dbError) {
-        errors.push({
-          employee_id: record.employee_id,
-          error: dbError.message,
-        });
+        if (result.affectedRows !== 1) {
+          throw new Error(`Payroll record was not inserted for employee ${record.employee_id}`);
+        }
+        insertedCount++;
       }
+
+      await connection.commit();
+    } catch (error) {
+      await connection.rollback();
+      console.error("Failed to replace payroll records; transaction rolled back:", error);
+      return res.status(500).json({
+        success: false,
+        message: `Payroll generation failed while saving records. Existing payroll was preserved. ${error.message}`,
+      });
+    } finally {
+      connection.release();
     }
 
     // 8. Mark advance installments as deducted

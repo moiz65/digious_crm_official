@@ -295,12 +295,18 @@ const getFinancialSummary = async (req, res) => {
       const [baRows] = await pool.query(
         `SELECT
            id AS bank_account_id,
-           CONCAT('****', SUBSTRING(account_number, -4)) AS account_number_masked,
-           account_title_name,
-           bank_name,
-           account_type
-         FROM employee_bank_accounts
-         WHERE employee_id = ?
+           CONCAT(
+             '****',
+             SUBSTRING(COALESCE(NULLIF(eo.bank_account, ''), ba.account_number), -4)
+           ) AS account_number_masked,
+           COALESCE(NULLIF(ba.account_title_name, ''), eo.account_title_name) AS account_title_name,
+           COALESCE(NULLIF(ba.bank_name, ''), eo.bank_name) AS bank_name,
+           ba.account_type
+         FROM employee_onboarding eo
+         LEFT JOIN employee_bank_accounts ba
+           ON ba.employee_id = eo.id AND ba.is_primary = 1
+         WHERE eo.id = ?
+         ORDER BY ba.updated_at DESC, ba.id DESC
          LIMIT 1`,
         [numericEmpId]
       );

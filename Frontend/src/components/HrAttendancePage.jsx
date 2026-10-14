@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { endpoints } from "../config/api";
 import { confirmDialog } from "../utils/confirm";
+import { showDesktopNotification } from "../utils/desktopNotifications";
 import BreakSummary from "./BreakSummary";
 import TodayBreaksSummary from "./TodayBreaksSummary";
 import HRAttendanceEmployee, {
@@ -2068,7 +2069,12 @@ const OverviewTab = ({
                   const isPresent =
                     rawStatus === "present" || (attendance?.checkIn && attendance.checkIn !== "-" && !isLate);
                   const status = isLate ? "late" : isPresent ? "present" : rawStatus;
-                  const isHoliday = holidays.some((h) => h.date === selectedDate);
+                  const holidayEntry = holidays.find(
+                    (holiday) =>
+                      holiday.date === selectedDate &&
+                      holiday.type === "holiday",
+                  );
+                  const isHoliday = Boolean(holidayEntry);
 
                   return (
                     <tr key={employee.id} className="hover:bg-gray-50 transition-colors duration-200">
@@ -2126,8 +2132,11 @@ const OverviewTab = ({
                       {/* Status Badge */}
                       <td className="px-6 py-4 whitespace-nowrap">
                         {isHoliday ? (
-                          <span className="px-3 py-1.5 rounded-md text-sm font-medium bg-purple-50 text-purple-700">
-                            Holiday
+                          <span
+                            className="px-3 py-1.5 rounded-md text-sm font-medium bg-teal-50 text-teal-700"
+                            title={holidayEntry.name}
+                          >
+                            PL
                           </span>
                         ) : (
                           <span
@@ -2362,120 +2371,195 @@ const BreaksManagement = ({ breaks, employees, onAddBreak, onDeleteBreak }) => {
   );
 };
 
-// Holidays Management Component
-const HolidaysManagement = ({ holidays, onAddHoliday, onDeleteHoliday }) => {
-  const [isAddHolidayModalOpen, setIsAddHolidayModalOpen] = useState(false);
+const HolidaysManagement = ({
+  currentDate,
+  onMonthChange,
+  holidays,
+  onSave,
+  onDelete,
+}) => {
+  const [selectedDate, setSelectedDate] = useState("");
+  const [title, setTitle] = useState("");
+  const [type, setType] = useState("holiday");
+  const [saving, setSaving] = useState(false);
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const leadingDays = (new Date(year, month, 1).getDay() + 6) % 7;
+  const holidayByDate = new Map(holidays.map((holiday) => [holiday.date, holiday]));
+  const selectedEntry = holidayByDate.get(selectedDate);
+
+  const openDate = (day) => {
+    const date = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    const entry = holidayByDate.get(date);
+    const weekday = new Date(year, month, day).getDay();
+    setSelectedDate(date);
+    setTitle(entry?.name || (weekday === 0 || weekday === 6 ? "Weekly Off" : ""));
+    setType(entry?.type || "holiday");
+  };
+
+  const saveDate = async () => {
+    setSaving(true);
+    try {
+      if (await onSave(selectedDate, title, type)) {
+        setSelectedDate("");
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteDate = async () => {
+    setSaving(true);
+    try {
+      if (await onDelete(selectedDate)) {
+        setSelectedDate("");
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
-    <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-lg font-semibold text-gray-900">
-          Holidays Management
-        </h2>
-        <button
-          onClick={() => setIsAddHolidayModalOpen(true)}
-          className="flex items-center px-4 py-2 bg-[#349dff] text-white rounded-xl hover:bg-[#2980db] transition duration-300"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Add Holiday
-        </button>
+    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-7">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-semibold text-slate-900">Company Calendar</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Mark company-wide paid holidays or override a weekend as a working day.
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            aria-label="Previous month"
+            className="rounded-lg border border-slate-200 p-2 hover:bg-slate-50"
+            onClick={() => onMonthChange(new Date(year, month - 1, 1))}
+            type="button"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </button>
+          <h3 className="min-w-36 text-center font-semibold text-slate-800">
+            {currentDate.toLocaleDateString(undefined, { month: "long", year: "numeric" })}
+          </h3>
+          <button
+            aria-label="Next month"
+            className="rounded-lg border border-slate-200 p-2 hover:bg-slate-50"
+            onClick={() => onMonthChange(new Date(year, month + 1, 1))}
+            type="button"
+          >
+            <ArrowRight className="h-4 w-4" />
+          </button>
+        </div>
       </div>
 
-      <div className="space-y-4">
-        {holidays.map((holiday) => (
-          <div
-            key={holiday.id}
-            className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200 hover:border-[#349dff] transition duration-300"
-          >
-            <div className="flex items-center space-x-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center text-white">
-                <Calendar className="h-5 w-5" />
-              </div>
-              <div>
-                <h4 className="font-medium text-gray-900">{holiday.name}</h4>
-                <p className="text-sm text-gray-600">
-                  {new Date(holiday.date).toLocaleDateString()} • {holiday.type}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <span
-                className={`text-xs px-2 py-1 rounded-full ${holiday.type === "public"
-                  ? "bg-green-100 text-green-800"
-                  : "bg-blue-100 text-blue-800"
-                  }`}
-              >
-                {holiday.type}
-              </span>
-              <button
-                onClick={() => onDeleteHoliday(holiday.id)}
-                className="p-2 text-gray-400 hover:text-red-600 transition duration-300"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
-            </div>
+      <div className="grid grid-cols-7 gap-2">
+        {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
+          <div key={day} className="py-2 text-center text-xs font-semibold uppercase text-slate-500">
+            {day}
           </div>
         ))}
+        {Array.from({ length: leadingDays }, (_, index) => (
+          <div key={`empty-${index}`} aria-hidden="true" />
+        ))}
+        {Array.from({ length: daysInMonth }, (_, index) => {
+          const day = index + 1;
+          const date = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+          const entry = holidayByDate.get(date);
+          const isWeekend = [0, 6].includes(new Date(year, month, day).getDay());
+          const isHoliday = entry?.type === "holiday";
+          const isWorkingOverride = entry?.type === "working";
+
+          return (
+            <button
+              key={date}
+              className={`min-h-20 rounded-xl border p-2 text-left transition hover:border-blue-400 hover:shadow-sm ${
+                isHoliday
+                  ? "border-purple-200 bg-purple-50"
+                  : isWorkingOverride
+                    ? "border-green-200 bg-green-50"
+                    : isWeekend
+                      ? "border-slate-200 bg-slate-50"
+                      : "border-slate-100 bg-white"
+              }`}
+              onClick={() => openDate(day)}
+              title={entry?.name || (isWeekend ? "Weekly Off" : "Working day")}
+              type="button"
+            >
+              <span className="text-sm font-semibold text-slate-800">{day}</span>
+              <span className="mt-2 block truncate text-xs font-medium text-slate-600">
+                {isHoliday ? "PL" : isWorkingOverride ? "Working" : isWeekend ? "Off" : ""}
+              </span>
+              {entry && (
+                <span className="block truncate text-[10px] text-slate-500">{entry.name}</span>
+              )}
+            </button>
+          );
+        })}
       </div>
 
-      {isAddHolidayModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-gray-900">Add Holiday</h2>
-              <button
-                onClick={() => setIsAddHolidayModalOpen(false)}
-                className="p-2 hover:bg-gray-100 rounded-lg"
-              >
+      <div className="mt-5 flex flex-wrap gap-4 text-xs text-slate-600">
+        <span><b className="text-purple-700">PL</b> = paid company holiday (no deduction)</span>
+        <span><b>Off</b> = default Saturday/Sunday</span>
+        <span><b className="text-green-700">Working</b> = weekend work override</span>
+      </div>
+
+      {selectedDate && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4">
+          <div aria-labelledby="calendar-date-title" aria-modal="true" className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl" role="dialog">
+            <div className="mb-5 flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-slate-900" id="calendar-date-title">
+                  {selectedEntry ? "Edit calendar date" : "Set calendar date"}
+                </h3>
+                <p className="text-sm text-slate-500">{selectedDate}</p>
+              </div>
+              <button aria-label="Close" className="rounded-lg p-2 hover:bg-slate-100" onClick={() => setSelectedDate("")} type="button">
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Holiday Name
-                </label>
-                <input
-                  type="text"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#349dff] focus:border-transparent"
-                  placeholder="Enter holiday name"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Date
-                </label>
-                <input
-                  type="date"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#349dff] focus:border-transparent"
-                />
-              </div>
-              <div className="flex space-x-4 pt-4">
-                <button
-                  onClick={() => setIsAddHolidayModalOpen(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition duration-300"
-                >
+            <label className="block text-sm font-medium text-slate-700" htmlFor="company-calendar-title">
+              Title
+            </label>
+            <input
+              autoFocus
+              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+              id="company-calendar-title"
+              maxLength={150}
+              onChange={(event) => setTitle(event.target.value)}
+              placeholder="e.g. Independence Day or Weekly Off"
+              value={title}
+            />
+            <label className="mt-4 block text-sm font-medium text-slate-700" htmlFor="company-calendar-type">
+              Day type
+            </label>
+            <select
+              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+              id="company-calendar-type"
+              onChange={(event) => setType(event.target.value)}
+              value={type}
+            >
+              <option value="holiday">Paid Holiday / Weekly Off</option>
+              <option value="working">Working Day (weekend override)</option>
+            </select>
+            <div className="mt-6 flex justify-between gap-3">
+              {selectedEntry ? (
+                <button className="rounded-lg border border-red-200 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50" disabled={saving} onClick={deleteDate} type="button">
+                  Remove
+                </button>
+              ) : <span />}
+              <div className="flex gap-2">
+                <button className="rounded-lg border border-slate-300 px-4 py-2 text-sm hover:bg-slate-50" onClick={() => setSelectedDate("")} type="button">
                   Cancel
                 </button>
-                <button
-                  onClick={() => {
-                    onAddHoliday({
-                      name: "New Holiday",
-                      date: new Date().toISOString().split("T")[0],
-                      type: "public",
-                    });
-                    setIsAddHolidayModalOpen(false);
-                  }}
-                  className="flex-1 px-4 py-2 bg-[#349dff] text-white rounded-lg hover:bg-[#2980db] transition duration-300"
-                >
-                  Add Holiday
+                <button className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50" disabled={saving || !title.trim()} onClick={saveDate} type="button">
+                  {saving ? "Saving..." : "Save"}
                 </button>
               </div>
             </div>
           </div>
         </div>
       )}
-    </div>
+    </section>
   );
 };
 
@@ -2813,7 +2897,6 @@ export function HrAttendancePage({ initialTab = "overview" }) {
 
   const [editingEmployee, setEditingEmployee] = useState(null);
   const [isAddEmployeeModalOpen, setIsAddEmployeeModalOpen] = useState(false);
-  const [isAddHolidayModalOpen, setIsAddHolidayModalOpen] = useState(false);
   const [isAddBreakModalOpen, setIsAddBreakModalOpen] = useState(false);
 
   useEffect(() => {
@@ -2952,7 +3035,9 @@ export function HrAttendancePage({ initialTab = "overview" }) {
     ).length;
 
     const totalBreaks = breaks.length;
-    const totalHolidays = holidays.length;
+    const totalHolidays = holidays.filter(
+      (holiday) => holiday.type === "holiday",
+    ).length;
     const totalLeavesTaken = employeeLeaves.reduce(
       (sum, leave) => sum + leave.totalTaken,
       0,
@@ -3586,6 +3671,29 @@ export function HrAttendancePage({ initialTab = "overview" }) {
       }
     };
 
+    const fetchCompanyCalendar = async () => {
+      try {
+        const response = await fetch(
+          endpoints.companyCalendar.byMonth(
+            currentDate.getFullYear(),
+            currentDate.getMonth() + 1,
+          ),
+        );
+        const result = await response.json();
+        if (!response.ok || !result.success) {
+          throw new Error(result.message || "Failed to fetch company calendar");
+        }
+        setHolidays(result.data || []);
+      } catch (error) {
+        console.error("Error fetching company calendar:", error);
+        setHolidays([]);
+        addNotification(
+          `Unable to load company calendar: ${error.message}`,
+          "error",
+        );
+      }
+    };
+
     // OPTIMIZED: Fetch all data in parallel instead of sequentially
     Promise.all([
       fetchEmployees(),
@@ -3593,16 +3701,10 @@ export function HrAttendancePage({ initialTab = "overview" }) {
       fetchRules(),
       fetchBreaks(),
       fetchMonthlyAbsentSummary(),
+      fetchCompanyCalendar(),
     ]).finally(() => {
       setPageLoading(false);
     });
-
-    // Set default holidays
-    const sampleHolidays = [
-      { id: 1, name: "New Year", date: "2025-01-01", type: "public" },
-      { id: 2, name: "Christmas Day", date: "2025-12-25", type: "public" },
-    ];
-    setHolidays(sampleHolidays);
   }, [currentDate]);
 
   // Fetch complete attendance (present + absent) whenever a calendar date is selected
@@ -3812,20 +3914,109 @@ export function HrAttendancePage({ initialTab = "overview" }) {
     }
   };
 
-  const handleAddHoliday = (holidayData) => {
-    const newHoliday = {
-      id: Math.max(...holidays.map((h) => h.id)) + 1,
-      ...holidayData,
-    };
-    setHolidays((prev) => [...prev, newHoliday]);
-    setIsAddHolidayModalOpen(false);
-    addNotification("Holiday added successfully", "success");
+  const handleSaveCompanyCalendarDate = async (date, title, type) => {
+    const token = localStorage.getItem("token") || localStorage.getItem("authToken");
+    if (!token) {
+      addNotification("Please log in again to manage the company calendar.", "error");
+      return false;
+    }
+
+    try {
+      const previousEntry = holidays.find((holiday) => holiday.date === date);
+      const response = await fetch(endpoints.companyCalendar.byDate(date), {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ title, type }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || "Failed to save calendar date");
+      }
+
+      setHolidays((previous) => [
+        ...previous.filter((holiday) => holiday.date !== date),
+        result.data,
+      ].sort((a, b) => a.date.localeCompare(b.date)));
+      setAttendanceData((previous) =>
+        previous.map((record) => {
+          if (record.date !== date) return record;
+          if (
+            type === "holiday" &&
+            (["absent", "uninformed absent"].includes(record.status) ||
+              (record.status === "paid leave" &&
+                record.notes?.startsWith("Company holiday: ")))
+          ) {
+            return {
+              ...record,
+              status: "paid leave",
+              notes: `Company holiday: ${title.trim()}`,
+            };
+          }
+          if (
+            type === "working" &&
+            previousEntry?.type === "holiday" &&
+            record.status === "paid leave" &&
+            record.notes === `Company holiday: ${previousEntry.name}`
+          ) {
+            return { ...record, status: "absent", notes: "No check-in" };
+          }
+          return record;
+        }),
+      );
+      addNotification(
+        type === "holiday" ? "Paid holiday saved" : "Working day saved",
+        "success",
+      );
+      return true;
+    } catch (error) {
+      console.error("Error saving company calendar date:", error);
+      addNotification(`Failed to save calendar date: ${error.message}`, "error");
+      return false;
+    }
   };
 
-  const handleDeleteHoliday = async (holidayId) => {
-    if (await confirmDialog("Are you sure you want to delete this holiday?")) {
-      setHolidays((prev) => prev.filter((h) => h.id !== holidayId));
-      addNotification("Holiday deleted successfully", "success");
+  const handleDeleteHoliday = async (date) => {
+    if (!(await confirmDialog("Remove this company calendar override?"))) {
+      return false;
+    }
+
+    const token = localStorage.getItem("token") || localStorage.getItem("authToken");
+    if (!token) {
+      addNotification("Please log in again to manage the company calendar.", "error");
+      return false;
+    }
+
+    try {
+      const previousEntry = holidays.find((holiday) => holiday.date === date);
+      const response = await fetch(endpoints.companyCalendar.byDate(date), {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || "Failed to remove calendar date");
+      }
+      setHolidays((previous) => previous.filter((holiday) => holiday.date !== date));
+      if (previousEntry?.type === "holiday") {
+        setAttendanceData((previous) =>
+          previous.map((record) =>
+            record.date === date &&
+            record.status === "paid leave" &&
+            record.notes === `Company holiday: ${previousEntry.name}`
+              ? { ...record, status: "absent", notes: "No check-in" }
+              : record,
+          ),
+        );
+      }
+      addNotification("Calendar override removed", "success");
+      return true;
+    } catch (error) {
+      console.error("Error removing company calendar date:", error);
+      addNotification(`Failed to remove calendar date: ${error.message}`, "error");
+      return false;
     }
   };
 
@@ -3942,6 +4133,9 @@ export function HrAttendancePage({ initialTab = "overview" }) {
     };
 
     setNotifications((prev) => [newNotification, ...prev.slice(0, 4)]);
+    if (type === "success" || type === "error") {
+      showDesktopNotification(message, type, newNotification.id);
+    }
 
     setTimeout(() => {
       setNotifications((prev) =>
@@ -4171,7 +4365,7 @@ export function HrAttendancePage({ initialTab = "overview" }) {
             {employeeView === "list" && (
               <>
                 <div className="flex border-b border-gray-200 mb-8">
-                  {["overview", "employees"].map((tab) => (
+                  {["overview", "employees", "calendar"].map((tab) => (
                     <button
                       key={tab}
                       onClick={() => {
@@ -4268,6 +4462,15 @@ export function HrAttendancePage({ initialTab = "overview" }) {
                     onBulkActionApply={handleBulkAction}
                     searchTerm={searchTerm}
                     onSearchChange={handleSearch}
+                  />
+                )}
+                {activeTab === "calendar" && (
+                  <HolidaysManagement
+                    currentDate={currentDate}
+                    onMonthChange={setCurrentDate}
+                    holidays={holidays}
+                    onSave={handleSaveCompanyCalendarDate}
+                    onDelete={handleDeleteHoliday}
                   />
                 )}
                 {activeTab === "breaks" && (

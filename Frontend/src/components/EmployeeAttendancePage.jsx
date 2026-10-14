@@ -72,6 +72,7 @@ const HRMyAttendance = () => {
 
   const [hasSyncedToday, setHasSyncedToday] = useState(false);
   const [syncedDate, setSyncedDate] = useState(null);
+  const [companyCalendar, setCompanyCalendar] = useState([]);
 
   // Attendance correction modal state
   const [correctionModalOpen, setCorrectionModalOpen] = useState(false);
@@ -115,6 +116,29 @@ const HRMyAttendance = () => {
     setCurrentPage(1);
     fetchMonthlyAttendance();
   }, [selectedMonth, selectedYear]);
+
+  useEffect(() => {
+    let isMounted = true;
+    fetch(endpoints.companyCalendar.byMonth(selectedYear, selectedMonth))
+      .then(async (response) => {
+        const result = await response.json();
+        if (!response.ok || !result.success) {
+          throw new Error(result.message || "Failed to fetch company calendar");
+        }
+        if (isMounted) setCompanyCalendar(result.data || []);
+      })
+      .catch((error) => {
+        console.error("Failed to load company calendar:", error);
+        if (isMounted) {
+          setCompanyCalendar([]);
+          toast.error(`Unable to load company calendar: ${error.message}`);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedYear, selectedMonth]);
 
   // Update break timers every second
   useEffect(() => {
@@ -231,9 +255,9 @@ const HRMyAttendance = () => {
 
     // ✅ Check if already synced today
     if (hasSyncedToday) {
-      toast.info(
+      toast(
         `Already synced today (${syncedDate}). Come back tomorrow for new sync.`,
-        { duration: 3000 }
+        { duration: 3000, icon: "ℹ️" }
       );
       return;
     }
@@ -268,7 +292,7 @@ const HRMyAttendance = () => {
       const deviceLogs = deviceData.data || [];
 
       if (deviceLogs.length === 0) {
-        toast.info("No attendance records found on device");
+        toast("No attendance records found on device", { icon: "ℹ️" });
         setIsSyncing(false);
         return;
       }
@@ -437,7 +461,9 @@ const HRMyAttendance = () => {
 
         toast.success(`${savedCount} record(s) synced from device`);
       } else {
-        toast.info(`No new records synced. ${skippedCount} skipped.`);
+        toast(`No new records synced. ${skippedCount} skipped.`, {
+          icon: "ℹ️",
+        });
       }
 
       if (skippedCount > 0) {
@@ -1263,7 +1289,16 @@ const HRMyAttendance = () => {
       const record = recordsByDate[date];
       const dateObj = new Date(selectedYear, selectedMonth - 1, date);
       const dayOfWeek = dateObj.getDay();
-      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+      const dateString = `${selectedYear}-${String(selectedMonth).padStart(2, "0")}-${String(date).padStart(2, "0")}`;
+      const calendarEntry = companyCalendar.find(
+        (entry) => entry.date === dateString,
+      );
+      const isCompanyHoliday = calendarEntry?.type === "holiday";
+      const isWeekend =
+        (dayOfWeek === 0 || dayOfWeek === 6) &&
+        calendarEntry?.type !== "working" &&
+        !record &&
+        !isCompanyHoliday;
 
       if (record) {
         allDates.push({
@@ -1274,7 +1309,11 @@ const HRMyAttendance = () => {
           minutes: record.net_working_time_minutes
             ? record.net_working_time_minutes % 60
             : 0,
-          status: record.status === "ML" ? "Late" : (record.status || "Absent"),
+          status: isCompanyHoliday
+            ? "Paid Leave"
+            : record.status === "ML"
+              ? "Late"
+              : record.status || "Absent",
           check_in_time: record.check_in_time,
           check_out_time: record.check_out_time,
           total_breaks_taken: record.total_breaks_taken || 0,
@@ -1284,7 +1323,9 @@ const HRMyAttendance = () => {
           overtime_minutes: record.overtime_minutes || 0,
           id: record.id,
           is_absent: false,
-          is_weekend: false,
+          is_weekend: isWeekend,
+          is_company_holiday: isCompanyHoliday,
+          holiday_title: calendarEntry?.name || "",
           has_attendance: true,
         });
       } else {
@@ -1292,7 +1333,7 @@ const HRMyAttendance = () => {
           date: date,
           hours: 0,
           minutes: 0,
-          status: "Absent",
+          status: isCompanyHoliday ? "Paid Leave" : "Absent",
           check_in_time: null,
           check_out_time: null,
           total_breaks_taken: 0,
@@ -1300,9 +1341,11 @@ const HRMyAttendance = () => {
           late_by_minutes: null,
           overtime_minutes: 0,
           id: null,
-          is_absent: true,
+          is_absent: !isCompanyHoliday && !isWeekend,
           is_weekend: isWeekend,
-          has_attendance: false,
+          is_company_holiday: isCompanyHoliday,
+          holiday_title: calendarEntry?.name || "",
+          has_attendance: isCompanyHoliday,
         });
       }
     }
@@ -1812,11 +1855,17 @@ const HRMyAttendance = () => {
 
                       return paginatedRecords.map((record, index) => {
                         const isWeekend = record.is_weekend === true;
+                        const isCompanyHoliday =
+                          record.is_company_holiday === true;
+                        const isNonWorkingDay = isWeekend || isCompanyHoliday;
 
                         return (
                           <tr
                             key={record.id || `date-${record.date}`}
-                            className={`${isWeekend
+                            title={isCompanyHoliday ? record.holiday_title : undefined}
+                            className={`${isCompanyHoliday
+                              ? "bg-teal-50 hover:bg-teal-100"
+                              : isWeekend
                               ? "bg-gray-100/50 hover:bg-gray-200"
                               : record.is_absent
                                 ? "bg-red-50 hover:bg-red-100"
@@ -1838,14 +1887,18 @@ const HRMyAttendance = () => {
                                 month: "short",
                                 day: "numeric",
                               })}
-                              {isWeekend && (
+                              {isCompanyHoliday ? (
+                                <span className="ml-2 inline-block rounded bg-teal-100 px-1.5 py-0.5 text-xs font-semibold text-teal-800" title={record.holiday_title}>
+                                  {record.holiday_title || "Company Holiday"}
+                                </span>
+                              ) : isWeekend && (
                                 <span className="ml-2 inline-block px-1.5 py-0.5 text-xs font-semibold bg-gray-300 text-gray-700 rounded">
                                   Weekend
                                 </span>
                               )}
                             </td>
                             <td className="px-4 py-3 text-sm text-gray-700">
-                              {isWeekend ? (
+                              {isNonWorkingDay ? (
                                 <span className="text-gray-400">—</span>
                               ) : !record.check_in_time ? (
                                 <span className="text-red-600 font-semibold">
@@ -1856,7 +1909,7 @@ const HRMyAttendance = () => {
                               )}
                             </td>
                             <td className="px-4 py-3 text-sm text-gray-700">
-                              {isWeekend ? (
+                              {isNonWorkingDay ? (
                                 <span className="text-gray-400">—</span>
                               ) : !record.check_in_time ? (
                                 <span className="text-red-600 font-semibold">
@@ -1867,7 +1920,11 @@ const HRMyAttendance = () => {
                               )}
                             </td>
                             <td className="px-4 py-3 text-sm">
-                              {isWeekend ? (
+                              {isCompanyHoliday ? (
+                                <span className="px-2 py-1 rounded-full text-xs font-semibold bg-teal-100 text-teal-700" title={record.holiday_title}>
+                                  PL
+                                </span>
+                              ) : isWeekend ? (
                                 <span className="px-2 py-1 rounded-full text-xs font-semibold bg-gray-200 text-gray-600">
                                   Weekend
                                 </span>
@@ -1906,7 +1963,7 @@ const HRMyAttendance = () => {
                               )}
                             </td>
                             <td className="px-4 py-3 text-sm text-gray-700">
-                              {isWeekend ? (
+                              {isNonWorkingDay ? (
                                 <span className="text-gray-400">—</span>
                               ) : record.is_absent ? (
                                 <span className="text-red-600 font-semibold">
@@ -1919,7 +1976,7 @@ const HRMyAttendance = () => {
                               )}
                             </td>
                             <td className="px-4 py-3 text-sm text-gray-700">
-                              {isWeekend ? (
+                              {isNonWorkingDay ? (
                                 <span className="text-gray-400">—</span>
                               ) : record.is_absent ? (
                                 <span className="text-red-600 font-semibold">
@@ -1933,7 +1990,7 @@ const HRMyAttendance = () => {
                               )}
                             </td>
                             <td className="px-4 py-3 text-sm text-gray-700">
-                              {isWeekend ? (
+                              {isNonWorkingDay ? (
                                 <span className="text-gray-400">—</span>
                               ) : record.is_absent ? (
                                 <span className="text-red-600 font-semibold">
@@ -1946,7 +2003,7 @@ const HRMyAttendance = () => {
                               )}
                             </td>
                             <td className="px-4 py-3 text-sm">
-                              {isWeekend ? (
+                              {isNonWorkingDay ? (
                                 <span className="text-gray-400">—</span>
                               ) : record.is_absent ? (
                                 <span className="text-red-600 font-semibold">
@@ -1962,7 +2019,7 @@ const HRMyAttendance = () => {
                               )}
                             </td>
                             <td className="px-4 py-3 text-sm text-center">
-                              {!isWeekend && (
+                              {!isNonWorkingDay && (
                                 <button
                                   onClick={() => {
                                     // ✅ FIX: Create date without timezone conversion

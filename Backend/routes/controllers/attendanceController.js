@@ -7,6 +7,12 @@ const {
   getPakistanYesterdayString,
   getUTCTimeString,
 } = require("../../utils/timezone");
+const {
+  ensureCompanyCalendarTable,
+  formatCalendarDate,
+  getCompanyCalendarEntries,
+  isWeekendDate,
+} = require("../../utils/companyCalendar");
 
 // ============================================================
 // HELPER FUNCTION: Get local date string (YYYY-MM-DD) from Date object
@@ -920,6 +926,16 @@ exports.generateAbsentRecords = async (req, res) => {
        FROM user_as_employees 
        WHERE status = 'Active'`,
     );
+    await ensureCompanyCalendarTable();
+    const [calendarRows] = await connection.query(
+      `SELECT calendar_date, day_type FROM company_calendar`,
+    );
+    const calendarTypes = new Map(
+      calendarRows.map((row) => [
+        formatCalendarDate(row.calendar_date),
+        row.day_type,
+      ]),
+    );
 
     if (employees.length === 0) {
       return res.status(200).json({
@@ -973,11 +989,13 @@ exports.generateAbsentRecords = async (req, res) => {
         const dateString = currentDate.toISOString().split("T")[0];
 
         // Skip weekends (optional - remove if you want to track weekend absences)
-        const dayOfWeek = currentDate.getDay();
-        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6; // Sunday = 0, Saturday = 6
+        const calendarType = calendarTypes.get(dateString);
+        const isScheduledOff =
+          calendarType === "holiday" ||
+          (calendarType !== "working" && isWeekendDate(dateString));
 
         // If no attendance record exists for this date and it's not weekend
-        if (!existingDateSet.has(dateString) && !isWeekend) {
+        if (!existingDateSet.has(dateString) && !isScheduledOff) {
           // First check if record already exists
           const [existingRecord] = await connection.query(
             `SELECT id FROM Employee_Attendance WHERE employee_id = ? AND attendance_date = ?`,
@@ -2849,6 +2867,16 @@ exports.getAllAttendanceWithAbsent = async (req, res) => {
     const connection = await pool.getConnection();
 
     try {
+      let calendarEntry = null;
+      if (date) {
+        const entries = await getCompanyCalendarEntries(date, date, connection);
+        calendarEntry = entries[0] || null;
+      }
+      const isHoliday = calendarEntry?.type === "holiday";
+      const isScheduledWorkingDay = calendarEntry
+        ? calendarEntry.type === "working"
+        : !isWeekendDate(date || "");
+
       // First get all active employees
       const [allEmployees] = await connection.query(
         `SELECT id, employee_id, name, email, department, status FROM employee_onboarding WHERE status = 'Active'`,
@@ -2971,6 +2999,14 @@ exports.getAllAttendanceWithAbsent = async (req, res) => {
 
         return {
           ...record,
+          status:
+            isHoliday && ["Absent", "Uninformed Absent"].includes(record.status)
+              ? "Paid Leave"
+              : record.status,
+          remarks:
+            isHoliday && ["Absent", "Uninformed Absent"].includes(record.status)
+              ? calendarEntry.title
+              : record.remarks,
           attendance_date: attendanceDateStr,
           check_in_time: record.check_in_time,
           check_out_time: record.check_out_time || null,
@@ -2991,13 +3027,7 @@ exports.getAllAttendanceWithAbsent = async (req, res) => {
       let completeAttendanceData = attendanceWithBreaks;
 
       if (date) {
-        // Check if the date is a weekend (Saturday = 6, Sunday = 0)
-        const dateObj = new Date(date);
-        const dayOfWeek = dateObj.getDay();
-        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-
-        // Only create absent records for weekdays
-        if (!isWeekend) {
+        if (isHoliday || isScheduledWorkingDay) {
           const attendanceEmployeeIds = new Set(
             attendance.map((a) => a.employee_id),
           );
@@ -3013,7 +3043,7 @@ exports.getAllAttendanceWithAbsent = async (req, res) => {
               attendance_date: date,
               check_in_time: null,
               check_out_time: null,
-              status: "Absent",
+              status: isHoliday ? "Paid Leave" : "Absent",
               total_breaks_taken: 0,
               smoke_break_count: 0,
               dinner_break_count: 0,
@@ -3031,7 +3061,7 @@ exports.getAllAttendanceWithAbsent = async (req, res) => {
               overtime_hours: "0.00",
               on_time: 0,
               late_by_minutes: 0,
-              remarks: "No check-in",
+              remarks: isHoliday ? calendarEntry.title : "No check-in",
               device_info: null,
               ip_address: null,
               created_at: null,
@@ -4635,10 +4665,26 @@ exports.autoMarkAbsentByDateRange = async (req, res) => {
     }
 
     console.log(`📆 Processing ${dateList.length} dates`);
+    const calendarEntries = await getCompanyCalendarEntries(
+      start_date,
+      end_date,
+      connection,
+    );
+    const calendarTypes = new Map(
+      calendarEntries.map((entry) => [entry.date, entry.type]),
+    );
 
     // For each date
     for (const checkDate of dateList) {
       console.log(`\n📊 Processing date: ${checkDate}`);
+      const calendarType = calendarTypes.get(checkDate);
+      if (
+        calendarType === "holiday" ||
+        (calendarType !== "working" && isWeekendDate(checkDate))
+      ) {
+        totalSkipped += allEmployees.length;
+        continue;
+      }
 
       // Get employees who checked in on this date
       const [checkedInToday] = await connection.query(

@@ -1,4 +1,5 @@
 const pool = require('../../config/database');
+const { getCompanyCalendarEntries } = require('../../utils/companyCalendar');
 
 // ──────────────────────────────────────────────────────────────
 // Helper: generate ticket number  ML-20260328-XXXX
@@ -9,22 +10,6 @@ const generateTicketNumber = () => {
   const date = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}`;
   const rand = String(Math.floor(1000 + Math.random() * 9000));
   return `ML-${date}-${rand}`;
-};
-
-// ──────────────────────────────────────────────────────────────
-// Helper: count business days between two dates (inclusive)
-// ──────────────────────────────────────────────────────────────
-const countDays = (startDate, endDate) => {
-  const start = new Date(startDate);
-  const end = new Date(endDate);
-  let count = 0;
-  const current = new Date(start);
-  while (current <= end) {
-    // Count all days (including weekends—adjust if needed)
-    count++;
-    current.setDate(current.getDate() + 1);
-  }
-  return count;
 };
 
 // ──────────────────────────────────────────────────────────────
@@ -80,9 +65,23 @@ const createManagedLeave = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid leave_scenario' });
     }
 
-    const totalDays = countDays(start_date, end_date);
-    if (totalDays <= 0) {
+    const dates = getDateRange(start_date, end_date);
+    if (dates.length === 0 || dates[0] !== start_date || dates[dates.length - 1] !== end_date) {
       return res.status(400).json({ success: false, message: 'end_date must be on or after start_date' });
+    }
+    const companyCalendarEntries = await getCompanyCalendarEntries(start_date, end_date);
+    const companyHolidayDates = new Set(
+      companyCalendarEntries
+        .filter((entry) => entry.type === 'holiday')
+        .map((entry) => entry.date)
+    );
+    const leaveDates = dates.filter((date) => !companyHolidayDates.has(date));
+    const totalDays = leaveDates.length;
+    if (totalDays === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'The selected date range contains only company paid holidays.',
+      });
     }
 
     // ── Check leave balance ─────────────────────────────────
@@ -106,20 +105,19 @@ const createManagedLeave = async (req, res) => {
 
     // ── For 'mark_absent_as_leave', verify the dates are actually absent ──
     if (leave_scenario === 'mark_absent_as_leave') {
-      const dates = getDateRange(start_date, end_date);
-      const placeholders = dates.map(() => '?').join(',');
+      const placeholders = leaveDates.map(() => '?').join(',');
       const [absentRows] = await pool.query(
         `SELECT attendance_date FROM Employee_Attendance
          WHERE employee_id = ? AND attendance_date IN (${placeholders})
          AND status IN ('Absent', 'Uninformed Absent')`,
-        [employeeId, ...dates]
+        [employeeId, ...leaveDates]
       );
 
       // Also check Employee_Absent table
       const [absentTable] = await pool.query(
         `SELECT absent_date FROM Employee_Absent
          WHERE employee_id = ? AND absent_date IN (${placeholders})`,
-        [employeeId, ...dates]
+        [employeeId, ...leaveDates]
       );
 
       const absentDatesSet = new Set([
@@ -133,7 +131,7 @@ const createManagedLeave = async (req, res) => {
         }),
       ]);
 
-      const missingDates = dates.filter(d => !absentDatesSet.has(d));
+      const missingDates = leaveDates.filter(d => !absentDatesSet.has(d));
       if (missingDates.length > 0) {
         return res.status(400).json({
           success: false,
@@ -414,21 +412,29 @@ const applyManagedLeave = async (ticket) => {
     leave_scenario,
     start_date,
     end_date,
-    total_days,
     ticket_number,
   } = ticket;
+
+  const dates = getDateRange(start_date, end_date);
+  const companyCalendarEntries = await getCompanyCalendarEntries(start_date, end_date);
+  const companyHolidayDates = new Set(
+    companyCalendarEntries
+      .filter((entry) => entry.type === 'holiday')
+      .map((entry) => entry.date)
+  );
+  const leaveDates = dates.filter((date) => !companyHolidayDates.has(date));
+
+  if (leaveDates.length === 0) return;
 
   // ── 1. Deduct leave balance ───────────────────────────────
   const usedCol = `${leave_type}_leaves_used`;
   await pool.query(
     `UPDATE employee_leaves SET ${usedCol} = ${usedCol} + ? WHERE employee_id = ?`,
-    [total_days, employee_id]
+    [leaveDates.length, employee_id]
   );
 
   // ── 2. Update attendance for each day in the range ────────
-  const dates = getDateRange(start_date, end_date);
-
-  for (const dateStr of dates) {
+  for (const dateStr of leaveDates) {
     // Check if attendance record already exists for this date
     const [existing] = await pool.query(
       `SELECT id FROM Employee_Attendance WHERE employee_id = ? AND attendance_date = ?`,

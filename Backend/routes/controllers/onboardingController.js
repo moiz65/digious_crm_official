@@ -213,11 +213,19 @@ exports.createEmployee = async (req, res) => {
       console.log(`✅ Employee created in CRM with ID: ${crmEmployeeId}, Employee Code: ${normalizedData.employeeId}`);
 
       // Insert bank account details
-      if (normalizedData.accountTitleName && normalizedData.bankName) {
-        const generatedAccountNumber = `${normalizedData.employeeId}-${Date.now()}`.substring(0, 50);
+      if (
+        normalizedData.bankAccount &&
+        normalizedData.accountTitleName &&
+        normalizedData.bankName
+      ) {
         await connection.query(
           `INSERT INTO employee_bank_accounts (employee_id, account_number, account_title_name, bank_name, is_primary) VALUES (?, ?, ?, ?, 1)`,
-          [crmEmployeeId, generatedAccountNumber, normalizedData.accountTitleName, normalizedData.bankName],
+          [
+            crmEmployeeId,
+            normalizedData.bankAccount,
+            normalizedData.accountTitleName,
+            normalizedData.bankName,
+          ],
         );
       }
 

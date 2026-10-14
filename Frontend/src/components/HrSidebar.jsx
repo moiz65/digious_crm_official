@@ -19,7 +19,8 @@ import {
   X,
   Shield,
   UserRoundCog,
-  Database
+  Database,
+  DollarSign
 } from 'lucide-react';
 
 const HrSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem = () => {} }) => {
@@ -78,6 +79,8 @@ const HrSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem = ()
     { id: 'employees', icon: Users, label: 'Employees', path: '/hr/employee-management' },
     { id: 'applicationmemos', icon: Calendar, label: 'Applications & Memos', path: '/hr/applications-memos' },
     { id: 'memos', icon: FileText, label: 'Memos', path: '/hr/memos' },
+    { id: 'profile', icon: User, label: 'My Profile', path: '/employee/hr/profile' },
+    { id: 'payroll', icon: DollarSign, label: 'My Payroll', path: '/employee/hr/payroll' },
     { 
       id: 'attendance', 
       icon: UserCheck, 

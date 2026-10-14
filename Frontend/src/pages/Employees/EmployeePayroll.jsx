@@ -1,9 +1,14 @@
 import React, { useState, useCallback } from 'react';
 import EmployeeSidebar from '../../components/EmployeeSidebar';
+import HrSidebar from '../../components/HrSidebar';
 import EmployeePayrollPage from '../../components/EmployeePayrollPage';
 import { DashboardHeader } from '../../components/DashboardComponents';
+import { useAuth } from '../../context/AuthContext';
 
 const EmployeePayroll = () => {
+  const { role } = useAuth();
+  const isHR = role === 'hr' || role === 'admin';
+  const Sidebar = isHR ? HrSidebar : EmployeeSidebar;
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [activeItem, setActiveItem] = useState('payroll');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -19,7 +24,7 @@ const EmployeePayroll = () => {
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
-      <EmployeeSidebar 
+      <Sidebar
         isCollapsed={isSidebarCollapsed}
         setIsCollapsed={setIsSidebarCollapsed}
         activeItem={activeItem}
@@ -75,7 +80,7 @@ const EmployeePayroll = () => {
             aria-label="Close menu"
           />
           <div className="absolute inset-y-0 left-0 w-64 bg-white shadow-xl">
-            <EmployeeSidebar 
+            <Sidebar
               isCollapsed={false}
               setIsCollapsed={setIsMobileMenuOpen}
               activeItem={activeItem}

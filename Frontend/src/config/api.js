@@ -84,6 +84,13 @@ export const endpoints = {
     hrCreate: `${config.FULL_API_URL}/attendance/hr-create`,
   },
 
+  companyCalendar: {
+    base: `${config.FULL_API_URL}/company-calendar`,
+    byMonth: (year, month) =>
+      `${config.FULL_API_URL}/company-calendar?year=${year}&month=${month}`,
+    byDate: (date) => `${config.FULL_API_URL}/company-calendar/${date}`,
+  },
+
   // Rules endpoints
   rules: {
     breakRules: `${config.FULL_API_URL}/rules/break-rules`,

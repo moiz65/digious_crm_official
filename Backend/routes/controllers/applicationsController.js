@@ -1,5 +1,6 @@
 const pool = require('../../config/database');
 const path = require('path');
+const { getCompanyCalendarEntries } = require('../../utils/companyCalendar');
 
 // =====================================================
 // APPLICATIONS CONTROLLER
@@ -44,10 +45,23 @@ const processLeaveApproval = async (connection, app) => {
       dates.push(d.toISOString().split('T')[0]);
     }
 
+    const companyCalendarEntries = await getCompanyCalendarEntries(
+      dates[0],
+      dates[dates.length - 1],
+      connection,
+    );
+    const companyHolidayDates = new Set(
+      companyCalendarEntries
+        .filter((entry) => entry.type === 'holiday')
+        .map((entry) => entry.date),
+    );
+    const leaveDates = dates.filter((date) => !companyHolidayDates.has(date));
+    if (leaveDates.length === 0) return;
+
     const employeeId = app.employee_id;
 
     // 1. For each date, update or create attendance record as Paid Leave
-    for (const dateStr of dates) {
+    for (const dateStr of leaveDates) {
       // Mark absent record as approved leave if it exists
       await connection.query(
         `UPDATE Employee_Absent
@@ -94,7 +108,7 @@ const processLeaveApproval = async (connection, app) => {
     }
 
     // 2. Deduct days from employee_leaves
-    const daysCount = dates.length;
+    const daysCount = leaveDates.length;
     const usedKey = `${leaveTypeKey}_leaves_used`;
     const [currentLeave] = await connection.query(
       'SELECT * FROM employee_leaves WHERE employee_id = ?', [employeeId]

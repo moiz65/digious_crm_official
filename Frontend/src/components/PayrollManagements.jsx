@@ -137,11 +137,15 @@ const PayrollManagements = () => {
     setGenerating(true);
     setError(null);
     try {
-      await generatePayrollAPI(selectedMonth, selectedYear);
+      const result = await generatePayrollAPI(selectedMonth, selectedYear);
       await fetchPayroll();
+      toast.success(
+        `Payroll generated for ${result.processed} employee${result.processed === 1 ? "" : "s"}.`,
+      );
     } catch (err) {
       console.error("Failed to generate payroll:", err);
       setError(err.message || "Failed to generate payroll");
+      toast.error(err.message || "Failed to generate payroll");
     } finally {
       setGenerating(false);
     }
@@ -1275,11 +1279,11 @@ const PaySlipModal = ({ payroll, onClose, onUpdateStatus, onEditPayroll }) => {
             <div className="p-3 bg-blue-50 rounded-lg text-center">
               <p className="text-xs text-blue-600">Days in Month</p>
               <p className="text-lg font-bold text-blue-700">
-                {payroll.working_days || 30}
+                {payroll.days_in_month || 30}
               </p>
             </div>
             <div className="p-3 bg-green-50 rounded-lg text-center">
-              <p className="text-xs text-green-600">Present</p>
+              <p className="text-xs text-green-600">On-time Present</p>
               <p className="text-lg font-bold text-green-700">
                 {payroll.present_days || 0}
               </p>
