@@ -438,6 +438,8 @@ export const RoleBasedNav = ({ role }) => {
               ? ['/hr/attendance/overview', '/hr/attendance/employee'].includes(location.pathname)
               : item.id === 'applications' && role === 'hr'
                 ? ['/hr/applications', '/hr/applications-memos'].includes(location.pathname)
+              : item.id === 'applications' && role === 'admin'
+                ? ['/admin/applications', '/application-memos'].includes(location.pathname)
               : location.pathname === item.path;
             const activeColor = getActiveColor(item.color);
             
@@ -553,6 +555,8 @@ export const MobileNav = ({ role, isOpen, onClose }) => {
                 ? ['/hr/attendance/overview', '/hr/attendance/employee'].includes(location.pathname)
                 : item.id === 'applications' && role === 'hr'
                   ? ['/hr/applications', '/hr/applications-memos'].includes(location.pathname)
+                : item.id === 'applications' && role === 'admin'
+                  ? ['/admin/applications', '/application-memos'].includes(location.pathname)
                 : location.pathname === item.path;
               
               return (

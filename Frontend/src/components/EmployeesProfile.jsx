@@ -106,7 +106,9 @@ const EmployeeProfile = () => {
   useEffect(() => {
     const fetchEmployees = async () => {
       try {
-        const response = await fetch(endpoints.employees.base);
+        const response = await fetch(
+          `${endpoints.employees.base}?include_inactive=true`,
+        );
         const data = await response.json();
 
         console.log("API Response:", data);
@@ -132,6 +134,7 @@ const EmployeeProfile = () => {
             cnic: emp.cnic || "N/A",
             profile_picture: emp.profile_photo || emp.profile_picture || null,
             designation: emp.designation || "N/A",
+            sub_department: emp.sub_department || "",
             total_salary: parseFloat(emp.total_salary) || 0,
             status: emp.status === "Active" ? "active" : "inactive",
             department: emp.department || "Unknown",
@@ -1876,6 +1879,7 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
     cnic: employee.cnic || "",
     designation: employee.designation || "",
     department: employee.department || "",
+    sub_department: employee.sub_department || "",
     role: employee.role || "",
     phone: employee.phone || "",
     address: employee.address || "",
@@ -2132,6 +2136,7 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
         designation: formData.designation,
         role: formData.role,
         department: formData.department,
+        sub_department: formData.sub_department,
         status: formData.status,
         join_date: formData.join_date,
         profile_picture: profilePictureBase64,
@@ -2310,6 +2315,30 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
     "Sr. Developer",
     "Jr.Developer",
   ];
+
+  const subDepartments = [
+    "Design - Sales",
+    "Sales Team",
+    "Bidding",
+    "HR Operations",
+    "Recruitment",
+    "Development",
+    "Graphics Design",
+    "Animation",
+    "SEO",
+    "Social Media",
+    "Operations",
+    "Support Staff",
+    "Production",
+    "Management",
+    "Digital Marketing",
+    "Administration",
+  ];
+
+  const selectOptionsWithCurrent = (options, current) => {
+    if (!current || options.includes(current)) return options;
+    return [current, ...options];
+  };
 
   // ═══════════════════════════════════════════════════════════
   // RENDER BASIC INFO TAB
@@ -2569,9 +2598,36 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="">Select Department</option>
-                {departments.map((dept) => (
-                  <option key={dept} value={dept}>
-                    {dept}
+                {selectOptionsWithCurrent(departments, formData.department).map(
+                  (dept) => (
+                    <option key={dept} value={dept}>
+                      {dept}
+                    </option>
+                  ),
+                )}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Sub-Department
+              </label>
+              <select
+                value={formData.sub_department}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    sub_department: e.target.value,
+                  }))
+                }
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">Select Sub-Department</option>
+                {selectOptionsWithCurrent(
+                  subDepartments,
+                  formData.sub_department,
+                ).map((sub) => (
+                  <option key={sub} value={sub}>
+                    {sub}
                   </option>
                 ))}
               </select>
@@ -2592,7 +2648,10 @@ const EditEmployeeModal = ({ employee, onClose, onSave, onUpdateEmployee }) => {
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="">Select Designation</option>
-                {designations.map((des) => (
+                {selectOptionsWithCurrent(
+                  designations,
+                  formData.designation,
+                ).map((des) => (
                   <option key={des} value={des}>
                     {des}
                   </option>

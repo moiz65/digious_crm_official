@@ -127,6 +127,14 @@ export const endpoints = {
   // Health check
   health: `${API_BASE_URL}/api/health`,
 
+  // Advances & Loans
+  advances: {
+    base: `${config.FULL_API_URL}/advances`,
+    mine: `${config.FULL_API_URL}/advances/mine`,
+    getById: (id) => `${config.FULL_API_URL}/advances/${id}`,
+    summary: `${config.FULL_API_URL}/advances/summary`,
+  },
+
   // Applications endpoints
   applications: {
     base: `${config.FULL_API_URL}/applications`,
@@ -302,16 +310,17 @@ export const endpoints = {
   },
 
   chat: {
-    conversations: `${API_BASE_URL}/chat/conversations`,
-    history: (userId) => `${API_BASE_URL}/chat/history/${userId}`,
-    send: `${API_BASE_URL}/chat/message`,
-    upload: `${API_BASE_URL}/chat/upload`,
-    markRead: `${API_BASE_URL}/chat/mark-read`,
-    unreadCount: `${API_BASE_URL}/chat/unread-count`,
-    search: `${API_BASE_URL}/chat/search`,
-    delete: (id) => `${API_BASE_URL}/chat/message/${id}`,
-    download: (id) => `${API_BASE_URL}/chat/download/${id}`,
-    users: `${API_BASE_URL}/chat/users`,
+    identity: `${config.FULL_API_URL}/chat/identity`,
+    conversations: `${config.FULL_API_URL}/chat/conversations`,
+    history: (userId) => `${config.FULL_API_URL}/chat/history/${userId}`,
+    send: `${config.FULL_API_URL}/chat/message`,
+    upload: `${config.FULL_API_URL}/chat/upload`,
+    markRead: `${config.FULL_API_URL}/chat/mark-read`,
+    unreadCount: `${config.FULL_API_URL}/chat/unread-count`,
+    search: `${config.FULL_API_URL}/chat/search`,
+    delete: (id) => `${config.FULL_API_URL}/chat/message/${id}`,
+    download: (id) => `${config.FULL_API_URL}/chat/download/${id}`,
+    users: `${config.FULL_API_URL}/chat/users`,
   },
 };
 

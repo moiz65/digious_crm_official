@@ -87,6 +87,29 @@ const getDaysInMonth = (year, month) => {
   return new Date(year, month, 0).getDate(); // month is 1-12
 };
 
+// Count weekdays (Mon–Fri) in a day range — matches absence generation rules
+const countWeekdays = (year, month, fromDay, toDay) => {
+  let count = 0;
+  for (let day = fromDay; day <= toDay; day++) {
+    const date = new Date(Date.UTC(year, month - 1, day));
+    const dow = date.getUTCDay();
+    if (dow !== 0 && dow !== 6) count++;
+  }
+  return count;
+};
+
+// Working days for an employee in a pay period (weekdays after join date)
+const getEmployeeWorkingDays = (year, month, lastDay, joinDate) => {
+  let startDay = 1;
+  if (joinDate) {
+    const [jy, jm, jd] = String(joinDate).split("-").map(Number);
+    if (jy > year || (jy === year && jm > month)) return 0;
+    if (jy === year && jm === month) startDay = jd;
+  }
+  if (startDay > lastDay) return 0;
+  return countWeekdays(year, month, startDay, lastDay);
+};
+
 // Helper: Calculate pay period and expected issue date
 // Pay period = 1st to last day of the salary month
 // Issue date = 5th of the NEXT month (salary issued 4th-6th of next month)
@@ -791,20 +814,29 @@ const generatePayroll = async (req, res) => {
           );
         }
 
+        const periodLastDay =
+          isCurrentMonth && cutoffDate ? cutoffDate : daysInMonth;
+        const workingDays = getEmployeeWorkingDays(
+          yearNum,
+          monthNum,
+          periodLastDay,
+          emp.join_date,
+        );
+
         payrollRecords.push({
           employee_id: emp.id,
           month: monthNum,
           year: yearNum,
           pay_period_start: payPeriod.start,
           pay_period_end: isCurrentMonth
-            ? `${yearNum}-${String(monthNum).padStart(2, "0")}-${cutoffDate}`
+            ? `${yearNum}-${String(monthNum).padStart(2, "0")}-${String(cutoffDate).padStart(2, "0")}`
             : payPeriod.end,
           days_in_month: daysInMonth,
           issue_date: payPeriod.issueDate,
           base_salary: baseSalary,
           daily_rate: dailyRate,
           total_allowances: totalAllowances,
-          working_days: isCurrentMonth ? cutoffDate : daysInMonth,
+          working_days: workingDays,
           present_days: presentDays,
           absent_days: unpaidAbsentDays,
           late_days: lateDays,

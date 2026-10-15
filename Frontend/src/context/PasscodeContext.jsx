@@ -1,8 +1,7 @@
 // contexts/PasscodeContext.jsx
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
 import { X, Shield, Lock, Key, Film } from "lucide-react";
-import { endpoints } from "../config/api";
 
 const PasscodeContext = createContext();
 
@@ -14,18 +13,67 @@ export const usePasscode = () => {
   return context;
 };
 
-export const PasscodeProvider = ({ children }) => {
-  const [lockedModules, setLockedModules] = useState({
-    payroll: true,
-    emp_payroll: true,
-    expense: true,
-    employeeSalaries: true,
-    salesStats: true,
-    profile: true,
-    admin_customers: true,
-    emp_sales: true,
-  });
+const DEFAULT_LOCKED = {
+  payroll: true,
+  emp_payroll: true,
+  expense: true,
+  employeeSalaries: true,
+  salesStats: true,
+  profile: true,
+  admin_customers: true,
+  emp_sales: true,
+};
 
+const SESSION_UNLOCK_KEY = "digious_passcode_session_unlock";
+const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes for non-session unlock
+
+const readSessionUnlock = () => {
+  try {
+    const raw = sessionStorage.getItem(SESSION_UNLOCK_KEY);
+    if (!raw) return { modules: {}, all: false };
+    const parsed = JSON.parse(raw);
+    return {
+      modules: parsed.modules && typeof parsed.modules === "object" ? parsed.modules : {},
+      all: !!parsed.all,
+    };
+  } catch {
+    return { modules: {}, all: false };
+  }
+};
+
+const writeSessionUnlock = (data) => {
+  try {
+    sessionStorage.setItem(SESSION_UNLOCK_KEY, JSON.stringify(data));
+  } catch {
+    /* ignore quota / private mode */
+  }
+};
+
+const clearSessionUnlock = () => {
+  try {
+    sessionStorage.removeItem(SESSION_UNLOCK_KEY);
+  } catch {
+    /* ignore */
+  }
+};
+
+const buildLockedFromSession = () => {
+  const saved = readSessionUnlock();
+  const next = { ...DEFAULT_LOCKED };
+  if (saved.all) {
+    Object.keys(next).forEach((k) => {
+      next[k] = false;
+    });
+    return next;
+  }
+  Object.keys(saved.modules).forEach((k) => {
+    if (saved.modules[k] && k in next) next[k] = false;
+  });
+  return next;
+};
+
+export const PasscodeProvider = ({ children }) => {
+  const [lockedModules, setLockedModules] = useState(buildLockedFromSession);
   const [showPasscodeModal, setShowPasscodeModal] = useState(false);
   const [showSetupModal, setShowSetupModal] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
@@ -34,9 +82,17 @@ export const PasscodeProvider = ({ children }) => {
   const [hasPasscode, setHasPasscode] = useState(false);
   const [failedAttempts, setFailedAttempts] = useState(0);
 
-  const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
+  // Re-hydrate if sessionStorage was updated in another tab
+  useEffect(() => {
+    const onStorage = (e) => {
+      if (e.key === SESSION_UNLOCK_KEY) {
+        setLockedModules(buildLockedFromSession());
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
 
-  // Check if user has passcode on mount
   useEffect(() => {
     checkPasscodeStatus();
   }, []);
@@ -44,6 +100,7 @@ export const PasscodeProvider = ({ children }) => {
   const checkPasscodeStatus = async () => {
     try {
       const token = localStorage.getItem("token");
+      if (!token) return;
       const response = await fetch(
         `${process.env.REACT_APP_API_URL}/api/v1/passcode/status`,
         {
@@ -56,15 +113,12 @@ export const PasscodeProvider = ({ children }) => {
         if (data.data.isAdmin) {
           setShowSetupModal(false);
           setHasPasscode(true);
-          // toast.success('👑 Admin: Use "admin123" to access modules');
+        } else if (data.data.hasPasscode) {
+          setShowSetupModal(false);
+          setHasPasscode(true);
         } else {
-          if (data.data.hasPasscode) {
-            setShowSetupModal(false);
-            setHasPasscode(true);
-          } else {
-            setShowSetupModal(true);
-            setHasPasscode(false);
-          }
+          setShowSetupModal(true);
+          setHasPasscode(false);
         }
       }
     } catch (error) {
@@ -72,15 +126,18 @@ export const PasscodeProvider = ({ children }) => {
     }
   };
 
-  const isModuleUnlocked = (moduleName) => {
-    return !lockedModules[moduleName] || tempUnlocked[moduleName];
-  };
+  const isModuleUnlocked = useCallback(
+    (moduleName) => {
+      const saved = readSessionUnlock();
+      if (saved.all || saved.modules[moduleName]) return true;
+      return !lockedModules[moduleName] || !!tempUnlocked[moduleName];
+    },
+    [lockedModules, tempUnlocked],
+  );
 
   const unlockModule = async (moduleName, passcode, permanent = false) => {
     try {
       const token = localStorage.getItem("token");
-      console.log("🔓 Unlocking module:", moduleName);
-
       const response = await fetch(
         `${process.env.REACT_APP_API_URL}/api/v1/passcode/verify`,
         {
@@ -94,12 +151,17 @@ export const PasscodeProvider = ({ children }) => {
       );
 
       const data = await response.json();
-      console.log("Verify response:", data);
 
       if (data.success) {
         if (permanent) {
-          setLockedModules((prev) => ({ ...prev, [moduleName]: false }));
-          toast.success(`✅ ${moduleName} module unlocked for this session!`);
+          // Session unlock: all confidential modules stay open until logout / tab close
+          const allUnlocked = { ...DEFAULT_LOCKED };
+          Object.keys(allUnlocked).forEach((k) => {
+            allUnlocked[k] = false;
+          });
+          setLockedModules(allUnlocked);
+          writeSessionUnlock({ all: true, modules: {} });
+          toast.success("✅ Confidential modules unlocked for this session!");
         } else {
           setTempUnlocked((prev) => ({ ...prev, [moduleName]: true }));
           setTimeout(() => {
@@ -109,19 +171,19 @@ export const PasscodeProvider = ({ children }) => {
               duration: 3000,
             });
           }, SESSION_TIMEOUT);
-          toast.success(`🔓 ${moduleName} module unlocked for 30 minutes!`);
+          toast.success(`🔓 Module unlocked for 30 minutes!`);
         }
         setShowPasscodeModal(false);
         setCurrentModule(null);
         setFailedAttempts(0);
         return true;
-      } else {
-        if (data.remainingAttempts !== undefined) {
-          setFailedAttempts(5 - data.remainingAttempts);
-        }
-        toast.error(`❌ ${data.message}`);
-        return false;
       }
+
+      if (data.remainingAttempts !== undefined) {
+        setFailedAttempts(5 - data.remainingAttempts);
+      }
+      toast.error(`❌ ${data.message}`);
+      return false;
     } catch (error) {
       console.error("Error verifying passcode:", error);
       toast.error("❌ Failed to verify passcode");
@@ -132,7 +194,6 @@ export const PasscodeProvider = ({ children }) => {
   const setPasscode = async (passcode, favoriteMovie) => {
     try {
       const token = localStorage.getItem("token");
-
       const response = await fetch(
         `${process.env.REACT_APP_API_URL}/api/v1/passcode/set`,
         {
@@ -141,7 +202,7 @@ export const PasscodeProvider = ({ children }) => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ passcode, favoriteMovie }), // No need to send employeeId
+          body: JSON.stringify({ passcode, favoriteMovie }),
         },
       );
 
@@ -153,10 +214,9 @@ export const PasscodeProvider = ({ children }) => {
         toast.success("✅ Passcode set successfully!");
         await checkPasscodeStatus();
         return true;
-      } else {
-        toast.error(`❌ ${data.message}`);
-        return false;
       }
+      toast.error(`❌ ${data.message}`);
+      return false;
     } catch (error) {
       console.error("Error setting passcode:", error);
       toast.error("❌ Failed to set passcode");
@@ -167,11 +227,6 @@ export const PasscodeProvider = ({ children }) => {
   const resetPasscode = async (favoriteMovie, newPasscode) => {
     try {
       const token = localStorage.getItem("token");
-
-      console.log("🔄 Resetting passcode...");
-      console.log("Favorite Movie:", favoriteMovie);
-      console.log("New Passcode length:", newPasscode?.length);
-
       const response = await fetch(
         `${process.env.REACT_APP_API_URL}/api/v1/passcode/reset`,
         {
@@ -185,25 +240,20 @@ export const PasscodeProvider = ({ children }) => {
       );
 
       const data = await response.json();
-      console.log("Reset response:", data);
 
       if (data.success) {
         setShowResetModal(false);
         toast.success(
           "✅ Passcode reset successfully! Please use your new passcode.",
         );
-
-        // Clear any temp unlocked modules
         setTempUnlocked({});
-
-        // Reset failed attempts
         setFailedAttempts(0);
-
+        setLockedModules({ ...DEFAULT_LOCKED });
+        clearSessionUnlock();
         return true;
-      } else {
-        toast.error(`❌ ${data.message}`);
-        return false;
       }
+      toast.error(`❌ ${data.message}`);
+      return false;
     } catch (error) {
       console.error("Error resetting passcode:", error);
       toast.error("❌ Failed to reset passcode. Please check your connection.");
@@ -214,6 +264,29 @@ export const PasscodeProvider = ({ children }) => {
   const lockModule = (moduleName) => {
     setLockedModules((prev) => ({ ...prev, [moduleName]: true }));
     setTempUnlocked((prev) => ({ ...prev, [moduleName]: false }));
+
+    const saved = readSessionUnlock();
+    if (saved.all) {
+      // Downgrade full-session unlock to per-module map (all except this one)
+      const modules = {};
+      Object.keys(DEFAULT_LOCKED).forEach((k) => {
+        if (k !== moduleName) modules[k] = true;
+      });
+      writeSessionUnlock({ all: false, modules });
+      setLockedModules((prev) => {
+        const next = { ...DEFAULT_LOCKED };
+        Object.keys(modules).forEach((k) => {
+          next[k] = false;
+        });
+        next[moduleName] = true;
+        return next;
+      });
+    } else if (saved.modules[moduleName]) {
+      const modules = { ...saved.modules };
+      delete modules[moduleName];
+      writeSessionUnlock({ all: false, modules });
+    }
+
     toast(`🔒 ${moduleName} module has been locked.`, {
       icon: "🔒",
       duration: 2000,
@@ -225,9 +298,27 @@ export const PasscodeProvider = ({ children }) => {
     setShowPasscodeModal(true);
   };
 
+  // Clear session unlocks on logout
+  useEffect(() => {
+    const resetUnlocks = () => {
+      clearSessionUnlock();
+      setLockedModules({ ...DEFAULT_LOCKED });
+      setTempUnlocked({});
+    };
+    const onStorage = (e) => {
+      if (e.key === "token" && !e.newValue) resetUnlocks();
+    };
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("auth:loggedOut", resetUnlocks);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("auth:loggedOut", resetUnlocks);
+    };
+  }, []);
+
   // Passcode Setup Modal (First time)
   const SetupPasscodeModal = () => {
-    const [passcode, setPasscode] = useState("");
+    const [passcode, setPasscodeLocal] = useState("");
     const [confirmPasscode, setConfirmPasscode] = useState("");
     const [favoriteMovie, setFavoriteMovie] = useState("");
     const [isLoading, setIsLoading] = useState(false);
@@ -241,66 +332,27 @@ export const PasscodeProvider = ({ children }) => {
         toast.error("Passcodes do not match!");
         return;
       }
-
       if (passcode.length < 4) {
         toast.error("Passcode must be at least 4 characters");
         return;
       }
-
       if (passcode.length > 10) {
         toast.error("Passcode must be at most 10 characters");
         return;
       }
-
       if (!favoriteMovie.trim()) {
         toast.error("Favorite movie is required");
         return;
       }
 
       setIsLoading(true);
-      console.log("🔄 Calling setPasscode API...");
-
       try {
-        const token = localStorage.getItem("token");
-        const user = JSON.parse(localStorage.getItem("user") || "{}");
-        const employeeId = user.employeeId; // ✅ Get employeeId
-
-        console.log("📤 Sending with employeeId:", employeeId);
-
-        const response = await fetch(
-          `${process.env.REACT_APP_API_URL}/api/v1/passcode/set`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              passcode: passcode,
-              favoriteMovie: favoriteMovie.trim(),
-              employeeId: employeeId, // ✅ SEND employeeId
-            }),
-          },
-        );
-
-        const data = await response.json();
-        console.log("📡 Set Passcode Response:", data);
-
-        if (data.success) {
-          setHasPasscode(true);
-          setShowSetupModal(false);
-          toast.success("✅ Passcode set successfully!");
-          setPasscode("");
+        const ok = await setPasscode(passcode, favoriteMovie.trim());
+        if (ok) {
+          setPasscodeLocal("");
           setConfirmPasscode("");
           setFavoriteMovie("");
-          // ✅ CRITICAL: Re-check status to ensure consistency
-          await checkPasscodeStatus();
-        } else {
-          toast.error(`❌ ${data.message}`);
         }
-      } catch (error) {
-        console.error("❌ Network error:", error);
-        toast.error("❌ Failed to set passcode.");
       } finally {
         setIsLoading(false);
       }
@@ -332,7 +384,7 @@ export const PasscodeProvider = ({ children }) => {
               <input
                 type="password"
                 value={passcode}
-                onChange={(e) => setPasscode(e.target.value)}
+                onChange={(e) => setPasscodeLocal(e.target.value)}
                 placeholder="Enter passcode"
                 className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500"
                 required
@@ -390,8 +442,8 @@ export const PasscodeProvider = ({ children }) => {
 
   // Passcode Verify Modal
   const PasscodeModal = () => {
-    const [passcode, setPasscode] = useState("");
-    const [unlockPermanent, setUnlockPermanent] = useState(false);
+    const [passcode, setPasscodeLocal] = useState("");
+    const [unlockPermanent, setUnlockPermanent] = useState(true);
 
     if (!showPasscodeModal) return null;
 
@@ -404,8 +456,8 @@ export const PasscodeProvider = ({ children }) => {
           unlockPermanent,
         );
         if (success) {
-          setPasscode("");
-          setUnlockPermanent(false);
+          setPasscodeLocal("");
+          setUnlockPermanent(true);
         }
       }
     };
@@ -419,13 +471,13 @@ export const PasscodeProvider = ({ children }) => {
                 <Lock className="h-5 w-5 text-blue-600" />
               </div>
               <h3 className="text-xl font-bold text-slate-800">
-                🔒 Confidential Module Access
+                Confidential Module Access
               </h3>
             </div>
             <button
               onClick={() => {
                 setShowPasscodeModal(false);
-                setPasscode("");
+                setPasscodeLocal("");
               }}
               className="p-1 hover:bg-gray-100 rounded-lg"
             >
@@ -455,7 +507,7 @@ export const PasscodeProvider = ({ children }) => {
               <input
                 type="password"
                 value={passcode}
-                onChange={(e) => setPasscode(e.target.value)}
+                onChange={(e) => setPasscodeLocal(e.target.value)}
                 placeholder="Enter passcode"
                 autoFocus
                 className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500"
@@ -470,32 +522,46 @@ export const PasscodeProvider = ({ children }) => {
                 className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
               />
               <span className="text-sm text-slate-600">
-                Keep unlocked for this session
+                Keep unlocked for this session (all confidential modules)
               </span>
             </label>
 
             <div className="flex gap-3">
               <button
                 type="button"
-                onClick={() => setShowResetModal(true)}
+                onClick={() => {
+                  setShowPasscodeModal(false);
+                  setPasscodeLocal("");
+                }}
                 className="flex-1 px-4 py-2 border border-slate-300 rounded-xl text-slate-700 hover:bg-slate-50"
               >
-                Forgot Passcode?
+                Cancel
               </button>
               <button
                 type="submit"
                 className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700"
               >
-                Unlock Module
+                Unlock
               </button>
             </div>
           </form>
+
+          <button
+            type="button"
+            onClick={() => {
+              setShowPasscodeModal(false);
+              setShowResetModal(true);
+            }}
+            className="mt-3 w-full text-xs text-slate-500 hover:text-blue-600"
+          >
+            Forgot passcode? Reset with favorite movie
+          </button>
         </div>
       </div>
     );
   };
 
-  // Passcode Reset Modal
+  // Reset Passcode Modal
   const ResetPasscodeModal = () => {
     const [favoriteMovie, setFavoriteMovie] = useState("");
     const [newPasscode, setNewPasscode] = useState("");
@@ -505,39 +571,26 @@ export const PasscodeProvider = ({ children }) => {
 
     const handleSubmit = async (e) => {
       e.preventDefault();
-
       if (newPasscode !== confirmPasscode) {
         toast.error("Passcodes do not match!");
         return;
       }
-
-      if (newPasscode.length < 4) {
-        toast.error("Passcode must be at least 4 characters");
+      if (newPasscode.length < 4 || newPasscode.length > 10) {
+        toast.error("Passcode must be 4-10 characters");
         return;
       }
-
-      const success = await resetPasscode(favoriteMovie, newPasscode);
-      if (success) {
-        setShowResetModal(false);
-        setFavoriteMovie("");
-        setNewPasscode("");
-        setConfirmPasscode("");
-      }
+      await resetPasscode(favoriteMovie.trim(), newPasscode);
     };
 
     return (
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[150]">
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[200]">
         <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl">
           <div className="flex items-center gap-3 mb-4">
             <div className="p-2 bg-amber-100 rounded-xl">
-              <Film className="h-6 w-6 text-amber-600" />
+              <Shield className="h-6 w-6 text-amber-600" />
             </div>
             <h3 className="text-xl font-bold text-slate-800">Reset Passcode</h3>
           </div>
-
-          <p className="text-sm text-slate-600 mb-4">
-            Enter your favorite movie name to reset your passcode.
-          </p>
 
           <form onSubmit={handleSubmit}>
             <div className="mb-4">
@@ -548,26 +601,22 @@ export const PasscodeProvider = ({ children }) => {
                 type="text"
                 value={favoriteMovie}
                 onChange={(e) => setFavoriteMovie(e.target.value)}
-                placeholder="Enter your favorite movie"
                 className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500"
                 required
               />
             </div>
-
             <div className="mb-4">
               <label className="block text-sm font-medium text-slate-700 mb-2">
-                New Passcode (4-10 characters)
+                New Passcode
               </label>
               <input
                 type="password"
                 value={newPasscode}
                 onChange={(e) => setNewPasscode(e.target.value)}
-                placeholder="Enter new passcode"
                 className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500"
                 required
               />
             </div>
-
             <div className="mb-6">
               <label className="block text-sm font-medium text-slate-700 mb-2">
                 Confirm New Passcode
@@ -576,7 +625,6 @@ export const PasscodeProvider = ({ children }) => {
                 type="password"
                 value={confirmPasscode}
                 onChange={(e) => setConfirmPasscode(e.target.value)}
-                placeholder="Confirm new passcode"
                 className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500"
                 required
               />
@@ -613,6 +661,7 @@ export const PasscodeProvider = ({ children }) => {
         lockModule,
         requestAccess,
         hasPasscode,
+        setShowResetModal,
       }}
     >
       {children}

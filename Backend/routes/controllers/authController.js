@@ -2,6 +2,7 @@ const pool = require('../../config/database');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { recordUserLogin } = require('../../utils/systemInfo');
+const { ensureAdminChatEmployeeId } = require('../../utils/adminChatIdentity');
 
 // Login user (employee or admin)
 // Uses email and password_temp from employee_onboarding table
@@ -47,10 +48,14 @@ exports.login = async (req, res) => {
         });
       }
 
+      // Chat FKs require employee_onboarding.id — map Super Admin to a stable chat identity
+      const chatEmployeeId = await ensureAdminChatEmployeeId(admin, connection);
+
       // Generate JWT token for admin
       const token = jwt.sign(
         {
           userId: admin.id,
+          employeeId: chatEmployeeId,
           email: admin.email,
           name: admin.full_name,
           role: 'admin'
@@ -59,13 +64,17 @@ exports.login = async (req, res) => {
         { expiresIn: process.env.JWT_EXPIRY || '24h' }
       );
 
-      console.log(`✅ Admin login successful for ${admin.email}`);
+      console.log(
+        `✅ Admin login successful for ${admin.email} (chat employeeId=${chatEmployeeId})`,
+      );
 
       res.status(200).json({
         success: true,
         message: 'Login successful',
         data: {
+          id: admin.id,
           userId: admin.id,
+          employeeId: chatEmployeeId,
           name: admin.full_name,
           email: admin.email,
           role: 'admin',
@@ -539,6 +548,7 @@ exports.getAllUsers = async (req, res) => {
           created_at,
           updated_at
          FROM employee_onboarding
+         WHERE status = 'Active'
          ORDER BY created_at DESC`
       );
 

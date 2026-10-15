@@ -53,9 +53,10 @@ app.set("io", io);
 
 const chatSocket = require('./sockets/chatSocket');
 const jwt = require('jsonwebtoken');
+const { resolveChatUserId } = require('./utils/adminChatIdentity');
 
 // Apply Socket.IO JWT Authentication Middleware
-io.use((socket, next) => {
+io.use(async (socket, next) => {
   const token = socket.handshake.auth?.token;
   if (!token) {
     console.warn("🔌 [Socket.IO] Connection attempt blocked - No token provided");
@@ -63,7 +64,22 @@ io.use((socket, next) => {
   }
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    socket.userId = decoded.employeeId || decoded.userId;
+    // Always use employee_onboarding.id for chat (admins are mapped via ensureAdminChatEmployeeId)
+    // Never trust admin_users.id — old JWTs without employeeId must be remapped by email/role
+    socket.userId = await resolveChatUserId(decoded);
+    socket.userRole = decoded.role || null;
+    socket.userName = decoded.name || null;
+    socket.adminUserId = decoded.userId || null;
+    if (!socket.userId) {
+      console.warn(
+        "🔌 [Socket.IO] Connection blocked - could not resolve chat user id for",
+        decoded.email || decoded.userId,
+      );
+      return next(new Error("Authentication error: Missing chat user id"));
+    }
+    console.log(
+      `🔌 [Socket.IO] Auth OK email=${decoded.email || "n/a"} jwt.employeeId=${decoded.employeeId ?? "none"} → chatUserId=${socket.userId}`,
+    );
     next();
   } catch (err) {
     console.warn("🔌 [Socket.IO] Connection attempt blocked - Invalid token:", err.message);

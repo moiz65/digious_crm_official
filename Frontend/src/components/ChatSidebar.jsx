@@ -142,7 +142,9 @@ const ChatSidebar = ({ onSelectChat }) => {
                         </div>
                     ) : (
                         filteredUsers.map((userItem) => {
-                            const isOnline = onlineUsers.includes(userItem.id);
+                            const isOnline = onlineUsers.some(
+                                (id) => String(id) === String(userItem.id),
+                            );
                             return (
                                 <button
                                     key={userItem.id}
@@ -198,7 +200,9 @@ const ChatSidebar = ({ onSelectChat }) => {
                 ) : (
                     displayItems.map((item) => {
                         const user = item.other_user || item;
-                        const isOnline = onlineUsers.includes(user?.id);
+                        const isOnline = onlineUsers.some(
+                            (id) => String(id) === String(user?.id),
+                        );
                         const lastMessage = item.last_message || item.message;
                         const timestamp = item.last_message_time || item.created_at;
                         const unread = item.unread_count || 0;

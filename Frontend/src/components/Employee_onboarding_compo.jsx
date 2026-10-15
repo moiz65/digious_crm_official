@@ -78,6 +78,25 @@ const Employee_onboarding_compo = () => {
     "Jr.Developer",
   ];
 
+  const subDepartments = [
+    "Design - Sales",
+    "Sales Team",
+    "Bidding",
+    "HR Operations",
+    "Recruitment",
+    "Development",
+    "Graphics Design",
+    "Animation",
+    "SEO",
+    "Social Media",
+    "Operations",
+    "Support Staff",
+    "Production",
+    "Management",
+    "Digital Marketing",
+    "Administration",
+  ];
+
   const [formData, setFormData] = useState({
     employeeId: '',
     name: '',
@@ -1228,15 +1247,18 @@ const Employee_onboarding_compo = () => {
 
                       <div>
                         <label className="block text-sm font-semibold text-slate-700 mb-2">Sub-Department *</label>
-                        <input
-                          type="text"
+                        <select
                           name="sub_department"
                           value={formData.sub_department}
                           onChange={handleInputChange}
-                          placeholder="e.g. Manager, Developer"
                           className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 ${errors.sub_department ? 'border-red-500 focus:ring-red-500' : 'border-blue-200 focus:ring-blue-500'
                             }`}
-                        />
+                        >
+                          <option value="">Select Sub-Department</option>
+                          {subDepartments.map((sub) => (
+                            <option key={sub} value={sub}>{sub}</option>
+                          ))}
+                        </select>
                         {errors.sub_department && <p className="text-red-500 text-sm mt-1">{errors.sub_department}</p>}
                       </div>
 

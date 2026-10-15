@@ -17,8 +17,11 @@ const MessageBubble = ({ message }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
 
-  const currentUserId = user?.id || user?.employeeId;
-  const isOwn = message.from_user === currentUserId;
+  // Prefer employeeId (employee_onboarding.id) — admin user.id is admin_users.id
+  const currentUserId = user?.employeeId ?? user?.id;
+  const isOwn =
+    currentUserId != null &&
+    String(message.from_user) === String(currentUserId);
 
   const formatTime = (dateString) => {
     if (!dateString) return "";

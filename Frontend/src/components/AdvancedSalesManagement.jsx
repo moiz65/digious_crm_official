@@ -248,7 +248,13 @@ const AdvancedSalesManagement = () => {
       .then((r) => r.json())
       .then((json) => {
         if (json.success && json.data) {
-          setEmployees(json.data.filter((e) => e.department === "Sales"));
+          setEmployees(
+            json.data.filter(
+              (e) =>
+                e.department === "Sales" &&
+                String(e.status || "Active").toLowerCase() === "active",
+            ),
+          );
         }
       })
       .catch(console.error);

@@ -58,6 +58,24 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  /** Merge fields into stored user (e.g. migrate Super Admin employeeId without re-login). */
+  const updateUser = (patch = {}, authToken = null) => {
+    setUser((prev) => {
+      const next = { ...(prev || {}), ...patch };
+      try {
+        localStorage.setItem('user', JSON.stringify(next));
+      } catch (e) {
+        /* ignore */
+      }
+      return next;
+    });
+    if (authToken) {
+      setToken(authToken);
+      localStorage.setItem('token', authToken);
+      localStorage.setItem('authToken', authToken);
+    }
+  };
+
   const logout = () => {
     // Use centralized no-checkout logout behavior for consistent cleanup
     logoutNoCheckout(false);
@@ -103,6 +121,8 @@ export const AuthProvider = ({ children }) => {
       // As a safety, also remove any tokens left behind
       try { localStorage.removeItem('authToken'); } catch (e) {}
       try { localStorage.removeItem('token'); } catch (e) {}
+      // Clear confidential-module session unlock
+      try { sessionStorage.removeItem('digious_passcode_session_unlock'); } catch (e) {}
 
       console.log('🔐 logoutNoCheckout: local session cleared');
 
@@ -133,6 +153,7 @@ export const AuthProvider = ({ children }) => {
     token,
     isLoading,
     login,
+    updateUser,
     logout,
     logoutNoCheckout,
     isAuthenticated: !!user && !!role && !!token

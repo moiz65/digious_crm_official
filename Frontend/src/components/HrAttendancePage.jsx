@@ -3392,9 +3392,11 @@ export function HrAttendancePage({ initialTab = "overview" }) {
         const response = await fetch(endpoints.employees.base);
         const data = await response.json();
 
-        const employeesList = Array.isArray(data)
-          ? data
-          : data.data || data.employees || [];
+        const employeesList = (
+          Array.isArray(data) ? data : data.data || data.employees || []
+        ).filter(
+          (emp) => String(emp.status || "Active").toLowerCase() === "active",
+        );
 
         const employeesData = employeesList.map((emp) => ({
           id: emp.id,

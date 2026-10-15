@@ -19,6 +19,64 @@ import toast from 'react-hot-toast';
 
 const API_URL = config.FULL_API_URL;
 
+const DEPARTMENT_OPTIONS = [
+  "HR",
+  "Sales",
+  "Supporting Staff",
+  "Production",
+  "Digital Marketing",
+  "Operations",
+];
+
+const DESIGNATION_OPTIONS = [
+  "Internee",
+  "Operations Manager",
+  "Sr. Sales Executive",
+  "HR Intern",
+  "HR Manager",
+  "Sales Executive",
+  "Bidder",
+  "Team Lead Sales",
+  "Team Lead Development",
+  "Production Manager",
+  "Business Unit Head",
+  "Sr. Graphics Designer",
+  "Jr. Graphics Designer",
+  "Animation Artist",
+  "SEO Executive",
+  "SEO Speacialist",
+  "Social Media Marketer",
+  "Office Boy",
+  "Support Staff",
+  "Sr. Developer",
+  "Jr.Developer",
+];
+
+const SUB_DEPARTMENT_OPTIONS = [
+  "Design - Sales",
+  "Sales Team",
+  "Bidding",
+  "HR Operations",
+  "Recruitment",
+  "Development",
+  "Graphics Design",
+  "Animation",
+  "SEO",
+  "Social Media",
+  "Operations",
+  "Support Staff",
+  "Production",
+  "Management",
+  "Digital Marketing",
+  "Administration",
+];
+
+/** Keep legacy free-text values selectable so edits don't wipe them. */
+const withCurrentOption = (options, current) => {
+  if (!current || options.includes(current)) return options;
+  return [current, ...options];
+};
+
 const EmployeeManagement = () => {
   const { role } = useAuth();
   const navigate = useNavigate();
@@ -45,7 +103,9 @@ const EmployeeManagement = () => {
   const fetchEmployees = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_URL}/employees`);
+      const response = await fetch(
+        `${API_URL}/employees?include_inactive=true`,
+      );
       const data = await response.json();
 
       if (data.success && Array.isArray(data.data)) {
@@ -793,27 +853,42 @@ const EmployeeManagement = () => {
                   isEditMode={isEditMode}
                   editValue={editFormData?.department}
                   onChange={(val) => handleEditFormChange("department", val)}
+                  type="select"
+                  options={withCurrentOption(
+                    DEPARTMENT_OPTIONS,
+                    editFormData?.department || selectedEmployee.department,
+                  )}
+                  placeholder="Select Department"
                 />
-                {selectedEmployee.sub_department && (
-                  <CompactField
-                    label="Sub-Department"
-                    value={selectedEmployee.sub_department}
-                    isEditMode={isEditMode}
-                    editValue={editFormData?.sub_department}
-                    onChange={(val) =>
-                      handleEditFormChange("sub_department", val)
-                    }
-                  />
-                )}
-                {selectedEmployee.designation && (
-                  <CompactField
-                    label="Designation"
-                    value={selectedEmployee.designation}
-                    isEditMode={isEditMode}
-                    editValue={editFormData?.designation}
-                    onChange={(val) => handleEditFormChange("designation", val)}
-                  />
-                )}
+                <CompactField
+                  label="Sub-Department"
+                  value={selectedEmployee.sub_department}
+                  isEditMode={isEditMode}
+                  editValue={editFormData?.sub_department}
+                  onChange={(val) =>
+                    handleEditFormChange("sub_department", val)
+                  }
+                  type="select"
+                  options={withCurrentOption(
+                    SUB_DEPARTMENT_OPTIONS,
+                    editFormData?.sub_department ||
+                      selectedEmployee.sub_department,
+                  )}
+                  placeholder="Select Sub-Department"
+                />
+                <CompactField
+                  label="Designation"
+                  value={selectedEmployee.designation}
+                  isEditMode={isEditMode}
+                  editValue={editFormData?.designation}
+                  onChange={(val) => handleEditFormChange("designation", val)}
+                  type="select"
+                  options={withCurrentOption(
+                    DESIGNATION_OPTIONS,
+                    editFormData?.designation || selectedEmployee.designation,
+                  )}
+                  placeholder="Select Designation"
+                />
                 {selectedEmployee.cnic && (
                   <CompactField
                     label="CNIC"
@@ -1176,6 +1251,8 @@ const CompactField = ({
   onChange,
   type = "text",
   readOnly = false,
+  options = null,
+  placeholder = "Select…",
 }) => {
   return (
     <div className="p-3 sm:p-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg border border-blue-100 hover:border-blue-300 transition">
@@ -1184,12 +1261,27 @@ const CompactField = ({
         {label}
       </p>
       {isEditMode && !readOnly ? (
-        <input
-          type={type}
-          value={editValue || ""}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-full bg-white text-slate-800 font-semibold border border-blue-300 rounded px-2 py-1.5 outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-        />
+        type === "select" && Array.isArray(options) ? (
+          <select
+            value={editValue || ""}
+            onChange={(e) => onChange(e.target.value)}
+            className="w-full bg-white text-slate-800 font-semibold border border-blue-300 rounded px-2 py-1.5 outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+          >
+            <option value="">{placeholder}</option>
+            {options.map((opt) => (
+              <option key={opt} value={opt}>
+                {opt}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <input
+            type={type}
+            value={editValue || ""}
+            onChange={(e) => onChange(e.target.value)}
+            className="w-full bg-white text-slate-800 font-semibold border border-blue-300 rounded px-2 py-1.5 outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+          />
+        )
       ) : (
         <p className="text-slate-800 font-semibold text-sm">{value || "—"}</p>
       )}

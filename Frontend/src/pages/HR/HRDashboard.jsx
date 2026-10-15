@@ -120,7 +120,9 @@ const HRDashboard = () => {
 
       let allEmployees = [];
       if (employeesResponse.success && Array.isArray(employeesResponse.data)) {
-        allEmployees = employeesResponse.data;
+        allEmployees = employeesResponse.data.filter(
+          (e) => String(e.status || "Active").toLowerCase() === "active",
+        );
         setEmployees(allEmployees);
       }
 
@@ -203,8 +205,11 @@ const HRDashboard = () => {
 
       const data = await response.json();
       if (data.success && Array.isArray(data.data)) {
-        setEmployees(data.data);
-        console.log(`Loaded ${data.data.length} employees`);
+        const activeOnly = data.data.filter(
+          (e) => String(e.status || "Active").toLowerCase() === "active",
+        );
+        setEmployees(activeOnly);
+        console.log(`Loaded ${activeOnly.length} employees`);
       }
     } catch (err) {
       console.error("Error fetching employees:", err);

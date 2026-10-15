@@ -557,13 +557,17 @@ const AdminExpense = () => {
     (_, i) => now.getFullYear() - 2 + i,
   );
 
+  const clearDateRange = () => setDateRange({ from: "", to: "" });
+
   const goPrevMonth = () => {
+    clearDateRange();
     if (selectedMonth === 0) {
       setSelectedMonth(11);
       setSelectedYear((y) => y - 1);
     } else setSelectedMonth((m) => m - 1);
   };
   const goNextMonth = () => {
+    clearDateRange();
     if (selectedMonth === 11) {
       setSelectedMonth(0);
       setSelectedYear((y) => y + 1);
@@ -577,6 +581,7 @@ const AdminExpense = () => {
       .toLowerCase()
       .replace(/^#?exp-?/i, "")
       .trim();
+    const expenseDate = String(expense.expense_date || "").slice(0, 10);
     const rawId = String(expense.id).padStart(3, "0");
     const matchSearch =
       !q ||
@@ -591,10 +596,15 @@ const AdminExpense = () => {
     const expensePaymentType = expense.payment_type || "Bank Account";
     const matchPaymentType =
       paymentTypeFilter === "All" || expensePaymentType === paymentTypeFilter;
-    const matchDate =
-      q || isRangeSet
-        ? true
-        : expense.expense_date?.startsWith(selectedMonthPfx);
+    // Date range overrides month; otherwise always scope to selected month
+    // (including when searching — search within the selected month)
+    let matchDate = true;
+    if (isRangeSet) {
+      if (dateRange.from && expenseDate < dateRange.from) matchDate = false;
+      if (dateRange.to && expenseDate > dateRange.to) matchDate = false;
+    } else {
+      matchDate = expenseDate.startsWith(selectedMonthPfx);
+    }
     return matchSearch && matchCat && matchPaymentType && matchDate;
   });
 
@@ -670,7 +680,7 @@ const AdminExpense = () => {
                   </h1>
                   <p className="text-slate-500 text-sm flex items-center gap-2">
                     <Receipt className="h-4 w-4" />
-                    {formatCurrency(totalExpenses)} total &bull;{" "}
+                    {formatCurrency(filteredTotal)} total &bull;{" "}
                     {filteredExpenses.length} records &bull;{" "}
                     {categories.filter((c) => c.is_active).length} active
                     categories
@@ -856,15 +866,9 @@ const AdminExpense = () => {
                         className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl p-5 text-white shadow-lg hover:scale-[1.02] transition-all cursor-pointer"
                         onClick={() => {
                           if (!isRangeSet) {
-                            const lmStart = `${prevMonthPfx}-01`;
-                            const lmEnd = new Date(
-                              prevMonthD.getFullYear(),
-                              prevMonthD.getMonth() + 1,
-                              0,
-                            )
-                              .toISOString()
-                              .slice(0, 10);
-                            setDateRange({ from: lmStart, to: lmEnd });
+                            clearDateRange();
+                            setSelectedMonth(prevMonthD.getMonth());
+                            setSelectedYear(prevMonthD.getFullYear());
                           }
                         }}
                       >
@@ -952,9 +956,10 @@ const AdminExpense = () => {
                         </button>
                         <select
                           value={selectedMonth}
-                          onChange={(e) =>
-                            setSelectedMonth(Number(e.target.value))
-                          }
+                          onChange={(e) => {
+                            clearDateRange();
+                            setSelectedMonth(Number(e.target.value));
+                          }}
                           className="border border-slate-200 rounded-lg px-2 py-1.5 text-sm font-semibold text-slate-700 bg-white focus:ring-2 focus:ring-blue-500 cursor-pointer"
                         >
                           {MONTH_SHORT.map((m, i) => (
@@ -965,9 +970,10 @@ const AdminExpense = () => {
                         </select>
                         <select
                           value={selectedYear}
-                          onChange={(e) =>
-                            setSelectedYear(Number(e.target.value))
-                          }
+                          onChange={(e) => {
+                            clearDateRange();
+                            setSelectedYear(Number(e.target.value));
+                          }}
                           className="border border-slate-200 rounded-lg px-2 py-1.5 text-sm font-semibold text-slate-700 bg-white focus:ring-2 focus:ring-blue-500 cursor-pointer"
                         >
                           {yearOptions.map((y) => (
@@ -1117,7 +1123,15 @@ const AdminExpense = () => {
                           className="w-full px-3 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 bg-white font-medium text-sm outline-none cursor-pointer"
                         >
                           <option value="All">All Payment Types</option>
-                          {PAYMENT_TYPES.map((type) => (
+                          {(paymentTypes.length
+                            ? paymentTypes
+                                .filter((pt) => pt.is_active !== false)
+                                .map((pt) => ({
+                                  value: pt.name || pt.value || pt.label,
+                                  label: pt.name || pt.label || pt.value,
+                                }))
+                            : PAYMENT_TYPES
+                          ).map((type) => (
                             <option key={type.value} value={type.value}>
                               {type.label}
                             </option>

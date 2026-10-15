@@ -54,9 +54,14 @@ const AttendanceCorrectionModal = ({ isOpen, onClose, record, onSubmitted }) => 
         const data = await res.json();
         if (data.success || Array.isArray(data)) {
           const list = Array.isArray(data) ? data : (data.data || data.employees || []);
-          // Filter out the current user
+          // Filter out the current user; only Active employees for tagging
           const currentEmpId = user?.employeeId || user?.employee_id || user?.id;
-          setEmployees(list.filter(e => e.id !== currentEmpId));
+          setEmployees(
+            list.filter((e) => {
+              const status = String(e.status || "Active").toLowerCase();
+              return e.id !== currentEmpId && status === "active";
+            }),
+          );
         }
       } catch (err) {
         console.error('Failed to fetch employees:', err);

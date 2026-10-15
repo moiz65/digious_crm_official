@@ -5,16 +5,35 @@ const pool = require("../config/database");
 const onlineUsers = new Map();
 const userSockets = new Map();
 
+const toKey = (id) => String(id);
+
+async function resolveSenderName(userId, fallbackName) {
+  if (fallbackName) return fallbackName;
+  try {
+    const [emp] = await pool.query(
+      `SELECT name FROM employee_onboarding WHERE id = ? LIMIT 1`,
+      [userId],
+    );
+    if (emp[0]?.name) return emp[0].name;
+  } catch (err) {
+    console.warn("resolveSenderName error:", err.message);
+  }
+  return "User";
+}
+
 module.exports = (io) => {
   io.on("connection", (socket) => {
     const userId = socket.userId;
+    const userKey = toKey(userId);
     console.log(`✅ User ${userId} connected`);
 
-    onlineUsers.set(userId, socket.id);
+    onlineUsers.set(userKey, socket.id);
     userSockets.set(socket.id, userId);
 
-    // Send online users list to new user
-    const onlineUserIds = Array.from(onlineUsers.keys());
+    // Send online users list to new user (numeric where possible)
+    const onlineUserIds = Array.from(onlineUsers.keys()).map((id) =>
+      Number.isNaN(Number(id)) ? id : Number(id),
+    );
     io.to(socket.id).emit("online_users", onlineUserIds);
 
     // Broadcast user online to others
@@ -31,11 +50,7 @@ module.exports = (io) => {
           return callback({ success: false, error: "Missing required fields" });
         }
 
-        const [sender] = await pool.query(
-          `SELECT id, name FROM employee_onboarding WHERE id = ?`,
-          [userId],
-        );
-        const senderName = sender[0]?.name || "User";
+        const senderName = await resolveSenderName(userId, from_name || socket.userName);
 
         const messageId = await ChatModel.saveMessage(
           userId,
@@ -51,7 +66,7 @@ module.exports = (io) => {
         messageData.sender_id = userId;
 
         // ✅ Send to recipient if online
-        const recipientSocketId = onlineUsers.get(parseInt(to));
+        const recipientSocketId = onlineUsers.get(toKey(to));
         if (recipientSocketId) {
           console.log(
             `📤 Sending message to recipient ${to}, socket: ${recipientSocketId}`,
@@ -69,9 +84,7 @@ module.exports = (io) => {
         io.to(socket.id).emit("conversations_update", senderConversations);
 
         if (recipientSocketId) {
-          const recipientConversations = await ChatModel.getConversations(
-            parseInt(to),
-          );
+          const recipientConversations = await ChatModel.getConversations(to);
           io.to(recipientSocketId).emit(
             "conversations_update",
             recipientConversations,
@@ -96,11 +109,7 @@ module.exports = (io) => {
           return callback({ success: false, error: "Missing required fields" });
         }
 
-        const [sender] = await pool.query(
-          `SELECT name FROM employee_onboarding WHERE id = ?`,
-          [userId],
-        );
-        const senderName = sender[0]?.name || "User";
+        const senderName = await resolveSenderName(userId, socket.userName);
 
         // Save file
         const uniqueFileName = `${Date.now()}-${Math.round(Math.random() * 1e9)}-${fileName}`;
@@ -142,7 +151,7 @@ module.exports = (io) => {
         const messageData = messages[0];
         messageData.from_user_name = senderName;
 
-        const recipientSocketId = onlineUsers.get(parseInt(to));
+        const recipientSocketId = onlineUsers.get(toKey(to));
         if (recipientSocketId) {
           io.to(recipientSocketId).emit("new_file", messageData);
         }
@@ -154,9 +163,7 @@ module.exports = (io) => {
         io.to(socket.id).emit("conversations_update", conversations);
 
         if (recipientSocketId) {
-          const recipientConversations = await ChatModel.getConversations(
-            parseInt(to),
-          );
+          const recipientConversations = await ChatModel.getConversations(to);
           io.to(recipientSocketId).emit(
             "conversations_update",
             recipientConversations,
@@ -192,7 +199,7 @@ module.exports = (io) => {
         io.to(socket.id).emit("conversations_update", conversations);
 
         // Notify sender that messages are read
-        const senderSocketId = onlineUsers.get(parseInt(fromUserId));
+        const senderSocketId = onlineUsers.get(toKey(fromUserId));
         if (senderSocketId) {
           io.to(senderSocketId).emit("messages_read", {
             by: userId,
@@ -201,7 +208,7 @@ module.exports = (io) => {
 
           // Also update sender's conversations
           const senderConversations = await ChatModel.getConversations(
-            parseInt(fromUserId),
+            fromUserId,
           );
           io.to(senderSocketId).emit(
             "conversations_update",
@@ -218,7 +225,7 @@ module.exports = (io) => {
     // ============================================================
     socket.on("typing", (data) => {
       const { to, isTyping } = data;
-      const recipientSocketId = onlineUsers.get(parseInt(to));
+      const recipientSocketId = onlineUsers.get(toKey(to));
       if (recipientSocketId) {
         io.to(recipientSocketId).emit("user_typing", {
           from: userId,
@@ -245,10 +252,10 @@ module.exports = (io) => {
 
           if (deleted) {
             const otherUser =
-              message.from_user === userId
+              String(message.from_user) === userKey
                 ? message.to_user
                 : message.from_user;
-            const recipientSocketId = onlineUsers.get(otherUser);
+            const recipientSocketId = onlineUsers.get(toKey(otherUser));
             if (recipientSocketId) {
               io.to(recipientSocketId).emit("message_deleted", { messageId });
             }
@@ -265,7 +272,7 @@ module.exports = (io) => {
     // ============================================================
     socket.on("disconnect", () => {
       console.log(`❌ User ${userId} disconnected`);
-      onlineUsers.delete(userId);
+      onlineUsers.delete(userKey);
       userSockets.delete(socket.id);
       socket.broadcast.emit("user_offline", { userId, online: false });
     });

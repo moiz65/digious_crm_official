@@ -4,18 +4,17 @@ import React, {
   useContext,
   useState,
   useEffect,
-  useRef,
 } from "react";
 import io from "socket.io-client";
 import { useAuth } from "./AuthContext";
-import { API_BASE_URL, SOCKET_URL } from "../config/api";
+import { API_BASE_URL, SOCKET_URL, endpoints } from "../config/api";
 
 const ChatContext = createContext();
 
 export const useChat = () => useContext(ChatContext);
 
 export const ChatProvider = ({ children }) => {
-  const { user, token } = useAuth();
+  const { user, role, token, updateUser } = useAuth();
   const [socket, setSocket] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
   const [onlineUsers, setOnlineUsers] = useState([]);
@@ -25,14 +24,115 @@ export const ChatProvider = ({ children }) => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [typingStatus, setTypingStatus] = useState({});
+  const [resolvedChatUserId, setResolvedChatUserId] = useState(null);
+  const [socketToken, setSocketToken] = useState(token);
 
-  const currentUserId = user?.id || user?.employeeId;
+  // Chat identity is always employee_onboarding.id (Super Admin gets this via login employeeId)
+  // JWT fallback for reconnect; socket auth also remaps admin → onboarding id server-side
+  const jwtPayload = (() => {
+    if (!socketToken && !token) return null;
+    try {
+      return JSON.parse(atob((socketToken || token).split(".")[1]));
+    } catch {
+      return null;
+    }
+  })();
+
+  const authRole = String(
+    role || jwtPayload?.role || user?.role || "",
+  ).toLowerCase();
+
+  const isAdminRole =
+    authRole === "admin" || authRole === "super_admin";
+
+  const currentUserId = (() => {
+    if (resolvedChatUserId != null && resolvedChatUserId !== "") {
+      return resolvedChatUserId;
+    }
+    if (user?.employeeId != null && user.employeeId !== "") return user.employeeId;
+    if (jwtPayload?.employeeId != null && jwtPayload.employeeId !== "") {
+      return jwtPayload.employeeId;
+    }
+    // Never use admin_users.id as chat id (FK → employee_onboarding)
+    if (isAdminRole) return null;
+    if (jwtPayload?.userId != null && jwtPayload.userId !== "") return jwtPayload.userId;
+    if (user?.id != null && user.id !== "") return user.id;
+    if (user?.userId != null && user.userId !== "") return user.userId;
+    return null;
+  })();
+
+  // Migrate legacy Super Admin sessions (JWT missing employeeId) without forcing re-login
+  useEffect(() => {
+    if (!token) {
+      setResolvedChatUserId(null);
+      setSocketToken(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    const migrateIdentity = async () => {
+      const hasEmployeeId =
+        (user?.employeeId != null && user.employeeId !== "") ||
+        (jwtPayload?.employeeId != null && jwtPayload.employeeId !== "");
+
+      // Always resolve for admins; employees only if employeeId missing
+      if (!isAdminRole && hasEmployeeId) {
+        setSocketToken(token);
+        if (user?.employeeId != null) setResolvedChatUserId(user.employeeId);
+        else if (jwtPayload?.employeeId != null) {
+          setResolvedChatUserId(jwtPayload.employeeId);
+        }
+        return;
+      }
+
+      try {
+        const response = await fetch(endpoints.chat.identity, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await response.json();
+        if (cancelled || !data.success) {
+          setSocketToken(token);
+          return;
+        }
+
+        const chatId = data.data.employeeId ?? data.data.chatUserId;
+        setResolvedChatUserId(chatId);
+
+        if (data.data.token) {
+          updateUser({ employeeId: chatId }, data.data.token);
+          setSocketToken(data.data.token);
+          console.log(
+            "✅ Chat identity migrated; employeeId=",
+            chatId,
+            "(token refreshed)",
+          );
+        } else {
+          if (user?.employeeId !== chatId) {
+            updateUser({ employeeId: chatId });
+          }
+          setSocketToken(token);
+        }
+      } catch (err) {
+        console.warn("Chat identity resolve failed:", err.message);
+        if (!cancelled) setSocketToken(token);
+      }
+    };
+
+    migrateIdentity();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- migrate once per token/role
+  }, [token, isAdminRole]);
 
   useEffect(() => {
-    if (!token || !currentUserId) return;
+    // Admins without employeeId in an old JWT can still connect after identity migrate
+    if (!socketToken) return;
+    if ((currentUserId == null || currentUserId === "") && !isAdminRole) return;
 
     const newSocket = io(SOCKET_URL, {
-      auth: { token },
+      auth: { token: socketToken },
       transports: ["websocket", "polling"],
       reconnection: true,
       reconnectionAttempts: 5,
@@ -228,7 +328,7 @@ export const ChatProvider = ({ children }) => {
     return () => {
       newSocket.disconnect();
     };
-  }, [token, currentUserId]);
+  }, [socketToken, currentUserId, isAdminRole]);
 
   const handleNewMessage = (message) => {
     // Add to messages if in current chat
@@ -327,7 +427,7 @@ export const ChatProvider = ({ children }) => {
   const sendMessage = async (to, message) => {
     if (!socket || !isConnected) {
       console.error("Socket not connected");
-      return false;
+      return { ok: false, error: "Not connected to chat server. Refresh and try again." };
     }
 
     const optimisticMessage = {
@@ -343,23 +443,34 @@ export const ChatProvider = ({ children }) => {
     setMessages((prev) => [...prev, optimisticMessage]);
 
     return new Promise((resolve) => {
+      const timeout = setTimeout(() => {
+        setMessages((prev) =>
+          prev.filter((msg) => msg.id !== optimisticMessage.id),
+        );
+        resolve({ ok: false, error: "Send timed out. Please try again." });
+      }, 15000);
+
       socket.emit(
         "send_message",
         { to, message, type: "text", from_name: user?.name },
         (response) => {
-          if (response.success) {
+          clearTimeout(timeout);
+          if (response?.success) {
             setMessages((prev) =>
               prev.map((msg) =>
                 msg.id === optimisticMessage.id ? response.data : msg,
               ),
             );
             fetchConversations(); // Update sidebar immediately
-            resolve(true);
+            resolve({ ok: true, data: response.data });
           } else {
             setMessages((prev) =>
               prev.filter((msg) => msg.id !== optimisticMessage.id),
             );
-            resolve(false);
+            resolve({
+              ok: false,
+              error: response?.error || "Message failed to send",
+            });
           }
         },
       );

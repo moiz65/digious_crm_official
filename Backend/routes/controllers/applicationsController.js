@@ -1,6 +1,7 @@
 const pool = require('../../config/database');
 const path = require('path');
 const { getCompanyCalendarEntries } = require('../../utils/companyCalendar');
+const { resolveChatUserId } = require('../../utils/adminChatIdentity');
 
 // =====================================================
 // APPLICATIONS CONTROLLER
@@ -147,13 +148,28 @@ const generateApplicationNumber = () => {
  */
 const getEmployeeApplications = async (req, res) => {
   try {
-    const employeeId = req.params.id;
+    let employeeId = req.params.id;
     const { status, department } = req.query;
+
+    // Super Admin (and self lookups): resolve to stable onboarding id when token maps to self
+    const resolved = await resolveChatUserId(req.user);
+    if (
+      resolved &&
+      (String(employeeId) === String(req.user?.employeeId) ||
+        String(employeeId) === String(req.user?.userId) ||
+        String(employeeId) === String(req.user?.id) ||
+        !employeeId ||
+        employeeId === 'undefined' ||
+        employeeId === 'null')
+    ) {
+      employeeId = resolved;
+    }
 
     let query = `
       SELECT 
         a.id,
         a.application_number,
+        a.employee_id,
         a.department,
         a.application_type,
         a.subject,
@@ -170,8 +186,11 @@ const getEmployeeApplications = async (req, res) => {
         a.approved_by,
         a.rejection_reason,
         a.documents,
-        JSON_LENGTH(a.documents) AS document_count
+        JSON_LENGTH(a.documents) AS document_count,
+        COALESCE(e.name, eo.name) AS employee_name
       FROM applications a
+      LEFT JOIN user_as_employees e ON a.employee_id = e.employee_id
+      LEFT JOIN employee_onboarding eo ON a.employee_id = eo.id
       WHERE a.employee_id = ?
     `;
 
@@ -306,8 +325,8 @@ const createApplication = async (req, res) => {
   const connection = await pool.getConnection();
   
   try {
-    // Use ONLY authenticated user's employee_id (from JWT token)
-    const employeeId = req.user?.employeeId || req.user?.employee_id;
+    // Employees: JWT employeeId; Super Admin: resolved employee_onboarding chat id
+    const employeeId = await resolveChatUserId(req.user);
     
     const {
       department,
@@ -998,14 +1017,16 @@ const getAllApplications = async (req, res) => {
         a.rejection_reason,
         a.documents,
         JSON_LENGTH(a.documents) AS document_count,
-        e.name AS applicant_name,
-        e.email AS applicant_email,
-        e.designation AS applicant_designation,
+        COALESCE(e.name, eo.name) AS employee_name,
+        COALESCE(e.name, eo.name) AS applicant_name,
+        COALESCE(e.email, eo.email) AS applicant_email,
+        COALESCE(e.designation, eo.designation) AS applicant_designation,
         assigned_emp.name AS assigned_to_name,
         assigned_emp.designation AS assigned_to_designation,
         assigned_emp.department AS assigned_to_department
       FROM applications a
       LEFT JOIN user_as_employees e ON a.employee_id = e.employee_id
+      LEFT JOIN employee_onboarding eo ON a.employee_id = eo.id
       LEFT JOIN user_as_employees assigned_emp ON a.assigned_to_employee_id = assigned_emp.employee_id
     `;
 
@@ -1154,7 +1175,7 @@ const searchEmployees = async (req, res) => {
  */
 const getAssignedToMe = async (req, res) => {
   try {
-    const employeeId = req.user?.employeeId || req.user?.employee_id;
+    const employeeId = await resolveChatUserId(req.user);
     const { status } = req.query;
 
     if (!employeeId) {
@@ -1188,15 +1209,17 @@ const getAssignedToMe = async (req, res) => {
         a.rejection_reason,
         a.documents,
         JSON_LENGTH(a.documents) AS document_count,
-        e.name AS applicant_name,
-        e.email AS applicant_email,
-        e.designation AS applicant_designation,
-        e.department AS applicant_department,
+        COALESCE(e.name, eo.name) AS employee_name,
+        COALESCE(e.name, eo.name) AS applicant_name,
+        COALESCE(e.email, eo.email) AS applicant_email,
+        COALESCE(e.designation, eo.designation) AS applicant_designation,
+        COALESCE(e.department, eo.department) AS applicant_department,
         aa.step_order AS my_step_order,
         aa.status AS my_step_status
       FROM applications a
       INNER JOIN application_assignees aa ON a.id = aa.application_id AND aa.employee_id = ?
       LEFT JOIN user_as_employees e ON a.employee_id = e.employee_id
+      LEFT JOIN employee_onboarding eo ON a.employee_id = eo.id
     `;
 
     const queryParams = [employeeId];
@@ -1261,7 +1284,7 @@ const getAssignedToMe = async (req, res) => {
 const withdrawApplication = async (req, res) => {
   try {
     const applicationId = req.params.id;
-    const employeeId = req.user.employeeId;
+    const employeeId = await resolveChatUserId(req.user);
 
     // Verify application exists and belongs to employee
     const [application] = await pool.query(
@@ -1327,7 +1350,7 @@ const approveApplication = async (req, res) => {
   try {
     const applicationId = req.params.id;
     const { approval_notes } = req.body;
-    const employeeId = req.user?.employeeId || req.user?.employee_id;
+    const employeeId = await resolveChatUserId(req.user);
     const employeeName = req.user?.name || 'Unknown';
 
     // Get application details
@@ -1532,7 +1555,7 @@ const rejectApplication = async (req, res) => {
   try {
     const applicationId = req.params.id;
     const { rejection_reason } = req.body;
-    const employeeId = req.user?.employeeId || req.user?.employee_id;
+    const employeeId = await resolveChatUserId(req.user);
     const employeeName = req.user?.name || 'Unknown';
 
     if (!rejection_reason) {

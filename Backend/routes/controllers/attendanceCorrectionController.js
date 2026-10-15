@@ -129,7 +129,7 @@ const createCorrection = async (req, res) => {
 const getMyCorrections = async (req, res) => {
   try {
     const employeeId = req.user.employeeId;
-    const { status } = req.query;
+    const { status, month, year, search } = req.query;
 
     let query = `SELECT * FROM attendance_corrections WHERE employee_id = ?`;
     const params = [employeeId];
@@ -137,6 +137,13 @@ const getMyCorrections = async (req, res) => {
     if (status && status !== 'all') {
       query += ` AND overall_status = ?`;
       params.push(status);
+    }
+    if (search && String(search).trim()) {
+      query += ` AND ticket_number LIKE ?`;
+      params.push(`%${String(search).trim()}%`);
+    } else if (month && year) {
+      query += ` AND MONTH(attendance_date) = ? AND YEAR(attendance_date) = ?`;
+      params.push(Number(month), Number(year));
     }
 
     query += ` ORDER BY created_at DESC`;
@@ -157,7 +164,7 @@ const getMyCorrections = async (req, res) => {
 const getTaggedToMe = async (req, res) => {
   try {
     const employeeId = req.user.employeeId;
-    const { status } = req.query;
+    const { status, month, year, search } = req.query;
 
     let query = `SELECT * FROM attendance_corrections WHERE tagged_employee_id = ?`;
     const params = [employeeId];
@@ -166,6 +173,14 @@ const getTaggedToMe = async (req, res) => {
       query += ` AND tagged_status = 'pending'`;
     } else if (status === 'reviewed') {
       query += ` AND tagged_status != 'pending'`;
+    }
+    if (search && String(search).trim()) {
+      query += ` AND (ticket_number LIKE ? OR employee_name LIKE ?)`;
+      const term = `%${String(search).trim()}%`;
+      params.push(term, term);
+    } else if (month && year) {
+      query += ` AND MONTH(attendance_date) = ? AND YEAR(attendance_date) = ?`;
+      params.push(Number(month), Number(year));
     }
 
     query += ` ORDER BY created_at DESC`;
@@ -241,7 +256,7 @@ const taggedAction = async (req, res) => {
 // ══════════════════════════════════════════════════════════════
 const getAllCorrections = async (req, res) => {
   try {
-    const { status, employee_id, month, year } = req.query;
+    const { status, employee_id, month, year, search } = req.query;
 
     let query = `SELECT * FROM attendance_corrections WHERE 1=1`;
     const params = [];
@@ -254,9 +269,14 @@ const getAllCorrections = async (req, res) => {
       query += ` AND employee_id = ?`;
       params.push(employee_id);
     }
-    if (month && year) {
+    if (search && String(search).trim()) {
+      // Ticket search spans all months so HR can find a specific ticket #
+      query += ` AND (ticket_number LIKE ? OR employee_name LIKE ?)`;
+      const term = `%${String(search).trim()}%`;
+      params.push(term, term);
+    } else if (month && year) {
       query += ` AND MONTH(attendance_date) = ? AND YEAR(attendance_date) = ?`;
-      params.push(month, year);
+      params.push(Number(month), Number(year));
     }
 
     query += ` ORDER BY created_at DESC`;

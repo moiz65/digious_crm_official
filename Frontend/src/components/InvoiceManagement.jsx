@@ -1272,6 +1272,10 @@ const CreateInvoiceModal = ({
     terms: inv?.terms || "",
     priority: inv?.priority || "Medium",
     status: inv?.status || "Sent",
+    paid_amount:
+      inv?.paid_amount != null && inv.paid_amount !== ""
+        ? Number(inv.paid_amount)
+        : 0,
   });
 
   const [formData, setFormData] = useState(() => buildInitialForm(invoice));
@@ -1307,9 +1311,41 @@ const CreateInvoiceModal = ({
     setFormData({ ...formData, items: newItems });
   };
 
+  const handleStatusChange = (status) => {
+    let paid = Number(formData.paid_amount) || 0;
+    if (status === "Paid") paid = total;
+    else if (status === "Unpaid" || status === "Draft" || status === "Sent" || status === "Cancelled") {
+      paid = 0;
+    }
+    // Partially Paid / Overdue: keep existing paid amount for the user to edit
+    setFormData({ ...formData, status, paid_amount: paid });
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.client_id) return;
+
+    let paidAmount = Number(formData.paid_amount) || 0;
+    if (formData.status === "Paid") {
+      paidAmount = total;
+    } else if (formData.status === "Partially Paid") {
+      if (paidAmount <= 0) {
+        alert("Enter how much has been paid for a Partially Paid invoice.");
+        return;
+      }
+      if (paidAmount >= total) {
+        alert("Partial payment must be less than the total. Use Paid status for full payment.");
+        return;
+      }
+    } else if (
+      formData.status === "Unpaid" ||
+      formData.status === "Draft" ||
+      formData.status === "Sent" ||
+      formData.status === "Cancelled"
+    ) {
+      paidAmount = 0;
+    }
+
     const payload = {
       client_id: parseInt(formData.client_id, 10),
       project_title: formData.project_title,
@@ -1327,6 +1363,7 @@ const CreateInvoiceModal = ({
       tax_amount: 0,
       discount_amount: 0,
       status: formData.status,
+      paid_amount: paidAmount,
     };
     onSave(payload);
   };
@@ -1498,7 +1535,7 @@ const CreateInvoiceModal = ({
               </label>
               <select
                 value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                onChange={(e) => handleStatusChange(e.target.value)}
                 className="w-full px-3 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500"
               >
                 <option>Sent</option>
@@ -1511,6 +1548,57 @@ const CreateInvoiceModal = ({
               </select>
             </div>
           </div>
+
+          {/* Amount paid — required when Partially Paid */}
+          {(formData.status === "Partially Paid" ||
+            formData.status === "Paid" ||
+            formData.status === "Overdue") && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                Amount Paid{" "}
+                {formData.status === "Partially Paid" && (
+                  <span className="text-rose-500">*</span>
+                )}
+              </label>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                <div className="relative flex-1">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-slate-500">
+                    Rs.
+                  </span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    max={total > 0 ? total : undefined}
+                    value={formData.paid_amount}
+                    disabled={formData.status === "Paid"}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        paid_amount: parseFloat(e.target.value) || 0,
+                      })
+                    }
+                    className="w-full pl-10 pr-3 py-2.5 border border-amber-300 rounded-xl focus:ring-2 focus:ring-amber-500 bg-white disabled:bg-slate-100 disabled:text-slate-500"
+                    placeholder="How much has been paid?"
+                  />
+                </div>
+                <div className="text-sm text-slate-600 whitespace-nowrap">
+                  Remaining:{" "}
+                  <span className="font-semibold text-rose-600">
+                    {formatCurrency(
+                      Math.max(0, total - (Number(formData.paid_amount) || 0)),
+                    )}
+                  </span>
+                </div>
+              </div>
+              {formData.status === "Partially Paid" && (
+                <p className="text-xs text-amber-700 mt-2">
+                  Enter the amount already received. It must be greater than 0 and less than the total (
+                  {formatCurrency(total)}).
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Notes */}
           <div>
@@ -1541,11 +1629,30 @@ const CreateInvoiceModal = ({
           </div>
 
           {/* Summary */}
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-5">
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-5 space-y-2">
             <div className="flex justify-between items-center">
               <span className="text-lg font-semibold text-slate-700">Total Amount:</span>
               <span className="text-3xl font-bold text-blue-600">{formatCurrency(total)}</span>
             </div>
+            {(formData.status === "Partially Paid" ||
+              (Number(formData.paid_amount) > 0 && formData.status !== "Paid")) && (
+              <>
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-slate-600">Paid so far</span>
+                  <span className="font-semibold text-emerald-600">
+                    {formatCurrency(Number(formData.paid_amount) || 0)}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-slate-600">Balance due</span>
+                  <span className="font-semibold text-rose-600">
+                    {formatCurrency(
+                      Math.max(0, total - (Number(formData.paid_amount) || 0)),
+                    )}
+                  </span>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Actions */}
