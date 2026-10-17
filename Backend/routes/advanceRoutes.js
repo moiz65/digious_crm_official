@@ -2,6 +2,7 @@
  * Advance / Loan Routes
  *
  * GET    /api/v1/advances                              – list all advances (filters: status, employee_id, type)
+ * GET    /api/v1/advances/mine                         – logged-in employee’s own advances (view)
  * GET    /api/v1/advances/summary                      – dashboard stats
  * GET    /api/v1/advances/employees                    – active employees dropdown
  * GET    /api/v1/advances/installments/pending/:y/:m   – pending installments for a month
@@ -17,6 +18,7 @@ const ctrl = require('./controllers/advanceController');
 const authMiddleware = require('../middleware/auth');
 
 // Summary & helper endpoints (before /:id)
+router.get('/mine',                             authMiddleware, ctrl.getMyAdvances);
 router.get('/summary',                          authMiddleware, ctrl.getAdvanceSummary);
 router.get('/employees',                        authMiddleware, ctrl.getEmployeesForDropdown);
 router.get('/installments/pending/:year/:month', authMiddleware, ctrl.getPendingInstallments);

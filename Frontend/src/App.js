@@ -61,6 +61,7 @@ import ApplicationandMemoEmployees from "./pages/Employees/ApplicationandMemoEmp
 import EmployeeMemos from "./pages/Employees/EmployeeMemos";
 import EmployeesSettings from "./pages/Employees/EmployeeSettings";
 import EmployeePayroll from "./pages/Employees/EmployeePayroll";
+import EmployeeAdvances from "./pages/Employees/EmployeeAdvances";
 import Sales from "./pages/Employees/Sales";
 import AttendanceCorrectionPage from "./components/AttendanceCorrectionPage";
 
@@ -120,9 +121,7 @@ function AppContent() {
             path="/admin/sales"
             element={
               <ProtectedRoute requiredRole="admin">
-                <PasscodeProvider>
                   <AdminSalesManagement />
-                </PasscodeProvider>
               </ProtectedRoute>
             }
           />
@@ -130,9 +129,7 @@ function AppContent() {
             path="/admin/sales-tiers"
             element={
               <ProtectedRoute requiredRole="admin">
-                <PasscodeProvider>
                   <AdminSalesTiers />
-                </PasscodeProvider>
               </ProtectedRoute>
             }
           />
@@ -140,9 +137,7 @@ function AppContent() {
             path="/admin/sales-quarters"
             element={
               <ProtectedRoute requiredRole="admin">
-                <PasscodeProvider>
                   <AdminSalesQuarters />
-                </PasscodeProvider>
               </ProtectedRoute>
             }
           />
@@ -150,9 +145,7 @@ function AppContent() {
             path="/admin/sales-performance"
             element={
               <ProtectedRoute requiredRole="admin">
-                <PasscodeProvider>
                   <AdminSalesPerformance />
-                </PasscodeProvider>
               </ProtectedRoute>
             }
           />
@@ -160,9 +153,7 @@ function AppContent() {
             path="/admin/sales-employees"
             element={
               <ProtectedRoute requiredRole="admin">
-                <PasscodeProvider>
                   <SalesEmployeeAssignment />
-                </PasscodeProvider>
               </ProtectedRoute>
             }
           />
@@ -170,9 +161,7 @@ function AppContent() {
             path="/expenses"
             element={
               <ProtectedRoute requiredRole="admin">
-                <PasscodeProvider>
                   <AdminExpense />
-                </PasscodeProvider>
               </ProtectedRoute>
             }
           />
@@ -180,9 +169,7 @@ function AppContent() {
             path="/admin/payroll"
             element={
               <ProtectedRoute requiredRole="admin">
-                <PasscodeProvider>
                   <PayrollManagement />
-                </PasscodeProvider>
               </ProtectedRoute>
             }
           />
@@ -198,9 +185,7 @@ function AppContent() {
             path="/admin/customers"
             element={
               <ProtectedRoute requiredRole="admin">
-                <PasscodeProvider>
                   <Customer />
-                </PasscodeProvider>
               </ProtectedRoute>
             }
           />
@@ -401,9 +386,7 @@ function AppContent() {
             path="/employee/sales"
             element={
               <ProtectedRoute requiredRole="employee">
-                <PasscodeProvider>
                   <Sales />
-                </PasscodeProvider>
               </ProtectedRoute>
             }
           />
@@ -411,9 +394,7 @@ function AppContent() {
             path="/employee/profile"
             element={
               <ProtectedRoute requiredRole="employee">
-                <PasscodeProvider>
                   <EmployeeDetails />
-                </PasscodeProvider>
               </ProtectedRoute>
             }
           />
@@ -447,9 +428,15 @@ function AppContent() {
             path="/employee/payroll"
             element={
               <ProtectedRoute requiredRole="employee">
-                <PasscodeProvider>
                   <EmployeePayroll />
-                </PasscodeProvider>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/employee/advances"
+            element={
+              <ProtectedRoute requiredRole="employee">
+                <EmployeeAdvances />
               </ProtectedRoute>
             }
           />
@@ -501,9 +488,7 @@ function AppContent() {
           <Route
             path="/sales"
             element={
-              <PasscodeProvider>
                 <AdminSalesManagement />
-              </PasscodeProvider>
             }
           />
 
@@ -533,7 +518,9 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <AppContent />
+        <PasscodeProvider>
+          <AppContent />
+        </PasscodeProvider>
         <Toaster
           position="top-right"
           toastOptions={{

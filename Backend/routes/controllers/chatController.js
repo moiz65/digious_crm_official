@@ -2,11 +2,62 @@ const ChatModel = require("../../models/chatModel");
 const pool = require("../../config/database");
 const path = require("path");
 const fs = require("fs");
+const jwt = require("jsonwebtoken");
+const { resolveChatUserId } = require("../../utils/adminChatIdentity");
+
+/**
+ * Resolve chat identity for the current JWT (works without re-login).
+ * Returns employee_onboarding.id and a refreshed token when Super Admin
+ * JWTs are missing employeeId.
+ */
+exports.getChatIdentity = async (req, res) => {
+  try {
+    const chatUserId = await resolveChatUserId(req.user);
+    if (!chatUserId) {
+      return res.status(400).json({
+        success: false,
+        error: "Could not resolve chat identity",
+      });
+    }
+
+    const needsTokenRefresh =
+      req.user?.employeeId == null ||
+      req.user?.employeeId === "" ||
+      Number(req.user?.employeeId) !== Number(chatUserId);
+
+    let token = null;
+    if (needsTokenRefresh && req.user?.email) {
+      token = jwt.sign(
+        {
+          userId: req.user.userId,
+          employeeId: chatUserId,
+          email: req.user.email,
+          name: req.user.name,
+          role: req.user.role || "admin",
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: process.env.JWT_EXPIRY || "24h" },
+      );
+    }
+
+    res.json({
+      success: true,
+      data: {
+        employeeId: chatUserId,
+        chatUserId,
+        token,
+      },
+    });
+  } catch (error) {
+    console.error("Get chat identity error:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
 
 // Get all conversations for current user
 exports.getConversations = async (req, res) => {
   try {
-    const currentUserId = req.user.employeeId || req.user.userId;
+    const currentUserId = await resolveChatUserId(req.user);
     const conversations = await ChatModel.getConversations(currentUserId);
 
     res.json({
@@ -23,7 +74,7 @@ exports.getConversations = async (req, res) => {
 // Get chat history with specific user
 exports.getChatHistory = async (req, res) => {
   try {
-    const currentUserId = req.user.employeeId || req.user.userId;
+    const currentUserId = await resolveChatUserId(req.user);
     const { userId } = req.params;
     const limit = parseInt(req.query.limit) || 50;
     const offset = parseInt(req.query.offset) || 0;
@@ -54,7 +105,7 @@ exports.getChatHistory = async (req, res) => {
 // Send message via REST API (fallback)
 exports.sendMessage = async (req, res) => {
   try {
-    const currentUserId = req.user.employeeId || req.user.userId;
+    const currentUserId = await resolveChatUserId(req.user);
     const { to, message, type = "text" } = req.body;
 
     if (!to || !message) {
@@ -93,7 +144,7 @@ exports.sendMessage = async (req, res) => {
 // Upload file
 exports.uploadFile = async (req, res) => {
   try {
-    const currentUserId = req.user.employeeId || req.user.userId;
+    const currentUserId = await resolveChatUserId(req.user);
     if (!req.file) {
       return res
         .status(400)
@@ -146,7 +197,7 @@ exports.uploadFile = async (req, res) => {
 exports.downloadFile = async (req, res) => {
   try {
     const { messageId } = req.params;
-    const currentUserId = req.user.employeeId || req.user.userId;
+    const currentUserId = await resolveChatUserId(req.user);
 
     console.log(`📥 Download request for message ID: ${messageId} by user ${currentUserId}`);
 
@@ -219,7 +270,7 @@ exports.downloadFile = async (req, res) => {
 // Mark messages as read
 exports.markAsRead = async (req, res) => {
   try {
-    const currentUserId = req.user.employeeId || req.user.userId;
+    const currentUserId = await resolveChatUserId(req.user);
     const { fromUserId } = req.body;
 
     const count = await ChatModel.markAsRead(fromUserId, currentUserId);
@@ -237,7 +288,7 @@ exports.markAsRead = async (req, res) => {
 // Delete message
 exports.deleteMessage = async (req, res) => {
   try {
-    const currentUserId = req.user.employeeId || req.user.userId;
+    const currentUserId = await resolveChatUserId(req.user);
     const { messageId } = req.params;
 
     const deleted = await ChatModel.deleteMessage(messageId, currentUserId);
@@ -261,7 +312,7 @@ exports.deleteMessage = async (req, res) => {
 // Get unread count
 exports.getUnreadCount = async (req, res) => {
   try {
-    const currentUserId = req.user.employeeId || req.user.userId;
+    const currentUserId = await resolveChatUserId(req.user);
     const count = await ChatModel.getUnreadCount(currentUserId);
 
     res.json({
@@ -277,7 +328,7 @@ exports.getUnreadCount = async (req, res) => {
 // Search messages
 exports.searchMessages = async (req, res) => {
   try {
-    const currentUserId = req.user.employeeId || req.user.userId;
+    const currentUserId = await resolveChatUserId(req.user);
     const { q, limit = 50 } = req.query;
 
     if (!q) {
@@ -299,7 +350,7 @@ exports.searchMessages = async (req, res) => {
 // Get all active users to start a chat with
 exports.getAvailableUsers = async (req, res) => {
   try {
-    const currentUserId = req.user.employeeId || req.user.userId;
+    const currentUserId = await resolveChatUserId(req.user);
     const users = await ChatModel.getAvailableUsers(currentUserId);
     res.json({
       success: true,

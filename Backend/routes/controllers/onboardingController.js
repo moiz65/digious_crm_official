@@ -390,8 +390,31 @@ exports.createEmployee = async (req, res) => {
 // Get all employees
 exports.getAllEmployees = async (req, res) => {
   try {
-    // Query 1: All employees with salary from employee_salary table
-    const [employees] = await pool.query(`
+    // Default: Active only (pickers, dashboards, HR/Admin modules).
+    // Employee management can pass status=all|Inactive or include_inactive=true.
+    const { status, include_inactive } = req.query;
+    const includeInactive =
+      include_inactive === "true" ||
+      include_inactive === "1" ||
+      String(status || "").toLowerCase() === "all";
+
+    const statusFilter = String(status || "").trim();
+    let whereClause = `WHERE eo.status = 'Active'`;
+    const queryParams = [];
+
+    if (includeInactive) {
+      whereClause = "";
+    } else if (
+      statusFilter &&
+      ["Active", "Inactive", "Suspended"].includes(statusFilter)
+    ) {
+      whereClause = `WHERE eo.status = ?`;
+      queryParams.push(statusFilter);
+    }
+
+    // Query 1: Employees with salary from employee_salary table
+    const [employees] = await pool.query(
+      `
       SELECT
         eo.id,
         eo.employee_id,
@@ -413,8 +436,11 @@ exports.getAllEmployees = async (req, res) => {
         es.total_salary
       FROM employee_onboarding eo
       LEFT JOIN employee_salary es ON eo.id = es.employee_id
+      ${whereClause}
       ORDER BY eo.created_at DESC
-    `);
+    `,
+      queryParams,
+    );
 
     if (employees.length === 0) {
       return res.status(200).json({ success: true, data: [], total: 0 });

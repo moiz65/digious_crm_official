@@ -15,7 +15,8 @@ import {
   ChevronLeft,
   ChevronRight,
   DollarSign,
-  ClipboardCheck
+  ClipboardCheck,
+  Banknote
 } from 'lucide-react';
 
 const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem = () => {} }) => {
@@ -35,6 +36,7 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveIte
     { id: 'applications', icon: FileText, label: 'Applications', path: '/employee/applications' },
     { id: 'memos', icon: FileText, label: 'Memos', path: '/employee/memos' },
     { id: 'payroll', icon: Wallet, label: 'My Payroll', path: '/employee/payroll' },
+    { id: 'advances', icon: Banknote, label: 'Advances & Loans', path: '/employee/advances' },
     { id: 'settings', icon: FileText, label: 'Settings', path: '/employee/settings' }
   ];
 

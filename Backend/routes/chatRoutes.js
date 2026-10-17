@@ -8,6 +8,9 @@ const upload = require('../middleware/upload');
 // All chat routes require authentication
 router.use(authMiddleware);
 
+// Chat identity (maps Super Admin → employee_onboarding.id; may refresh JWT)
+router.get('/identity', chatController.getChatIdentity);
+
 // Conversations
 router.get('/conversations', chatController.getConversations);
 

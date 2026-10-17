@@ -114,9 +114,12 @@ const AttendanceManagement = () => {
       );
       const result = await response.json();
       if (result.success && result.data) {
-        setAllEmployees(result.data);
-        console.log("Fetched all employees:", result.data);
-        return result.data;
+        const activeOnly = result.data.filter(
+          (e) => String(e.status || "Active").toLowerCase() === "active",
+        );
+        setAllEmployees(activeOnly);
+        console.log("Fetched all employees:", activeOnly);
+        return activeOnly;
       }
       return [];
     } catch (error) {

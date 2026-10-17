@@ -25,10 +25,13 @@ import {
   File,
   Paperclip,
   CalendarDays,
+  ChevronLeft,
+  ChevronRight,
   Plus,
   Briefcase,
   Heart,
   Palmtree,
+  Search,
 } from 'lucide-react';
 
 // ─── Helper: format time string ──────────────────────────────
@@ -588,7 +591,12 @@ const CreateLeaveTicketForm = ({ balance, onSubmit, onCancel, submitting }) => {
         const res = await fetch(endpoints.employees.base, { headers: getAuthHeaders() });
         const data = await res.json();
         if (data.success || Array.isArray(data.data)) {
-          setEmployees(data.data || []);
+          const list = data.data || [];
+          setEmployees(
+            list.filter(
+              (e) => String(e.status || "Active").toLowerCase() === "active",
+            ),
+          );
         }
       } catch (err) {
         console.error('Failed to fetch employees:', err);
@@ -1123,6 +1131,11 @@ const AttendanceCorrectionPage = () => {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState('all');
+  // Default to current calendar month (filter by attendance_date / DATE column)
+  const [filterMonth, setFilterMonth] = useState(() => new Date().getMonth() + 1); // 1–12, or null = all months
+  const [filterYear, setFilterYear] = useState(() => new Date().getFullYear());
+  const [ticketSearch, setTicketSearch] = useState('');
+  const [debouncedTicketSearch, setDebouncedTicketSearch] = useState('');
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [counts, setCounts] = useState({ my_open: 0, tagged_pending: 0, hr_pending: 0 });
   const [isFileSliderOpen, setIsFileSliderOpen] = useState(false);
@@ -1171,16 +1184,30 @@ const AttendanceCorrectionPage = () => {
     }
   }, []);
 
+  // Debounce ticket search so typing doesn't spam the API
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedTicketSearch(ticketSearch.trim()), 300);
+    return () => clearTimeout(t);
+  }, [ticketSearch]);
+
   const fetchTickets = useCallback(async () => {
     setLoading(true);
     try {
+      const searchQ = debouncedTicketSearch
+        ? `&search=${encodeURIComponent(debouncedTicketSearch)}`
+        : '';
+      // Ticket search spans months; otherwise apply month filter
+      const monthParams =
+        !debouncedTicketSearch && filterMonth != null && filterYear != null
+          ? `&month=${filterMonth}&year=${filterYear}`
+          : '';
       let url;
       if (activeTab === 'my') {
-        url = `${endpoints.attendanceCorrections.my}?status=${statusFilter}`;
+        url = `${endpoints.attendanceCorrections.my}?status=${statusFilter}${monthParams}${searchQ}`;
       } else if (activeTab === 'tagged') {
-        url = `${endpoints.attendanceCorrections.tagged}?status=${statusFilter === 'all' ? '' : statusFilter === 'open' ? 'pending' : 'reviewed'}`;
+        url = `${endpoints.attendanceCorrections.tagged}?status=${statusFilter === 'all' ? '' : statusFilter === 'open' ? 'pending' : 'reviewed'}${monthParams}${searchQ}`;
       } else {
-        url = `${endpoints.attendanceCorrections.all}?status=${statusFilter}`;
+        url = `${endpoints.attendanceCorrections.all}?status=${statusFilter}${monthParams}${searchQ}`;
       }
       const res = await fetch(url, { headers: getAuthHeaders() });
       const data = await res.json();
@@ -1191,7 +1218,7 @@ const AttendanceCorrectionPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [activeTab, statusFilter]);
+  }, [activeTab, statusFilter, filterMonth, filterYear, debouncedTicketSearch]);
 
   useEffect(() => {
     fetchTickets();
@@ -1607,12 +1634,99 @@ const AttendanceCorrectionPage = () => {
                       </button>
                     ))}
                   </div>
-                  <button
-                    onClick={() => { fetchTickets(); fetchCounts(); }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                  >
-                    <RefreshCw className="w-3.5 h-3.5" /> Refresh
-                  </button>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {/* Ticket # search */}
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+                      <input
+                        type="text"
+                        value={ticketSearch}
+                        onChange={(e) => setTicketSearch(e.target.value)}
+                        placeholder="Search ticket #..."
+                        className="pl-8 pr-8 py-1.5 w-48 text-xs font-medium border border-gray-200 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                      />
+                      {ticketSearch && (
+                        <button
+                          type="button"
+                          onClick={() => setTicketSearch('')}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 text-gray-400 hover:text-gray-600"
+                          title="Clear search"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                    {/* Month filter — filters by attendance DATE column */}
+                    <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg px-1 py-0.5">
+                      <button
+                        type="button"
+                        title="Previous month"
+                        disabled={filterMonth == null}
+                        onClick={() => {
+                          if (filterMonth == null) return;
+                          if (filterMonth === 1) {
+                            setFilterMonth(12);
+                            setFilterYear((y) => y - 1);
+                          } else {
+                            setFilterMonth((m) => m - 1);
+                          }
+                        }}
+                        className="p-1 rounded-md hover:bg-gray-100 text-gray-500 disabled:opacity-40 disabled:pointer-events-none"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        title={filterMonth == null ? 'Showing all months — click to use current month' : 'Filter by this month'}
+                        onClick={() => {
+                          const now = new Date();
+                          setFilterMonth(now.getMonth() + 1);
+                          setFilterYear(now.getFullYear());
+                        }}
+                        className="flex items-center gap-1.5 px-2 py-1 text-xs font-semibold text-gray-700 min-w-[7.5rem] justify-center"
+                      >
+                        <CalendarDays className="w-3.5 h-3.5 text-indigo-500" />
+                        {filterMonth == null
+                          ? 'All Months'
+                          : new Date(filterYear, filterMonth - 1).toLocaleString('en-US', { month: 'short', year: 'numeric' })}
+                      </button>
+                      <button
+                        type="button"
+                        title="Next month"
+                        disabled={filterMonth == null}
+                        onClick={() => {
+                          if (filterMonth == null) return;
+                          if (filterMonth === 12) {
+                            setFilterMonth(1);
+                            setFilterYear((y) => y + 1);
+                          } else {
+                            setFilterMonth((m) => m + 1);
+                          }
+                        }}
+                        className="p-1 rounded-md hover:bg-gray-100 text-gray-500 disabled:opacity-40 disabled:pointer-events-none"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setFilterMonth(null)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                        filterMonth == null
+                          ? 'bg-indigo-600 text-white shadow-sm'
+                          : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                      }`}
+                      title="Show corrections from all months"
+                    >
+                      All Months
+                    </button>
+                    <button
+                      onClick={() => { fetchTickets(); fetchCounts(); }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" /> Refresh
+                    </button>
+                  </div>
                 </div>
 
                 {/* Table */}
@@ -1626,11 +1740,15 @@ const AttendanceCorrectionPage = () => {
                       <FileText className="w-10 h-10 text-gray-300 mx-auto mb-3" />
                       <h3 className="text-base font-semibold text-gray-500">No correction tickets found</h3>
                       <p className="text-sm text-gray-400 mt-1">
-                        {activeTab === 'my'
-                          ? "You haven't submitted any correction requests yet."
-                          : activeTab === 'tagged'
-                            ? 'No correction requests are tagged to you.'
-                            : 'No correction tickets to review.'}
+                        {debouncedTicketSearch
+                          ? `No tickets match “${debouncedTicketSearch}”. Try another ticket number.`
+                          : filterMonth != null
+                          ? `No tickets for ${new Date(filterYear, filterMonth - 1).toLocaleString('en-US', { month: 'long', year: 'numeric' })}. Try another month or All Months.`
+                          : activeTab === 'my'
+                            ? "You haven't submitted any correction requests yet."
+                            : activeTab === 'tagged'
+                              ? 'No correction requests are tagged to you.'
+                              : 'No correction tickets to review.'}
                       </p>
                     </div>
                   ) : (

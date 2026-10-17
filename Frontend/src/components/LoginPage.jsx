@@ -102,9 +102,12 @@ const LoginPage = () => {
         console.log('Backend Role:', backendRole, 'Department:', department);
         console.log('Mapped User Role:', userRole);
 
-        // Login with real user data from backend
+        // Login with real user data from backend.
+        // employeeId = employee_onboarding.id (chat FK identity). Admin also receives this.
+        // userId/id = admin_users.id for Super Admin, or user_as_employees.id for employees.
         login({
-          id: data.data.id,
+          id: data.data.userId ?? data.data.id,
+          userId: data.data.userId ?? data.data.id,
           email: data.data.email,
           name: data.data.name,
           employeeId: data.data.employeeId,

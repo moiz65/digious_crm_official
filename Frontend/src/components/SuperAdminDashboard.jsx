@@ -29,7 +29,6 @@ import {
   CreditCard,
   PieChart,
   MessageSquare,
-  ClipboardList,
   Mail,
   Star,
   Wallet,
@@ -109,7 +108,6 @@ export function SuperAdminDashboard() {
   const [attendanceToday, setAttendanceToday] = useState([]);
   const [activeBreaks, setActiveBreaks] = useState([]);
   const [salesData, setSalesData] = useState([]);
-  const [projects, setProjects] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [salesTargets, setSalesTargets] = useState({});
 
@@ -297,7 +295,6 @@ export function SuperAdminDashboard() {
           : "absent",
         salesAchieved: salesTargetMap[emp.id]?.achieved || 0,
         salesTarget: salesTargetMap[emp.id]?.target || 0,
-        projects: [],
       }));
 
       setEmployees(enrichedEmployees);
@@ -310,25 +307,6 @@ export function SuperAdminDashboard() {
       toast.error("Failed to load dashboard data");
     } finally {
       setLoading(false);
-    }
-  }, []);
-
-  // Fetch projects
-  const fetchProjects = useCallback(async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(
-        `${process.env.REACT_APP_API_URL || "http://localhost:5000"}/api/v1/projects?limit=100`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
-      const data = await res.json();
-      if (data.success) {
-        setProjects(data.data || []);
-      }
-    } catch (error) {
-      console.error("Error fetching projects:", error);
     }
   }, []);
 
@@ -400,7 +378,6 @@ export function SuperAdminDashboard() {
 
   useEffect(() => {
     fetchDashboardData();
-    fetchProjects();
     fetchActiveBreaks();
 
     // Auto refresh every 30 seconds
@@ -410,7 +387,7 @@ export function SuperAdminDashboard() {
     }, 30000);
 
     return () => clearInterval(interval);
-  }, [fetchDashboardData, fetchProjects, fetchActiveBreaks]);
+  }, [fetchDashboardData, fetchActiveBreaks]);
 
   // Update time
   useEffect(() => {
@@ -708,8 +685,8 @@ export function SuperAdminDashboard() {
           </div>
         </div>
 
-        {/* Activity Grid - 4 Columns */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6">
+        {/* Activity Grid - 3 Columns */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           {/* Column 1: Absent Employees */}
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
             <div className="px-5 py-4 border-b border-slate-100 bg-gradient-to-r from-rose-50 to-white">
@@ -929,81 +906,6 @@ export function SuperAdminDashboard() {
                     <p className="text-slate-500 font-medium">No sales data</p>
                     <p className="text-xs text-slate-400 mt-1">
                       No sales employees found
-                    </p>
-                  </div>
-                )}
-            </div>
-          </div>
-
-          {/* Column 4: Projects Status */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100 bg-gradient-to-r from-purple-50 to-white">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 bg-purple-100 rounded-lg">
-                    <ClipboardList className="h-4 w-4 text-purple-600" />
-                  </div>
-                  <h3 className="font-semibold text-slate-800">
-                    Projects Status
-                  </h3>
-                </div>
-                <span className="text-xs font-medium bg-purple-100 text-purple-700 px-2.5 py-1 rounded-full">
-                  Active
-                </span>
-              </div>
-            </div>
-            <div className="divide-y divide-slate-50 max-h-[420px] overflow-y-auto">
-              {projects
-                .filter((p) => p.status !== "Completed")
-                .map((project, idx) => (
-                  <div
-                    key={idx}
-                    className="p-4 hover:bg-slate-50 transition-colors"
-                  >
-                    <div className="mb-2">
-                      <div className="flex items-start justify-between mb-1">
-                        <p className="font-medium text-slate-800 text-sm">
-                          {project.name}
-                        </p>
-                        <span
-                          className={`text-xs px-2 py-0.5 rounded-full ${project.status === "In Progress"
-                            ? "bg-blue-100 text-blue-700"
-                            : project.status === "Planning"
-                              ? "bg-amber-100 text-amber-700"
-                              : "bg-green-100 text-green-700"
-                            }`}
-                        >
-                          {project.status}
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-400">
-                        {project.assigned_to || "Unassigned"} •{" "}
-                        {project.department}
-                      </p>
-                    </div>
-                    <div>
-                      <div className="flex justify-between text-xs text-slate-500 mb-1">
-                        <span>Progress</span>
-                        <span>{project.progress || 0}%</span>
-                      </div>
-                      <div className="w-full bg-slate-100 rounded-full h-1.5">
-                        <div
-                          className="bg-purple-500 h-1.5 rounded-full transition-all duration-500"
-                          style={{ width: `${project.progress || 0}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              {projects.filter((p) => p.status !== "Completed").length ===
-                0 && (
-                  <div className="p-8 text-center">
-                    <ClipboardList className="h-10 w-10 text-slate-300 mx-auto mb-3" />
-                    <p className="text-slate-500 font-medium">
-                      No active projects
-                    </p>
-                    <p className="text-xs text-slate-400 mt-1">
-                      All projects are completed
                     </p>
                   </div>
                 )}

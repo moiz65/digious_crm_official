@@ -120,6 +120,59 @@ const getAdvances = async (req, res) => {
   }
 };
 
+const isAdminRole = (user) => {
+  const role = String(user?.role || '').toLowerCase();
+  return role === 'admin' || role === 'superadmin' || role === 'super admin';
+};
+
+const resolveEmployeeOnboardingId = (user) => {
+  const raw = user?.employeeId ?? user?.employee_id ?? null;
+  if (raw === null || raw === undefined || raw === '') return null;
+  const asNum = Number(raw);
+  return Number.isFinite(asNum) && asNum > 0 ? asNum : null;
+};
+
+// ────────────────────────────────────────────────
+// GET /advances/mine
+// Logged-in employee: own advances + installments (view only)
+// ────────────────────────────────────────────────
+const getMyAdvances = async (req, res) => {
+  try {
+    await ensureAdvanceTables();
+
+    const onboardingId = resolveEmployeeOnboardingId(req.user);
+    if (!onboardingId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Employee ID not found in token',
+      });
+    }
+
+    const [rows] = await pool.query(
+      `
+      SELECT ea.*,
+             eo.name AS employee_name,
+             eo.employee_id AS employee_code,
+             eo.department,
+             eo.designation,
+             eo.profile_photo,
+             approver.name AS approved_by_name
+      FROM employee_advances ea
+      JOIN employee_onboarding eo ON eo.id = ea.employee_id
+      LEFT JOIN employee_onboarding approver ON approver.id = ea.approved_by
+      WHERE ea.employee_id = ?
+      ORDER BY ea.created_at DESC
+    `,
+      [onboardingId],
+    );
+
+    return res.json({ success: true, data: rows });
+  } catch (err) {
+    console.error('getMyAdvances error:', err);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
 // ────────────────────────────────────────────────
 // GET /advances/:id
 // Single advance with installments
@@ -146,6 +199,14 @@ const getAdvance = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Advance not found' });
     }
 
+    // Non-admins may only view their own advance/loan
+    if (!isAdminRole(req.user)) {
+      const onboardingId = resolveEmployeeOnboardingId(req.user);
+      if (!onboardingId || Number(rows[0].employee_id) !== Number(onboardingId)) {
+        return res.status(403).json({ success: false, message: 'Access denied' });
+      }
+    }
+
     const [installments] = await pool.query(`
       SELECT * FROM advance_installments WHERE advance_id = ? ORDER BY installment_no ASC
     `, [id]);
@@ -163,6 +224,10 @@ const getAdvance = async (req, res) => {
 // ────────────────────────────────────────────────
 const createAdvance = async (req, res) => {
   try {
+    if (!isAdminRole(req.user)) {
+      return res.status(403).json({ success: false, message: 'Only admins can create advances/loans' });
+    }
+
     await ensureAdvanceTables();
 
     const {
@@ -265,6 +330,10 @@ const createAdvance = async (req, res) => {
 // ────────────────────────────────────────────────
 const updateAdvance = async (req, res) => {
   try {
+    if (!isAdminRole(req.user)) {
+      return res.status(403).json({ success: false, message: 'Only admins can update advances/loans' });
+    }
+
     await ensureAdvanceTables();
     const { id } = req.params;
     const {
@@ -469,6 +538,10 @@ const updateAdvance = async (req, res) => {
 // ────────────────────────────────────────────────
 const deleteAdvance = async (req, res) => {
   try {
+    if (!isAdminRole(req.user)) {
+      return res.status(403).json({ success: false, message: 'Only admins can delete advances/loans' });
+    }
+
     await ensureAdvanceTables();
     const { id } = req.params;
 
@@ -593,6 +666,7 @@ const getAdvanceSummary = async (req, res) => {
 
 module.exports = {
   getAdvances,
+  getMyAdvances,
   getAdvance,
   createAdvance,
   updateAdvance,

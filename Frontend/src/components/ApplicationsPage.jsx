@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { endpoints, getAuthHeaders } from '../config/api';
 import EmployeeSidebar from './EmployeeSidebar';
 import HrSidebar from './HrSidebar';
+import Sidebar from './Sidebar';
 import {
   CheckCircle,
   XCircle,
@@ -901,15 +902,18 @@ const CreateApplicationForm = ({ onSubmit, onCancel, submitting }) => {
 const ApplicationsPage = () => {
   const { user, role } = useAuth();
   const currentEmployeeId = user?.employeeId || user?.employee_id || user?.id;
-  const isHR = role === 'hr' || role === 'admin';
+  const isAdmin = role === 'admin';
+  const isHR = role === 'hr' || isAdmin;
 
   // Sidebar state
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [activeItem, setActiveItem] = useState(isHR ? 'applicationmemos' : 'applications');
+  const [activeItem, setActiveItem] = useState(
+    isAdmin ? 'applications-memos' : role === 'hr' ? 'applicationmemos' : 'applications',
+  );
 
   // Views: 'list' | 'detail' | 'create'
   const [view, setView] = useState('list');
-  const [activeTab, setActiveTab] = useState('my');
+  const [activeTab, setActiveTab] = useState(isAdmin ? 'all' : 'my');
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState('all');
@@ -918,7 +922,17 @@ const ApplicationsPage = () => {
 
   // Render the appropriate sidebar based on role
   const renderSidebar = () => {
-    if (isHR) {
+    if (isAdmin) {
+      return (
+        <Sidebar
+          isCollapsed={isSidebarCollapsed}
+          setIsCollapsed={setIsSidebarCollapsed}
+          activeItem={activeItem}
+          setActiveItem={setActiveItem}
+        />
+      );
+    }
+    if (role === 'hr') {
       return (
         <HrSidebar
           isCollapsed={isSidebarCollapsed}
@@ -937,6 +951,13 @@ const ApplicationsPage = () => {
       />
     );
   };
+
+  const normalizeApps = (rows) =>
+    (rows || []).map((app) => ({
+      ...app,
+      employee_name:
+        app.employee_name || app.applicant_name || app.name || 'Unknown',
+    }));
 
   // ── Fetch applications ────────────────────────────────────
   const fetchApplications = useCallback(async () => {
@@ -959,7 +980,7 @@ const ApplicationsPage = () => {
       const res = await fetch(`${url}${filterParam}`, { headers: getAuthHeaders() });
       const data = await res.json();
       if (data.success) {
-        setApplications(data.data || []);
+        setApplications(normalizeApps(data.data));
       } else {
         setApplications([]);
       }
@@ -1080,7 +1101,7 @@ const ApplicationsPage = () => {
         {renderSidebar()}
         <div className="flex-1 flex flex-col overflow-hidden">
           <DashboardHeader title="Applications" subtitle="Application Detail" />
-          <RoleBasedNav role={role} />
+          {!isAdmin && <RoleBasedNav role={role} />}
           <div className="flex-1 overflow-y-auto">
             <ApplicationDetailView
               application={selectedApp}
@@ -1110,7 +1131,7 @@ const ApplicationsPage = () => {
         {renderSidebar()}
         <div className="flex-1 flex flex-col overflow-hidden">
           <DashboardHeader title="Applications" subtitle="New Application" />
-          <RoleBasedNav role={role} />
+          {!isAdmin && <RoleBasedNav role={role} />}
           <div className="flex-1 overflow-y-auto">
             <CreateApplicationForm
               onSubmit={handleCreate}
@@ -1138,9 +1159,13 @@ const ApplicationsPage = () => {
       <div className="flex-1 flex flex-col overflow-hidden">
         <DashboardHeader
           title="Applications"
-          subtitle="Submit and track your applications"
+          subtitle={
+            isAdmin
+              ? 'View all company applications and submit as Super Admin'
+              : 'Submit and track your applications'
+          }
         />
-        <RoleBasedNav role={role} />
+        {!isAdmin && <RoleBasedNav role={role} />}
 
         {/* Sub‑Tabs */}
         <div className="bg-transparent border-b border-gray-200 px-6 py-6">

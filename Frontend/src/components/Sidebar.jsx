@@ -4,7 +4,6 @@ import { useAuth } from '../context/AuthContext';
 import { confirmDialog } from '../utils/confirm';
 import {
   FileText,
-  ClipboardList,
   Settings,
   LogOut,
   ChevronRight,
@@ -55,7 +54,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) => 
         { id: 'attendance', label: 'Attendance', icon: SheetIcon, path: '/attendance' },
         { id: 'activity-tracker', label: 'Activity Tracker', icon: RefreshCw, path: '/activity-tracker' },
         { id: 'employees', label: 'Employees', icon: Users, path: '/employees' },
-        { id: 'applications-memos', label: 'Applications', icon: FileText, path: '/application-memos' },
+        { id: 'applications-memos', label: 'Applications', icon: FileText, path: '/admin/applications' },
         { id: 'employee-feedback', label: 'Employee Feedback', icon: MessageSquare, path: '/employee-feedback' },
       ]
     },
@@ -85,9 +84,6 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) => 
         { id: 'sales-employees', label: 'Sales Employees', icon: Users, path: '/admin/sales-employees' },
       ]
     },
-
-    // Projects
-    { id: 'projects', label: 'Projects', icon: ClipboardList, path: '/projects' },
 
     // Invoice
     {

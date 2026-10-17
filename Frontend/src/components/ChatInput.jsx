@@ -45,10 +45,18 @@ const ChatInput = ({ onTyping }) => {
     }
 
     if (message.trim()) {
-      await sendMessage(currentChat.other_user.id, message);
-      setMessage("");
-      if (onTyping) {
-        onTyping(false);
+      const result = await sendMessage(currentChat.other_user.id, message);
+      const ok = result === true || result?.ok === true;
+      if (ok) {
+        setMessage("");
+        if (onTyping) {
+          onTyping(false);
+        }
+      } else {
+        const detail =
+          (typeof result === "object" && result?.error) ||
+          "Message failed to send. Check your connection and try again.";
+        alert(detail);
       }
     }
   };

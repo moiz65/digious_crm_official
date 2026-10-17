@@ -1277,9 +1277,9 @@ const PaySlipModal = ({ payroll, onClose, onUpdateStatus, onEditPayroll }) => {
           {/* Attendance Summary */}
           <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
             <div className="p-3 bg-blue-50 rounded-lg text-center">
-              <p className="text-xs text-blue-600">Days in Month</p>
+              <p className="text-xs text-blue-600">Working Days</p>
               <p className="text-lg font-bold text-blue-700">
-                {payroll.days_in_month || 30}
+                {payroll.working_days ?? payroll.days_in_month ?? 0}
               </p>
             </div>
             <div className="p-3 bg-green-50 rounded-lg text-center">

@@ -1,5 +1,6 @@
 // models/chatModel.js
 const pool = require('../config/database');
+const { ensureAllAdminChatIdentities } = require('../utils/adminChatIdentity');
 
 class ChatModel {
     // Save message to database
@@ -32,9 +33,11 @@ class ChatModel {
         const [rows] = await pool.query(
             `SELECT id, from_user, to_user, message, file_url, file_name, file_size, type, created_at, is_read
              FROM chat_messages 
-             WHERE (from_user = ? AND to_user = ?) OR (from_user = ? AND to_user = ?)
+             WHERE (
+               (from_user = ? AND to_user = ?) OR (from_user = ? AND to_user = ?)
+             )
              AND is_deleted = FALSE
-             ORDER BY created_at DESC
+             ORDER BY created_at DESC, id DESC
              LIMIT ? OFFSET ?`,
             [userId1, userId2, userId2, userId1, limit, offset]
         );
@@ -58,11 +61,13 @@ class ChatModel {
             [userId, userId, userId, userId]
         );
         
-        // Get user details for each conversation
+        // Get user details for each conversation (all chat ids are employee_onboarding.id)
         if (conversations.length > 0) {
             const userIds = conversations.map(c => c.other_user_id);
             const [users] = await pool.query(
-                `SELECT id, name, employee_id, profile_photo, department 
+                `SELECT id, name, employee_id, profile_photo, department, designation,
+                        CASE WHEN department = 'Administration' AND designation = 'Super Admin'
+                             THEN 1 ELSE 0 END AS is_admin
                  FROM employee_onboarding WHERE id IN (?) AND status = 'Active'`,
                 [userIds]
             );
@@ -158,16 +163,26 @@ class ChatModel {
         return rows;
     }
 
-    // Get all active users to start a chat with (excluding current user)
+    // Get all active users to start a chat with (excluding current user).
+    // Super Admins appear via their employee_onboarding chat identity (not admin_users.id).
     static async getAvailableUsers(currentUserId) {
-        const [rows] = await pool.query(
-            `SELECT id, name, employee_id, profile_photo, department, designation 
+        try {
+            await ensureAllAdminChatIdentities();
+        } catch (err) {
+            console.warn('ensureAllAdminChatIdentities skipped:', err.message);
+        }
+
+        const [employees] = await pool.query(
+            `SELECT id, name, employee_id, profile_photo, department, designation,
+                    CASE WHEN department = 'Administration' AND designation = 'Super Admin'
+                         THEN 1 ELSE 0 END AS is_admin
              FROM employee_onboarding 
              WHERE id != ? AND status = 'Active'
-             ORDER BY name ASC`,
+             ORDER BY is_admin DESC, name ASC`,
             [currentUserId]
         );
-        return rows;
+
+        return employees;
     }
 }
 

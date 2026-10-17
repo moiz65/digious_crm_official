@@ -232,7 +232,8 @@ exports.getExpiringCnicDocuments = async (req, res) => {
           eo.department,
           DATEDIFF(eo.cnic_expiry_date, CURDATE()) as days_until_expiry
         FROM employee_onboarding eo
-        WHERE eo.cnic_expiry_date IS NOT NULL
+        WHERE eo.status = 'Active'
+          AND eo.cnic_expiry_date IS NOT NULL
           AND DATEDIFF(eo.cnic_expiry_date, CURDATE()) <= ?
           AND DATEDIFF(eo.cnic_expiry_date, CURDATE()) > 0
         ORDER BY eo.cnic_expiry_date ASC`,
@@ -279,7 +280,8 @@ exports.getExpiredCnicDocuments = async (req, res) => {
           eo.department,
           DATEDIFF(CURDATE(), eo.cnic_expiry_date) as days_expired
         FROM employee_onboarding eo
-        WHERE eo.cnic_expiry_date IS NOT NULL
+        WHERE eo.status = 'Active'
+          AND eo.cnic_expiry_date IS NOT NULL
           AND eo.cnic_expiry_date < CURDATE()
         ORDER BY eo.cnic_expiry_date ASC`
       );
