@@ -839,7 +839,7 @@ const EmployeeAttendanceDashboard = () => {
       />
       <div className="flex-1 flex flex-col overflow-hidden">
         <DashboardHeader
-          title="My Attendance Dashboard"
+          title="My Dashboard"
           subtitle="Manage your daily attendance and working hours"
           role={role}
           currentTime={currentTime}

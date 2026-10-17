@@ -523,7 +523,7 @@ function AppContent() {
 
         {/* ✅ ChatDashboard ONLY on protected routes */}
         <ChatDashboardWrapper />
-        <DesktopNotificationManager />
+        {/* <DesktopNotificationManager /> */}
       </div>
     </ChatProvider>
   );
