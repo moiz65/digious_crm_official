@@ -134,7 +134,7 @@ const RoleLoginPage = () => {
           <div className="bg-white bg-opacity-10 backdrop-blur-lg rounded-2xl p-8 border border-white border-opacity-20 shadow-2xl">
             <div className="mb-8">
               <h2 className="text-2xl font-bold text-white mb-2">Select Your Role</h2>
-              <p className="text-gray-300">Welcome, <span className="font-semibold text-blue-400">{username}</span></p>
+              <p className="text-gray-300">👋 Welcome, <span className="font-semibold text-blue-400">{username}</span></p>
             </div>
 
             <div className="space-y-3">

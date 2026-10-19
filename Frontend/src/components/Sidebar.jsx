@@ -52,10 +52,10 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) => 
       icon: Briefcase,
       children: [
         { id: 'attendance', label: 'Attendance', icon: SheetIcon, path: '/attendance' },
-        { id: 'activity-tracker', label: 'Activity Tracker', icon: RefreshCw, path: '/activity-tracker' },
+        // { id: 'activity-tracker', label: 'Activity Tracker', icon: RefreshCw, path: '/activity-tracker' },
         { id: 'employees', label: 'Employees', icon: Users, path: '/employees' },
         { id: 'applications-memos', label: 'Applications', icon: FileText, path: '/admin/applications' },
-        { id: 'employee-feedback', label: 'Employee Feedback', icon: MessageSquare, path: '/employee-feedback' },
+        // { id: 'employee-feedback', label: 'Employee Feedback', icon: MessageSquare, path: '/employee-feedback' },
       ]
     },
     // Finance
@@ -72,12 +72,12 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) => 
     // Business Development
     {
       id: 'business-development',
-      label: 'Business & Insights',
+      label: 'Sales Insights',
       icon: TrendingUp,
       children: [
         { id: 'sales', label: 'Sales', icon: TrendingUp, path: '/admin/sales' },
         { id: 'customers', label: 'Customers', icon: Users, path: '/admin/customers' },
-        { id: 'leads', label: 'Leads', icon: Phone, path: '/admin/leads' },
+        // { id: 'leads', label: 'Leads', icon: Phone, path: '/admin/leads' },
         { id: 'sales-tiers', label: 'Sales Tiers', icon: Award, path: '/admin/sales-tiers' },
         { id: 'sales-quarters', label: 'Sales Quarters', icon: Calendar, path: '/admin/sales-quarters' },
         { id: 'sales-performance', label: 'Performance', icon: Trophy, path: '/admin/sales-performance' },
@@ -94,15 +94,15 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) => 
     },
 
     // System Settings
-    {
-      id: 'settings',
-      label: 'Settings',
-      icon: Settings,
-      children: [
-        { id: 'user-roles', label: 'Roles & Permissions', icon: Shield, path: '/admin/roles' },
-        { id: 'system-config', label: 'System Configuration', icon: Database, path: '/system-config' },
-      ]
-    },
+    // {
+    //   id: 'settings',
+    //   label: 'Settings',
+    //   icon: Settings,
+    //   children: [
+    //     { id: 'user-roles', label: 'Roles & Permissions', icon: Shield, path: '/admin/roles' },
+    //     { id: 'system-config', label: 'System Configuration', icon: Database, path: '/system-config' },
+    //   ]
+    // },
   ];
 
   // Helper functions

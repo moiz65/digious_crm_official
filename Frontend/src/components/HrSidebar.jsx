@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { confirmDialog } from '../utils/confirm';
-import { 
-  LayoutDashboard, 
-  Users, 
-  Calendar, 
+import {
+  LayoutDashboard,
+  Users,
+  Calendar,
   FileText,
   Bell,
   LogOut,
@@ -23,7 +23,7 @@ import {
   DollarSign
 } from 'lucide-react';
 
-const HrSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem = () => {} }) => {
+const HrSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem = () => { } }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { logoutNoCheckout, user } = useAuth();
@@ -52,13 +52,13 @@ const HrSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem = ()
   // Set active item based on current path
   useEffect(() => {
     const currentPath = location.pathname;
-    
+
     // Check main menu items
     menuItems.forEach(item => {
       if (item.path && currentPath === item.path) {
         setActiveItem(item.id);
       }
-      
+
       // Check submenu items
       if (item.submenu) {
         item.submenu.forEach(subItem => {
@@ -77,36 +77,36 @@ const HrSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem = ()
   const menuItems = [
     { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard', path: '/hr/dashboard' },
     { id: 'employees', icon: Users, label: 'Employees', path: '/hr/employee-management' },
-    { id: 'applicationmemos', icon: Calendar, label: 'Applications & Memos', path: '/hr/applications-memos' },
-    { id: 'memos', icon: FileText, label: 'Memos', path: '/hr/memos' },
-    { id: 'profile', icon: User, label: 'My Profile', path: '/employee/hr/profile' },
-    { id: 'payroll', icon: DollarSign, label: 'My Payroll', path: '/employee/hr/payroll' },
-    { 
-      id: 'attendance', 
-      icon: UserCheck, 
-      label: 'Attendance', 
+    {
+      id: 'attendance',
+      icon: UserCheck,
+      label: 'Attendance',
       hasSubmenu: true,
       submenu: [
-        { id: 'manage-attendance', label: 'Manage Attendance', path: '/hr/attendance', icon: Settings },
+        // { id: 'manage-attendance', label: 'Manage Attendance', path: '/hr/attendance', icon: Settings },
         { id: 'my-attendance', label: 'My Attendance', path: '/hr/my-attendance', icon: User },
-        { id: 'attendance-adjustment', label: 'Adjustment', path: '/hr/attendance-adjustment', icon: BarChart3 },
+        // { id: 'attendance-adjustment', label: 'Adjustment', path: '/hr/attendance-adjustment', icon: BarChart3 },
         { id: 'attendance-corrections', label: 'Corrections', path: '/hr/attendance-corrections', icon: FileText }
       ]
     },
+    { id: 'applicationmemos', icon: Calendar, label: 'Applications', path: '/hr/applications-memos' },
+    { id: 'memos', icon: FileText, label: 'Memos', path: '/hr/memos' },
+    { id: 'profile', icon: User, label: 'My Profile', path: '/employee/hr/profile' },
+    { id: 'payroll', icon: DollarSign, label: 'My Payroll', path: '/employee/hr/payroll' },
     // { id: 'applications', icon: FileText, label: 'Applications & Memos', path: '/hr/applications' },
-    { id: 'reports', icon: BarChart3, label: 'Reports', path: '/hr/reports-management' },
-    { 
-      id: 'settings', 
-      icon: Settings, 
-      label: 'Settings', 
-      hasSubmenu: true,
-      submenu: [
-        { id: 'user-roles', label: 'User Roles', icon: Shield, path: '/hr/user-roles' },
-        // { id: 'system-config', label: 'System Configuration', icon: Database, path: '/hr/system-config' },
-        { id: 'role-management', label: 'Role Management', icon: UserRoundCog, path: '/hr/role-management' },
-        { id: 'hr-settings', label: 'HR Settings', icon: Settings, path: '/hr/settings' },
-      ]
-    },
+    // { id: 'reports', icon: BarChart3, label: 'Reports', path: '/hr/reports-management' },
+    // {
+    //   id: 'settings',
+    //   icon: Settings,
+    //   label: 'Settings',
+    //   hasSubmenu: true,
+    //   submenu: [
+    //     { id: 'user-roles', label: 'User Roles', icon: Shield, path: '/hr/user-roles' },
+    //     // { id: 'system-config', label: 'System Configuration', icon: Database, path: '/hr/system-config' },
+    //     { id: 'role-management', label: 'Role Management', icon: UserRoundCog, path: '/hr/role-management' },
+    //     { id: 'hr-settings', label: 'HR Settings', icon: Settings, path: '/hr/settings' },
+    //   ]
+    // },
   ];
 
   const toggleSubmenu = (itemId) => {
@@ -125,10 +125,10 @@ const HrSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem = ()
         return;
       }
     }
-    
+
     setActiveItem(item.id);
     navigate(item.path);
-    
+
     // Close sidebar on mobile after navigation
     if (isMobile) {
       setIsCollapsed(true);
@@ -137,12 +137,12 @@ const HrSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem = ()
 
   const isItemActive = (item) => {
     if (item.id === activeItem) return true;
-    
+
     // Check if any submenu item is active
     if (item.submenu) {
       return item.submenu.some(subItem => subItem.id === activeItem);
     }
-    
+
     return false;
   };
 
@@ -164,7 +164,7 @@ const HrSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem = ()
       // Clear local storage
       localStorage.removeItem('token');
       localStorage.removeItem('authToken');
-      
+
       // Navigate to login
       navigate('/login', { replace: true });
     }
@@ -179,33 +179,33 @@ const HrSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem = ()
       {/* Mobile Toggle Button */}
       <button
         onClick={toggleSidebar}
-        className="fixed top-4 left-4 z-50 lg:hidden p-2 rounded-lg bg-blue-600 text-white shadow-lg hover:bg-blue-700 transition-all duration-300"
+        className="fixed top-4 left-4 z-10 lg:hidden p-2 rounded-lg bg-blue-600 text-white shadow-lg hover:bg-blue-700 transition-all duration-300"
       >
         {isCollapsed ? <Menu className="h-5 w-5" /> : <X className="h-5 w-5" />}
       </button>
 
       {/* Mobile Overlay */}
       {!isCollapsed && isMobile && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden transition-opacity duration-300"
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-10 lg:hidden transition-opacity duration-300"
           onClick={() => setIsCollapsed(true)}
         />
       )}
 
       {/* Sidebar */}
       <div className={`
-        fixed lg:relative inset-y-0 left-0 z-40
+        fixed lg:relative inset-y-0 left-0 z-10
         bg-blue-50/90 backdrop-blur-md border-r border-blue-200/40
         transition-all duration-300 ease-in-out
         flex flex-col
         h-screen
         shadow-xl shadow-blue-500/10
-        ${isCollapsed ? 
-          isMobile ? '-translate-x-full' : 'w-20' 
+        ${isCollapsed ?
+          isMobile ? '-translate-x-full' : 'w-20'
           : isMobile ? 'w-64 translate-x-0' : 'w-64'
         }
       `}>
-        
+
         {/* Desktop Toggle Button */}
         {!isMobile && (
           <div className="p-4 border-b border-blue-200/40 flex justify-end">
@@ -255,7 +255,7 @@ const HrSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem = ()
               const Icon = item.icon;
               const active = isItemActive(item);
               const isExpanded = expandedItems[item.id];
-              
+
               return (
                 <div key={item.id}>
                   {/* Main Menu Item */}
@@ -277,8 +277,8 @@ const HrSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem = ()
                       <>
                         <span className="font-semibold flex-1 text-left">{item.label}</span>
                         {item.hasSubmenu && (
-                          isExpanded ? 
-                            <ChevronDown className="h-4 w-4" /> : 
+                          isExpanded ?
+                            <ChevronDown className="h-4 w-4" /> :
                             <ChevronRight className="h-4 w-4" />
                         )}
                       </>
@@ -291,7 +291,7 @@ const HrSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem = ()
                       {item.submenu.map((subItem) => {
                         const SubIcon = subItem.icon;
                         const subActive = isSubItemActive(subItem);
-                        
+
                         return (
                           <button
                             key={subItem.id}
@@ -320,7 +320,7 @@ const HrSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem = ()
 
         {/* Logout Button */}
         <div className="p-4 border-t border-blue-200/40">
-          <button 
+          <button
             onClick={handleLogout}
             className={`
               w-full flex items-center rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-300

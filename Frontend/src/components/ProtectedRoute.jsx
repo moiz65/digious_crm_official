@@ -3,8 +3,8 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-const ProtectedRoute = ({ children, requiredRole }) => {
-  const { isAuthenticated, role, isLoading } = useAuth();
+const ProtectedRoute = ({ children, requiredRole, requiredDesignation }) => {
+  const { isAuthenticated, role, user, isLoading } = useAuth();
 
   if (isLoading) {
     return (
@@ -22,6 +22,13 @@ const ProtectedRoute = ({ children, requiredRole }) => {
   }
 
   if (requiredRole && role?.toLowerCase() !== requiredRole?.toLowerCase()) {
+    return <Navigate to="/unauthorized" replace />;
+  }
+
+  if (
+    requiredDesignation &&
+    user?.designation?.trim().toLowerCase() !== requiredDesignation.toLowerCase()
+  ) {
     return <Navigate to="/unauthorized" replace />;
   }
 

@@ -112,6 +112,7 @@ const LoginPage = () => {
           name: data.data.name,
           employeeId: data.data.employeeId,
           department: data.data.department,
+          designation: data.data.designation,
           device_user_id: data.data.device_user_id
         }, userRole, data.data.token);
 
@@ -133,6 +134,8 @@ const LoginPage = () => {
           navigate('/admin/dashboard');
         } else if (userRole === 'hr') {
           navigate('/hr/dashboard');
+        } else if (data.data.designation?.trim().toLowerCase() === 'business unit head') {
+          navigate('/business-unit-head/dashboard');
         } else {
           navigate('/employee/dashboard');
         }

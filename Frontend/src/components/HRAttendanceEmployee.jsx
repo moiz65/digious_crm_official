@@ -65,6 +65,9 @@ export const BREAK_TYPES = {
     },
 };
 
+const formatLocalDate = (date) =>
+    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+
 // Enhanced Employee Detail View Component with Notes Editing
 export const EmployeeDetailView = ({
     employee,
@@ -870,11 +873,9 @@ export const EmployeeDetailView = ({
                                     const cells = [];
                                     for (let i = 0; i < firstDay; i++) cells.push(null);
                                     for (let d = 1; d <= daysInMonth; d++) {
-                                        const dateStr = new Date(
-                                            year,
-                                            monthIndex,
-                                            d,
-                                        ).toLocaleDateString("en-CA");
+                                        const dateStr = formatLocalDate(
+                                            new Date(year, monthIndex, d),
+                                        );
                                         const rec = records.find((r) => r.date === dateStr);
                                         cells.push({ day: d, dateStr, rec });
                                     }
@@ -1125,8 +1126,6 @@ export const EmployeeDetailView = ({
                                     const year = parsed.getFullYear();
                                     const mIdx = parsed.getMonth();
                                     const daysInMonth = new Date(year, mIdx + 1, 0).getDate();
-                                    const today = new Date();
-                                    today.setHours(0, 0, 0, 0);
 
                                     // Get DB records for this month keyed by date string
                                     const monthRecords = sortedEmpAttendance.filter((r) => {
@@ -1147,12 +1146,10 @@ export const EmployeeDetailView = ({
                                         const dateObj = new Date(year, mIdx, d);
                                         const dow = dateObj.getDay();
                                         const isWeekend = dow === 0 || dow === 6;
-
-                                        // Don't skip weekends anymore - show them all
-                                        // But don't show future dates
-                                        if (dateObj > today) continue;
-
-                                        const dateStr = dateObj.toLocaleDateString("en-CA"); // YYYY-MM-DD
+                                        const dateStr = formatLocalDate(dateObj);
+                                        const calendarEntry = historyCalendar.find(
+                                            (entry) => entry.date === dateStr,
+                                        );
                                         const record = recordsByDate[dateStr] || null;
 
                                         // Get day name
@@ -1172,6 +1169,7 @@ export const EmployeeDetailView = ({
                                             dateObj,
                                             record,
                                             isWeekend,
+                                            calendarEntry,
                                             dayName,
                                         });
                                     }
@@ -1189,14 +1187,20 @@ export const EmployeeDetailView = ({
                                         );
                                     }
 
-                                    return rows.map(({ dateStr, dateObj, record }, idx) => {
-                                        const status = record ? record.status : "absent";
+                                    return rows.map(({ dateStr, dateObj, record, calendarEntry }, idx) => {
+                                        const isHoliday = calendarEntry?.type === "holiday";
+                                        const status = isHoliday
+                                            ? "paid holiday"
+                                            : record
+                                                ? record.status
+                                                : "absent";
                                         const isAbsent = status === "absent";
                                         const isPresent = status === "present";
                                         const isLate = status === "late";
                                         const isLeave =
                                             status === "leave" || status === "paid leave";
                                         const isUnexplained =
+                                            !isHoliday &&
                                             isAbsent &&
                                             (!record ||
                                                 !record.notes ||
@@ -1210,8 +1214,10 @@ export const EmployeeDetailView = ({
                                             0,
                                         );
 
-                                        const statusLabel = isUnexplained
-                                            ? "A"
+                                        const statusLabel = isHoliday
+                                            ? "Paid Holiday"
+                                            : isUnexplained
+                                                ? "A"
                                             : isPresent
                                                 ? "P"
                                                 : isLate
@@ -1226,8 +1232,10 @@ export const EmployeeDetailView = ({
                                                                     ? "A"
                                                                     : status?.charAt(0)?.toUpperCase() || "-";
 
-                                        const statusColor = isUnexplained
-                                            ? "bg-red-100 text-red-700"
+                                        const statusColor = isHoliday
+                                            ? "bg-teal-100 text-teal-700"
+                                            : isUnexplained
+                                                ? "bg-red-100 text-red-700"
                                             : isPresent
                                                 ? "bg-green-100 text-green-700"
                                                 : isLate
@@ -1245,7 +1253,7 @@ export const EmployeeDetailView = ({
                                         return (
                                             <tr
                                                 key={dateStr}
-                                                className={`border-b border-gray-100 ${idx % 2 === 0 ? "bg-blue-50/30" : "bg-white"} hover:bg-blue-50 transition`}
+                                                className={`border-b border-gray-100 ${isHoliday ? "bg-teal-50/70" : idx % 2 === 0 ? "bg-blue-50/30" : "bg-white"} hover:bg-blue-50 transition`}
                                             >
                                                 <td className="px-4 py-3 text-gray-800 font-medium whitespace-nowrap">
                                                     {dateObj.toLocaleDateString("en-US", {
@@ -1254,9 +1262,16 @@ export const EmployeeDetailView = ({
                                                         day: "numeric",
                                                         year: "numeric",
                                                     })}
+                                                    {isHoliday && calendarEntry.name && (
+                                                        <div className="mt-0.5 text-xs font-normal text-teal-700">
+                                                            {calendarEntry.name}
+                                                        </div>
+                                                    )}
                                                 </td>
                                                 <td className="px-4 py-3">
-                                                    {record &&
+                                                    {isHoliday ? (
+                                                        <span className="text-gray-400">&mdash;</span>
+                                                    ) : record &&
                                                         record.checkIn &&
                                                         record.checkIn !== "-" ? (
                                                         <span className="text-green-600 font-medium">
@@ -1269,7 +1284,9 @@ export const EmployeeDetailView = ({
                                                     )}
                                                 </td>
                                                 <td className="px-4 py-3">
-                                                    {record &&
+                                                    {isHoliday ? (
+                                                        <span className="text-gray-400">&mdash;</span>
+                                                    ) : record &&
                                                         record.checkOut &&
                                                         record.checkOut !== "-" ? (
                                                         <span className="text-blue-600 font-medium">
@@ -1281,6 +1298,7 @@ export const EmployeeDetailView = ({
                                                 </td>
                                                 <td className="px-4 py-3 text-center">
                                                     <span
+                                                        title={isHoliday ? calendarEntry.name : undefined}
                                                         className={`inline-block px-2.5 py-1 rounded-full text-xs font-bold ${statusColor}`}
                                                     >
                                                         {statusLabel}

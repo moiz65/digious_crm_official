@@ -61,6 +61,15 @@ const formatDate = (dateStr) => {
   });
 };
 
+const formatLocalDateKey = (dateValue) => {
+  if (typeof dateValue === "string" && /^\d{4}-\d{2}-\d{2}/.test(dateValue)) {
+    return dateValue.slice(0, 10);
+  }
+  const date = new Date(dateValue);
+  if (Number.isNaN(date.getTime())) return "";
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+};
+
 const AttendanceManagement = () => {
   // State Management
   const [attendanceData, setAttendanceData] = useState([]);
@@ -83,6 +92,7 @@ const AttendanceManagement = () => {
   // Monthly view states
   const [selectedEmployeeForMonthly, setSelectedEmployeeForMonthly] = useState(null);
   const [monthlyAttendanceRecords, setMonthlyAttendanceRecords] = useState([]);
+  const [monthlyHolidays, setMonthlyHolidays] = useState({ month: null, year: null, entries: [] });
   const [showMonthlyDetail, setShowMonthlyDetail] = useState(false);
   const [monthlyLoading, setMonthlyLoading] = useState(false);
 
@@ -249,6 +259,26 @@ const AttendanceManagement = () => {
     try {
       const m = month || detailMonth || selectedMonth;
       const y = year || detailYear || selectedYear;
+      setMonthlyHolidays({ month: m, year: y, entries: [] });
+
+      try {
+        const calendarResponse = await fetch(
+          endpoints.companyCalendar.byMonth(y, m),
+        );
+        const calendarResult = await calendarResponse.json();
+        if (!calendarResponse.ok || !calendarResult.success) {
+          throw new Error(calendarResult.message || "Failed to load company calendar");
+        }
+        setMonthlyHolidays({
+          month: m,
+          year: y,
+          entries: (calendarResult.data || []).filter(
+            (entry) => entry.type === "holiday",
+          ),
+        });
+      } catch (calendarError) {
+        console.error("Error fetching company calendar:", calendarError);
+      }
 
       const url = `${process.env.REACT_APP_API_URL || "http://localhost:5000"}/api/v1/attendance/monthly/${actualEmployeeId}?year=${y}&month=${m}`;
 
@@ -280,6 +310,7 @@ const AttendanceManagement = () => {
         setMonthlyAttendanceRecords([]);
         setShowMonthlyDetail(true);
       }
+
     } catch (error) {
       console.error("Error fetching monthly attendance:", error);
       setMonthlyAttendanceRecords([]);
@@ -812,10 +843,17 @@ const AttendanceManagement = () => {
               <MonthlyAttendanceDetail
                 employee={selectedEmployeeForMonthly}
                 records={monthlyAttendanceRecords}
+                holidays={
+                  monthlyHolidays.month === detailMonth &&
+                  monthlyHolidays.year === detailYear
+                    ? monthlyHolidays.entries
+                    : []
+                }
                 loading={monthlyLoading}
                 onBack={() => {
                   setShowMonthlyDetail(false);
                   setMonthlyAttendanceRecords([]);
+                  setMonthlyHolidays({ month: null, year: null, entries: [] });
                   setSelectedEmployeeForMonthly(null);
                 }}
                 detailMonth={detailMonth}
@@ -958,18 +996,74 @@ const EmployeeList = ({
 const MonthlyAttendanceDetail = ({
   employee,
   records,
+  holidays,
   loading,
   onBack,
   detailMonth,
   detailYear,
   onMonthChange,
 }) => {
+  const displayRecords = useMemo(() => {
+    const recordsByDate = new Map(
+      records.map((record) => [
+        formatLocalDateKey(record.attendance_date),
+        record,
+      ]),
+    );
+
+    holidays.forEach((holiday) => {
+      const record = recordsByDate.get(holiday.date);
+      recordsByDate.set(
+        holiday.date,
+        record
+          ? {
+              ...record,
+              is_company_holiday: true,
+              holiday_name: holiday.name,
+              status: "Paid Holiday",
+            }
+          : {
+              attendance_date: holiday.date,
+              check_in_time: null,
+              check_out_time: null,
+              net_working_time_minutes: 0,
+              total_breaks_taken: 0,
+              total_break_duration_minutes: 0,
+              is_company_holiday: true,
+              holiday_name: holiday.name,
+              status: "Paid Holiday",
+            },
+      );
+    });
+
+    const daysInMonth = new Date(detailYear, detailMonth, 0).getDate();
+    const today = formatLocalDateKey(new Date());
+    return Array.from({ length: daysInMonth }, (_, index) => {
+      const date = `${detailYear}-${String(detailMonth).padStart(2, "0")}-${String(index + 1).padStart(2, "0")}`;
+      return (
+        recordsByDate.get(date) || {
+          attendance_date: date,
+          check_in_time: null,
+          check_out_time: null,
+          net_working_time_minutes: 0,
+          total_breaks_taken: 0,
+          total_break_duration_minutes: 0,
+          is_absent: date <= today,
+          status: date <= today ? "Absent" : "Upcoming",
+        }
+      );
+    });
+  }, [records, holidays, detailMonth, detailYear]);
+
   const stats = useMemo(() => {
-    if (!records || records.length === 0) {
+    const completedDays = displayRecords.filter(
+      (record) => record.status !== "Upcoming",
+    );
+    if (completedDays.length === 0) {
       return { present: 0, absent: 0, late: 0, totalWorkMinutes: 0, avgHours: "0.0" };
     }
 
-    const s = records.reduce(
+    const s = completedDays.reduce(
       (acc, r) => {
         if (r.status === "Present" || r.status === "Present (Late)") {
           acc.present++;
@@ -986,9 +1080,9 @@ const MonthlyAttendanceDetail = ({
         totalWorkMinutes: 0,
       },
     );
-    s.avgHours = records.length > 0 ? (s.totalWorkMinutes / records.length / 60).toFixed(1) : "0.0";
+    s.avgHours = (s.totalWorkMinutes / completedDays.length / 60).toFixed(1);
     return s;
-  }, [records]);
+  }, [displayRecords]);
 
   const handleMonthChange = (month) => {
     onMonthChange(month, detailYear);
@@ -1084,7 +1178,7 @@ const MonthlyAttendanceDetail = ({
             </button>
           </div>
           <span className="text-sm text-slate-500 ml-auto">
-            Showing {records.length} records
+            Showing {displayRecords.length} records
           </span>
         </div>
       </div>
@@ -1162,20 +1256,29 @@ const MonthlyAttendanceDetail = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
-              {records.length === 0 ? (
+              {displayRecords.length === 0 ? (
                 <tr>
                   <td colSpan="6" className="px-6 py-8 text-center text-slate-500">
                     No attendance records found for this period
                   </td>
                 </tr>
               ) : (
-                records.map((record) => (
+                displayRecords.map((record) => (
                   <tr
-                    key={record.id || record._id}
-                    className="hover:bg-slate-50 transition-colors"
+                    key={record.id || record._id || formatLocalDateKey(record.attendance_date)}
+                    className={`transition-colors ${
+                      record.is_company_holiday
+                        ? "bg-teal-50/70 font-semibold hover:bg-teal-70"
+                        : "hover:bg-slate-50"
+                    }`}
                   >
                     <td className="px-6 py-4 text-sm text-slate-700">
                       {formatDate(record.attendance_date)}
+                      {record.is_company_holiday && record.holiday_name && (
+                        <div className="mt-1 text-sm font-bold text-teal-800">
+                          {record.holiday_name}
+                        </div>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-sm text-slate-700">
                       {record.check_in_time ? formatTimeShort(record.check_in_time) : "-"}
@@ -1198,15 +1301,17 @@ const MonthlyAttendanceDetail = ({
                     </td>
                     <td className="px-6 py-4">
                       <span
-                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${record.status === "Present" || record.status === "Present (Late)"
+                        className={`inline-flex items-center px-3 py-1 rounded-full ${record.is_company_holiday ? "text-sm font-bold" : "text-xs font-semibold"} ${record.status === "Present" || record.status === "Present (Late)"
                           ? "bg-emerald-100 text-emerald-700"
-                          : record.status === "Absent"
-                            ? "bg-rose-100 text-rose-700"
-                            : record.status === "Late" || record.status === "Present (Late)"
-                              ? "bg-amber-100 text-amber-700"
-                              : record.status === "ML"
-                                ? "bg-blue-900 text-white"
-                                : "bg-slate-100 text-slate-700"
+                          : record.status === "Paid Holiday"
+                            ? "bg-teal-100 text-teal-700"
+                            : record.status === "Absent"
+                              ? "bg-rose-100 text-rose-700"
+                              : record.status === "Late" || record.status === "Present (Late)"
+                                ? "bg-amber-100 text-amber-700"
+                                : record.status === "ML"
+                                  ? "bg-blue-900 text-white"
+                                  : "bg-slate-100 text-slate-700"
                           }`}
                       >
                         {record.status || "Unknown"}

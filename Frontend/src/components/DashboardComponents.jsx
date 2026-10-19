@@ -375,6 +375,7 @@ export const LogoWithProfile = ({ title, subtitle }) => {
 export const RoleBasedNav = ({ role }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { logoutNoCheckout, user } = useAuth();
 
   const navItems = {
     admin: [
@@ -395,7 +396,9 @@ export const RoleBasedNav = ({ role }) => {
       // { id: 'reports', label: 'Reports', path: '/hr/reports', icon: ChartBar, color: 'teal' }
     ],
     employee: [
-      { id: 'dashboard', label: 'My Dashboard', path: '/employee/dashboard', icon: LayoutDashboard, color: 'blue' },
+      { id: 'dashboard', label: 'My Dashboard', path: user?.designation?.trim().toLowerCase() === 'business unit head'
+        ? '/business-unit-head/dashboard'
+        : '/employee/dashboard', icon: LayoutDashboard, color: 'blue' },
       { id: 'attendance', label: 'My Attendance', path: '/employee/attendance', icon: Calendar, color: 'orange' },
       { id: 'profile', label: 'My Profile', path: '/employee/profile', icon: User, color: 'green' },
       { id: 'applications', label: 'My Applications', path: '/employee/applications', icon: FileText, color: 'pink' }
@@ -429,13 +432,13 @@ export const RoleBasedNav = ({ role }) => {
   };
 
   return (
-    <nav className="bg-white border-b border-gray-200 shadow-md sticky top-0 z-40">
+    <nav className="bg-white border-b border-gray-200 shadow-md sticky top-0 z-10">
       <div className="px-6">
         <div className="flex items-center space-x-1 overflow-x-auto scrollbar-hide">
           {items.map((item) => {
             const Icon = item.icon;
             const isActive = item.id === 'attendance'
-              ? ['/hr/attendance/overview', '/hr/attendance/employee'].includes(location.pathname)
+              ? ['/admin/attendance', '/hr/attendance/overview','/hr/attendance/calendar', '/hr/attendance/employee', '/employee/attendance'].includes(location.pathname)
               : item.id === 'applications' && role === 'hr'
                 ? ['/hr/applications', '/hr/applications-memos'].includes(location.pathname)
               : item.id === 'applications' && role === 'admin'
@@ -552,7 +555,7 @@ export const MobileNav = ({ role, isOpen, onClose }) => {
             {items.map((item) => {
               const Icon = item.icon;
               const isActive = item.id === 'attendance'
-                ? ['/hr/attendance/overview', '/hr/attendance/employee'].includes(location.pathname)
+                ? ['/admin/attendance', '/hr/attendance/overview', '/hr/attendance/employee', '/hr/attendance/calendar', '/employee/attendance'].includes(location.pathname)
                 : item.id === 'applications' && role === 'hr'
                   ? ['/hr/applications', '/hr/applications-memos'].includes(location.pathname)
                 : item.id === 'applications' && role === 'admin'

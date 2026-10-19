@@ -122,6 +122,8 @@ const ChangePasswordPage = () => {
           navigate('/admin/dashboard');
         } else if (userRole === 'hr') {
           navigate('/hr/dashboard');
+        } else if (user?.designation?.trim().toLowerCase() === 'business unit head') {
+          navigate('/business-unit-head/dashboard');
         } else {
           navigate('/employee/dashboard');
         }

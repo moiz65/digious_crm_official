@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import Sidebar from "../../components/Sidebar";
+import EmployeeSidebar from "../../components/EmployeeSidebar";
+import { useAuth } from "../../context/AuthContext";
 import { confirmDialog } from "../../utils/confirm";
 import {
   DollarSign,
@@ -114,6 +116,9 @@ const getRandomColor = () => COLORS[Math.floor(Math.random() * COLORS.length)];
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 const AdminExpense = () => {
+  const { user } = useAuth();
+  const isBusinessUnitHead =
+    user?.designation?.trim().toLowerCase() === "business unit head";
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [activeItem, setActiveItem] = useState("expenses");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -630,12 +635,21 @@ const AdminExpense = () => {
   // Update filteredExpenses to include payment_type filter
   return (
     <div className="flex h-screen bg-gray-50">
-      <Sidebar
-        isCollapsed={isSidebarCollapsed}
-        setIsCollapsed={setIsSidebarCollapsed}
-        activeItem={activeItem}
-        setActiveItem={setActiveItem}
-      />
+      {isBusinessUnitHead ? (
+        <EmployeeSidebar
+          isCollapsed={isSidebarCollapsed}
+          setIsCollapsed={setIsSidebarCollapsed}
+          activeItem={activeItem}
+          setActiveItem={setActiveItem}
+        />
+      ) : (
+        <Sidebar
+          isCollapsed={isSidebarCollapsed}
+          setIsCollapsed={setIsSidebarCollapsed}
+          activeItem={activeItem}
+          setActiveItem={setActiveItem}
+        />
+      )}
       <div className="flex-1 flex flex-col overflow-hidden">
         <ProtectedModule
           moduleName="expense"
@@ -646,6 +660,7 @@ const AdminExpense = () => {
           <header className="lg:hidden bg-white border-b border-gray-200 p-4">
             <div className="flex items-center justify-between">
               <button
+                hidden={isBusinessUnitHead}
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 className="p-2 rounded-lg bg-gray-100"
               >
@@ -1355,7 +1370,7 @@ const AdminExpense = () => {
         </ProtectedModule>
       </div>
       {/* Mobile Sidebar Overlay */}
-      {isMobileMenuOpen && (
+      {!isBusinessUnitHead && isMobileMenuOpen && (
         <div className="fixed inset-0 z-40 lg:hidden">
           <div
             className="absolute inset-0 bg-black/50"
@@ -1440,7 +1455,7 @@ const ExpenseTable = ({
         <table className="w-full min-w-[800px]">
           <thead className="bg-slate-100">
             <tr>
-              {["Expense", "Category", "Amount", "Payment Type", "Note", "Actions"].map((h) => (
+              {["Expense", "Category", "Amount", "Payment Type", "Created By", "Note", "Actions"].map((h) => (
                 <th
                   key={h}
                   className="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider"
@@ -1453,7 +1468,7 @@ const ExpenseTable = ({
           <tbody className="divide-y divide-slate-100">
             {data.length === 0 ? (
               <tr>
-                <td colSpan="6" className="py-16 text-center">
+                <td colSpan="7" className="py-16 text-center">
                   <Receipt className="h-10 w-10 text-slate-300 mx-auto mb-2" />
                   <p className="text-slate-500 font-medium">
                     No expense records
@@ -1499,6 +1514,11 @@ const ExpenseTable = ({
                   <td className="px-4 py-4">
                     <span className="text-sm font-medium text-slate-700">
                       {expense.payment_type || "N/A"}
+                    </span>
+                  </td>
+                  <td className="px-4 py-4">
+                    <span className="text-sm font-medium text-slate-700">
+                      {expense.created_by_name || "—"}
                     </span>
                   </td>
                   <td className="px-4 py-4 max-w-xs">
@@ -1867,6 +1887,12 @@ const ViewExpenseModal = ({ expense, onClose, onEdit }) => (
             <p className="text-xs text-slate-500">Time</p>
             <p className="font-semibold text-slate-800">
               {formatTime(expense.expense_time) || "—"}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-slate-500">Created By</p>
+            <p className="font-semibold text-slate-800">
+              {expense.created_by_name || "—"}
             </p>
           </div>
           <div>

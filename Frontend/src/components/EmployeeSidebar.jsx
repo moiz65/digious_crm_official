@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { confirmDialog } from '../utils/confirm';
@@ -26,19 +26,29 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveIte
   const { logoutNoCheckout, user } = useAuth();
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
 
-  const menuItems = [
-    { id: 'dashboard', icon: LayoutDashboard, label: 'My Dashboard', path: '/employee/dashboard' },
+  const menuItems = useMemo(() => [
+    {
+      id: 'dashboard',
+      icon: LayoutDashboard,
+      label: 'My Dashboard',
+      path: user?.designation?.trim().toLowerCase() === 'business unit head'
+        ? '/business-unit-head/dashboard'
+        : '/employee/dashboard'
+    },
     { id: 'attendance', icon: Calendar, label: 'Attendance', path: '/employee/attendance' },
     { id: 'profile', icon: User, label: 'My Profile', path: '/employee/profile' },
     // Sales menu only visible for Sales department employees
     ...(user?.department === 'Sales' ? [{ id: 'sales', icon: DollarSign, label: 'Sales', path: '/employee/sales' }] : []),
-    { id: 'corrections', icon: ClipboardCheck, label: 'Attendance Corrections', path: '/employee/attendance-corrections' },
+    ...(user?.designation?.trim().toLowerCase() === 'business unit head'
+      ? [{ id: 'expenses', icon: Wallet, label: 'Expense', path: '/business-unit-head/expenses' }]
+      : []),
+    { id: 'corrections', icon: ClipboardCheck, label: 'Corrections', path: '/employee/attendance-corrections' },
     { id: 'applications', icon: FileText, label: 'Applications', path: '/employee/applications' },
     { id: 'memos', icon: FileText, label: 'Memos', path: '/employee/memos' },
     { id: 'payroll', icon: Wallet, label: 'My Payroll', path: '/employee/payroll' },
     { id: 'advances', icon: Banknote, label: 'Advances & Loans', path: '/employee/advances' },
-    { id: 'settings', icon: FileText, label: 'Settings', path: '/employee/settings' }
-  ];
+    // { id: 'settings', icon: FileText, label: 'Settings', path: '/employee/settings' }
+  ], [user?.department, user?.designation]);
 
   // Detect mobile screen
   useEffect(() => {
@@ -57,7 +67,7 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveIte
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [setIsCollapsed]);
 
   // Set active item based on current path
   useEffect(() => {
@@ -69,7 +79,7 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveIte
         setActiveItem(item.id);
       }
     });
-  }, [location.pathname]);
+  }, [location.pathname, menuItems, setActiveItem]);
 
   // Click outside to close sidebar on mobile
   useEffect(() => {
@@ -83,7 +93,7 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveIte
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isCollapsed, isMobile]);
+  }, [isCollapsed, isMobile, setIsCollapsed]);
 
   const handleNavigation = (item) => {
     setActiveItem(item.id);

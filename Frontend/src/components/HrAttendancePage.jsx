@@ -4379,6 +4379,9 @@ export function HrAttendancePage({ initialTab = "overview" }) {
                           navigate("/hr/attendance/employee");
                           return;
                         }
+                        if (tab === "calendar") {
+                          navigate ("/hr/attendance/calendar")
+                        }
                         setActiveTab(tab);
                       }}
                       className={`px-6 py-3 text-sm font-semibold transition duration-300 border-b-2 ${activeTab === tab

@@ -55,6 +55,7 @@ import AttendanceAdjustment from "./pages/HR/AttendanceAdjustment";
 
 // Employee Pages
 import ProductionDashboard from "./pages/Employees/ProductionDashboard";
+import BusinessUnitHeadDashboard from "./pages/Employees/BusinessUnitHeadDashboard";
 import EmployeeAttendance from "./pages/Employees/EmployeeAtt";
 import EmployeeDetails from "./pages/Employees/EmployeeDetails";
 import ApplicationandMemoEmployees from "./pages/Employees/ApplicationandMemoEmployees";
@@ -161,7 +162,18 @@ function AppContent() {
             path="/expenses"
             element={
               <ProtectedRoute requiredRole="admin">
-                  <AdminExpense />
+                <AdminExpense />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/business-unit-head/expenses"
+            element={
+              <ProtectedRoute
+                requiredRole="employee"
+                requiredDesignation="Business Unit Head"
+              >
+                <AdminExpense />
               </ProtectedRoute>
             }
           />
@@ -281,6 +293,14 @@ function AppContent() {
             }
           />
           <Route
+            path="/hr/attendance/calendar"
+            element={
+              <ProtectedRoute requiredRole="hr">
+                <HrAttendance initialTab="calendar" />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/hr/my-attendance"
             element={
               <ProtectedRoute requiredRole="hr">
@@ -371,6 +391,17 @@ function AppContent() {
             element={
               <ProtectedRoute requiredRole="employee">
                 <ProductionDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/business-unit-head/dashboard"
+            element={
+              <ProtectedRoute
+                requiredRole="employee"
+                requiredDesignation="Business Unit Head"
+              >
+                <BusinessUnitHeadDashboard />
               </ProtectedRoute>
             }
           />

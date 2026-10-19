@@ -172,13 +172,17 @@ const calcTotals = (items, taxAmount = 0, discountAmount = 0) => {
   const subtotal = items.reduce((sum, item) => {
     const qty = parseFloat(item.quantity) || 0;
     const price = parseFloat(item.unit_price) || 0;
-    const amount = item.amount != null ? parseFloat(item.amount) : qty * price;
-    return sum + amount;
+    return sum + Math.round((qty * price + Number.EPSILON) * 100) / 100;
   }, 0);
   const tax = parseFloat(taxAmount) || 0;
   const discount = parseFloat(discountAmount) || 0;
-  const total = Math.max(0, subtotal + tax - discount);
-  return { subtotal, tax_amount: tax, discount_amount: discount, total_amount: total };
+  const total = Math.max(0, Math.round((subtotal + tax - discount + Number.EPSILON) * 100) / 100);
+  return {
+    subtotal: Math.round((subtotal + Number.EPSILON) * 100) / 100,
+    tax_amount: tax,
+    discount_amount: discount,
+    total_amount: total,
+  };
 };
 
 const insertInvoiceItems = async (connection, invoiceId, items) => {
@@ -186,13 +190,29 @@ const insertInvoiceItems = async (connection, invoiceId, items) => {
     const item = items[i];
     const qty = parseFloat(item.quantity) || 0;
     const price = parseFloat(item.unit_price) || 0;
-    const amount = item.amount != null ? parseFloat(item.amount) : qty * price;
+    const amount = Math.round((qty * price + Number.EPSILON) * 100) / 100;
     await connection.query(
       `INSERT INTO invoice_items (invoice_id, description, quantity, unit_price, amount, sort_order)
        VALUES (?, ?, ?, ?, ?, ?)`,
       [invoiceId, item.description || '', qty, price, amount, i]
     );
   }
+};
+
+const invoiceStatuses = ['Paid', 'Unpaid', 'Overdue', 'Partially Paid', 'Cancelled', 'Draft', 'Sent'];
+
+const validateInvoicePayment = (status, paidAmount, totalAmount) => {
+  if (!invoiceStatuses.includes(status)) return 'Invalid invoice status';
+  if (!Number.isFinite(paidAmount) || paidAmount < 0) {
+    return 'Amount paid must be a valid non-negative amount';
+  }
+  if (paidAmount > totalAmount) {
+    return 'Amount paid cannot exceed the invoice total';
+  }
+  if (status === 'Partially Paid' && !(paidAmount > 0 && paidAmount < totalAmount)) {
+    return 'A partially paid invoice must have a payment greater than zero and less than the invoice total';
+  }
+  return null;
 };
 
 // ═══════════════════════════════════════════════════════════
@@ -408,12 +428,22 @@ exports.createInvoice = async (req, res) => {
     const totals = calcTotals(items, tax_amount, discount_amount);
     const user = req.user || {};
 
+    const invoiceStatus = status || 'Sent';
+    const paidAmt = invoiceStatus === 'Paid'
+      ? totals.total_amount
+      : ['Unpaid', 'Draft', 'Sent', 'Cancelled'].includes(invoiceStatus)
+        ? 0
+        : (paid_amount === undefined || paid_amount === null || paid_amount === ''
+          ? 0
+          : Number(paid_amount));
+    const paymentError = validateInvoicePayment(invoiceStatus, paidAmt, totals.total_amount);
+    if (paymentError) {
+      return res.status(400).json({ success: false, message: paymentError });
+    }
+
     await connection.beginTransaction();
 
     const invoiceNumber = await generateInvoiceNumber(connection);
-    const invoiceStatus = status || 'Sent';
-    const paidAmt = parseFloat(paid_amount) || 0;
-
     const [result] = await connection.query(
       `INSERT INTO invoices (
         invoice_number, customer_id, client_name, client_email, client_phone, client_address,
@@ -484,6 +514,33 @@ exports.updateInvoice = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Invoice not found' });
     }
 
+    const currentInvoice = existing[0];
+    const finalStatus = status ?? currentInvoice.status;
+    let finalTotal = parseFloat(currentInvoice.total_amount);
+    if (items && items.length) {
+      finalTotal = calcTotals(
+        items,
+        tax_amount ?? currentInvoice.tax_amount,
+        discount_amount ?? currentInvoice.discount_amount,
+      ).total_amount;
+    } else if (tax_amount !== undefined || discount_amount !== undefined) {
+      const subtotal = parseFloat(currentInvoice.subtotal);
+      const tax = tax_amount !== undefined ? Number(tax_amount) : parseFloat(currentInvoice.tax_amount);
+      const discount = discount_amount !== undefined ? Number(discount_amount) : parseFloat(currentInvoice.discount_amount);
+      finalTotal = Math.max(0, Math.round((subtotal + tax - discount + Number.EPSILON) * 100) / 100);
+    }
+    const finalPaidAmount = finalStatus === 'Paid'
+      ? finalTotal
+      : ['Unpaid', 'Draft', 'Sent', 'Cancelled'].includes(finalStatus)
+        ? 0
+        : (paid_amount === undefined
+          ? parseFloat(currentInvoice.paid_amount)
+          : Number(paid_amount));
+    const paymentError = validateInvoicePayment(finalStatus, finalPaidAmount, finalTotal);
+    if (paymentError) {
+      return res.status(400).json({ success: false, message: paymentError });
+    }
+
     await connection.beginTransaction();
 
     const fields = [];
@@ -507,11 +564,19 @@ exports.updateInvoice = async (req, res) => {
     if (notes !== undefined) { fields.push('notes = ?'); values.push(notes); }
     if (terms !== undefined) { fields.push('terms = ?'); values.push(terms); }
     if (priority !== undefined) { fields.push('priority = ?'); values.push(priority); }
-    if (status !== undefined) { fields.push('status = ?'); values.push(status); }
-    if (paid_amount !== undefined) { fields.push('paid_amount = ?'); values.push(parseFloat(paid_amount) || 0); }
+    if (status !== undefined) { fields.push('status = ?'); values.push(finalStatus); }
+    if (paid_amount !== undefined || finalStatus === 'Paid' ||
+      ['Unpaid', 'Draft', 'Sent', 'Cancelled'].includes(finalStatus)) {
+      fields.push('paid_amount = ?');
+      values.push(finalPaidAmount);
+    }
 
     if (items && items.length) {
-      const totals = calcTotals(items, tax_amount, discount_amount);
+      const totals = calcTotals(
+        items,
+        tax_amount ?? currentInvoice.tax_amount,
+        discount_amount ?? currentInvoice.discount_amount,
+      );
       fields.push('subtotal = ?', 'tax_amount = ?', 'discount_amount = ?', 'total_amount = ?');
       values.push(totals.subtotal, totals.tax_amount, totals.discount_amount, totals.total_amount);
 
@@ -566,12 +631,30 @@ exports.updateInvoiceStatus = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Status is required' });
     }
 
+    const [invoices] = await pool.query('SELECT total_amount, paid_amount FROM invoices WHERE id = ?', [id]);
+    if (!invoices.length) {
+      return res.status(404).json({ success: false, message: 'Invoice not found' });
+    }
+    const totalAmount = parseFloat(invoices[0].total_amount);
+    const finalPaidAmount = status === 'Paid'
+      ? totalAmount
+      : ['Unpaid', 'Draft', 'Sent', 'Cancelled'].includes(status)
+        ? 0
+        : (paid_amount === undefined
+          ? parseFloat(invoices[0].paid_amount)
+          : Number(paid_amount));
+    const paymentError = validateInvoicePayment(status, finalPaidAmount, totalAmount);
+    if (paymentError) {
+      return res.status(400).json({ success: false, message: paymentError });
+    }
+
     const fields = ['status = ?'];
     const values = [status];
 
-    if (paid_amount !== undefined) {
+    if (paid_amount !== undefined || status === 'Paid' ||
+      ['Unpaid', 'Draft', 'Sent', 'Cancelled'].includes(status)) {
       fields.push('paid_amount = ?');
-      values.push(parseFloat(paid_amount) || 0);
+      values.push(finalPaidAmount);
     }
 
     values.push(id);

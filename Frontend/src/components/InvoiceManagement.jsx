@@ -170,6 +170,7 @@ const InvoiceManagement = () => {
   const [editingInvoice, setEditingInvoice] = useState(null);
   const [showCreateCustomerModal, setShowCreateCustomerModal] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [invoiceToSettle, setInvoiceToSettle] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
@@ -300,7 +301,10 @@ const InvoiceManagement = () => {
           acc.overdueAmount += inv.total_amount || 0;
         } else if (inv.status === "Partially Paid") {
           acc.partiallyPaidInvoices++;
-          acc.partiallyPaidAmount += inv.total_amount || 0;
+          acc.partiallyPaidAmount += Math.max(
+            0,
+            (Number(inv.total_amount) || 0) - (Number(inv.paid_amount) || 0),
+          );
         }
         
         return acc;
@@ -415,6 +419,36 @@ const InvoiceManagement = () => {
       }
     } catch (err) {
       setError(err.message || "Failed to update invoice");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleSettleInvoice = async () => {
+    if (!invoiceToSettle?.id) return;
+    setActionLoading(true);
+    setError("");
+    try {
+      const result = await apiRequest(endpoints.invoices.updateStatus(invoiceToSettle.id), {
+        method: "PATCH",
+        body: JSON.stringify({
+          status: "Paid",
+          paid_amount: Number(invoiceToSettle.total_amount) || 0,
+        }),
+      });
+      if (result.success && result.data) {
+        setInvoices((prev) =>
+          prev.map((invoice) => invoice.id === result.data.id ? result.data : invoice),
+        );
+        if (selectedInvoice?.id === result.data.id) {
+          setSelectedInvoice(result.data);
+        }
+        setInvoiceToSettle(null);
+      } else {
+        throw new Error(result.message || "Failed to mark invoice as fully paid");
+      }
+    } catch (err) {
+      setError(err.message || "Failed to mark invoice as fully paid");
     } finally {
       setActionLoading(false);
     }
@@ -568,9 +602,13 @@ const InvoiceManagement = () => {
                 <AlertCircle className="h-6 w-6" />
               </div>
               <div className="text-right">
-                <div className="text-3xl font-bold">{stats.unpaidInvoices + stats.overdueInvoices}</div>
+                <div className="text-3xl font-bold">
+                  {stats.unpaidInvoices + stats.overdueInvoices + stats.partiallyPaidInvoices}
+                </div>
                 <div className="text-rose-100 text-xs">Pending Payments</div>
-                <div className="text-xs">{formatCurrency(stats.unpaidAmount + stats.overdueAmount)}</div>
+                <div className="text-xs">
+                  {formatCurrency(stats.unpaidAmount + stats.overdueAmount + stats.partiallyPaidAmount)}
+                </div>
               </div>
             </div>
           </div>
@@ -678,6 +716,7 @@ const InvoiceManagement = () => {
             setShowDetailModal(true);
           }}
           onEditInvoice={openEditModal}
+          onSettleInvoice={setInvoiceToSettle}
           onDeleteInvoice={(invoice) => {
             setSelectedInvoice(invoice);
             setShowDeleteConfirm(true);
@@ -726,6 +765,15 @@ const InvoiceManagement = () => {
           />
         )}
 
+        {invoiceToSettle && (
+          <SettleInvoiceModal
+            invoice={invoiceToSettle}
+            loading={actionLoading}
+            onConfirm={handleSettleInvoice}
+            onClose={() => setInvoiceToSettle(null)}
+          />
+        )}
+
         {/* Delete Confirmation Modal */}
         {showDeleteConfirm && selectedInvoice && (
           <DeleteConfirmModal
@@ -749,6 +797,7 @@ const InvoiceTable = ({
   loading,
   onViewDetails,
   onEditInvoice,
+  onSettleInvoice,
   onDeleteInvoice,
   currentPage,
   setCurrentPage,
@@ -868,11 +917,50 @@ const InvoiceTable = ({
                   </td>
                   <td className="px-6 py-4">
                     <div className="font-bold text-slate-800">
-                      {formatCurrency(invoice.total_amount)}
+                      {formatCurrency(Number(invoice.total_amount) || 0)}
                     </div>
-                    {invoice.status === "Partially Paid" && invoice.paid_amount > 0 && (
-                      <div className="text-xs text-emerald-600">
-                        Paid: {formatCurrency(invoice.paid_amount)}
+                    {invoice.status === "Partially Paid" && (
+                      <div className="mt-1 space-y-1">
+                        <div className="text-xs text-emerald-600">
+                          Paid: {formatCurrency(Number(invoice.paid_amount) || 0)}
+                        </div>
+                        <div className="text-xs font-semibold text-amber-700">
+                          Due: {formatCurrency(Math.max(
+                            0,
+                            (Number(invoice.total_amount) || 0) - (Number(invoice.paid_amount) || 0),
+                          ))}
+                        </div>
+                        <div
+                          className="h-1.5 w-24 overflow-hidden rounded-full bg-slate-200"
+                          role="progressbar"
+                          aria-label="Invoice payment progress"
+                          aria-valuemin="0"
+                          aria-valuemax="100"
+                          aria-valuenow={Math.min(
+                            100,
+                            Math.max(
+                              0,
+                              ((Number(invoice.paid_amount) || 0) /
+                                (Number(invoice.total_amount) || 1)) *
+                                100,
+                            ),
+                          )}
+                        >
+                          <div
+                            className="h-full rounded-full bg-emerald-500"
+                            style={{
+                              width: `${Math.min(
+                                100,
+                                Math.max(
+                                  0,
+                                  ((Number(invoice.paid_amount) || 0) /
+                                    (Number(invoice.total_amount) || 1)) *
+                                    100,
+                                ),
+                              )}%`,
+                            }}
+                          />
+                        </div>
                       </div>
                     )}
                   </td>
@@ -888,6 +976,16 @@ const InvoiceTable = ({
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex gap-2">
+                      {invoice.status === "Partially Paid" && (
+                        <button
+                          onClick={() => onSettleInvoice(invoice)}
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-2.5 py-2 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-100"
+                          title="Record the remaining balance as paid"
+                        >
+                          <CheckCircle className="h-4 w-4" />
+                          <span className="hidden xl:inline">Settle</span>
+                        </button>
+                      )}
                       <button
                         onClick={() => onViewDetails(invoice)}
                         className="p-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg transition-colors"
@@ -1279,13 +1377,19 @@ const CreateInvoiceModal = ({
   });
 
   const [formData, setFormData] = useState(() => buildInitialForm(invoice));
+  const [paymentError, setPaymentError] = useState("");
 
   useEffect(() => {
     setFormData(buildInitialForm(invoice));
   }, [invoice]);
 
   const calculateTotal = () => {
-    return formData.items.reduce((sum, item) => sum + (item.amount || 0), 0);
+    const subtotal = formData.items.reduce((sum, item) => {
+      const quantity = Number(item.quantity) || 0;
+      const unitPrice = Number(item.unit_price) || 0;
+      return sum + quantity * unitPrice;
+    }, 0);
+    return Math.round((subtotal + Number.EPSILON) * 100) / 100;
   };
 
   const total = calculateTotal();
@@ -1312,6 +1416,7 @@ const CreateInvoiceModal = ({
   };
 
   const handleStatusChange = (status) => {
+    setPaymentError("");
     let paid = Number(formData.paid_amount) || 0;
     if (status === "Paid") paid = total;
     else if (status === "Unpaid" || status === "Draft" || status === "Sent" || status === "Cancelled") {
@@ -1325,16 +1430,17 @@ const CreateInvoiceModal = ({
     e.preventDefault();
     if (!formData.client_id) return;
 
+    setPaymentError("");
     let paidAmount = Number(formData.paid_amount) || 0;
     if (formData.status === "Paid") {
       paidAmount = total;
     } else if (formData.status === "Partially Paid") {
-      if (paidAmount <= 0) {
-        alert("Enter how much has been paid for a Partially Paid invoice.");
-        return;
-      }
-      if (paidAmount >= total) {
-        alert("Partial payment must be less than the total. Use Paid status for full payment.");
+      if (!Number.isFinite(paidAmount) || paidAmount <= 0 || paidAmount >= total) {
+        setPaymentError(
+          total > 0
+            ? "Enter an amount greater than zero and less than the invoice total."
+            : "Add an invoice item with an amount greater than zero before recording a partial payment.",
+        );
         return;
       }
     } else if (
@@ -1494,7 +1600,9 @@ const CreateInvoiceModal = ({
                   </div>
                   <div className="col-span-1">
                     <div className="text-sm font-medium text-slate-700 py-2">
-                      {formatCurrency(item.amount)}
+                        {formatCurrency(
+                          (Number(item.quantity) || 0) * (Number(item.unit_price) || 0),
+                        )}
                     </div>
                   </div>
                   <div className="col-span-1">
@@ -1572,12 +1680,14 @@ const CreateInvoiceModal = ({
                     max={total > 0 ? total : undefined}
                     value={formData.paid_amount}
                     disabled={formData.status === "Paid"}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      setPaymentError("");
                       setFormData({
                         ...formData,
-                        paid_amount: parseFloat(e.target.value) || 0,
-                      })
-                    }
+                        paid_amount: e.target.value === "" ? "" : Number(e.target.value),
+                      });
+                    }}
+                    aria-invalid={Boolean(paymentError)}
                     className="w-full pl-10 pr-3 py-2.5 border border-amber-300 rounded-xl focus:ring-2 focus:ring-amber-500 bg-white disabled:bg-slate-100 disabled:text-slate-500"
                     placeholder="How much has been paid?"
                   />
@@ -1593,8 +1703,12 @@ const CreateInvoiceModal = ({
               </div>
               {formData.status === "Partially Paid" && (
                 <p className="text-xs text-amber-700 mt-2">
-                  Enter the amount already received. It must be greater than 0 and less than the total (
-                  {formatCurrency(total)}).
+                  Enter the payment received so far. The invoice total remains unchanged and the outstanding balance is calculated automatically.
+                </p>
+              )}
+              {paymentError && (
+                <p role="alert" className="mt-2 text-sm font-medium text-rose-700">
+                  {paymentError}
                 </p>
               )}
             </div>
@@ -1631,7 +1745,7 @@ const CreateInvoiceModal = ({
           {/* Summary */}
           <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-5 space-y-2">
             <div className="flex justify-between items-center">
-              <span className="text-lg font-semibold text-slate-700">Total Amount:</span>
+              <span className="text-lg font-semibold text-slate-700">Invoice Total:</span>
               <span className="text-3xl font-bold text-blue-600">{formatCurrency(total)}</span>
             </div>
             {(formData.status === "Partially Paid" ||
@@ -1953,7 +2067,9 @@ const InvoiceDetailModal = ({ invoice, onClose, onEdit }) => {
                       {formatCurrency(item.unit_price || 0)}
                     </td>
                     <td style={{ textAlign: 'right', padding: '12px', fontSize: '13px', fontWeight: '600', color: '#0f172a' }}>
-                      {formatCurrency(item.amount || 0)}
+                      {formatCurrency(
+                        (Number(item.quantity) || 0) * (Number(item.unit_price) || 0),
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -1996,6 +2112,29 @@ const InvoiceDetailModal = ({ invoice, onClose, onEdit }) => {
                       {formatCurrency(invoice.total_amount || 0)}
                     </td>
                   </tr>
+                  {invoice.status === 'Partially Paid' && (
+                    <>
+                      <tr>
+                        <td style={{ color: '#059669', fontSize: '11px', padding: '8px 12px' }}>
+                          Amount Paid
+                        </td>
+                        <td style={{ textAlign: 'right', fontSize: '11px', color: '#059669', fontWeight: '600', padding: '8px 12px' }}>
+                          {formatCurrency(Number(invoice.paid_amount) || 0)}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style={{ color: '#b45309', fontSize: '12px', fontWeight: '700', padding: '10px 12px', borderTop: '1px solid #e2e8f0' }}>
+                          Balance Due
+                        </td>
+                        <td style={{ textAlign: 'right', fontSize: '14px', color: '#b45309', fontWeight: '800', padding: '10px 12px', borderTop: '1px solid #e2e8f0' }}>
+                          {formatCurrency(Math.max(
+                            0,
+                            (Number(invoice.total_amount) || 0) - (Number(invoice.paid_amount) || 0),
+                          ))}
+                        </td>
+                      </tr>
+                    </>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -2334,6 +2473,74 @@ const InvoiceDetailModal = ({ invoice, onClose, onEdit }) => {
         }
       `}</style>
     </>
+  );
+};
+
+const SettleInvoiceModal = ({ invoice, onConfirm, onClose, loading = false }) => {
+  const invoiceTotal = Number(invoice.total_amount) || 0;
+  const paidAmount = Number(invoice.paid_amount) || 0;
+  const balanceDue = Math.max(0, invoiceTotal - paidAmount);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="settle-invoice-title"
+        className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl"
+      >
+        <div className="mb-5 flex items-center gap-3">
+          <div className="rounded-full bg-emerald-100 p-2">
+            <CheckCircle className="h-6 w-6 text-emerald-600" />
+          </div>
+          <div>
+            <h3 id="settle-invoice-title" className="text-xl font-bold text-slate-800">
+              Settle Invoice
+            </h3>
+            <p className="text-sm text-slate-500">{invoice.invoice_number}</p>
+          </div>
+        </div>
+
+        <p className="mb-5 text-sm text-slate-600">
+          Confirm that the remaining payment has been received. This will mark the invoice as fully paid.
+        </p>
+
+        <dl className="mb-6 space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm">
+          <div className="flex justify-between gap-4">
+            <dt className="text-slate-600">Invoice total</dt>
+            <dd className="font-semibold text-slate-800">{formatCurrency(invoiceTotal)}</dd>
+          </div>
+          <div className="flex justify-between gap-4">
+            <dt className="text-slate-600">Paid so far</dt>
+            <dd className="font-semibold text-emerald-700">{formatCurrency(paidAmount)}</dd>
+          </div>
+          <div className="flex justify-between gap-4 border-t border-slate-200 pt-3">
+            <dt className="font-semibold text-slate-700">Remaining balance received</dt>
+            <dd className="font-bold text-emerald-700">{formatCurrency(balanceDue)}</dd>
+          </div>
+        </dl>
+
+        <div className="flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={loading}
+            className="rounded-lg border border-slate-300 px-4 py-2 font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-60"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={loading || balanceDue <= 0}
+            className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 font-semibold text-white transition-colors hover:bg-emerald-700 disabled:opacity-60"
+          >
+            <CheckCircle className="h-4 w-4" />
+            {loading ? "Updating..." : "Confirm Payment"}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 };
 

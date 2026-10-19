@@ -68,7 +68,7 @@ const EmployeeDashboard = () => {
               </div>
               <div>
                 <h2 className="text-3xl font-extrabold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent mb-2">
-                  Welcome, {user?.name || user?.email || 'Employee'}!
+                  👋 Welcome, {user?.name || user?.email || 'Employee'}!
                 </h2>
                 <p className="text-gray-600 text-sm">
                   Have a productive day ahead! 🚀

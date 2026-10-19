@@ -71,6 +71,21 @@ const ensureTables = async () => {
        AFTER amount`
     );
   }
+
+  const [createdByNameColumn] = await pool.query(
+    `SELECT COUNT(*) AS count
+     FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE()
+       AND TABLE_NAME = 'expenses'
+       AND COLUMN_NAME = 'created_by_name'`
+  );
+  if (createdByNameColumn[0].count === 0) {
+    await pool.query(
+      `ALTER TABLE expenses
+       ADD COLUMN created_by_name VARCHAR(150) DEFAULT NULL
+       AFTER created_by`
+    );
+  }
 };
 
 // Run once at module load
@@ -201,6 +216,7 @@ exports.getExpenses = async (req, res) => {
               e.amount,
               e.payment_type,
               e.note,
+              e.created_by_name,
               DATE_FORMAT(e.expense_date, '%Y-%m-%d') AS expense_date,  -- ✅ FIX: Format as string
               e.expense_time,
               e.created_at,
@@ -267,10 +283,14 @@ exports.createExpense = async (req, res) => {
 
     console.log("✅ [createExpense] Final payment_type:", finalPaymentType);
 
+    const creatorId = req.user?.userId || req.user?.id || null;
+    const creatorName =
+      typeof req.user?.name === 'string' ? req.user.name.trim() || null : null;
+
     const [result] = await pool.query(
-      `INSERT INTO expenses (category_id, category_name, amount, payment_type, note, expense_date, expense_time, created_by)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [category_id, cats[0].name, parseFloat(amount), finalPaymentType, note.trim(), expense_date, expense_time, req.user?.userId || req.user?.id || null]
+      `INSERT INTO expenses (category_id, category_name, amount, payment_type, note, expense_date, expense_time, created_by, created_by_name)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [category_id, cats[0].name, parseFloat(amount), finalPaymentType, note.trim(), expense_date, expense_time, creatorId, creatorName]
     );
 
     const [rows] = await pool.query(

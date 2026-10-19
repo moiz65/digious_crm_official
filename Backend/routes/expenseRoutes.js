@@ -16,20 +16,23 @@ const express = require('express');
 const router = express.Router();
 const ctrl = require('./controllers/expenseController');
 const authMiddleware = require('../middleware/auth');
+const expenseAccess = require('../middleware/expenseAccess');
+
+router.use(authMiddleware, expenseAccess);
 
 // ── Categories (must be before /:id to avoid param conflicts) ──
-router.get   ('/categories',      authMiddleware, ctrl.getCategories);
-router.post  ('/categories',      authMiddleware, ctrl.createCategory);
-router.put   ('/categories/:id',  authMiddleware, ctrl.updateCategory);
-router.delete('/categories/:id',  authMiddleware, ctrl.deleteCategory);
+router.get   ('/categories',      ctrl.getCategories);
+router.post  ('/categories',      ctrl.createCategory);
+router.put   ('/categories/:id',  ctrl.updateCategory);
+router.delete('/categories/:id',  ctrl.deleteCategory);
 
 // ── Monthly summary (must be before /:id) ─────────────────────
-router.get   ('/summary/monthly', authMiddleware, ctrl.getMonthlySummary);
+router.get   ('/summary/monthly', ctrl.getMonthlySummary);
 
 // ── Expenses ──────────────────────────────────────────────────
-router.get   ('/',     authMiddleware, ctrl.getExpenses);
-router.post  ('/',     authMiddleware, ctrl.createExpense);
-router.put   ('/:id',  authMiddleware, ctrl.updateExpense);
-router.delete('/:id',  authMiddleware, ctrl.deleteExpense);
+router.get   ('/',     ctrl.getExpenses);
+router.post  ('/',     ctrl.createExpense);
+router.put   ('/:id',  ctrl.updateExpense);
+router.delete('/:id',  ctrl.deleteExpense);
 
 module.exports = router;

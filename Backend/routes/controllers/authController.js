@@ -261,6 +261,7 @@ exports.login = async (req, res) => {
         email: user.email,
         department: user.department,
         position: user.position,
+        designation: user.designation,
         role: user.department,
         token: token,
         device_user_id: deviceUserId,
@@ -698,4 +699,3 @@ exports.getIPInfo = async (req, res) => {
     });
   }
 };
-

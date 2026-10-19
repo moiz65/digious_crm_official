@@ -1766,14 +1766,14 @@ const HRMyAttendance = () => {
                 </button>
 
                 <button
-                  onClick={() => setStatusFilter("Leave")}
-                  className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${statusFilter === "Leave"
+                  onClick={() => setStatusFilter("Paid Leave")}
+                  className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${statusFilter === "Paid Leave"
                     ? "bg-purple-600 text-white"
                     : "bg-white text-gray-700 hover:bg-gray-200"
                     }`}
                 >
                   Leave (
-                  {monthlyAttendance.filter((r) => r.status === "Leave").length}
+                  {monthlyAttendance.filter((r) => r.status === "Paid Leave").length}
                   )
                 </button>
               </div>
