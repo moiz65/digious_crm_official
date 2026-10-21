@@ -134,8 +134,8 @@ const LoginPage = () => {
           navigate('/admin/dashboard');
         } else if (userRole === 'hr') {
           navigate('/hr/dashboard');
-        } else if (data.data.designation?.trim().toLowerCase() === 'business unit head') {
-          navigate('/business-unit-head/dashboard');
+        } else if (data.data.designation?.trim().toLowerCase() === 'operations manager') {
+          navigate('/operations-manager/dashboard');
         } else {
           navigate('/employee/dashboard');
         }

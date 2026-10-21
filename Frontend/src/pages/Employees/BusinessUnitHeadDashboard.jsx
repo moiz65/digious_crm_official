@@ -92,7 +92,7 @@ const BusinessUnitHeadDashboard = () => {
       setMonthlyExpenses(Number(expensesData.total) || 0);
       setCurrentDate(now);
     } catch (loadError) {
-      console.error("Failed to load Business Unit Head dashboard:", loadError);
+      console.error("Failed to load operations manager dashboard:", loadError);
       setError(loadError.message || "Failed to load dashboard data");
     } finally {
       setIsLoading(false);
@@ -158,7 +158,7 @@ const BusinessUnitHeadDashboard = () => {
         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
           <header className="mb-8 flex flex-col gap-4 rounded-3xl bg-gradient-to-r from-indigo-700 via-indigo-600 to-violet-600 p-6 text-white shadow-lg sm:flex-row sm:items-center sm:justify-between sm:p-8">
             <div>
-              <p className="mb-2 text-sm font-medium text-indigo-100">Business Unit Head</p>
+              <p className="mb-2 text-sm font-medium text-indigo-100">Operations Manager</p>
               <h1 className="text-2xl font-bold sm:text-3xl">
                 👋 Welcome{user?.name ? `, ${user.name}` : ""}
               </h1>

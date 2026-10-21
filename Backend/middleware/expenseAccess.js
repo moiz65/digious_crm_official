@@ -5,7 +5,7 @@ const expenseAccess = (req, res, next) => {
   if (
     role === 'admin' ||
     role === 'administration' ||
-    designation === 'business unit head'
+    designation === 'operations manager'
   ) {
     return next();
   }

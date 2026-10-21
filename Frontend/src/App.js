@@ -167,11 +167,11 @@ function AppContent() {
             }
           />
           <Route
-            path="/business-unit-head/expenses"
+            path="/operations-manager/expenses"
             element={
               <ProtectedRoute
                 requiredRole="employee"
-                requiredDesignation="Business Unit Head"
+                requiredDesignation="Operations Manager"
               >
                 <AdminExpense />
               </ProtectedRoute>
@@ -395,11 +395,11 @@ function AppContent() {
             }
           />
           <Route
-            path="/business-unit-head/dashboard"
+            path="/operations-manager/dashboard"
             element={
               <ProtectedRoute
                 requiredRole="employee"
-                requiredDesignation="Business Unit Head"
+                requiredDesignation="Operations Manager"
               >
                 <BusinessUnitHeadDashboard />
               </ProtectedRoute>

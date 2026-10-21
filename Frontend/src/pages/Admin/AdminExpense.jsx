@@ -118,7 +118,7 @@ const getRandomColor = () => COLORS[Math.floor(Math.random() * COLORS.length)];
 const AdminExpense = () => {
   const { user } = useAuth();
   const isBusinessUnitHead =
-    user?.designation?.trim().toLowerCase() === "business unit head";
+    user?.designation?.trim().toLowerCase() === "operations manager";
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [activeItem, setActiveItem] = useState("expenses");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);

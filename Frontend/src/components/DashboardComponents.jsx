@@ -396,8 +396,8 @@ export const RoleBasedNav = ({ role }) => {
       // { id: 'reports', label: 'Reports', path: '/hr/reports', icon: ChartBar, color: 'teal' }
     ],
     employee: [
-      { id: 'dashboard', label: 'My Dashboard', path: user?.designation?.trim().toLowerCase() === 'business unit head'
-        ? '/business-unit-head/dashboard'
+      { id: 'dashboard', label: 'My Dashboard', path: user?.designation?.trim().toLowerCase() === 'operations manager'
+        ? '/operations-manager/dashboard'
         : '/employee/dashboard', icon: LayoutDashboard, color: 'blue' },
       { id: 'attendance', label: 'My Attendance', path: '/employee/attendance', icon: Calendar, color: 'orange' },
       { id: 'profile', label: 'My Profile', path: '/employee/profile', icon: User, color: 'green' },

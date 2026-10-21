@@ -31,16 +31,16 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveIte
       id: 'dashboard',
       icon: LayoutDashboard,
       label: 'My Dashboard',
-      path: user?.designation?.trim().toLowerCase() === 'business unit head'
-        ? '/business-unit-head/dashboard'
+      path: user?.designation?.trim().toLowerCase() === 'operations manager'
+        ? '/operations-manager/dashboard'
         : '/employee/dashboard'
     },
     { id: 'attendance', icon: Calendar, label: 'Attendance', path: '/employee/attendance' },
     { id: 'profile', icon: User, label: 'My Profile', path: '/employee/profile' },
     // Sales menu only visible for Sales department employees
     ...(user?.department === 'Sales' ? [{ id: 'sales', icon: DollarSign, label: 'Sales', path: '/employee/sales' }] : []),
-    ...(user?.designation?.trim().toLowerCase() === 'business unit head'
-      ? [{ id: 'expenses', icon: Wallet, label: 'Expense', path: '/business-unit-head/expenses' }]
+    ...(user?.designation?.trim().toLowerCase() === 'operations manager'
+      ? [{ id: 'expenses', icon: Wallet, label: 'Expense', path: '/operations-manager/expenses' }]
       : []),
     { id: 'corrections', icon: ClipboardCheck, label: 'Corrections', path: '/employee/attendance-corrections' },
     { id: 'applications', icon: FileText, label: 'Applications', path: '/employee/applications' },
