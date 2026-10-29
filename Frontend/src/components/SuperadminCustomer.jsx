@@ -28,6 +28,7 @@ import ProtectedModule from "./ProtectedModule";
 import { usePasscode } from "../context/PasscodeContext";
 
 const SuperadminCustomer = () => {
+  
   // ── State ──
   const [customers, setCustomers] = useState([]);
   const [stats, setStats] = useState({
@@ -36,6 +37,7 @@ const SuperadminCustomer = () => {
     total_projects: 0,
     repeat_customers: 0,
   });
+
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 

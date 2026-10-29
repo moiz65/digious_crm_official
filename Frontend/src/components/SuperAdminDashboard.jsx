@@ -448,6 +448,9 @@ export function SuperAdminDashboard() {
 
   // ✅ Use direct absentEmployeesList from API
   const absentEmployees = absentEmployeesList;
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const userName = user?.name || user?.email || user?.username || "Super Admin";
+  const greeting = `Hello, ${userName}!`;
   
   const salesProgress =
     dashboardData.salesTarget > 0
@@ -520,6 +523,29 @@ export function SuperAdminDashboard() {
       </div>
 
       <div className="px-8 py-6">
+        <div className="mb-8">
+          <div className="rounded-3xl bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 p-6 text-white shadow-xl border border-indigo-500/30">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div className="flex items-start gap-4">
+                <div className="p-3 bg-white/15 rounded-2xl backdrop-blur-sm">
+                  <Sparkles className="h-7 w-7 text-white" />
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-[0.25em] text-indigo-100/80">Welcome</p>
+                  <h2 className="text-3xl font-bold mt-1">{greeting}</h2>
+                  <p className="text-indigo-100 mt-1 text-sm">
+                    Welcome to the Super Admin dashboard. Your organization overview is ready.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 rounded-full bg-white/10 px-3 py-2 text-sm font-medium border border-white/10">
+                <ShieldCheck className="h-4 w-4 text-emerald-300" />
+                Super Admin Access
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* KPI Cards Row */}
         <div className="relative">
           {/* Toggle Button for Values */}

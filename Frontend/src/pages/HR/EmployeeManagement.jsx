@@ -369,9 +369,24 @@ const EmployeeManagement = () => {
             r.resource_serial || r.serial || r.resourceSerial || "",
         }))
         .filter((r) => r.resource_name && r.resource_name.trim() !== "");
+      const baseSalary = Number(editFormData.base_salary);
+      if (!Number.isFinite(baseSalary) || baseSalary < 0) {
+        toast.error("Provide a valid base salary");
+        return;
+      }
+      const totalSalary =
+        baseSalary +
+        normalizedAllowances.reduce(
+          (total, allowance) => total + allowance.allowance_amount,
+          0,
+        );
 
       const payload = {
         ...editFormData,
+        salary: {
+          base_salary: baseSalary,
+          total_salary: totalSalary,
+        },
         allowances: normalizedAllowances,
         dynamic_resources: normalizedDynamicResources,
       };
@@ -385,18 +400,26 @@ const EmployeeManagement = () => {
         body: JSON.stringify(payload),
       });
 
-      if (response.ok) {
-        const updatedEmployee = await response.json();
+      const result = await response.json();
+      if (response.ok && result.success) {
+        const updatedEmployee = {
+          ...editFormData,
+          base_salary: baseSalary,
+          total_salary: totalSalary,
+          allowances: normalizedAllowances,
+          dynamicResources: normalizedDynamicResources,
+          dynamic_resources: normalizedDynamicResources,
+        };
         setEmployees(
           employees.map((emp) =>
-            emp.id === editFormData.id ? { ...emp, ...editFormData } : emp,
+            emp.id === editFormData.id ? { ...emp, ...updatedEmployee } : emp,
           ),
         );
-        setSelectedEmployee({ ...selectedEmployee, ...editFormData });
+        setSelectedEmployee({ ...selectedEmployee, ...updatedEmployee });
         setIsEditMode(false);
         toast.success("Employee details updated successfully!");
       } else {
-        toast.error("Failed to update employee");
+        toast.error(result.message || "Failed to update employee");
       }
     } catch (err) {
       console.error("Error updating employee:", err);
@@ -1054,9 +1077,8 @@ const EmployeeManagement = () => {
                   </div>
 
                   <div className="space-y-2">
-                    {(editFormData?.allowances &&
-                    editFormData.allowances.length > 0
-                      ? editFormData.allowances
+                    {(isEditMode
+                      ? editFormData?.allowances || []
                       : selectedEmployee.allowances || []
                     ).map((a, idx) => (
                       <div
@@ -1086,10 +1108,9 @@ const EmployeeManagement = () => {
                       </div>
                     ))}
 
-                    {(!editFormData?.allowances ||
-                      editFormData.allowances.length === 0) &&
-                      (!selectedEmployee.allowances ||
-                        selectedEmployee.allowances.length === 0) && (
+                    {(isEditMode
+                      ? !editFormData?.allowances?.length
+                      : !selectedEmployee.allowances?.length) && (
                         <p className="text-sm text-gray-500">
                           No allowances assigned.
                         </p>
@@ -1143,13 +1164,11 @@ const EmployeeManagement = () => {
                   </div>
 
                   <div className="space-y-2">
-                    {(editFormData?.dynamic_resources &&
-                    editFormData.dynamic_resources.length > 0
-                      ? editFormData.dynamic_resources
-                      : editFormData?.dynamicResources &&
-                          editFormData.dynamicResources.length > 0
-                        ? editFormData.dynamicResources
-                        : selectedEmployee.dynamicResources || []
+                    {(isEditMode
+                      ? editFormData?.dynamic_resources ||
+                        editFormData?.dynamicResources ||
+                        []
+                      : selectedEmployee.dynamicResources || []
                     ).map((r, idx) => (
                       <div
                         key={idx}
@@ -1177,10 +1196,12 @@ const EmployeeManagement = () => {
                       </div>
                     ))}
 
-                    {(!editFormData?.dynamic_resources ||
-                      editFormData.dynamic_resources.length === 0) &&
-                      (!selectedEmployee.dynamicResources ||
-                        selectedEmployee.dynamicResources.length === 0) && (
+                    {(isEditMode
+                      ? !(
+                          editFormData?.dynamic_resources ||
+                          editFormData?.dynamicResources
+                        )?.length
+                      : !selectedEmployee.dynamicResources?.length) && (
                         <p className="text-sm text-gray-500">
                           No dynamic resources allocated.
                         </p>

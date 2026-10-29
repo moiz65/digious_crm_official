@@ -702,11 +702,27 @@ exports.updateEmployee = async (req, res) => {
   const { id } = req.params;
   const {
     salary,
+    base_salary: baseSalaryInput,
+    total_salary: totalSalaryInput,
     allowances,
     dynamic_resources,
+    dynamicResources,
     profile_picture,
     ...employeeFields
   } = req.body;
+  const salaryBaseInput = salary?.base_salary ?? baseSalaryInput;
+  const salaryTotalInput = salary?.total_salary ?? totalSalaryInput;
+  const resourcesToSave = dynamic_resources ?? dynamicResources;
+
+  if (
+    salaryBaseInput !== undefined &&
+    (!Number.isFinite(Number(salaryBaseInput)) || Number(salaryBaseInput) < 0)
+  ) {
+    return res.status(400).json({
+      success: false,
+      message: "Base salary must be a valid non-negative number",
+    });
+  }
 
   const connection = await pool.getConnection();
 
@@ -824,21 +840,6 @@ exports.updateEmployee = async (req, res) => {
       await connection.query(updateQuery, updateValues);
     }
 
-    /* 2. Update salary */
-    if (salary) {
-      // Try UPDATE first; if no row exists, INSERT
-      const [salaryUpdateResult] = await connection.query(
-        `UPDATE employee_salary SET base_salary = ?, total_salary = ? WHERE employee_id = ?`,
-        [salary.base_salary, salary.total_salary, id],
-      );
-      if (salaryUpdateResult.affectedRows === 0) {
-        await connection.query(
-          `INSERT INTO employee_salary (employee_id, base_salary, total_salary) VALUES (?, ?, ?)`,
-          [id, salary.base_salary, salary.total_salary],
-        );
-      }
-    }
-
     /* 3. Update allowances (UPSERT LOGIC) */
 
     if (Array.isArray(allowances)) {
@@ -904,21 +905,53 @@ exports.updateEmployee = async (req, res) => {
 
     /* 4. Update dynamic resources */
 
-    if (Array.isArray(dynamic_resources)) {
+    if (Array.isArray(resourcesToSave)) {
       // For dynamic resources, we can do simple delete+insert
       await connection.query(
         `DELETE FROM employee_dynamic_resources WHERE employee_id = ?`,
         [id],
       );
 
-      for (const resource of dynamic_resources) {
+      for (const resource of resourcesToSave) {
         await connection.query(
           `
           INSERT INTO employee_dynamic_resources
           (employee_id, resource_name, resource_serial)
           VALUES (?, ?, ?)
           `,
-          [id, resource.resource_name, resource.resource_serial],
+          [
+            id,
+            resource.resource_name || resource.name,
+            resource.resource_serial || resource.serial || null,
+          ],
+        );
+      }
+    }
+
+    /* 5. Update salary after allowances so total salary reflects the saved list */
+    if (salaryBaseInput !== undefined) {
+      const baseSalary = Number(salaryBaseInput);
+      let totalSalary =
+        salaryTotalInput === undefined ? null : Number(salaryTotalInput);
+
+      if (totalSalary === null || !Number.isFinite(totalSalary)) {
+        const [allowanceTotalRows] = await connection.query(
+          `SELECT COALESCE(SUM(allowance_amount * COALESCE(exchange_rate, 1)), 0) AS total_allowances
+           FROM employee_allowances
+           WHERE employee_id = ?`,
+          [id],
+        );
+        totalSalary = baseSalary + Number(allowanceTotalRows[0].total_allowances || 0);
+      }
+
+      const [salaryUpdateResult] = await connection.query(
+        `UPDATE employee_salary SET base_salary = ?, total_salary = ? WHERE employee_id = ?`,
+        [baseSalary, totalSalary, id],
+      );
+      if (salaryUpdateResult.affectedRows === 0) {
+        await connection.query(
+          `INSERT INTO employee_salary (employee_id, base_salary, total_salary) VALUES (?, ?, ?)`,
+          [id, baseSalary, totalSalary],
         );
       }
     }
@@ -938,8 +971,8 @@ exports.updateEmployee = async (req, res) => {
       employee: updatedEmployee[0], // Return updated employee data
       details: {
         allowancesUpdated: allowances ? allowances.length : 0,
-        dynamicResourcesUpdated: dynamic_resources
-          ? dynamic_resources.length
+        dynamicResourcesUpdated: Array.isArray(resourcesToSave)
+          ? resourcesToSave.length
           : 0,
         profilePictureUpdated: !!profilePictureUrl,
       },
