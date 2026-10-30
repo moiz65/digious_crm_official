@@ -1002,17 +1002,29 @@ const EmployeeManagement = () => {
                     onChange={(val) => handleEditFormChange("address", val)}
                   />
                 )}
-                {selectedEmployee.bank_account && (
-                  <CompactField
-                    label="Bank Account"
-                    value={selectedEmployee.bank_account}
-                    isEditMode={isEditMode}
-                    editValue={editFormData?.bank_account}
-                    onChange={(val) =>
-                      handleEditFormChange("bank_account", val)
-                    }
-                  />
-                )}
+                <CompactField
+                  label="Account Title"
+                  value={selectedEmployee.account_title_name}
+                  isEditMode={isEditMode}
+                  editValue={editFormData?.account_title_name}
+                  onChange={(val) =>
+                    handleEditFormChange("account_title_name", val)
+                  }
+                />
+                <CompactField
+                  label="Bank Name"
+                  value={selectedEmployee.bank_name}
+                  isEditMode={isEditMode}
+                  editValue={editFormData?.bank_name}
+                  onChange={(val) => handleEditFormChange("bank_name", val)}
+                />
+                <CompactField
+                  label="Bank Account"
+                  value={selectedEmployee.bank_account}
+                  isEditMode={isEditMode}
+                  editValue={editFormData?.bank_account}
+                  onChange={(val) => handleEditFormChange("bank_account", val)}
+                />
                 {selectedEmployee.tax_id && (
                   <CompactField
                     label="Tax ID"

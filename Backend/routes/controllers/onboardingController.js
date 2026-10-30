@@ -575,9 +575,14 @@ exports.getEmployeeById = async (req, res) => {
     try {
       // Get basic employee info
       const [employees] = await connection.query(
-        `SELECT eo.*, es.base_salary, es.total_salary 
+        `SELECT eo.*, es.base_salary, es.total_salary,
+                ba.account_number AS primary_bank_account,
+                ba.account_title_name AS primary_account_title_name,
+                ba.bank_name AS primary_bank_name
          FROM employee_onboarding eo
          LEFT JOIN employee_salary es ON eo.id = es.employee_id
+         LEFT JOIN employee_bank_accounts ba
+           ON eo.id = ba.employee_id AND ba.is_primary = 1
          WHERE eo.id = ?`,
         [id],
       );
@@ -590,6 +595,14 @@ exports.getEmployeeById = async (req, res) => {
       }
 
       const employee = employees[0];
+      employee.bank_account =
+        employee.primary_bank_account || employee.bank_account || "";
+      employee.account_title_name =
+        employee.primary_account_title_name || employee.account_title_name || "";
+      employee.bank_name = employee.primary_bank_name || employee.bank_name || "";
+      delete employee.primary_bank_account;
+      delete employee.primary_account_title_name;
+      delete employee.primary_bank_name;
 
       // CNIC/DOB are stored on employee_onboarding (single source of truth)
       // Compute CNIC document status based on cnic_expiry_date
@@ -713,6 +726,24 @@ exports.updateEmployee = async (req, res) => {
   const salaryBaseInput = salary?.base_salary ?? baseSalaryInput;
   const salaryTotalInput = salary?.total_salary ?? totalSalaryInput;
   const resourcesToSave = dynamic_resources ?? dynamicResources;
+  const bankFields = ["bank_account", "account_title_name", "bank_name"];
+  const bankFieldsSupplied = bankFields.some(
+    (field) => employeeFields[field] !== undefined,
+  );
+  const providedBankValues = bankFields.map((field) =>
+    String(employeeFields[field] ?? "").trim(),
+  );
+
+  if (
+    bankFieldsSupplied &&
+    providedBankValues.some(Boolean) &&
+    providedBankValues.some((value) => !value)
+  ) {
+    return res.status(400).json({
+      success: false,
+      message: "Bank name, account title, and account number are all required",
+    });
+  }
 
   if (
     salaryBaseInput !== undefined &&
@@ -838,6 +869,57 @@ exports.updateEmployee = async (req, res) => {
       console.log("Update Values:", updateValues);
 
       await connection.query(updateQuery, updateValues);
+    }
+
+    if (bankFieldsSupplied) {
+      const [existingPrimaryAccounts] = await connection.query(
+        `SELECT id
+         FROM employee_bank_accounts
+         WHERE employee_id = ? AND is_primary = 1
+         LIMIT 1`,
+        [id],
+      );
+      if (providedBankValues.every((value) => !value)) {
+        await connection.query(
+          `DELETE FROM employee_bank_accounts
+           WHERE employee_id = ? AND is_primary = 1`,
+          [id],
+        );
+      } else {
+        const [accountNumber, accountTitle, bankName] = providedBankValues;
+        if (existingPrimaryAccounts.length > 0) {
+          await connection.query(
+            `UPDATE employee_bank_accounts
+             SET account_number = ?, account_title_name = ?, bank_name = ?
+             WHERE id = ?`,
+            [
+              accountNumber,
+              accountTitle,
+              bankName,
+              existingPrimaryAccounts[0].id,
+            ],
+          );
+        } else {
+          await connection.query(
+            `INSERT INTO employee_bank_accounts
+               (employee_id, account_number, account_title_name, bank_name, is_primary)
+             VALUES (?, ?, ?, ?, 1)`,
+            [id, accountNumber, accountTitle, bankName],
+          );
+        }
+      }
+
+      await connection.query(
+        `UPDATE employee_onboarding
+         SET bank_account = ?, account_title_name = ?, bank_name = ?
+         WHERE id = ?`,
+        [
+          providedBankValues[0],
+          providedBankValues[1],
+          providedBankValues[2],
+          id,
+        ],
+      );
     }
 
     /* 3. Update allowances (UPSERT LOGIC) */

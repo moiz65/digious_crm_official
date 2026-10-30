@@ -16,8 +16,8 @@ router.post('/set', authMiddleware, passcodeController.setPasscode);
 // Supports both admin and employee users
 router.post('/verify', authMiddleware, passcodeController.verifyPasscode);
 
-// Reset passcode using favorite movie
-// Only for employee users (admin cannot reset passcode)
+// Request and verify an email OTP to reset the passcode.
+router.post('/reset/request-otp', authMiddleware, passcodeController.sendPasscodeResetOtp);
 router.post('/reset', authMiddleware, passcodeController.resetPasscode);
 
 // Lock module temporarily

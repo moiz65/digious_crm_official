@@ -1,7 +1,7 @@
 // contexts/PasscodeContext.jsx
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
-import { X, Shield, Lock, Key, Film } from "lucide-react";
+import { X, Lock, Key, Mail } from "lucide-react";
 
 const PasscodeContext = createContext();
 
@@ -191,7 +191,7 @@ export const PasscodeProvider = ({ children }) => {
     }
   };
 
-  const setPasscode = async (passcode, favoriteMovie) => {
+  const setPasscode = async (passcode) => {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
@@ -202,7 +202,7 @@ export const PasscodeProvider = ({ children }) => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ passcode, favoriteMovie }),
+          body: JSON.stringify({ passcode }),
         },
       );
 
@@ -224,7 +224,35 @@ export const PasscodeProvider = ({ children }) => {
     }
   };
 
-  const resetPasscode = async (favoriteMovie, newPasscode) => {
+  const requestPasscodeResetOtp = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}/api/v1/passcode/reset/request-otp`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      const data = await response.json();
+      if (data.success) {
+        toast.success(data.message);
+        return data.data;
+      }
+      toast.error(data.message || "Failed to send verification code");
+      return null;
+    } catch (error) {
+      console.error("Error requesting passcode reset code:", error);
+      toast.error("Failed to send verification code. Please check your connection.");
+      return null;
+    }
+  };
+
+  const resetPasscode = async (otp, newPasscode) => {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
@@ -235,7 +263,7 @@ export const PasscodeProvider = ({ children }) => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ favoriteMovie, newPasscode }),
+          body: JSON.stringify({ otp, newPasscode }),
         },
       );
 
@@ -243,6 +271,7 @@ export const PasscodeProvider = ({ children }) => {
 
       if (data.success) {
         setShowResetModal(false);
+        setShowPasscodeModal(false);
         toast.success(
           "✅ Passcode reset successfully! Please use your new passcode.",
         );
@@ -320,7 +349,6 @@ export const PasscodeProvider = ({ children }) => {
   const SetupPasscodeModal = () => {
     const [passcode, setPasscodeLocal] = useState("");
     const [confirmPasscode, setConfirmPasscode] = useState("");
-    const [favoriteMovie, setFavoriteMovie] = useState("");
     const [isLoading, setIsLoading] = useState(false);
 
     if (!showSetupModal) return null;
@@ -340,18 +368,12 @@ export const PasscodeProvider = ({ children }) => {
         toast.error("Passcode must be at most 10 characters");
         return;
       }
-      if (!favoriteMovie.trim()) {
-        toast.error("Favorite movie is required");
-        return;
-      }
-
       setIsLoading(true);
       try {
-        const ok = await setPasscode(passcode, favoriteMovie.trim());
+        const ok = await setPasscode(passcode);
         if (ok) {
           setPasscodeLocal("");
           setConfirmPasscode("");
-          setFavoriteMovie("");
         }
       } finally {
         setIsLoading(false);
@@ -373,7 +395,8 @@ export const PasscodeProvider = ({ children }) => {
           <p className="text-sm text-slate-600 mb-4">
             Please set a security passcode to protect confidential modules.
             You'll need this passcode to access payroll, expenses, and other
-            sensitive information.
+            sensitive information. If you forget it, you can reset it using a
+            verification code sent to your registered email.
           </p>
 
           <form onSubmit={handleSubmit}>
@@ -406,25 +429,6 @@ export const PasscodeProvider = ({ children }) => {
                 required
                 disabled={isLoading}
               />
-            </div>
-
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                <Film className="h-4 w-4 inline mr-2" />
-                Favorite Movie (for passcode recovery)
-              </label>
-              <input
-                type="text"
-                value={favoriteMovie}
-                onChange={(e) => setFavoriteMovie(e.target.value)}
-                placeholder="e.g., The Dark Knight, Inception, etc."
-                className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500"
-                required
-                disabled={isLoading}
-              />
-              <p className="text-xs text-slate-500 mt-1">
-                This will be used to reset your passcode if you forget it.
-              </p>
             </div>
 
             <button
@@ -554,7 +558,7 @@ export const PasscodeProvider = ({ children }) => {
             }}
             className="mt-3 w-full text-xs text-slate-500 hover:text-blue-600"
           >
-            Forgot passcode? Reset with favorite movie
+            Forgot passcode? Reset with email code
           </button>
         </div>
       </div>
@@ -563,14 +567,34 @@ export const PasscodeProvider = ({ children }) => {
 
   // Reset Passcode Modal
   const ResetPasscodeModal = () => {
-    const [favoriteMovie, setFavoriteMovie] = useState("");
+    const [otpRequested, setOtpRequested] = useState(false);
+    const [maskedEmail, setMaskedEmail] = useState("");
+    const [otp, setOtp] = useState("");
     const [newPasscode, setNewPasscode] = useState("");
     const [confirmPasscode, setConfirmPasscode] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
 
     if (!showResetModal) return null;
 
+    const handleRequestCode = async () => {
+      setIsLoading(true);
+      try {
+        const result = await requestPasscodeResetOtp();
+        if (result) {
+          setMaskedEmail(result.email);
+          setOtpRequested(true);
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
     const handleSubmit = async (e) => {
       e.preventDefault();
+      if (!otpRequested) {
+        await handleRequestCode();
+        return;
+      }
       if (newPasscode !== confirmPasscode) {
         toast.error("Passcodes do not match!");
         return;
@@ -579,7 +603,16 @@ export const PasscodeProvider = ({ children }) => {
         toast.error("Passcode must be 4-10 characters");
         return;
       }
-      await resetPasscode(favoriteMovie.trim(), newPasscode);
+      if (!/^\d{6}$/.test(otp)) {
+        toast.error("Enter the 6-digit email verification code");
+        return;
+      }
+      setIsLoading(true);
+      try {
+        await resetPasscode(otp, newPasscode);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     return (
@@ -587,65 +620,111 @@ export const PasscodeProvider = ({ children }) => {
         <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl">
           <div className="flex items-center gap-3 mb-4">
             <div className="p-2 bg-amber-100 rounded-xl">
-              <Shield className="h-6 w-6 text-amber-600" />
+              <Mail className="h-6 w-6 text-amber-600" />
             </div>
             <h3 className="text-xl font-bold text-slate-800">Reset Passcode</h3>
           </div>
 
-          <form onSubmit={handleSubmit}>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Favorite Movie
-              </label>
-              <input
-                type="text"
-                value={favoriteMovie}
-                onChange={(e) => setFavoriteMovie(e.target.value)}
-                className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500"
-                required
-              />
-            </div>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                New Passcode
-              </label>
-              <input
-                type="password"
-                value={newPasscode}
-                onChange={(e) => setNewPasscode(e.target.value)}
-                className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500"
-                required
-              />
-            </div>
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Confirm New Passcode
-              </label>
-              <input
-                type="password"
-                value={confirmPasscode}
-                onChange={(e) => setConfirmPasscode(e.target.value)}
-                className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500"
-                required
-              />
-            </div>
-
-            <div className="flex gap-3">
+          {!otpRequested ? (
+            <div>
+              <p className="text-sm text-slate-600 mb-5">
+                We’ll send a one-time verification code to the email address
+                registered to your account.
+              </p>
               <button
                 type="button"
-                onClick={() => setShowResetModal(false)}
-                className="flex-1 px-4 py-2 border border-slate-300 rounded-xl text-slate-700 hover:bg-slate-50"
+                onClick={handleRequestCode}
+                disabled={isLoading}
+                className="w-full px-4 py-2 bg-amber-600 text-white rounded-xl hover:bg-amber-700 disabled:opacity-50"
               >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="flex-1 px-4 py-2 bg-amber-600 text-white rounded-xl hover:bg-amber-700"
-              >
-                Reset Passcode
+                {isLoading ? "Sending code..." : "Send email verification code"}
               </button>
             </div>
-          </form>
+          ) : (
+            <form onSubmit={handleSubmit}>
+              <p className="text-sm text-slate-600 mb-4">
+                Enter the 6-digit code sent to <strong>{maskedEmail}</strong>.
+                The code expires in 10 minutes.
+              </p>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Email verification code
+                </label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+                  className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500"
+                  required
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  New Passcode
+                </label>
+                <input
+                  type="password"
+                  value={newPasscode}
+                  onChange={(e) => setNewPasscode(e.target.value)}
+                  className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500"
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Confirm New Passcode
+                </label>
+                <input
+                  type="password"
+                  value={confirmPasscode}
+                  onChange={(e) => setConfirmPasscode(e.target.value)}
+                  className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500"
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+
+              <div className="flex gap-3 mb-3">
+                <button
+                  type="button"
+                  onClick={handleRequestCode}
+                  disabled={isLoading}
+                  className="flex-1 px-4 py-2 border border-amber-300 rounded-xl text-amber-700 hover:bg-amber-50 disabled:opacity-50"
+                >
+                  Resend code
+                </button>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="flex-1 px-4 py-2 bg-amber-600 text-white rounded-xl hover:bg-amber-700 disabled:opacity-50"
+                >
+                  {isLoading ? "Resetting..." : "Reset Passcode"}
+                </button>
+              </div>
+            </form>
+          )}
+
+          <div className="flex gap-3 mt-4">
+            <button
+              type="button"
+              onClick={() => {
+                setShowResetModal(false);
+                setShowPasscodeModal(true);
+                setOtpRequested(false);
+                setMaskedEmail("");
+                setOtp("");
+                setNewPasscode("");
+                setConfirmPasscode("");
+              }}
+              className="flex-1 px-4 py-2 border border-slate-300 rounded-xl text-slate-700 hover:bg-slate-50"
+            >
+              Cancel
+            </button>
+          </div>
         </div>
       </div>
     );

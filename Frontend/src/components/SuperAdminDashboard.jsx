@@ -497,11 +497,11 @@ export function SuperAdminDashboard() {
               <div className="text-right">
                 <div className="flex items-center gap-2 text-slate-500">
                   <Clock className="h-4 w-4" />
-                  <span className="font-mono text-sm font-medium">
+                  <span className="font-mono text-lg font-medium">
                     {currentTime.toLocaleTimeString()}
                   </span>
                 </div>
-                <div className="text-xs text-slate-400 mt-0.5">
+                <div className="text-sm text-slate-400 mt-0.5">
                   {currentTime.toLocaleDateString("en-US", {
                     weekday: "long",
                     month: "long",
@@ -522,7 +522,7 @@ export function SuperAdminDashboard() {
         </div>
       </div>
 
-      <div className="px-8 py-6">
+      <div className="mx-auto max-w-7xl px-8 py-6">
         <div className="mb-8">
           <div className="rounded-3xl bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 p-6 text-white shadow-xl border border-indigo-500/30">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -563,7 +563,7 @@ export function SuperAdminDashboard() {
                       <h3 className="text-slate-600 font-medium">
                         Active Employees
                       </h3>
-                      <span className="text-3xl font-bold text-slate-800">
+                      <span className="text-xl font-bold text-slate-800">
                         {visibleValues.activeEmployees
                           ? dashboardData.totalActiveEmployees
                           : "*****"}
@@ -599,9 +599,9 @@ export function SuperAdminDashboard() {
                     </div>
                     <div>
                       <h3 className="text-slate-600 font-medium">
-                        Monthly Sales Revenue
+                        Monthly Sales
                       </h3>
-                      <span className="text-3xl font-bold text-slate-800">
+                      <span className="text-xl font-bold text-slate-800">
                         {visibleValues.monthlySales
                           ? dashboardData.monthlySalesRevenue >= 1000000
                             ? `$${(dashboardData.monthlySalesRevenue / 1000000).toFixed(1)}M`
@@ -610,6 +610,12 @@ export function SuperAdminDashboard() {
                               : `$${dashboardData.monthlySalesRevenue.toLocaleString()}`
                           : "*****"}
                       </span>
+                      <p className="text-xs text-slate-400 mt-1">
+                        {new Date().toLocaleDateString("en-US", {
+                          month: "long",
+                          year: "numeric",
+                        })}
+                      </p>
                     </div>
                   </div>
                   <button
@@ -641,7 +647,7 @@ export function SuperAdminDashboard() {
                       <h3 className="text-slate-600 font-medium">
                         Absent Today
                       </h3>
-                      <span className="text-3xl font-bold text-slate-800">
+                      <span className="text-xl font-bold text-slate-800">
                         {visibleValues.absentToday
                           ? dashboardData.absentToday
                           : "*****"}
@@ -677,7 +683,7 @@ export function SuperAdminDashboard() {
                       <h3 className="text-slate-600 font-medium">
                         Monthly Expenses
                       </h3>
-                      <span className="text-3xl font-bold text-slate-800">
+                      <span className="text-xl font-bold text-slate-800">
                         {visibleValues.monthlyExpenses
                           ? `Rs ${dashboardData.monthlyExpenses.toLocaleString()}`
                           : "*****"}

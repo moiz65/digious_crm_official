@@ -114,7 +114,12 @@ exports.getCategories = async (req, res) => {
       `SELECT id, name, slug, description, icon, color, is_active, created_at
        FROM sales_categories
        WHERE is_active = 1
-       ORDER BY name ASC`
+       ORDER BY 
+         CASE 
+           WHEN slug = 'other' THEN 1 
+           ELSE 0 
+         END ASC, 
+         name ASC`
     );
     return res.json({ success: true, data: rows });
   } catch (err) {

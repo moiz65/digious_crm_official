@@ -899,7 +899,7 @@ const EmployeeProfile = () => {
                 </div>
                 <div className="flex items-center gap-3">
                   {/* Export Dropdown */}
-                  <div className="relative export-dropdown-container">
+                  {/* <div className="relative export-dropdown-container">
                     <button
                       onClick={() => setShowExportDropdown(!showExportDropdown)}
                       className="flex items-center gap-1 px-4 py-2 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition duration-200 shadow-sm"
@@ -950,7 +950,7 @@ const EmployeeProfile = () => {
                         </div>
                       </div>
                     )}
-                  </div>
+                  </div> */}
 
                   {/* Add Employee Button */}
                   <button
@@ -1359,13 +1359,13 @@ const EmployeeProfile = () => {
                               >
                                 <Edit className="h-4 w-4" />
                               </button>
-                              <button
+                              {/* <button
                                 onClick={() => handleDeleteEmployee(employee.id)}
                                 className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600 transition duration-200"
                                 title="Delete"
                               >
                                 <Trash2 className="h-4 w-4" />
-                              </button>
+                              </button> */}
                             </div>
                           </td>
                         </tr>
@@ -4196,7 +4196,7 @@ const ProfileDetailModal = ({
                     <Edit className="h-4 w-4" />
                     Edit
                   </button>
-                  <button
+                  {/* <button
                     onClick={onToggleStatus}
                     className="flex items-center gap-2 px-4 py-2 bg-yellow-50 text-yellow-600 rounded-xl hover:bg-yellow-100 transition duration-200"
                   >
@@ -4209,7 +4209,7 @@ const ProfileDetailModal = ({
                   >
                     <Trash2 className="h-4 w-4" />
                     Delete
-                  </button>
+                  </button> */}
                 </div>
               </div>
             </div>

@@ -1,4 +1,6 @@
 const bcrypt = require("bcryptjs");
+const crypto = require("crypto");
+const nodemailer = require("nodemailer");
 const pool = require("../../config/database");
 
 // Helper function to add audit log for admin
@@ -146,7 +148,7 @@ exports.setPasscode = async (req, res) => {
   const connection = await pool.getConnection();
   try {
     const employeeId = req.user.employeeId;
-    const { passcode, favoriteMovie } = req.body;
+    const { passcode } = req.body;
 
     console.log("=========================================");
     console.log("📝 SET PASSCODE REQUEST");
@@ -154,10 +156,10 @@ exports.setPasscode = async (req, res) => {
     console.log("=========================================");
 
     // Validation
-    if (!passcode || !favoriteMovie) {
+    if (!passcode) {
       return res.status(400).json({
         success: false,
-        message: "Passcode and favorite movie are required",
+        message: "Passcode is required",
       });
     }
 
@@ -192,7 +194,7 @@ exports.setPasscode = async (req, res) => {
     await connection.query(
       `INSERT INTO user_passcodes (employee_id, passcode_hash, favorite_movie, created_at) 
        VALUES (?, ?, ?, NOW())`,
-      [employeeId, passcodeHash, favoriteMovie],
+      [employeeId, passcodeHash, ""],
     );
 
     console.log("✅ Passcode inserted for employee_id:", employeeId);
@@ -356,112 +358,283 @@ exports.verifyPasscode = async (req, res) => {
   }
 };
 
-// Reset passcode
-// Reset passcode - FIXED for both Admin and Employee
-exports.resetPasscode = async (req, res) => {
-  const connection = await pool.getConnection();
+const getPasscodeResetIdentity = async (user) => {
+  const isAdmin =
+    user.role === "admin" || user.email === "shameel@digioussolutions.com";
+
+  if (isAdmin) {
+    const [users] = await pool.query(
+      "SELECT id, email, full_name AS name FROM admin_users WHERE id = ?",
+      [user.userId],
+    );
+    if (!users.length) return null;
+
+    const [passcodes] = await pool.query(
+      "SELECT id FROM user_passcodes WHERE admin_id = ?",
+      [users[0].id],
+    );
+    return passcodes.length
+      ? { ...users[0], passcodeId: passcodes[0].id, isAdmin: true }
+      : null;
+  }
+
+  const [users] = await pool.query(
+    "SELECT employee_id AS id, email, name FROM user_as_employees WHERE employee_id = ?",
+    [user.employeeId],
+  );
+  if (!users.length) return null;
+
+  const [passcodes] = await pool.query(
+    "SELECT id FROM user_passcodes WHERE employee_id = ?",
+    [users[0].id],
+  );
+  return passcodes.length
+    ? { ...users[0], passcodeId: passcodes[0].id, isAdmin: false }
+    : null;
+};
+
+const maskEmail = (email) => {
+  const [localPart, domain] = email.split("@");
+  return `${localPart.slice(0, 1)}***@${domain}`;
+};
+
+exports.sendPasscodeResetOtp = async (req, res) => {
   try {
-    const { favoriteMovie, newPasscode } = req.body;
-
-    if (!favoriteMovie || !newPasscode) {
-      return res.status(400).json({
-        success: false,
-        message: "Favorite movie and new passcode are required",
-      });
-    }
-
-    // Check if user is admin
-    const isAdmin = req.user.role === 'admin';
-    const employeeId = req.user.employeeId;
-    const userId = req.user.userId;
-
-    console.log('🔍 Reset Passcode Request:');
-    console.log('Is Admin:', isAdmin);
-    console.log('Employee ID:', employeeId);
-    console.log('User ID:', userId);
-
-    let query = '';
-    let params = [];
-    let identifier = '';
-
-    if (isAdmin) {
-      // ✅ ADMIN: Use admin_id column
-      query = "SELECT id, favorite_movie FROM user_passcodes WHERE admin_id = ?";
-      params = [userId];
-      identifier = `Admin ID: ${userId}`;
-      console.log('🔍 Looking for admin passcode with admin_id:', userId);
-    } else {
-      // ✅ EMPLOYEE: Use employee_id column
-      query = "SELECT id, favorite_movie FROM user_passcodes WHERE employee_id = ?";
-      params = [employeeId];
-      identifier = `Employee ID: ${employeeId}`;
-      console.log('🔍 Looking for employee passcode with employee_id:', employeeId);
-    }
-
-    const [rows] = await connection.query(query, params);
-
-    if (rows.length === 0) {
-      console.log('❌ No passcode found for:', identifier);
+    const identity = await getPasscodeResetIdentity(req.user);
+    if (!identity) {
       return res.status(404).json({
         success: false,
-        message: isAdmin ? "Admin passcode not set." : "Passcode not set.",
+        message: "Passcode or registered account was not found",
       });
     }
-
-    console.log('✅ Passcode found for:', identifier);
-    console.log('📝 Stored favorite movie:', rows[0].favorite_movie);
-    console.log('📝 Provided favorite movie:', favoriteMovie);
-
-    // Verify favorite movie (case-insensitive)
-    if (rows[0].favorite_movie.toLowerCase() !== favoriteMovie.toLowerCase()) {
-      console.log('❌ Favorite movie does not match');
-      return res.status(401).json({
+    if (!identity.email) {
+      return res.status(400).json({
         success: false,
-        message: "Favorite movie does not match",
+        message: "No registered email is available for this account",
+      });
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identity.email)) {
+      return res.status(400).json({
+        success: false,
+        message: "The registered email address is invalid. Please contact your administrator.",
       });
     }
 
-    console.log('✅ Favorite movie verified');
-
-    // Hash new passcode
-    const salt = await bcrypt.genSalt(10);
-    const newPasscodeHash = await bcrypt.hash(newPasscode, salt);
-
-    // Update based on user type
-    let updateQuery = '';
-    let updateParams = [];
-
-    if (isAdmin) {
-      updateQuery = `UPDATE user_passcodes 
-                     SET passcode_hash = ?, failed_attempts = 0, locked_until = NULL, updated_at = NOW() 
-                     WHERE admin_id = ?`;
-      updateParams = [newPasscodeHash, userId];
-    } else {
-      updateQuery = `UPDATE user_passcodes 
-                     SET passcode_hash = ?, failed_attempts = 0, locked_until = NULL, updated_at = NOW() 
-                     WHERE employee_id = ?`;
-      updateParams = [newPasscodeHash, employeeId];
+    if (!process.env.SMTP_EMAIL || !process.env.SMTP_PASSWORD) {
+      console.error("Passcode reset email is not configured");
+      return res.status(503).json({
+        success: false,
+        message: "Email delivery is unavailable. Please contact your administrator.",
+      });
     }
 
-    await connection.query(updateQuery, updateParams);
-    await connection.commit();
+    const [otpRows] = await pool.query(
+      `SELECT TIMESTAMPDIFF(SECOND, last_sent_at, NOW()) AS seconds_since_last_sent
+       FROM passcode_reset_otps
+       WHERE passcode_id = ?`,
+      [identity.passcodeId],
+    );
+    if (
+      otpRows.length &&
+      Number(otpRows[0].seconds_since_last_sent) < 60
+    ) {
+      const retryAfter = 60 - Number(otpRows[0].seconds_since_last_sent);
+      return res.status(429).json({
+        success: false,
+        message: `Please wait ${retryAfter} seconds before requesting another code`,
+        retryAfter,
+      });
+    }
 
-    console.log(`✅ Passcode reset successful for ${isAdmin ? 'Admin' : 'Employee'}:`, identifier);
+    const otp = crypto.randomInt(100000, 1000000).toString();
+    const otpHash = await bcrypt.hash(otp, 10);
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+    await pool.query(
+      `INSERT INTO passcode_reset_otps
+         (passcode_id, otp_hash, expires_at, last_sent_at, attempts)
+       VALUES (?, ?, ?, NOW(), 0)
+       ON DUPLICATE KEY UPDATE
+         otp_hash = VALUES(otp_hash),
+         expires_at = VALUES(expires_at),
+         last_sent_at = NOW(),
+         attempts = 0`,
+      [identity.passcodeId, otpHash, expiresAt],
+    );
+
+    const smtpPort = parseInt(process.env.SMTP_PORT, 10) || 587;
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST || "smtp.gmail.com",
+      port: smtpPort,
+      secure: process.env.SMTP_SECURE === "true",
+      dnsTimeout: 5000,
+      connectionTimeout: 7000,
+      greetingTimeout: 7000,
+      socketTimeout: 7000,
+      auth: {
+        user: process.env.SMTP_EMAIL,
+        pass: process.env.SMTP_PASSWORD,
+      },
+      tls: {
+        rejectUnauthorized: false,
+      },
+    });
+
+    try {
+      await transporter.sendMail({
+        from: `"${process.env.SMTP_FROM_NAME || "Digious CRM"}" <${process.env.SMTP_EMAIL}>`,
+        to: identity.email,
+        subject: "Passcode Reset Verification Code - Digious CRM",
+        text: `Hello ${identity.name || "there"},\n\nYour passcode reset verification code is ${otp}. It expires in 10 minutes. If you did not request this, you can ignore this email.`,
+      });
+    } catch (error) {
+      await pool.query(
+        "DELETE FROM passcode_reset_otps WHERE passcode_id = ?",
+        [identity.passcodeId],
+      );
+      console.error("Passcode reset email delivery failed:", {
+        code: error.code,
+        command: error.command,
+        message: error.message,
+      });
+      if (!res.headersSent) {
+        return res.status(503).json({
+          success: false,
+          message: "Could not connect to the email service. Please try again later.",
+        });
+      }
+      return;
+    }
+
+    res.json({
+      success: true,
+      message: "Verification code sent to your registered email",
+      data: { email: maskEmail(identity.email), expiresIn: 600 },
+    });
+  } catch (error) {
+    console.error("Error sending passcode reset code:", error);
+    if (!res.headersSent) {
+      res.status(500).json({
+        success: false,
+        message: "Could not send verification code. Please try again later.",
+      });
+    }
+  }
+};
+
+exports.resetPasscode = async (req, res) => {
+  const { otp, newPasscode } = req.body;
+  if (typeof otp !== "string" || !/^\d{6}$/.test(otp)) {
+    return res.status(400).json({
+      success: false,
+      message: "Enter the 6-digit verification code",
+    });
+  }
+  if (
+    typeof newPasscode !== "string" ||
+    newPasscode.length < 4 ||
+    newPasscode.length > 10
+  ) {
+    return res.status(400).json({
+      success: false,
+      message: "Passcode must be 4-10 characters",
+    });
+  }
+
+  let connection;
+  let transactionStarted = false;
+  try {
+    const identity = await getPasscodeResetIdentity(req.user);
+    if (!identity) {
+      return res.status(404).json({
+        success: false,
+        message: "Passcode or registered account was not found",
+      });
+    }
+
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
+    transactionStarted = true;
+    const [otpRows] = await connection.query(
+      `SELECT id, otp_hash, expires_at, attempts,
+              expires_at > NOW() AS is_valid
+       FROM passcode_reset_otps
+       WHERE passcode_id = ?
+       FOR UPDATE`,
+      [identity.passcodeId],
+    );
+    if (!otpRows.length) {
+      await connection.commit();
+      transactionStarted = false;
+      return res.status(400).json({
+        success: false,
+        message: "Request a new verification code to continue",
+      });
+    }
+
+    const resetOtp = otpRows[0];
+    if (!resetOtp.is_valid) {
+      await connection.query(
+        "DELETE FROM passcode_reset_otps WHERE id = ?",
+        [resetOtp.id],
+      );
+      await connection.commit();
+      transactionStarted = false;
+      return res.status(400).json({
+        success: false,
+        message: "Verification code expired. Request a new code.",
+      });
+    }
+    if (Number(resetOtp.attempts) >= 5) {
+      await connection.commit();
+      transactionStarted = false;
+      return res.status(429).json({
+        success: false,
+        message: "Too many incorrect codes. Request a new verification code.",
+      });
+    }
+
+    if (!(await bcrypt.compare(otp, resetOtp.otp_hash))) {
+      await connection.query(
+        "UPDATE passcode_reset_otps SET attempts = attempts + 1 WHERE id = ?",
+        [resetOtp.id],
+      );
+      await connection.commit();
+      transactionStarted = false;
+      return res.status(400).json({
+        success: false,
+        message: "Verification code is incorrect",
+        remainingAttempts: Math.max(0, 4 - Number(resetOtp.attempts)),
+      });
+    }
+
+    const passcodeHash = await bcrypt.hash(newPasscode, 10);
+    await connection.query(
+      `UPDATE user_passcodes
+       SET passcode_hash = ?, failed_attempts = 0, locked_until = NULL, updated_at = NOW()
+       WHERE id = ?`,
+      [passcodeHash, identity.passcodeId],
+    );
+    await connection.query(
+      "DELETE FROM passcode_reset_otps WHERE id = ?",
+      [resetOtp.id],
+    );
+    await connection.commit();
+    transactionStarted = false;
 
     res.json({
       success: true,
       message: "Passcode reset successfully",
     });
-
   } catch (error) {
-    await connection.rollback();
-    console.error("❌ Error resetting passcode:", error);
+    if (connection && transactionStarted) await connection.rollback();
+    console.error("Error resetting passcode:", error);
     res.status(500).json({
       success: false,
-      message: "Server error: " + error.message
+      message: "Could not reset passcode. Please try again later.",
     });
   } finally {
-    connection.release();
+    if (connection) connection.release();
   }
 };
 
