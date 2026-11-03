@@ -360,12 +360,19 @@ const InvoiceManagement = () => {
     return s;
   }, [invoices]);
 
-  // Monthly stats (filtered by selected month/year)
+  // This Month stats also honor the From/To filters without changing All Time stats.
   const monthlyStats = useMemo(() => {
     const monthInvoices = invoices.filter((inv) => {
       const d = parseDateOnly(inv.issue_date);
+      if (!d) return false;
+
+      if (dateRange.start || dateRange.end) {
+        const startDate = parseDateOnly(dateRange.start);
+        const endDate = parseDateOnly(dateRange.end);
+        return (!startDate || d >= startDate) && (!endDate || d <= endDate);
+      }
+
       return (
-        d &&
         d.getMonth() + 1 === selectedMonth &&
         d.getFullYear() === selectedYear
       );
@@ -411,7 +418,7 @@ const InvoiceManagement = () => {
       s.unpaidInvoices + s.overdueInvoices + s.partiallyPaidInvoices;
     s.pendingAmount = s.unpaidAmount + s.overdueAmount + s.partiallyPaidAmount;
     return s;
-  }, [invoices, selectedMonth, selectedYear]);
+  }, [invoices, selectedMonth, selectedYear, dateRange]);
 
   // Yearly stats
   const yearlyStats = useMemo(() => {
@@ -460,6 +467,15 @@ const InvoiceManagement = () => {
         year: "numeric",
       }
     );
+  };
+
+  const getStatsDateDisplay = () => {
+    if (dateRange.start || dateRange.end) {
+      return `${dateRange.start ? formatDate(dateRange.start) : "Any"} – ${
+        dateRange.end ? formatDate(dateRange.end) : "Any"
+      }`;
+    }
+    return getDateDisplay();
   };
 
   // ==================== EXPORT CSV ====================
@@ -796,7 +812,7 @@ const InvoiceManagement = () => {
                 <div className="text-blue-100 text-xs">
                   {statsViewMode === "all"
                     ? "Total Invoices (All Time)"
-                    : `Invoices (${getDateDisplay()})`}
+                    : `Invoices (${getStatsDateDisplay()})`}
                 </div>
               </div>
             </div>
@@ -822,7 +838,7 @@ const InvoiceManagement = () => {
                 <div className="text-pink-100 text-xs">
                   {statsViewMode === "all"
                     ? "Total Revenue (All Time)"
-                    : `Revenue (${getDateDisplay()})`}
+                    : `Revenue (${getStatsDateDisplay()})`}
                 </div>
               </div>
             </div>
@@ -846,7 +862,7 @@ const InvoiceManagement = () => {
                 <div className="text-rose-100 text-xs">
                   {statsViewMode === "all"
                     ? "Pending Invoices (All Time)"
-                    : `Pending (${getDateDisplay()})`}
+                    : `Pending (${getStatsDateDisplay()})`}
                 </div>
               </div>
             </div>
@@ -877,7 +893,7 @@ const InvoiceManagement = () => {
                 <div className="text-emerald-100 text-xs">
                   {statsViewMode === "all"
                     ? "Total Collected (All Time)"
-                    : `Collected (${getDateDisplay()})`}
+                    : `Collected (${getStatsDateDisplay()})`}
                 </div>
               </div>
             </div>
@@ -905,7 +921,7 @@ const InvoiceManagement = () => {
                 <div className="text-cyan-100 text-xs">
                   {statsViewMode === "all"
                     ? "Expected Collection (All Time)"
-                    : `Expected Collection (${getDateDisplay()})`}
+                    : `Expected Collection (${getStatsDateDisplay()})`}
                 </div>
               </div>
             </div>
