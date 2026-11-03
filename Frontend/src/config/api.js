@@ -228,6 +228,7 @@ export const endpoints = {
     stats: `${config.FULL_API_URL}/invoices/stats`,
     getById: (id) => `${config.FULL_API_URL}/invoices/${id}`,
     create: `${config.FULL_API_URL}/invoices`,
+    send: (id) => `${config.FULL_API_URL}/invoices/${id}/send`,
     update: (id) => `${config.FULL_API_URL}/invoices/${id}`,
     updateStatus: (id) => `${config.FULL_API_URL}/invoices/${id}/status`,
     delete: (id) => `${config.FULL_API_URL}/invoices/${id}`,

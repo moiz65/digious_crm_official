@@ -2373,16 +2373,8 @@ exports.getMonthlyAttendance = async (req, res) => {
 
       // Format dates immediately after database retrieval to ensure consistency
       monthlyData.forEach((record) => {
-        if (
-          record.attendance_date &&
-          !(typeof record.attendance_date === "string")
-        ) {
-          // Convert Date object to YYYY-MM-DD string using local date methods
-          const d = record.attendance_date;
-          const year = d.getFullYear();
-          const month = String(d.getMonth() + 1).padStart(2, "0");
-          const day = String(d.getDate()).padStart(2, "0");
-          record.attendance_date = `${year}-${month}-${day}`;
+        if (record.attendance_date) {
+          record.attendance_date = formatCalendarDate(record.attendance_date);
         }
       });
 
@@ -2454,41 +2446,60 @@ exports.getMonthlyAttendance = async (req, res) => {
         }
       }
 
-      // Get all days in the month and identify missing days (absences)
-      const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
-      const existingDates = new Set(
-        monthlyData.map((record) => {
-          const d =
-            record.attendance_date instanceof Date
-              ? record.attendance_date
-              : new Date(record.attendance_date);
-          return d.getDate();
-        }),
+      const monthStart = `${currentYear}-${String(currentMonth).padStart(2, "0")}-01`;
+      const monthEnd = `${currentYear}-${String(currentMonth).padStart(2, "0")}-${String(new Date(currentYear, currentMonth, 0).getDate()).padStart(2, "0")}`;
+      const calendarEntries = await getCompanyCalendarEntries(
+        monthStart,
+        monthEnd,
+        connection,
+      );
+      const calendarByDate = new Map(
+        calendarEntries.map((entry) => [entry.date, entry]),
       );
 
-      // Get today's date in Pakistan timezone to only create absent records up to today
+      const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
       const todayPK = getPakistanDate();
       const todayDate = todayPK.getDate();
       const todayMonth = todayPK.getMonth() + 1;
       const todayYear = todayPK.getFullYear();
+      const selectedMonthKey = `${currentYear}-${String(currentMonth).padStart(2, "0")}`;
+      const todayMonthKey = `${todayYear}-${String(todayMonth).padStart(2, "0")}`;
+      const daysToGenerate =
+        selectedMonthKey < todayMonthKey
+          ? daysInMonth
+          : selectedMonthKey === todayMonthKey
+            ? todayDate
+            : 0;
+      const existingDates = new Set(
+        monthlyData.map((record) => record.attendance_date),
+      );
 
-      // Create absent records for missing days (only up to today, not future days)
-      for (let day = 1; day <= todayDate; day++) {
-        if (!existingDates.has(day)) {
-          // Create date string directly in YYYY-MM-DD format
-          const month = String(currentMonth).padStart(2, "0");
-          const dayStr = String(day).padStart(2, "0");
-          const dateStr = `${currentYear}-${month}-${dayStr}`;
+      for (let day = 1; day <= daysToGenerate; day++) {
+        const dateStr = `${currentYear}-${String(currentMonth).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+        const calendarEntry = calendarByDate.get(dateStr);
+        const isCompanyHoliday = calendarEntry?.type === "holiday";
+        const isWeekend =
+          !isCompanyHoliday &&
+          calendarEntry?.type !== "working" &&
+          isWeekendDate(dateStr);
 
-          const absentRecord = {
+        if (!existingDates.has(dateStr)) {
+          monthlyData.push({
             id: null,
             employee_id: finalEmployeeId,
             email: monthlyData[0]?.email || null,
             name: monthlyData[0]?.name || null,
-            attendance_date: dateStr, // Store as string, not Date object
+            attendance_date: dateStr,
             check_in_time: null,
             check_out_time: null,
-            status: "Absent",
+            status: isCompanyHoliday
+              ? "Paid Leave"
+              : isWeekend
+                ? "Weekend"
+                : "Absent",
+            remarks: isCompanyHoliday
+              ? `Company holiday: ${calendarEntry.title}`
+              : null,
             total_breaks_taken: 0,
             total_break_duration_minutes: 0,
             gross_working_time_minutes: 0,
@@ -2496,11 +2507,34 @@ exports.getMonthlyAttendance = async (req, res) => {
             overtime_minutes: 0,
             overtime_hours: "0.00",
             late_by_minutes: 0,
-            is_absent: true,
-          };
-          monthlyData.push(absentRecord);
+            is_absent: !isCompanyHoliday && !isWeekend,
+            is_weekend: isWeekend,
+            is_company_holiday: isCompanyHoliday,
+            holiday_title: isCompanyHoliday ? calendarEntry.title : null,
+          });
         }
       }
+
+      monthlyData.forEach((record) => {
+        const calendarEntry = calendarByDate.get(record.attendance_date);
+        const isCompanyHoliday = calendarEntry?.type === "holiday";
+        record.is_company_holiday = isCompanyHoliday;
+        record.holiday_title = isCompanyHoliday ? calendarEntry.title : null;
+        record.is_weekend =
+          !isCompanyHoliday &&
+          calendarEntry?.type !== "working" &&
+          !record.check_in_time &&
+          isWeekendDate(record.attendance_date);
+
+        if (isCompanyHoliday && !record.check_in_time) {
+          record.status = "Paid Leave";
+          record.remarks = `Company holiday: ${calendarEntry.title}`;
+          record.is_absent = false;
+        } else if (record.is_weekend && !record.check_in_time) {
+          record.status = "Weekend";
+          record.is_absent = false;
+        }
+      });
 
       // Sort all data (actual records + absent records) by date
       monthlyData.sort((a, b) => {

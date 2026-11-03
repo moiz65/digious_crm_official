@@ -30,8 +30,10 @@ router.get('/stats', authMiddleware, adminGuard, ctrl.getInvoiceStats);
 router.get('/', authMiddleware, adminGuard, ctrl.getInvoices);
 router.get('/:id', authMiddleware, adminGuard, ctrl.getInvoiceById);
 router.post('/', authMiddleware, adminGuard, ctrl.createInvoice);
+router.post('/:id/send', authMiddleware, adminGuard, ctrl.sendSuperInvoice);
 router.put('/:id', authMiddleware, adminGuard, ctrl.updateInvoice);
 router.patch('/:id/status', authMiddleware, adminGuard, ctrl.updateInvoiceStatus);
 router.delete('/:id', authMiddleware, adminGuard, ctrl.deleteInvoice);
+
 
 module.exports = router;

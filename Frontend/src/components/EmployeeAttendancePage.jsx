@@ -47,6 +47,29 @@ const parseAttendanceDate = (dateStr) => {
   return new Date(dateStr);
 };
 
+const getPakistanMonthValue = () => {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Karachi",
+    year: "numeric",
+    month: "2-digit",
+  }).formatToParts(new Date());
+  const year = parts.find((part) => part.type === "year")?.value;
+  const month = parts.find((part) => part.type === "month")?.value;
+  return `${year}-${month}`;
+};
+
+const getMonthSyncDateRange = (monthValue) => {
+  const [year, month] = monthValue.split("-").map(Number);
+  const pad = (value) => String(value).padStart(2, "0");
+  const lastDay = new Date(year, month, 0).getDate();
+  const nextMonthStart = new Date(year, month, 1);
+  return {
+    from: `${year}-${pad(month)}-01`,
+    to: `${year}-${pad(month)}-${pad(lastDay)}`,
+    deviceTo: `${nextMonthStart.getFullYear()}-${pad(nextMonthStart.getMonth() + 1)}-${pad(nextMonthStart.getDate())}`,
+  };
+};
+
 const HRMyAttendance = () => {
   const { user, role } = useAuth();
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -69,6 +92,7 @@ const HRMyAttendance = () => {
   const [lastSyncTime, setLastSyncTime] = useState(null);
   const [deviceStatus, setDeviceStatus] = useState(null);
   const [syncResult, setSyncResult] = useState(null);
+  const [deviceSyncMonth, setDeviceSyncMonth] = useState(getPakistanMonthValue);
 
   const [hasSyncedToday, setHasSyncedToday] = useState(false);
   const [syncedDate, setSyncedDate] = useState(null);
@@ -224,7 +248,7 @@ const HRMyAttendance = () => {
 
     return deviceUserId;
   };
-   
+
   // ✅ NEW: Check device status function
   const checkDeviceStatus = async () => {
     try {
@@ -247,6 +271,7 @@ const HRMyAttendance = () => {
   const handleSyncWithDevice = async () => {
     const employeeId = getEmployeeId();
     const deviceUserId = getDeviceUserId();
+    const isCurrentSyncMonth = deviceSyncMonth === getPakistanMonthValue();
 
     if (!employeeId) {
       toast.error("Employee ID not found");
@@ -254,7 +279,7 @@ const HRMyAttendance = () => {
     }
 
     // ✅ Check if already synced today
-    if (hasSyncedToday) {
+    if (hasSyncedToday && isCurrentSyncMonth) {
       toast(
         `Already synced today (${syncedDate}). Come back tomorrow for new sync.`,
         { duration: 3000, icon: "ℹ️" }
@@ -275,9 +300,10 @@ const HRMyAttendance = () => {
 
       console.log(`📱 Syncing with device_user_id: ${deviceUserId}`);
 
-      // Fetch device logs
+      const syncDateRange = getMonthSyncDateRange(deviceSyncMonth);
+      // Include the first day of the next month to capture night-shift checkouts.
       const deviceResponse = await fetch(
-        `${process.env.REACT_APP_API_URL || "http://localhost:5000"}/api/v1/zkTime/attendance/user/${deviceUserId}`,
+        `${process.env.REACT_APP_API_URL || "http://localhost:5000"}/api/v1/zkTime/attendance/user/${deviceUserId}?from=${syncDateRange.from}&to=${syncDateRange.deviceTo}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -291,12 +317,6 @@ const HRMyAttendance = () => {
 
       const deviceLogs = deviceData.data || [];
 
-      if (deviceLogs.length === 0) {
-        toast("No attendance records found on device", { icon: "ℹ️" });
-        setIsSyncing(false);
-        return;
-      }
-
       // ============================================================
       // ⭐ CORRECT DATE CORRECTION (00:00 - 08:59 → Previous Day)
       // ============================================================
@@ -304,7 +324,8 @@ const HRMyAttendance = () => {
         const [hour] = punchTimeStr.split(":").map(Number);
         // 00:00 - 08:59 → Previous day (Night shift checkout)
         if (hour >= 0 && hour <= 8) {
-          const date = new Date(originalDateStr);
+          const [inputYear, inputMonth, inputDay] = originalDateStr.split("-").map(Number);
+          const date = new Date(inputYear, inputMonth - 1, inputDay);
           date.setDate(date.getDate() - 1);
           const year = date.getFullYear();
           const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -314,6 +335,21 @@ const HRMyAttendance = () => {
         return originalDateStr;
       };
 
+      const monthDeviceLogs = deviceLogs.filter((log) => {
+        const fullDateTime = log.attendance_time;
+        const deviceDate = log.punch_date_date;
+        if (!fullDateTime || !deviceDate) return false;
+        const [, punchTime] = fullDateTime.split(" ");
+        const correctedDate = getCorrectedDate(punchTime, deviceDate);
+        return correctedDate >= syncDateRange.from && correctedDate <= syncDateRange.to;
+      });
+
+      if (monthDeviceLogs.length === 0) {
+        toast("No attendance records found for the selected month", { icon: "ℹ️" });
+        setIsSyncing(false);
+        return;
+      }
+
       let savedCount = 0;
       let skippedCount = 0;
       let syncedRecords = [];
@@ -321,11 +357,11 @@ const HRMyAttendance = () => {
       // ✅ Process logs in batches to avoid rate limiting
       const BATCH_SIZE = 50;
       const batches = [];
-      for (let i = 0; i < deviceLogs.length; i += BATCH_SIZE) {
-        batches.push(deviceLogs.slice(i, i + BATCH_SIZE));
+      for (let i = 0; i < monthDeviceLogs.length; i += BATCH_SIZE) {
+        batches.push(monthDeviceLogs.slice(i, i + BATCH_SIZE));
       }
 
-      console.log(`📊 Total logs: ${deviceLogs.length}, Batches: ${batches.length}`);
+      console.log(`📊 Selected month logs: ${monthDeviceLogs.length}, Batches: ${batches.length}`);
 
       for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
         const batch = batches[batchIndex];
@@ -335,80 +371,80 @@ const HRMyAttendance = () => {
         const batchPromises = [];
         for (const log of batch) {
           const result = await (async () => {
-          const fullDateTime = log.attendance_time;
-          const deviceDate = log.punch_date_date;
+            const fullDateTime = log.attendance_time;
+            const deviceDate = log.punch_date_date;
 
-          if (!fullDateTime) {
-            skippedCount++;
-            return null;
-          }
-
-          const [, timePart] = fullDateTime.split(" ");
-          const punchTime = timePart;
-          let punchType = null;
-
-          if (log.punch_label === 'check-in') {
-            punchType = 'IN';
-          } else if (log.punch_label === 'check-out') {
-            punchType = 'OUT';
-          }
-
-          if (!punchType) {
-            skippedCount++;
-            console.log(`⚠️ Unknown device punch type, skipping time: ${punchTime}`);
-            return null;
-          }
-
-          // ⭐ Correct date for night shift
-          const correctedDate = getCorrectedDate(punchTime, deviceDate);
-
-          console.log(`📌 ${punchType} | Time: ${punchTime} | Date: ${correctedDate} (original: ${deviceDate})`);
-
-          // ⭐ Prepare request body
-          const requestBody = {
-            employee_id: employeeId,
-            email: user?.email,
-            name: user?.name,
-            device_info: "ZKTeco Device",
-            is_device_sync: true,
-            punch_type: punchType,  // ⭐ SEND PUNCH TYPE
-          };
-
-          let saveResponse;
-          let endpoint;
-
-          if (punchType === "IN") {
-            requestBody.check_in_time = punchTime;
-            requestBody.attendance_date = correctedDate;
-            endpoint = endpoints.attendance.checkIn;
-          } else if (punchType === "OUT") {
-            requestBody.check_out_time = punchTime;
-            requestBody.attendance_date = correctedDate;
-            endpoint = endpoints.attendance.checkOut;
-          }
-
-          try {
-            saveResponse = await fetch(endpoint, {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify(requestBody),
-            });
-
-            const responseData = await saveResponse.json();
-
-            if (saveResponse.ok) {
-              return { success: true, type: punchType, time: punchTime, date: correctedDate };
-            } else {
-              console.log(`⚠️ Failed: ${responseData.message || 'Unknown error'}`);
-              return { success: false, type: punchType, time: punchTime, error: responseData.message };
+            if (!fullDateTime) {
+              skippedCount++;
+              return null;
             }
-          } catch (err) {
-            console.error(`❌ Error saving ${punchType}:`, err.message);
-            return { success: false, type: punchType, time: punchTime, error: err.message };
-          }
+
+            const [, timePart] = fullDateTime.split(" ");
+            const punchTime = timePart;
+            let punchType = null;
+
+            if (log.punch_label === 'check-in') {
+              punchType = 'IN';
+            } else if (log.punch_label === 'check-out') {
+              punchType = 'OUT';
+            }
+
+            if (!punchType) {
+              skippedCount++;
+              console.log(`⚠️ Unknown device punch type, skipping time: ${punchTime}`);
+              return null;
+            }
+
+            // ⭐ Correct date for night shift
+            const correctedDate = getCorrectedDate(punchTime, deviceDate);
+
+            console.log(`📌 ${punchType} | Time: ${punchTime} | Date: ${correctedDate} (original: ${deviceDate})`);
+
+            // ⭐ Prepare request body
+            const requestBody = {
+              employee_id: employeeId,
+              email: user?.email,
+              name: user?.name,
+              device_info: "ZKTeco Device",
+              is_device_sync: true,
+              punch_type: punchType,  // ⭐ SEND PUNCH TYPE
+            };
+
+            let saveResponse;
+            let endpoint;
+
+            if (punchType === "IN") {
+              requestBody.check_in_time = punchTime;
+              requestBody.attendance_date = correctedDate;
+              endpoint = endpoints.attendance.checkIn;
+            } else if (punchType === "OUT") {
+              requestBody.check_out_time = punchTime;
+              requestBody.attendance_date = correctedDate;
+              endpoint = endpoints.attendance.checkOut;
+            }
+
+            try {
+              saveResponse = await fetch(endpoint, {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify(requestBody),
+              });
+
+              const responseData = await saveResponse.json();
+
+              if (saveResponse.ok) {
+                return { success: true, type: punchType, time: punchTime, date: correctedDate };
+              } else {
+                console.log(`⚠️ Failed: ${responseData.message || 'Unknown error'}`);
+                return { success: false, type: punchType, time: punchTime, error: responseData.message };
+              }
+            } catch (err) {
+              console.error(`❌ Error saving ${punchType}:`, err.message);
+              return { success: false, type: punchType, time: punchTime, error: err.message };
+            }
           })();
           batchPromises.push(result);
         }
@@ -446,18 +482,22 @@ const HRMyAttendance = () => {
       // ⭐ FINAL SUMMARY
       // ============================================================
       if (savedCount > 0) {
-        const today = new Date().toISOString().split("T")[0];
-        setHasSyncedToday(true);
-        setSyncedDate(today);
-        localStorage.setItem(
-          `zk_sync_${employeeId}`,
-          JSON.stringify({
-            date: today,
-            syncedAt: new Date().toISOString(),
-            recordsCount: savedCount,
-            skippedCount: skippedCount,
-          })
-        );
+        if (isCurrentSyncMonth) {
+          const today = new Intl.DateTimeFormat("en-CA", {
+            timeZone: "Asia/Karachi",
+          }).format(new Date());
+          setHasSyncedToday(true);
+          setSyncedDate(today);
+          localStorage.setItem(
+            `zk_sync_${employeeId}`,
+            JSON.stringify({
+              date: today,
+              syncedAt: new Date().toISOString(),
+              recordsCount: savedCount,
+              skippedCount: skippedCount,
+            })
+          );
+        }
 
         toast.success(`${savedCount} record(s) synced from device`);
       } else {
@@ -490,7 +530,9 @@ const HRMyAttendance = () => {
       if (savedSync) {
         try {
           const syncData = JSON.parse(savedSync);
-          const today = new Date().toISOString().split("T")[0];
+          const today = new Intl.DateTimeFormat("en-CA", {
+            timeZone: "Asia/Karachi",
+          }).format(new Date());
           if (syncData.date === today) {
             setHasSyncedToday(true);
             setSyncedDate(syncData.date);
@@ -1393,6 +1435,9 @@ const HRMyAttendance = () => {
     },
   ];
 
+  const syncBlockedForToday =
+    hasSyncedToday && deviceSyncMonth === getPakistanMonthValue();
+
   return (
     <div className="flex h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-cyan-50">
       <div className="flex-1 flex flex-col overflow-hidden">
@@ -1428,50 +1473,76 @@ const HRMyAttendance = () => {
               )}
             </div>
 
-            <button
-              onClick={handleSyncWithDevice}
-              disabled={isSyncing || hasSyncedToday}
-              className={`
+            <div className="flex items-center gap-4">
+
+              <label className="flex items-center gap-2 text-sm text-gray-600">
+                Attendance month: 
+                <input
+                  type="month"
+                  value={deviceSyncMonth}
+                  max={getPakistanMonthValue()}
+                  onChange={(event) => setDeviceSyncMonth(event.target.value)}
+                  disabled={isSyncing}
+                  className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 disabled:bg-gray-100"
+                />
+              </label>
+
+              <button
+                onClick={handleSyncWithDevice}
+                disabled={isSyncing || syncBlockedForToday || !deviceSyncMonth}
+                className={`
         flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all duration-300
-        ${isSyncing || hasSyncedToday
-                  ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                  : "bg-indigo-500 hover:bg-indigo-600 text-white shadow-lg hover:shadow-indigo-500/25"
-                }
+        ${isSyncing || syncBlockedForToday || !deviceSyncMonth
+                    ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                    : "bg-indigo-500 hover:bg-indigo-600 text-white shadow-lg hover:shadow-indigo-500/25"
+                  }
       `}
-              title={
-                hasSyncedToday
-                  ? `Already synced today (${syncedDate})`
-                  : "Sync attendance from device"
-              }
-            >
-              {isSyncing ? (
-                <>
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                  Syncing...
-                </>
-              ) : hasSyncedToday ? (
-                <>
-                  <CheckCircle className="w-4 h-4" />
-                  Synced Today
-                </>
-              ) : (
-                <>
-                  <RefreshCw className="w-4 h-4" />
-                  Sync with Device
-                </>
-              )}
-            </button>
+                title={
+                  syncBlockedForToday
+                    ? `Already synced today (${syncedDate})`
+                    : "Sync attendance from device"
+                }
+              >
+                {isSyncing ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    Syncing...
+                  </>
+                ) : syncBlockedForToday ? (
+                  <>
+                    <CheckCircle className="w-4 h-4" />
+                    Synced Today
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="w-4 h-4" />
+                    Sync with Device
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Mobile Sync Button */}
         <div className="lg:hidden bg-white border-b border-gray-200 p-3">
+          <label className="mb-2 flex items-center justify-between gap-2 text-sm text-gray-600">
+            Attendance month:
+            <input
+              type="month"
+              value={deviceSyncMonth}
+              max={getPakistanMonthValue()}
+              onChange={(event) => setDeviceSyncMonth(event.target.value)}
+              disabled={isSyncing}
+              className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 disabled:bg-gray-100"
+            />
+          </label>
           <button
             onClick={handleSyncWithDevice}
-            disabled={isSyncing || hasSyncedToday}
+            disabled={isSyncing || syncBlockedForToday || !deviceSyncMonth}
             className={`
       w-full flex items-center justify-center gap-2 py-2 rounded-xl font-medium transition-all duration-300
-      ${isSyncing || hasSyncedToday
+      ${isSyncing || syncBlockedForToday || !deviceSyncMonth
                 ? "bg-gray-200 text-gray-500 cursor-not-allowed"
                 : "bg-indigo-500 text-white"
               }
@@ -1482,7 +1553,7 @@ const HRMyAttendance = () => {
                 <RefreshCw className="w-4 h-4 animate-spin" />
                 Syncing...
               </>
-            ) : hasSyncedToday ? (
+            ) : syncBlockedForToday ? (
               <>
                 <CheckCircle className="w-4 h-4" />
                 Synced Today
@@ -1866,14 +1937,14 @@ const HRMyAttendance = () => {
                             className={`${isCompanyHoliday
                               ? "bg-teal-50 hover:bg-teal-100"
                               : isWeekend
-                              ? "bg-gray-100/50 hover:bg-gray-200"
-                              : record.is_absent
-                                ? "bg-red-50 hover:bg-red-100"
-                                : record.status === "Half Day"
-                                  ? "bg-blue-50 hover:bg-blue-100"
-                                  : index % 2 === 0
-                                    ? "bg-gray-50 hover:bg-gray-100"
-                                    : "bg-white hover:bg-gray-50"
+                                ? "bg-gray-100/50 hover:bg-gray-200"
+                                : record.is_absent
+                                  ? "bg-red-50 hover:bg-red-100"
+                                  : record.status === "Half Day"
+                                    ? "bg-blue-50 hover:bg-blue-100"
+                                    : index % 2 === 0
+                                      ? "bg-gray-50 hover:bg-gray-100"
+                                      : "bg-white hover:bg-gray-50"
                               } transition-colors`}
                           >
                             <td className="px-4 py-3 text-sm text-gray-700">

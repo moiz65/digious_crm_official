@@ -3,6 +3,26 @@ import React, { useState, useEffect } from 'react';
 import { RefreshCw, CheckCircle, Loader, Clock, AlertCircle } from 'lucide-react';
 import { toast } from "react-hot-toast";
 
+const getPakistanMonth = () => {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Karachi',
+    year: 'numeric',
+    month: '2-digit',
+  }).formatToParts(new Date());
+  const year = parts.find((part) => part.type === 'year')?.value;
+  const month = parts.find((part) => part.type === 'month')?.value;
+  return `${year}-${month}`;
+};
+
+const getMonthDateRange = (monthValue) => {
+  const [year, month] = monthValue.split('-').map(Number);
+  const lastDay = new Date(year, month, 0).getDate();
+  return {
+    date_from: `${year}-${String(month).padStart(2, '0')}-01`,
+    date_to: `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`,
+  };
+};
+
 const HRAttendanceSync = () => {
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncProgress, setSyncProgress] = useState(0);
@@ -10,6 +30,7 @@ const HRAttendanceSync = () => {
   const [syncLogs, setSyncLogs] = useState([]);
   const [currentJobId, setCurrentJobId] = useState(null);
   const [lastSyncInfo, setLastSyncInfo] = useState(null);
+  const [selectedMonth, setSelectedMonth] = useState(getPakistanMonth);
 
   // Get user info from localStorage
   const userInfo = JSON.parse(localStorage.getItem('user') || '{}');
@@ -56,31 +77,7 @@ const HRAttendanceSync = () => {
       
       console.log("📤 Sending sync request with HR User ID:", userId);
       
-      const getPakistanDateParts = (date = new Date()) => {
-        const format = new Intl.DateTimeFormat('en-CA', {
-          timeZone: 'Asia/Karachi',
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hourCycle: 'h23',
-        });
-
-        const parts = format.formatToParts(date).reduce((acc, part) => {
-          if (part.type !== 'literal') acc[part.type] = part.value;
-          return acc;
-        }, {});
-
-        return {
-          year: Number(parts.year),
-          month: Number(parts.month),
-          day: Number(parts.day),
-          fullDate: `${parts.year}-${parts.month}-${parts.day}`,
-        };
-      };
-
-      const pkNow = getPakistanDateParts();
-      const firstDayOfMonth = `${pkNow.year}-${String(pkNow.month).padStart(2, '0')}-01`;
-      const lastDayOfMonth = `${pkNow.year}-${String(pkNow.month).padStart(2, '0')}-${new Date(pkNow.year, pkNow.month, 0).getDate()}`;
+      const { date_from, date_to } = getMonthDateRange(selectedMonth);
 
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/v1/zkTime/sync-all`, {
         method: 'POST',
@@ -89,8 +86,8 @@ const HRAttendanceSync = () => {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
         body: JSON.stringify({
-          date_from: firstDayOfMonth,
-          date_to: lastDayOfMonth,
+          date_from,
+          date_to,
           initiated_by: userId,
         }),
       });
@@ -183,7 +180,7 @@ const HRAttendanceSync = () => {
             Attendance Sync
           </h3>
           <p className="text-sm text-gray-500">
-            Sync all employee's attendance from ZKTeco device
+            Sync all employees' attendance from ZKTeco for the selected month
           </p>
           <p className="text-xs text-gray-400 mt-1">
             HR ID: {userId || 'Not found'}
@@ -191,6 +188,18 @@ const HRAttendanceSync = () => {
         </div>
         
         <div className="flex items-center gap-4">
+          <label className="flex flex-col gap-1 text-xs font-medium text-gray-600">
+            Attendance month
+            <input
+              type="month"
+              value={selectedMonth}
+              max={getPakistanMonth()}
+              onChange={(event) => setSelectedMonth(event.target.value)}
+              disabled={isSyncing}
+              className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 disabled:bg-gray-100"
+            />
+          </label>
+
           {lastSyncInfo && (
             <div className="text-xs text-gray-400 text-right">
               <div>Last sync: {lastSyncInfo.date}</div>
@@ -200,7 +209,7 @@ const HRAttendanceSync = () => {
           
           <button
             onClick={handleSyncAll}
-            disabled={isSyncing}
+            disabled={isSyncing || !selectedMonth}
             className={`
               flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-300
               ${isSyncing 

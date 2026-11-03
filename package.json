@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/moiz65/digious_crm_official#readme",
   "dependencies": {
-    "concurrently": "^9.2.1"
+    "concurrently": "^9.2.1",
+    "puppeteer": "^25.16.0"
   }
 }

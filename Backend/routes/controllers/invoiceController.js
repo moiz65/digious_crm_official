@@ -6,6 +6,7 @@
  */
 
 const pool = require('../../config/database');
+// const { sendInvoiceEmail } = require('../../services/emailservice');
 
 // ──────────────────────────────────
 // Auto-create tables (idempotent)
@@ -493,6 +494,48 @@ exports.createInvoice = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Server error' });
   } finally {
     connection.release();
+  }
+};
+
+exports.sendSuperInvoice = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // 1. Invoice fetch karein (same file ke formatInvoice helper se)
+    const [rows] = await pool.query('SELECT * FROM invoices WHERE id = ?', [id]);
+    if (!rows.length) {
+      return res.status(404).json({
+        success: false,
+        message: 'Invoice not found',
+      });
+    }
+
+    // 2. Items bhi fetch karein
+    const itemsMap = await fetchInvoiceItems([rows[0].id]);
+    const invoice = formatInvoice(rows[0], itemsMap[rows[0].id] || []);
+
+    // 3. Client email check
+    if (!invoice.client_email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Client email is missing for this invoice',
+      });
+    }
+
+    // 4. Email bhejein (PDF attachment ke saath)
+    const { sendInvoiceEmail } = require('../../services/emailservice');
+    await sendInvoiceEmail(invoice);
+
+    return res.json({
+      success: true,
+      message: `Invoice #${invoice.invoice_number} sent to ${invoice.client_email}`,
+    });
+  } catch (err) {
+    console.error('sendSuperInvoice error:', err);
+    return res.status(500).json({
+      success: false,
+      message: err.message || 'Failed to send invoice email',
+    });
   }
 };
 

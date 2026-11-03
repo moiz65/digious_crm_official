@@ -2117,6 +2117,21 @@ const HRMyAttendance = () => {
                         }
                         )
                       </button>
+                      <button
+                        onClick={() => setStatusFilter("Paid Leave")}
+                        className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${statusFilter === "Paid Leave"
+                          ? "bg-purple-600 text-white"
+                          : "bg-white text-gray-700 hover:bg-gray-200"
+                          }`}
+                      >
+                        Paid Leave (
+                        {
+                          monthlyAttendance.filter(
+                            (r) => r.status === "Paid Leave",
+                          ).length
+                        }
+                        )
+                      </button>
                     </div>
                   </div>
 
@@ -2208,13 +2223,22 @@ const HRMyAttendance = () => {
                                     record.id ||
                                     `absent-${record.attendance_date}`
                                   }
-                                  className={`${record.is_absent
-                                    ? "bg-red-50 hover:bg-red-100"
-                                    : record.status === "ML"
-                                      ? "bg-blue-50 hover:bg-blue-100"
-                                      : index % 2 === 0
-                                        ? "bg-gray-50 hover:bg-gray-100"
-                                        : "bg-white hover:bg-gray-50"
+                                  title={
+                                    record.is_company_holiday
+                                      ? record.holiday_title
+                                      : undefined
+                                  }
+                                  className={`${record.is_company_holiday
+                                    ? "bg-teal-50 hover:bg-teal-100"
+                                    : record.is_weekend
+                                      ? "bg-gray-100/50 hover:bg-gray-200"
+                                      : record.is_absent
+                                        ? "bg-red-50 hover:bg-red-100"
+                                        : record.status === "ML"
+                                          ? "bg-blue-50 hover:bg-blue-100"
+                                          : index % 2 === 0
+                                            ? "bg-gray-50 hover:bg-gray-100"
+                                            : "bg-white hover:bg-gray-50"
                                     } transition-colors`}
                                 >
                                   <td className="px-4 py-3 text-sm text-gray-700">
@@ -2226,9 +2250,25 @@ const HRMyAttendance = () => {
                                       month: "short",
                                       day: "numeric",
                                     })}
+                                    {record.is_company_holiday ? (
+                                      <span
+                                        className="ml-2 inline-block rounded bg-teal-100 px-1.5 py-0.5 text-xs font-semibold text-teal-800"
+                                        title={record.holiday_title}
+                                      >
+                                        {record.holiday_title || "Company Holiday"}
+                                      </span>
+                                    ) : record.is_weekend ? (
+                                      <span className="ml-2 inline-block rounded bg-gray-200 px-1.5 py-0.5 text-xs font-semibold text-gray-700">
+                                        Weekend
+                                      </span>
+                                    ) : null}
                                   </td>
                                   <td className="px-4 py-3 text-sm text-gray-700">
-                                    {!record.check_in_time ? (
+                                    {!record.check_in_time &&
+                                    (record.is_weekend ||
+                                      record.is_company_holiday) ? (
+                                      <span className="text-gray-400">—</span>
+                                    ) : !record.check_in_time ? (
                                       <span className="text-red-600 font-semibold">
                                         No Check-in
                                       </span>
@@ -2237,7 +2277,11 @@ const HRMyAttendance = () => {
                                     )}
                                   </td>
                                   <td className="px-4 py-3 text-sm text-gray-700">
-                                    {!record.check_in_time ? (
+                                    {!record.check_in_time &&
+                                    (record.is_weekend ||
+                                      record.is_company_holiday) ? (
+                                      <span className="text-gray-400">—</span>
+                                    ) : !record.check_in_time ? (
                                       <span className="text-red-600 font-semibold">
                                         —
                                       </span>
@@ -2260,10 +2304,18 @@ const HRMyAttendance = () => {
                                                 : record.status ===
                                                   "Uninformed Absent"
                                                   ? "bg-red-200 text-red-800"
-                                                  : "bg-purple-100 text-purple-700"
+                                                      : record.status === "Weekend"
+                                                        ? "bg-gray-200 text-gray-600"
+                                                        : "bg-purple-100 text-purple-700"
                                         }`}
                                     >
-                                      {record.status === "Paid Leave"
+                                      {record.is_company_holiday &&
+                                      !record.check_in_time
+                                        ? "PL"
+                                        : record.is_weekend &&
+                                          !record.check_in_time
+                                          ? "Weekend"
+                                          : record.status === "Paid Leave"
                                         ? "PL"
                                         : record.status === "Uninformed Absent"
                                           ? "UA"
