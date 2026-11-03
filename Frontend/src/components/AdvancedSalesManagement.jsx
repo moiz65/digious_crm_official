@@ -1270,7 +1270,7 @@ const AdvancedSalesManagement = () => {
                           <input
                             type="number"
                             min="0"
-                            step="0.01"
+                            step="1"
                             value={editData.totalAmount}
                             onChange={(e) =>
                               onEditChange("totalAmount", e.target.value)
@@ -1291,7 +1291,7 @@ const AdvancedSalesManagement = () => {
                           <input
                             type="number"
                             min="0"
-                            step="0.01"
+                            step="1"
                             value={editData.upfrontPayment}
                             onChange={(e) =>
                               onEditChange("upfrontPayment", e.target.value)
@@ -1772,7 +1772,7 @@ const AddSaleModal = ({ categories, employees, saving, onSubmit, onClose }) => {
                 <input
                   type="number"
                   min="0"
-                  step="0.01"
+                  step="1"
                   value={form.totalAmount}
                   onChange={(e) => set("totalAmount", e.target.value)}
                   onWheel={(e) => e.target.blur()}
@@ -1792,7 +1792,7 @@ const AddSaleModal = ({ categories, employees, saving, onSubmit, onClose }) => {
                 <input
                   type="number"
                   min="0"
-                  step="0.01"
+                  step="1"
                   value={form.upfrontPayment}
                   onChange={(e) => set("upfrontPayment", e.target.value)}
                   onWheel={(e) => e.target.blur()}

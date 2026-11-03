@@ -86,12 +86,12 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) => 
     },
 
     // Invoice
-    // {
-    //   id: 'invoice',
-    //   label: 'Invoice',
-    //   icon: Receipt,
-    //   path: '/admin/invoice'
-    // },
+    {
+      id: 'invoice',
+      label: 'Invoice',
+      icon: Receipt,
+      path: '/admin/invoice'
+    },
 
     // System Settings
     // {

@@ -1195,7 +1195,7 @@ const EmployeeSalesPage = () => {
                   type="number"
                   required
                   min="0"
-                  step="0.01"
+                  step="1"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   value={formData.totalSales}
                   onChange={(e) =>
@@ -1214,7 +1214,7 @@ const EmployeeSalesPage = () => {
                   type="number"
                   required
                   min="0"
-                  step="0.01"
+                  step="1"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   value={formData.upfrontPayment}
                   onChange={(e) =>
@@ -2013,7 +2013,7 @@ const EmployeeSalesPage = () => {
                               onChange={(e) =>
                                 handleEditChange("totalSales", e.target.value)
                               }
-                              step="0.01"
+                              step="1"
                               min="0"
                               onWheel={(e) => e.target.blur()}
                             />
@@ -2035,7 +2035,7 @@ const EmployeeSalesPage = () => {
                                   e.target.value,
                                 )
                               }
-                              step="0.01"
+                              step="1"
                               min="0"
                               onWheel={(e) => e.target.blur()}
                             />

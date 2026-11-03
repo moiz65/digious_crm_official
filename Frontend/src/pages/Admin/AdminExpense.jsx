@@ -1748,7 +1748,7 @@ const ExpenseModal = ({
                 }
                 className="w-full pl-16 pr-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
                 required
-                step="0.01"
+                step="1"
                 min="0"
               />
             </div>

@@ -780,7 +780,7 @@ const InvoiceManagement = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-8">
           {/* Total Invoices Card */}
           <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl p-5 text-white shadow-xl">
             <div className="flex items-center justify-between mb-3">
@@ -812,7 +812,7 @@ const InvoiceManagement = () => {
                 <DollarSign className="h-6 w-6" />
               </div>
               <div className="text-right">
-                <div className="text-2xl font-bold">
+                <div className="text-xl font-bold">
                   {formatCurrency(
                     statsViewMode === "all"
                       ? allTimeStats.totalRevenue
@@ -867,7 +867,7 @@ const InvoiceManagement = () => {
                 <CheckCircle className="h-6 w-6" />
               </div>
               <div className="text-right">
-                <div className="text-2xl font-bold">
+                <div className="text-xl font-bold">
                   {formatCurrency(
                     statsViewMode === "all"
                       ? allTimeStats.paidAmount
@@ -885,6 +885,37 @@ const InvoiceManagement = () => {
               {statsViewMode === "all"
                 ? `${allTimeStats.paidInvoices} paid invoices • ${allTimeStats.collectionRate.toFixed(1)}% rate`
                 : `${monthlyStats.paidInvoices} paid invoices`}
+            </div>
+          </div>
+
+          {/* Expected Collection Card */}
+          <div className="bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl p-5 text-white shadow-xl">
+            <div className="flex items-center justify-between mb-3">
+              <div className="p-2 bg-white/20 rounded-lg">
+                <TrendingUp className="h-6 w-6" />
+              </div>
+              <div className="text-right">
+                <div className="text-xl font-bold">
+                  {formatCurrency(
+                    statsViewMode === "all"
+                      ? allTimeStats.totalRevenue
+                      : monthlyStats.totalRevenue
+                  )}
+                </div>
+                <div className="text-cyan-100 text-xs">
+                  {statsViewMode === "all"
+                    ? "Expected Collection (All Time)"
+                    : `Expected Collection (${getDateDisplay()})`}
+                </div>
+              </div>
+            </div>
+            <div className="text-xs text-cyan-100 border-t border-white/20 pt-2">
+              Includes pending:{" "}
+              {formatCurrency(
+                statsViewMode === "all"
+                  ? allTimeStats.pendingAmount
+                  : monthlyStats.pendingAmount
+              )}
             </div>
           </div>
         </div>
@@ -963,7 +994,7 @@ const InvoiceManagement = () => {
               </div>
 
               {/* Priority */}
-              <div>
+              {/* <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">
                   Priority
                 </label>
@@ -977,7 +1008,7 @@ const InvoiceManagement = () => {
                   <option>Medium</option>
                   <option>Low</option>
                 </select>
-              </div>
+              </div> */}
 
               {/* Month Navigation */}
               <div>
@@ -1302,8 +1333,6 @@ const InvoiceDetailModal = ({ invoice, onClose, onEdit, onSend, isSending }) => 
               <tr>
                 <th style={{ width: "5%" }} className="center">#</th>
                 <th>Description</th>
-                <th style={{ width: "12%" }} className="center">Qty</th>
-                <th style={{ width: "20%" }} className="right">Unit Price</th>
                 <th style={{ width: "20%" }} className="right">Amount</th>
               </tr>
             </thead>
@@ -1312,12 +1341,8 @@ const InvoiceDetailModal = ({ invoice, onClose, onEdit, onSend, isSending }) => 
                 <tr key={idx}>
                   <td className="center">{idx + 1}</td>
                   <td>{item.description || "Service"}</td>
-                  <td className="center">{item.quantity || 1}</td>
-                  <td className="right">{formatCurrency(item.unit_price || 0)}</td>
                   <td className="right">
-                    {formatCurrency(
-                      (Number(item.quantity) || 0) * (Number(item.unit_price) || 0)
-                    )}
+                    {formatCurrency(item.amount ?? (Number(item.quantity) || 0) * (Number(item.unit_price) || 0))}
                   </td>
                 </tr>
               ))}
@@ -1562,8 +1587,6 @@ const InvoiceDetailModal = ({ invoice, onClose, onEdit, onSend, isSending }) => 
                   <thead className="bg-slate-100">
                     <tr>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Description</th>
-                      <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 uppercase w-20">Qty</th>
-                      <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 uppercase w-32">Unit Price</th>
                       <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 uppercase w-32">Amount</th>
                     </tr>
                   </thead>
@@ -1571,17 +1594,15 @@ const InvoiceDetailModal = ({ invoice, onClose, onEdit, onSend, isSending }) => 
                     {(invoice.items || []).map((item, idx) => (
                       <tr key={idx} className="hover:bg-slate-50">
                         <td className="px-4 py-3 text-slate-700">{item.description}</td>
-                        <td className="px-4 py-3 text-right text-slate-600">{item.quantity}</td>
-                        <td className="px-4 py-3 text-right text-slate-600">{formatCurrency(item.unit_price)}</td>
                         <td className="px-4 py-3 text-right font-bold text-slate-800">
-                          {formatCurrency(item.amount)}
+                          {formatCurrency(item.amount ?? (Number(item.quantity) || 0) * (Number(item.unit_price) || 0))}
                         </td>
                       </tr>
                     ))}
                   </tbody>
                   <tfoot className="bg-slate-50 border-t-2 border-slate-200">
                     <tr>
-                      <td colSpan="3" className="px-4 py-3 text-right font-bold text-slate-700">Total:</td>
+                      <td className="px-4 py-3 text-right font-bold text-slate-700">Total:</td>
                       <td className="px-4 py-3 text-right font-black text-xl text-blue-600">
                         {formatCurrency(total)}
                       </td>
@@ -1589,13 +1610,13 @@ const InvoiceDetailModal = ({ invoice, onClose, onEdit, onSend, isSending }) => 
                     {isPartiallyPaid && (
                       <>
                         <tr>
-                          <td colSpan="3" className="px-4 py-2 text-right text-sm text-slate-600">Paid:</td>
+                          <td className="px-4 py-2 text-right text-sm text-slate-600">Paid:</td>
                           <td className="px-4 py-2 text-right font-semibold text-emerald-600">
                             {formatCurrency(paid)}
                           </td>
                         </tr>
                         <tr>
-                          <td colSpan="3" className="px-4 py-2 text-right text-sm text-slate-600">Balance:</td>
+                          <td className="px-4 py-2 text-right text-sm text-slate-600">Balance:</td>
                           <td className="px-4 py-2 text-right font-semibold text-amber-700">
                             {formatCurrency(balance)}
                           </td>
@@ -2170,7 +2191,7 @@ const CreateInvoiceModal = ({
           description: item.description || "",
           quantity: item.quantity ?? 1,
           unit_price: item.unit_price ?? 0,
-          amount: item.amount ?? 0,
+          amount: item.amount ?? (Number(item.quantity ?? 1) * Number(item.unit_price ?? 0)),
         }))
         : [{ description: "", quantity: 1, unit_price: 0, amount: 0 }],
     notes: inv?.notes || "",
@@ -2192,9 +2213,7 @@ const CreateInvoiceModal = ({
 
   const calculateTotal = () => {
     const subtotal = formData.items.reduce((sum, item) => {
-      const quantity = Number(item.quantity) || 0;
-      const unitPrice = Number(item.unit_price) || 0;
-      return sum + quantity * unitPrice;
+      return sum + (Number(item.amount) || 0);
     }, 0);
     return Math.round((subtotal + Number.EPSILON) * 100) / 100;
   };
@@ -2221,10 +2240,9 @@ const CreateInvoiceModal = ({
   const updateItem = (index, field, value) => {
     const newItems = [...formData.items];
     newItems[index][field] = value;
-    if (field === "quantity" || field === "unit_price") {
-      newItems[index].amount =
-        (Number(newItems[index].quantity) || 0) *
-        (Number(newItems[index].unit_price) || 0);
+    if (field === "amount") {
+      newItems[index].quantity = 1;
+      newItems[index].unit_price = Number(value) || 0;
     }
     setFormData({ ...formData, items: newItems });
   };
@@ -2270,10 +2288,9 @@ const CreateInvoiceModal = ({
       due_date: formData.due_date,
       items: formData.items.map((item) => ({
         description: item.description,
-        quantity: Number(item.quantity) || 0,
-        unit_price: Number(item.unit_price) || 0,
-        amount:
-          (Number(item.quantity) || 0) * (Number(item.unit_price) || 0),
+        quantity: 1,
+        unit_price: Number(item.amount) || 0,
+        amount: Number(item.amount) || 0,
       })),
       notes: formData.notes,
       terms: formData.terms,
@@ -2393,10 +2410,8 @@ const CreateInvoiceModal = ({
             </div>
 
             <div className="space-y-3">
-              <div className="hidden md:grid grid-cols-[1fr_80px_120px_120px_44px] gap-3 px-1 text-xs font-semibold text-slate-500 uppercase tracking-wide">
+              <div className="hidden md:grid grid-cols-[1fr_160px_44px] gap-3 px-1 text-xs font-semibold text-slate-500 uppercase tracking-wide">
                 <div>Description</div>
-                <div className="text-center">Qty</div>
-                <div className="text-right">Unit Price</div>
                 <div className="text-right">Amount</div>
                 <div></div>
               </div>
@@ -2404,7 +2419,7 @@ const CreateInvoiceModal = ({
               {formData.items.map((item, index) => (
                 <div
                   key={index}
-                  className="grid grid-cols-1 md:grid-cols-[1fr_80px_120px_120px_44px] gap-3 items-center bg-slate-50 p-3 rounded-xl border border-slate-200"
+                  className="grid grid-cols-1 md:grid-cols-[1fr_160px_44px] gap-3 items-center bg-slate-50 p-3 rounded-xl border border-slate-200"
                 >
                   <input
                     type="text"
@@ -2418,39 +2433,14 @@ const CreateInvoiceModal = ({
                   <input
                     type="number"
                     min="0"
-                    step="any"
-                    placeholder="Qty"
-                    value={item.quantity}
+                    step="1"
+                    placeholder="0"
+                    value={item.amount || ""}
                     onChange={(e) =>
-                      updateItem(
-                        index,
-                        "quantity",
-                        parseFloat(e.target.value) || 0
-                      )
-                    }
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-center focus:ring-2 focus:ring-blue-500"
-                  />
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    placeholder="Unit Price"
-                    value={item.unit_price}
-                    onChange={(e) =>
-                      updateItem(
-                        index,
-                        "unit_price",
-                        parseFloat(e.target.value) || 0
-                      )
+                      updateItem(index, "amount", e.target.value)
                     }
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-right focus:ring-2 focus:ring-blue-500"
                   />
-                  <div className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-800 text-right truncate">
-                    {formatCurrency(
-                      (Number(item.quantity) || 0) *
-                      (Number(item.unit_price) || 0)
-                    )}
-                  </div>
                   <div className="flex justify-center">
                     {formData.items.length > 1 ? (
                       <button
@@ -2525,7 +2515,7 @@ const CreateInvoiceModal = ({
                   <input
                     type="number"
                     min="0"
-                    step="0.01"
+                    step="1"
                     max={total > 0 ? total : undefined}
                     value={formData.paid_amount}
                     disabled={formData.status === "Paid"}
