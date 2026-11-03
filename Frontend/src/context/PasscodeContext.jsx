@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
 import { X, Lock, Key, Mail } from "lucide-react";
+import { useAuth } from "./AuthContext";
 
 const PasscodeContext = createContext();
 
@@ -73,6 +74,7 @@ const buildLockedFromSession = () => {
 };
 
 export const PasscodeProvider = ({ children }) => {
+  const { token } = useAuth();
   const [lockedModules, setLockedModules] = useState(buildLockedFromSession);
   const [showPasscodeModal, setShowPasscodeModal] = useState(false);
   const [showSetupModal, setShowSetupModal] = useState(false);
@@ -93,11 +95,7 @@ export const PasscodeProvider = ({ children }) => {
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
-  useEffect(() => {
-    checkPasscodeStatus();
-  }, []);
-
-  const checkPasscodeStatus = async () => {
+  const checkPasscodeStatus = useCallback(async () => {
     try {
       const token = localStorage.getItem("token");
       if (!token) return;
@@ -124,7 +122,16 @@ export const PasscodeProvider = ({ children }) => {
     } catch (error) {
       console.error("Error checking passcode status:", error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!token) {
+      setShowSetupModal(false);
+      setHasPasscode(false);
+      return;
+    }
+    checkPasscodeStatus();
+  }, [checkPasscodeStatus, token]);
 
   const isModuleUnlocked = useCallback(
     (moduleName) => {
