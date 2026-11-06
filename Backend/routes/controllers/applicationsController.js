@@ -65,7 +65,7 @@ const processLeaveApproval = async (connection, app) => {
     for (const dateStr of leaveDates) {
       // Mark absent record as approved leave if it exists
       await connection.query(
-        `UPDATE Employee_Absent
+        `UPDATE employee_absent
          SET reason_type  = 'Paid Leave',
              leave_type_key = ?,
              is_approved  = 1,

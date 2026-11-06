@@ -128,7 +128,7 @@ const getAllEmployeeLeaves = async (req, res) => {
       FROM employee_leaves
       ORDER BY employee_id ASC`
     );
-    // Note: uninformed_leaves and paid_absent columns removed — use Employee_Absent table instead
+    // Note: uninformed_leaves and paid_absent columns removed — use employee_absent table instead
 
     if (leaves.length === 0) {
       return res.json({

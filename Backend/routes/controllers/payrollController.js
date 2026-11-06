@@ -8,7 +8,7 @@
  * - employee_bank_accounts (bank info)
  * - Monthly_Attendance_Summary (view - attendance stats)
  * - employee_attendance (for detailed late count)
- * - Employee_Absent (absent records)
+ * - employee_absent (absent records)
  * - payroll_records (stores generated payroll)
  *
  * Payroll Logic:
@@ -442,7 +442,7 @@ const generatePayroll = async (req, res) => {
       detailedMap[d.employee_id] = d;
     });
 
-    // 3b. Get approved leaves from Employee_Absent
+    // 3b. Get approved leaves from employee_absent
     let approvedLeaves;
     if (isCurrentMonth && cutoffDate) {
       [approvedLeaves] = await pool.query(
@@ -451,7 +451,7 @@ const generatePayroll = async (req, res) => {
           employee_id,
           COUNT(*) AS paid_absent_days,
           SUM(CASE WHEN (ea.reason_type IN ('Leave', 'Medical', 'Sick', 'Paid Leave') OR ea.is_approved = 1) AND DAY(ea.absent_date) <= ? THEN 1 ELSE 0 END) AS approved_leave_days
-        FROM Employee_Absent ea
+        FROM employee_absent ea
         LEFT JOIN company_calendar cc ON cc.calendar_date = ea.absent_date
         WHERE YEAR(ea.absent_date) = ? AND MONTH(ea.absent_date) = ?
           AND DAY(ea.absent_date) <= ?
@@ -472,7 +472,7 @@ const generatePayroll = async (req, res) => {
           employee_id,
           COUNT(*) AS paid_absent_days,
           SUM(CASE WHEN ea.reason_type IN ('Leave', 'Medical', 'Sick', 'Paid Leave') OR ea.is_approved = 1 THEN 1 ELSE 0 END) AS approved_leave_days
-        FROM Employee_Absent ea
+        FROM employee_absent ea
         LEFT JOIN company_calendar cc ON cc.calendar_date = ea.absent_date
         WHERE YEAR(ea.absent_date) = ? AND MONTH(ea.absent_date) = ?
           AND (cc.calendar_date IS NULL OR cc.day_type = 'working')
@@ -500,7 +500,7 @@ const generatePayroll = async (req, res) => {
         SUM(CASE WHEN leave_type_key = 'annual' THEN 1 ELSE 0 END) AS annual_leave_days
       FROM (
         SELECT ea.employee_id, DATE(ea.absent_date) AS leave_date, ea.leave_type_key
-        FROM Employee_Absent ea
+        FROM employee_absent ea
         LEFT JOIN company_calendar cc ON cc.calendar_date = ea.absent_date
         WHERE ea.absent_date BETWEEN ? AND ?
           AND ea.leave_type_key IN ('casual', 'sick', 'annual')
@@ -552,7 +552,7 @@ const generatePayroll = async (req, res) => {
             AND (cc.day_type = 'working' OR (cc.calendar_date IS NULL AND WEEKDAY(ea.attendance_date) < 5))
           UNION
           SELECT ea.employee_id, DATE_FORMAT(ea.absent_date, '%Y-%m-%d') AS absent_date
-          FROM Employee_Absent ea
+          FROM employee_absent ea
           LEFT JOIN company_calendar cc ON cc.calendar_date = ea.absent_date
           WHERE YEAR(ea.absent_date) = ? AND MONTH(ea.absent_date) = ?
             AND DAY(ea.absent_date) <= ?
@@ -579,7 +579,7 @@ const generatePayroll = async (req, res) => {
             AND (cc.day_type = 'working' OR (cc.calendar_date IS NULL AND WEEKDAY(ea.attendance_date) < 5))
           UNION
           SELECT ea.employee_id, DATE_FORMAT(ea.absent_date, '%Y-%m-%d') AS absent_date
-          FROM Employee_Absent ea
+          FROM employee_absent ea
           LEFT JOIN company_calendar cc ON cc.calendar_date = ea.absent_date
           WHERE YEAR(ea.absent_date) = ? AND MONTH(ea.absent_date) = ?
             AND COALESCE(ea.is_approved, 0) = 0
@@ -740,7 +740,7 @@ const generatePayroll = async (req, res) => {
         // Total absent days = raw absent days + half days converted to absent
         const totalAbsentDays = rawAbsentDays + halfDaysToAbsent;
 
-        // Paid leave days from Employee_Absent
+        // Paid leave days from employee_absent
         const markedPaidDays = parseInt(approvedLeave.approved_leave_days) || 0;
         const casualFromAbsent =
           parseInt(categorizedPaidLeave.casual_leave_days) || 0;

@@ -158,7 +158,7 @@ router.put("/:date", authMiddleware, requireHrOrAdmin, async (req, res) => {
           [`Company holiday: ${title.trim()}`, date],
         );
         await connection.query(
-          `DELETE FROM Employee_Absent
+          `DELETE FROM employee_absent
            WHERE absent_date = ?
              AND reason_type = 'No Check-in'
              AND is_approved = 0`,

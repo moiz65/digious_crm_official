@@ -113,9 +113,9 @@ const createManagedLeave = async (req, res) => {
         [employeeId, ...leaveDates]
       );
 
-      // Also check Employee_Absent table
+      // Also check employee_absent table
       const [absentTable] = await pool.query(
-        `SELECT absent_date FROM Employee_Absent
+        `SELECT absent_date FROM employee_absent
          WHERE employee_id = ? AND absent_date IN (${placeholders})`,
         [employeeId, ...leaveDates]
       );
@@ -401,7 +401,7 @@ const hrManagedLeaveAction = async (req, res) => {
 //   2. Update/create attendance records as "Paid Leave"
 //      - No check-in / check-out
 //      - Full 9-hour (540 min) shift credit
-//   3. Remove from Employee_Absent if applicable
+//   3. Remove from employee_absent if applicable
 // ──────────────────────────────────────────────────────────────
 const applyManagedLeave = async (ticket) => {
   const {
@@ -481,9 +481,9 @@ const applyManagedLeave = async (ticket) => {
       );
     }
 
-    // Remove from Employee_Absent if exists
+    // Remove from employee_absent if exists
     await pool.query(
-      `DELETE FROM Employee_Absent WHERE employee_id = ? AND absent_date = ?`,
+      `DELETE FROM employee_absent WHERE employee_id = ? AND absent_date = ?`,
       [employee_id, dateStr]
     );
   }

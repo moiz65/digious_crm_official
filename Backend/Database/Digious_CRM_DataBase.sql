@@ -104,13 +104,13 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `ProcessDailyAbsences` ()   BEGIN
             
             -- Check if absence record already exists for this date
             IF NOT EXISTS (
-                SELECT 1 FROM Employee_Absent 
+                SELECT 1 FROM employee_absent 
                 WHERE employee_id = emp_id 
                 AND absent_date = check_date
             ) THEN
                 
                 -- Insert new absence record
-                INSERT INTO Employee_Absent 
+                INSERT INTO employee_absent 
                 (employee_id, email, name, absent_date, reason_type, reason, is_approved, remarks) 
                 VALUES 
                 (emp_id, emp_email, emp_name, check_date, 'No Check-in', 'Automatically marked - No check-in record found', 0, 'Automatically marked - No check-in record found');
@@ -11736,7 +11736,7 @@ ALTER TABLE `chat_messages`
 -- Constraints for table `employee_absent`
 --
 ALTER TABLE `employee_absent`
-  ADD CONSTRAINT `Employee_Absent_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employee_onboarding` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `employee_absent_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employee_onboarding` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `employee_achievements`
@@ -11772,8 +11772,8 @@ ALTER TABLE `employee_bank_accounts`
 -- Constraints for table `employee_breaks`
 --
 ALTER TABLE `employee_breaks`
-  ADD CONSTRAINT `Employee_Breaks_ibfk_1` FOREIGN KEY (`attendance_id`) REFERENCES `employee_attendance` (`id`),
-  ADD CONSTRAINT `Employee_Breaks_ibfk_2` FOREIGN KEY (`employee_id`) REFERENCES `employee_onboarding` (`id`);
+  ADD CONSTRAINT `employee_breaks_ibfk_1` FOREIGN KEY (`attendance_id`) REFERENCES `employee_attendance` (`id`),
+  ADD CONSTRAINT `employee_breaks_ibfk_2` FOREIGN KEY (`employee_id`) REFERENCES `employee_onboarding` (`id`);
 
 --
 -- Constraints for table `employee_dynamic_resources`

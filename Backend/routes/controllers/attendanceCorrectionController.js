@@ -472,9 +472,9 @@ const applyCorrection = async (ticket) => {
         ]
       );
 
-      // Remove from Employee_Absent if exists
+      // Remove from employee_absent if exists
       await pool.query(
-        `DELETE FROM Employee_Absent WHERE employee_id = ? AND absent_date = ?`,
+        `DELETE FROM employee_absent WHERE employee_id = ? AND absent_date = ?`,
         [employee_id, attendance_date]
       );
     }

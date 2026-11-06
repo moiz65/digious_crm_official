@@ -435,12 +435,12 @@ exports.checkIn = async (req, res) => {
       // Remove absence record if exists
       try {
         const [absentRecord] = await connection.query(
-          `SELECT id FROM Employee_Absent WHERE employee_id = ? AND absent_date = ?`,
+          `SELECT id FROM employee_absent WHERE employee_id = ? AND absent_date = ?`,
           [employee_id, attendanceDate],
         );
         if (absentRecord.length > 0) {
           await connection.query(
-            `DELETE FROM Employee_Absent WHERE employee_id = ? AND absent_date = ?`,
+            `DELETE FROM employee_absent WHERE employee_id = ? AND absent_date = ?`,
             [employee_id, attendanceDate],
           );
           console.log(`🗑️ Removed absence record for ${attendanceDate}`);
@@ -1161,7 +1161,7 @@ exports.recordBreakStart = async (req, res) => {
 
       // Insert break record with only start time (end_time will be NULL initially)
       const [breakResult] = await connection.query(
-        `INSERT INTO Employee_Breaks 
+        `INSERT INTO employee_breaks 
          (attendance_id, employee_id, break_type, break_start_time, break_end_time, reason)
          VALUES (?, ?, ?, ?, NULL, ?)`,
         [attendanceId, employee_id, break_type, breakStart, reason || null],
@@ -1291,7 +1291,7 @@ exports.recordBreakEnd = async (req, res) => {
 
       // Find the most recent break record for this type
       const [breakRecord] = await connection.query(
-        `SELECT id FROM Employee_Breaks 
+        `SELECT id FROM employee_breaks 
          WHERE attendance_id = ? AND employee_id = ? AND break_type = ? AND break_end_time IS NULL
          ORDER BY created_at DESC LIMIT 1`,
         [attendanceId, employee_id, break_type],
@@ -1309,7 +1309,7 @@ exports.recordBreakEnd = async (req, res) => {
 
       // Update break record with end time, duration, and inactivity
       await connection.query(
-        `UPDATE Employee_Breaks 
+        `UPDATE employee_breaks 
          SET break_end_time = ?, 
              break_duration_minutes = ?,
              allowed_duration_minutes = ?,
@@ -1519,7 +1519,7 @@ exports.recordBreakProgress = async (req, res) => {
 
       // Find the most recent break record for this type that doesn't have an end time
       const [breakRecord] = await connection.query(
-        `SELECT id FROM Employee_Breaks 
+        `SELECT id FROM employee_breaks 
          WHERE attendance_id = ? AND employee_id = ? AND break_type = ? AND break_end_time IS NULL
          ORDER BY created_at DESC LIMIT 1`,
         [attendanceId, employee_id, break_type],
@@ -1538,7 +1538,7 @@ exports.recordBreakProgress = async (req, res) => {
       // This is an optional field to track progress in real-time
       // Note: This updates the record but doesn't set end_time yet
       await connection.query(
-        `UPDATE Employee_Breaks 
+        `UPDATE employee_breaks 
          SET break_duration_minutes = ?, updated_at = NOW()
          WHERE id = ? AND break_end_time IS NULL`,
         [Math.floor(current_duration_minutes), breakId],
@@ -1665,7 +1665,7 @@ exports.getOngoingBreaks = async (req, res) => {
       // Find all ongoing breaks (break_end_time IS NULL) for today
       const [ongoingBreaks] = await connection.query(
         `SELECT id, break_type, break_start_time, break_duration_minutes, created_at
-         FROM Employee_Breaks 
+         FROM employee_breaks 
          WHERE attendance_id = ? AND employee_id = ? AND break_end_time IS NULL
          ORDER BY created_at DESC`,
         [attendanceId, employee_id],
@@ -1818,7 +1818,7 @@ exports.getTodayBreaks = async (req, res) => {
       // Get all breaks for today (both completed and ongoing)
       const [todayBreaks] = await connection.query(
         `SELECT id, break_type, break_start_time, break_end_time, break_duration_minutes, created_at
-         FROM Employee_Breaks 
+         FROM employee_breaks 
          WHERE attendance_id = ? AND employee_id = ?
          ORDER BY created_at ASC`,
         [attendanceId, finalEmployeeId],
@@ -1952,7 +1952,7 @@ exports.recordBreak = async (req, res) => {
 
       // Insert break record
       const [breakResult] = await connection.query(
-        `INSERT INTO Employee_Breaks 
+        `INSERT INTO employee_breaks 
          (attendance_id, employee_id, break_type, break_start_time, break_end_time, break_duration_minutes, reason)
          VALUES (?, ?, ?, ?, ?, ?, ?)`,
         [
@@ -2232,7 +2232,7 @@ exports.getTodayAttendance = async (req, res) => {
           COALESCE(b.allowed_duration_minutes, 0) as allowed_duration_minutes,
           COALESCE(b.inactivity_minutes, 0) as inactivity_minutes,
           COALESCE(b.is_inactive, 0) as is_inactive
-         FROM Employee_Breaks b 
+         FROM employee_breaks b 
          WHERE b.attendance_id = ? 
          ORDER BY b.break_start_time ASC`,
         [record.id],
@@ -2673,7 +2673,7 @@ exports.getAllAttendance = async (req, res) => {
       if (attendanceIds.length > 0) {
         const [allBreaks] = await connection.query(
           `SELECT id, attendance_id, break_type, break_start_time, break_end_time, break_duration_minutes, reason 
-           FROM Employee_Breaks 
+           FROM employee_breaks 
            WHERE attendance_id IN (?) 
            ORDER BY break_start_time ASC`,
           [attendanceIds],
@@ -2942,7 +2942,7 @@ exports.getAllAttendanceWithAbsent = async (req, res) => {
       if (attIds.length > 0) {
         const [allBreaks] = await connection.query(
           `SELECT id, attendance_id, break_type, break_start_time, break_end_time, break_duration_minutes, reason 
-           FROM Employee_Breaks 
+           FROM employee_breaks 
            WHERE attendance_id IN (?) 
            ORDER BY break_start_time ASC`,
           [attIds],
@@ -3260,7 +3260,7 @@ exports.getAllBreaks = async (req, res) => {
                 eb.break_start_time, eb.break_end_time, eb.break_duration_minutes,
                 eb.reason, eb.created_at, eb.updated_at,
                 eo.name as employee_name 
-         FROM Employee_Breaks eb
+         FROM employee_breaks eb
          LEFT JOIN employee_onboarding eo ON eb.employee_id = eo.id
          ORDER BY eb.created_at DESC`,
       );
@@ -3538,7 +3538,7 @@ exports.getBreakSummary = async (req, res) => {
            break_duration_minutes,
            reason,
            created_at
-         FROM Employee_Breaks
+         FROM employee_breaks
          WHERE attendance_id = ?
          ORDER BY created_at ASC`,
         [attendanceId],
@@ -4354,7 +4354,7 @@ exports.getAbsentEmployeesByDate = async (req, res) => {
         eo.department,
         eo.designation,
         eo.phone
-       FROM Employee_Absent ea
+       FROM employee_absent ea
        LEFT JOIN employee_onboarding eo ON ea.employee_id = eo.id
        WHERE ea.absent_date = ?
        ORDER BY ea.name ASC`,
@@ -4432,7 +4432,7 @@ exports.getAbsentEmployeesByDateRange = async (req, res) => {
         ea.updated_at,
         eo.department,
         eo.designation
-       FROM Employee_Absent ea
+       FROM employee_absent ea
        LEFT JOIN employee_onboarding eo ON ea.employee_id = eo.id
        WHERE ea.absent_date BETWEEN ? AND ?
        ORDER BY ea.absent_date DESC, ea.name ASC`,
@@ -4512,7 +4512,7 @@ exports.getAbsentSummaryByEmployee = async (req, res) => {
         SUM(CASE WHEN ea.is_approved = 0 THEN 1 ELSE 0 END) as pending_count,
         MIN(ea.absent_date) as first_absent_date,
         MAX(ea.absent_date) as last_absent_date
-      FROM Employee_Absent ea
+      FROM employee_absent ea
       LEFT JOIN employee_onboarding eo ON ea.employee_id = eo.id
       WHERE 1=1
     `;
@@ -4590,7 +4590,7 @@ exports.getAbsentByEmployee = async (req, res) => {
         ea.updated_at,
         eo.department,
         eo.designation
-       FROM Employee_Absent ea
+       FROM employee_absent ea
        LEFT JOIN employee_onboarding eo ON ea.employee_id = eo.id
        WHERE ea.employee_id = ?
        AND ea.absent_date BETWEEN ? AND ?
@@ -4742,14 +4742,14 @@ exports.autoMarkAbsentByDateRange = async (req, res) => {
         try {
           // Check if record already exists
           const [existingAbsent] = await connection.query(
-            `SELECT id FROM Employee_Absent WHERE employee_id = ? AND absent_date = ?`,
+            `SELECT id FROM employee_absent WHERE employee_id = ? AND absent_date = ?`,
             [emp.id, checkDate],
           );
 
           if (existingAbsent.length === 0) {
             // Create absence record
             await connection.query(
-              `INSERT INTO Employee_Absent 
+              `INSERT INTO employee_absent 
                (employee_id, email, name, absent_date, reason_type, reason, is_approved, remarks, created_at, updated_at) 
                VALUES (?, ?, ?, ?, 'No Check-in', 'Auto-generated: Employee did not check in', 0, 'System auto-marked', NOW(), NOW())`,
               [emp.id, emp.email, emp.name, checkDate],
@@ -5263,10 +5263,10 @@ exports.hrCreateAttendance = async (req, res) => {
       ],
     );
 
-    // Remove from Employee_Absent if exists
+    // Remove from employee_absent if exists
     try {
       await connection.query(
-        "DELETE FROM Employee_Absent WHERE employee_id = ? AND absent_date = ?",
+        "DELETE FROM employee_absent WHERE employee_id = ? AND absent_date = ?",
         [employee_id, attendance_date],
       );
     } catch (e) {

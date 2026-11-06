@@ -202,7 +202,7 @@ const getEmployeeData = async (req, res) => {
     const [absents] = await pool.query(`
       SELECT id, employee_id, name, absent_date, reason_type, reason,
              is_approved, approved_by, approved_at, remarks
-      FROM Employee_Absent 
+      FROM employee_absent 
       WHERE employee_id = ? AND absent_date BETWEEN ? AND ?
       ORDER BY absent_date DESC
     `, [employeeId, start, end]);
@@ -222,7 +222,7 @@ const getEmployeeData = async (req, res) => {
       SELECT eb.id, eb.attendance_id, eb.employee_id, eb.break_type,
              eb.break_start_time, eb.break_end_time, eb.break_duration_minutes,
              eb.reason, ea.attendance_date
-      FROM Employee_Breaks eb
+      FROM employee_breaks eb
       JOIN employee_attendance ea ON eb.attendance_id = ea.id
       WHERE eb.employee_id = ? AND ea.attendance_date BETWEEN ? AND ?
       ORDER BY ea.attendance_date DESC, eb.break_start_time DESC
@@ -436,7 +436,7 @@ const updateAbsent = async (req, res) => {
     const { reason_type, reason, is_approved, remarks } = req.body;
     const hrEmployeeId = req.user?.employeeId;
 
-    const [existing] = await pool.query('SELECT * FROM Employee_Absent WHERE id = ?', [id]);
+    const [existing] = await pool.query('SELECT * FROM employee_absent WHERE id = ?', [id]);
     if (existing.length === 0) {
       return res.status(404).json({ success: false, message: 'Absent record not found' });
     }
@@ -460,9 +460,9 @@ const updateAbsent = async (req, res) => {
     const setClause = Object.keys(updates).map(key => `${key} = ?`).join(', ');
     const values = Object.values(updates);
 
-    await pool.query(`UPDATE Employee_Absent SET ${setClause} WHERE id = ?`, [...values, id]);
+    await pool.query(`UPDATE employee_absent SET ${setClause} WHERE id = ?`, [...values, id]);
 
-    const [updated] = await pool.query('SELECT * FROM Employee_Absent WHERE id = ?', [id]);
+    const [updated] = await pool.query('SELECT * FROM employee_absent WHERE id = ?', [id]);
 
     res.status(200).json({
       success: true,
@@ -480,12 +480,12 @@ const deleteAbsent = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const [existing] = await pool.query('SELECT * FROM Employee_Absent WHERE id = ?', [id]);
+    const [existing] = await pool.query('SELECT * FROM employee_absent WHERE id = ?', [id]);
     if (existing.length === 0) {
       return res.status(404).json({ success: false, message: 'Absent record not found' });
     }
 
-    await pool.query('DELETE FROM Employee_Absent WHERE id = ?', [id]);
+    await pool.query('DELETE FROM employee_absent WHERE id = ?', [id]);
 
     res.status(200).json({
       success: true,
@@ -515,7 +515,7 @@ const addAbsent = async (req, res) => {
 
     // Check if absent record already exists for this date
     const [existing] = await pool.query(
-      'SELECT * FROM Employee_Absent WHERE employee_id = ? AND absent_date = ?',
+      'SELECT * FROM employee_absent WHERE employee_id = ? AND absent_date = ?',
       [employee_id, absent_date]
     );
     if (existing.length > 0) {
@@ -523,7 +523,7 @@ const addAbsent = async (req, res) => {
     }
 
     const [result] = await pool.query(`
-      INSERT INTO Employee_Absent 
+      INSERT INTO employee_absent 
       (employee_id, name, absent_date, reason_type, reason, is_approved, approved_by, approved_at, remarks)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
@@ -538,7 +538,7 @@ const addAbsent = async (req, res) => {
       null
     ]);
 
-    const [newRecord] = await pool.query('SELECT * FROM Employee_Absent WHERE id = ?', [result.insertId]);
+    const [newRecord] = await pool.query('SELECT * FROM employee_absent WHERE id = ?', [result.insertId]);
 
     res.status(201).json({
       success: true,
@@ -685,7 +685,7 @@ const convertAbsentToPaidLeave = async (req, res) => {
       return res.status(400).json({ success: false, message: 'leave_type_key must be casual, sick, or annual' });
     }
 
-    const [absent] = await connection.query('SELECT * FROM Employee_Absent WHERE id = ?', [id]);
+    const [absent] = await connection.query('SELECT * FROM employee_absent WHERE id = ?', [id]);
     if (absent.length === 0) {
       return res.status(404).json({ success: false, message: 'Absent record not found' });
     }
@@ -718,7 +718,7 @@ const convertAbsentToPaidLeave = async (req, res) => {
 
     // 1. Update absent record to Paid Leave
     await connection.query(
-      `UPDATE Employee_Absent
+      `UPDATE employee_absent
        SET reason_type = 'Paid Leave',
            leave_type_key = ?,
            is_approved = 1,
@@ -770,7 +770,7 @@ const convertAbsentToPaidLeave = async (req, res) => {
 
     await connection.commit();
 
-    const [updatedAbsent] = await connection.query('SELECT * FROM Employee_Absent WHERE id = ?', [id]);
+    const [updatedAbsent] = await connection.query('SELECT * FROM employee_absent WHERE id = ?', [id]);
     const [updatedLeaves] = await connection.query('SELECT * FROM employee_leaves WHERE employee_id = ?', [record.employee_id]);
 
     res.status(200).json({
