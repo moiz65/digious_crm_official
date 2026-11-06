@@ -538,10 +538,10 @@ function AppContent() {
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
 
-        {/* ✅ ChatDashboard ONLY on protected routes */}
+        {/* ChatDashboard ONLY on protected routes */}
         <ChatDashboardWrapper />
         <DesktopMonitor />
-        {/* <DesktopNotificationManager /> */}
+        <DesktopNotificationManager />
       </div>
     </ChatProvider>
   );
