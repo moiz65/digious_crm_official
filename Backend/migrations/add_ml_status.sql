@@ -1,5 +1,5 @@
 
-ALTER TABLE `Employee_Attendance` 
+ALTER TABLE `employee_attendance` 
 MODIFY COLUMN `status` 
 ENUM('Present','Absent','Late','ML','On Leave','Half Day','Paid Leave','Uninformed Absent') 
 DEFAULT 'Absent';

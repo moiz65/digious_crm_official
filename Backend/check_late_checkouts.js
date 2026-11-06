@@ -34,7 +34,7 @@ async function checkLateCheckouts() {
         EXTRACT(MINUTE FROM STR_TO_DATE(ea.check_in_time, '%H:%i:%s')) as check_in_minute,
         EXTRACT(HOUR FROM STR_TO_DATE(ea.check_out_time, '%H:%i:%s')) as check_out_hour,
         EXTRACT(MINUTE FROM STR_TO_DATE(ea.check_out_time, '%H:%i:%s')) as check_out_minute
-      FROM Employee_Attendance ea
+      FROM employee_attendance ea
       LEFT JOIN user_as_employees eu ON ea.employee_id = eu.id
       WHERE ea.check_out_time IS NOT NULL
       ORDER BY ea.attendance_date DESC
@@ -108,7 +108,7 @@ async function checkLateCheckouts() {
         ea.check_in_time,
         EXTRACT(HOUR FROM STR_TO_DATE(ea.check_in_time, '%H:%i:%s')) as check_in_hour,
         EXTRACT(MINUTE FROM STR_TO_DATE(ea.check_in_time, '%H:%i:%s')) as check_in_minute
-      FROM Employee_Attendance ea
+      FROM employee_attendance ea
       LEFT JOIN user_as_employees eu ON ea.employee_id = eu.id
       WHERE ea.check_out_time IS NULL
       ORDER BY ea.attendance_date DESC

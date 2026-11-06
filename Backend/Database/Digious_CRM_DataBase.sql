@@ -97,7 +97,7 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `ProcessDailyAbsences` ()   BEGIN
         
         -- Check if employee has NO check-in record for this date
         IF NOT EXISTS (
-            SELECT 1 FROM Employee_Attendance 
+            SELECT 1 FROM employee_attendance 
             WHERE employee_id = emp_id 
             AND attendance_date = check_date
         ) THEN
@@ -169,7 +169,7 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `ProcessMissingCheckouts` ()   BEGIN
             net_working_time_minutes, expected_working_time_minutes,
             overtime_minutes, overtime_hours, on_time, late_by_minutes,
             remarks, device_info, ip_address
-        FROM Employee_Attendance
+        FROM employee_attendance
         WHERE check_out_time IS NULL 
             AND check_in_time IS NOT NULL
             AND attendance_date < CURDATE()
@@ -231,7 +231,7 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `ProcessMissingCheckouts` ()   BEGIN
             'Checkout Missing - Auto-detected by system', 0, NOW()
         );
 
-        DELETE FROM Employee_Attendance WHERE id = v_attendance_id;
+        DELETE FROM employee_attendance WHERE id = v_attendance_id;
 
         SET v_records_moved = v_records_moved + 1;
 
@@ -317,7 +317,7 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `ResolveCheckoutMissing` (IN `p_chec
         '\nManual checkout time set: ', p_check_out_time
     );
 
-    INSERT INTO Employee_Attendance (
+    INSERT INTO employee_attendance (
         id, employee_id, email, name, attendance_date,
         check_in_time, check_out_time, status,
         total_breaks_taken, smoke_break_count, dinner_break_count,
@@ -697,7 +697,7 @@ CREATE TABLE `attendance_corrections` (
   `employee_id` int(11) NOT NULL COMMENT 'FK → employee_onboarding.id',
   `employee_name` varchar(100) NOT NULL,
   `employee_email` varchar(100) NOT NULL,
-  `attendance_id` int(11) DEFAULT NULL COMMENT 'FK → Employee_Attendance.id (NULL if absent record)',
+  `attendance_id` int(11) DEFAULT NULL COMMENT 'FK → employee_attendance.id (NULL if absent record)',
   `attendance_date` date NOT NULL,
   `original_check_in` time DEFAULT NULL,
   `original_check_out` time DEFAULT NULL,
@@ -6250,7 +6250,7 @@ INSERT INTO `employee_breaks` (`id`, `attendance_id`, `employee_id`, `break_type
 
 CREATE TABLE `employee_checkout_missing` (
   `id` int(11) NOT NULL,
-  `original_attendance_id` int(11) NOT NULL COMMENT 'Reference to original Employee_Attendance record',
+  `original_attendance_id` int(11) NOT NULL COMMENT 'Reference to original employee_attendance record',
   `employee_id` int(11) NOT NULL,
   `email` varchar(100) NOT NULL,
   `name` varchar(100) NOT NULL,
@@ -6284,7 +6284,7 @@ CREATE TABLE `employee_checkout_missing` (
   `resolved_by` int(11) DEFAULT NULL COMMENT 'HR admin who resolved this',
   `resolved_at` timestamp NULL DEFAULT NULL COMMENT 'When HR resolved this',
   `is_resolved` tinyint(1) DEFAULT 0 COMMENT '0 = Pending, 1 = Resolved',
-  `moved_from_attendance_at` timestamp NOT NULL DEFAULT current_timestamp() COMMENT 'When moved from Employee_Attendance',
+  `moved_from_attendance_at` timestamp NOT NULL DEFAULT current_timestamp() COMMENT 'When moved from employee_attendance',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Manages employees who forgot to check out';
@@ -11760,7 +11760,7 @@ ALTER TABLE `employee_allowances`
 -- Constraints for table `employee_attendance`
 --
 ALTER TABLE `employee_attendance`
-  ADD CONSTRAINT `Employee_Attendance_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employee_onboarding` (`id`);
+  ADD CONSTRAINT `employee_attendance_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employee_onboarding` (`id`);
 
 --
 -- Constraints for table `employee_bank_accounts`

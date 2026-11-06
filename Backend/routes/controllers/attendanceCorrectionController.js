@@ -355,7 +355,7 @@ const hrAction = async (req, res) => {
 };
 
 // ──────────────────────────────────────────────────────────────
-// Helper: Apply the correction to Employee_Attendance
+// Helper: Apply the correction to employee_attendance
 // ──────────────────────────────────────────────────────────────
 const applyCorrection = async (ticket) => {
   const {
@@ -437,7 +437,7 @@ const applyCorrection = async (ticket) => {
     if (updates.length > 0) {
       values.push(attendance_id);
       await pool.query(
-        `UPDATE Employee_Attendance SET ${updates.join(', ')} WHERE id = ?`,
+        `UPDATE employee_attendance SET ${updates.join(', ')} WHERE id = ?`,
         values
       );
     }
@@ -457,7 +457,7 @@ const applyCorrection = async (ticket) => {
       }
 
       await pool.query(
-        `INSERT INTO Employee_Attendance
+        `INSERT INTO employee_attendance
           (employee_id, email, name, attendance_date, check_in_time, check_out_time,
            status, gross_working_time_minutes, net_working_time_minutes,
            expected_working_time_minutes, overtime_minutes, overtime_hours,

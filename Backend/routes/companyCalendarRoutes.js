@@ -121,7 +121,7 @@ router.put("/:date", authMiddleware, requireHrOrAdmin, async (req, res) => {
 
       if (previousEntry?.day_type === "holiday" && type !== "holiday") {
         await connection.query(
-          `UPDATE Employee_Attendance
+          `UPDATE employee_attendance
            SET status = 'Absent', remarks = 'No check-in', updated_at = NOW()
            WHERE attendance_date = ?
              AND status = 'Paid Leave'
@@ -144,7 +144,7 @@ router.put("/:date", authMiddleware, requireHrOrAdmin, async (req, res) => {
 
       if (type === "holiday") {
         await connection.query(
-          `UPDATE Employee_Attendance
+          `UPDATE employee_attendance
            SET status = 'Paid Leave',
                remarks = ?,
                updated_at = NOW()
@@ -211,7 +211,7 @@ router.delete("/:date", authMiddleware, requireHrOrAdmin, async (req, res) => {
       );
       if (existingEntry?.day_type === "holiday") {
         await connection.query(
-          `UPDATE Employee_Attendance
+          `UPDATE employee_attendance
            SET status = 'Absent', remarks = 'No check-in', updated_at = NOW()
            WHERE attendance_date = ?
              AND status = 'Paid Leave'

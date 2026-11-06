@@ -689,7 +689,7 @@ exports.checkPunchExists = async (req, res) => {
     connection = await pool.getConnection();
 
     const [rows] = await connection.query(
-      `SELECT id FROM Employee_Attendance 
+      `SELECT id FROM employee_attendance 
        WHERE employee_id = ? AND attendance_date = ?
        AND (TIME(check_in_time) = ? OR TIME(check_out_time) = ?)`,
       [employee_id, punch_date, punch_time, punch_time],
@@ -1358,7 +1358,7 @@ async function saveAttendanceRecord(connection, employee, log, jobId) {
     // CHECK EXISTING RECORD
     // ============================================================
     const [existing] = await connection.query(
-      `SELECT id, check_in_time, check_out_time FROM Employee_Attendance 
+      `SELECT id, check_in_time, check_out_time FROM employee_attendance 
        WHERE employee_id = ? AND attendance_date = ?`,
       [employee.id, finalDate]
     );
@@ -1380,7 +1380,7 @@ async function saveAttendanceRecord(connection, employee, log, jobId) {
       if (punchType === 'IN' && !record.check_in_time) {
         console.log(`🔄 Updating IN for ${employee.employee_id} on ${finalDate} at ${punchTime}`);
         await connection.query(
-          `UPDATE Employee_Attendance 
+          `UPDATE employee_attendance 
            SET check_in_time = ?, 
                device_info = 'ZKTeco Device',
                is_device_sync = 1
@@ -1395,7 +1395,7 @@ async function saveAttendanceRecord(connection, employee, log, jobId) {
       if (punchType === 'OUT' && !record.check_out_time) {
         console.log(`🔄 Updating OUT for ${employee.employee_id} on ${finalDate} at ${punchTime}`);
         await connection.query(
-          `UPDATE Employee_Attendance 
+          `UPDATE employee_attendance 
            SET check_out_time = ?, 
                device_info = 'ZKTeco Device',
                is_device_sync = 1
@@ -1418,7 +1418,7 @@ async function saveAttendanceRecord(connection, employee, log, jobId) {
     console.log(`🆕 Inserting ${punchType} for ${employee.employee_id} on ${finalDate} at ${punchTime}`);
 
     await connection.query(
-      `INSERT INTO Employee_Attendance 
+      `INSERT INTO employee_attendance 
        (employee_id, email, name, attendance_date, 
         check_in_time, check_out_time, 
         device_info, is_device_sync)
@@ -1457,7 +1457,7 @@ async function recalculateWorkingHours(connection, employeeId, attendanceDate) {
   try {
     const [record] = await connection.query(
       `SELECT check_in_time, check_out_time, total_break_duration_minutes 
-       FROM Employee_Attendance 
+       FROM employee_attendance 
        WHERE employee_id = ? AND attendance_date = ?`,
       [employeeId, attendanceDate]
     );
@@ -1474,7 +1474,7 @@ async function recalculateWorkingHours(connection, employeeId, attendanceDate) {
     );
 
     await connection.query(
-      `UPDATE Employee_Attendance 
+      `UPDATE employee_attendance 
        SET gross_working_time_minutes = ?,
            net_working_time_minutes = ?,
            overtime_minutes = ?,
@@ -1541,7 +1541,7 @@ function calculateWorkingHours(checkIn, checkOut, breakMinutes) {
 async function updateAttendanceStatus(connection, employeeId, attendanceDate) {
   try {
     const [record] = await connection.query(
-      `SELECT check_in_time FROM Employee_Attendance 
+      `SELECT check_in_time FROM employee_attendance 
        WHERE employee_id = ? AND attendance_date = ?`,
       [employeeId, attendanceDate]
     );
@@ -1615,7 +1615,7 @@ async function updateAttendanceStatus(connection, employeeId, attendanceDate) {
     }
 
     await connection.query(
-      `UPDATE Employee_Attendance 
+      `UPDATE employee_attendance 
        SET status = ?, on_time = ?, late_by_minutes = ?
        WHERE employee_id = ? AND attendance_date = ?`,
       [status, onTime, lateByMinutes, employeeId, attendanceDate]

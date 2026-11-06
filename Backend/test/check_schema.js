@@ -4,7 +4,7 @@ async function test() {
   const connection = await pool.getConnection();
   try {
     const [rows] = await connection.query(
-      'DESCRIBE Employee_Attendance'
+      'DESCRIBE employee_attendance'
     );
     console.log('Column definitions:');
     rows.forEach(r => {

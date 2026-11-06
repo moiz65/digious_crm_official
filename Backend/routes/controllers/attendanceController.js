@@ -120,7 +120,7 @@ const validateAndFixWorkingHours = async (
 ) => {
   try {
     const [record] = await connection.query(
-      "SELECT gross_working_time_minutes FROM Employee_Attendance WHERE id = ?",
+      "SELECT gross_working_time_minutes FROM employee_attendance WHERE id = ?",
       [attendanceId],
     );
 
@@ -141,7 +141,7 @@ const validateAndFixWorkingHours = async (
       );
 
       await connection.query(
-        `UPDATE Employee_Attendance 
+        `UPDATE employee_attendance 
          SET gross_working_time_minutes = ?,
              net_working_time_minutes = ?,
              overtime_minutes = ?,
@@ -254,7 +254,7 @@ exports.checkIn = async (req, res) => {
       if (!isDeviceSync) {
         if (currentTotalMinutes >= ninePM) {
           const [pending] = await connection.query(
-            `SELECT id, check_in_time, attendance_date FROM Employee_Attendance 
+            `SELECT id, check_in_time, attendance_date FROM employee_attendance 
              WHERE employee_id = ? AND check_out_time IS NULL AND attendance_date = ?
              LIMIT 1`,
             [employee_id, todayStr],
@@ -264,7 +264,7 @@ exports.checkIn = async (req, res) => {
           const yesterdayDate = getPakistanYesterday();
           const yesterdayStr = getLocalDateString(yesterdayDate);
           const [pending] = await connection.query(
-            `SELECT id, check_in_time, attendance_date FROM Employee_Attendance 
+            `SELECT id, check_in_time, attendance_date FROM employee_attendance 
              WHERE employee_id = ? AND check_out_time IS NULL AND attendance_date = ?
              LIMIT 1`,
             [employee_id, yesterdayStr],
@@ -288,7 +288,7 @@ exports.checkIn = async (req, res) => {
       // CHECK EXISTING ATTENDANCE
       // ============================================================
       const [existingAttendance] = await connection.query(
-        `SELECT id, check_in_time, check_out_time FROM Employee_Attendance 
+        `SELECT id, check_in_time, check_out_time FROM employee_attendance 
          WHERE employee_id = ? AND attendance_date = ?`,
         [employee_id, attendanceDate],
       );
@@ -296,7 +296,7 @@ exports.checkIn = async (req, res) => {
       if (existingAttendance.length > 0) {
         if (existingAttendance[0].check_out_time === null) {
           const [fullRecord] = await connection.query(
-            `SELECT id, check_in_time, created_at FROM Employee_Attendance WHERE id = ?`,
+            `SELECT id, check_in_time, created_at FROM employee_attendance WHERE id = ?`,
             [existingAttendance[0].id],
           );
 
@@ -317,7 +317,7 @@ exports.checkIn = async (req, res) => {
               const autoCheckOutTime = getPakistanTimeString();
               
               const [breakResult] = await connection.query(
-                `SELECT total_break_duration_minutes FROM Employee_Attendance WHERE id = ?`,
+                `SELECT total_break_duration_minutes FROM employee_attendance WHERE id = ?`,
                 [existingAttendance[0].id],
               );
               const breakMinutes = breakResult[0]?.total_break_duration_minutes || 0;
@@ -328,7 +328,7 @@ exports.checkIn = async (req, res) => {
               );
 
               await connection.query(
-                `UPDATE Employee_Attendance 
+                `UPDATE employee_attendance 
                  SET check_out_time = ?, 
                      gross_working_time_minutes = ?,
                      net_working_time_minutes = ?,
@@ -415,7 +415,7 @@ exports.checkIn = async (req, res) => {
 
       // Create new attendance record with source tracking
       const [result] = await connection.query(
-        `INSERT INTO Employee_Attendance 
+        `INSERT INTO employee_attendance 
          (employee_id, email, name, attendance_date, check_in_time, status, on_time, late_by_minutes, device_info, ip_address)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
@@ -546,7 +546,7 @@ exports.checkOut = async (req, res) => {
       if (isDeviceSync && deviceAttendanceDate) {
         const [deviceRecord] = await connection.query(
           `SELECT id, check_in_time, check_out_time, total_break_duration_minutes
-           FROM Employee_Attendance
+           FROM employee_attendance
            WHERE employee_id = ? AND attendance_date = ? AND check_out_time IS NULL`,
           [employee_id, deviceAttendanceDate],
         );
@@ -577,7 +577,7 @@ exports.checkOut = async (req, res) => {
         const yesterdayStr = getLocalDateString(yesterdayDate);
 
         const [attendanceRecordYesterday] = await connection.query(
-          `SELECT id, check_in_time, total_break_duration_minutes FROM Employee_Attendance 
+          `SELECT id, check_in_time, total_break_duration_minutes FROM employee_attendance 
            WHERE employee_id = ? AND attendance_date = ? AND check_out_time IS NULL`,
           [employee_id, yesterdayStr],
         );
@@ -589,7 +589,7 @@ exports.checkOut = async (req, res) => {
         } else {
           // Try TODAY as fallback (in case they checked in early morning)
           const [attendanceRecordToday] = await connection.query(
-            `SELECT id, check_in_time, total_break_duration_minutes FROM Employee_Attendance 
+            `SELECT id, check_in_time, total_break_duration_minutes FROM employee_attendance 
              WHERE employee_id = ? AND attendance_date = ? AND check_out_time IS NULL`,
             [employee_id, todayStr],
           );
@@ -614,7 +614,7 @@ exports.checkOut = async (req, res) => {
       } else if (!attendanceRecord) {
         // Daytime hours (9 AM onwards) - try TODAY first
         const [attendanceRecordToday] = await connection.query(
-          `SELECT id, check_in_time, total_break_duration_minutes FROM Employee_Attendance 
+          `SELECT id, check_in_time, total_break_duration_minutes FROM employee_attendance 
            WHERE employee_id = ? AND attendance_date = ? AND check_out_time IS NULL`,
           [employee_id, todayStr],
         );
@@ -630,7 +630,7 @@ exports.checkOut = async (req, res) => {
 
           const [recentPending] = await connection.query(
             `SELECT id, check_in_time, total_break_duration_minutes, attendance_date 
-             FROM Employee_Attendance 
+             FROM employee_attendance 
              WHERE employee_id = ? AND check_out_time IS NULL
              ORDER BY attendance_date DESC, check_in_time DESC
              LIMIT 1`,
@@ -838,7 +838,7 @@ exports.checkOut = async (req, res) => {
 
       // Update attendance record
       await connection.query(
-        `UPDATE Employee_Attendance 
+        `UPDATE employee_attendance 
          SET check_out_time = ?,
              gross_working_time_minutes = ?,
              net_working_time_minutes = ?,
@@ -858,7 +858,7 @@ exports.checkOut = async (req, res) => {
 
       // Validate working hours were saved correctly
       const [updatedRecord] = await connection.query(
-        "SELECT gross_working_time_minutes, net_working_time_minutes FROM Employee_Attendance WHERE id = ?",
+        "SELECT gross_working_time_minutes, net_working_time_minutes FROM employee_attendance WHERE id = ?",
         [attendanceId],
       );
 
@@ -962,7 +962,7 @@ exports.generateAbsentRecords = async (req, res) => {
 
       // Get all existing attendance dates for this employee
       const [existingDates] = await connection.query(
-        `SELECT DISTINCT DATE(attendance_date) as attendance_date FROM Employee_Attendance 
+        `SELECT DISTINCT DATE(attendance_date) as attendance_date FROM employee_attendance 
          WHERE employee_id = ? AND DATE(attendance_date) >= ? AND DATE(attendance_date) <= ?`,
         [
           employee_id,
@@ -998,14 +998,14 @@ exports.generateAbsentRecords = async (req, res) => {
         if (!existingDateSet.has(dateString) && !isScheduledOff) {
           // First check if record already exists
           const [existingRecord] = await connection.query(
-            `SELECT id FROM Employee_Attendance WHERE employee_id = ? AND attendance_date = ?`,
+            `SELECT id FROM employee_attendance WHERE employee_id = ? AND attendance_date = ?`,
             [employee_id, dateString],
           );
 
           if (existingRecord.length === 0) {
             // Record doesn't exist, create it
             await connection.query(
-              `INSERT INTO Employee_Attendance 
+              `INSERT INTO employee_attendance 
                (employee_id, email, name, attendance_date, status, 
                 total_breaks_taken, smoke_break_count, dinner_break_count, 
                 washroom_break_count, prayer_break_count, smoke_break_duration_minutes, 
@@ -1114,7 +1114,7 @@ exports.recordBreakStart = async (req, res) => {
     try {
       // Find any attendance record for this employee on that date
       const [attendanceRows] = await connection.query(
-        `SELECT id, check_in_time, check_out_time, status FROM Employee_Attendance 
+        `SELECT id, check_in_time, check_out_time, status FROM employee_attendance 
          WHERE employee_id = ? AND attendance_date = ? LIMIT 1`,
         [employee_id, attendanceDate],
       );
@@ -1127,7 +1127,7 @@ exports.recordBreakStart = async (req, res) => {
       if (attendanceRows.length === 0) {
         // No attendance record exists -> create a Present record with check_in_time = breakStart
         const [createRes] = await connection.query(
-          `INSERT INTO Employee_Attendance (employee_id, email, name, attendance_date, status, check_in_time, total_breaks_taken, total_break_duration_minutes, created_at, updated_at)
+          `INSERT INTO employee_attendance (employee_id, email, name, attendance_date, status, check_in_time, total_breaks_taken, total_break_duration_minutes, created_at, updated_at)
            VALUES (?, ?, ?, ?, 'Present', ?, 0, 0, NOW(), NOW())`,
           [employee_id, null, null, attendanceDate, breakStart],
         );
@@ -1142,7 +1142,7 @@ exports.recordBreakStart = async (req, res) => {
         // If the record exists but shows as Absent or has no check_in_time, convert to Present
         if (a.status === "Absent" || !a.check_in_time) {
           await connection.query(
-            `UPDATE Employee_Attendance SET status = 'Present', check_in_time = COALESCE(check_in_time, ?), updated_at = NOW() WHERE id = ?`,
+            `UPDATE employee_attendance SET status = 'Present', check_in_time = COALESCE(check_in_time, ?), updated_at = NOW() WHERE id = ?`,
             [breakStart, attendanceId],
           );
           console.log(
@@ -1270,7 +1270,7 @@ exports.recordBreakEnd = async (req, res) => {
     try {
       // Get today's attendance record
       const [attendanceRecord] = await connection.query(
-        `SELECT id, dinner_break_taken, smoke_break_count FROM Employee_Attendance 
+        `SELECT id, dinner_break_taken, smoke_break_count FROM employee_attendance 
          WHERE employee_id = ? AND attendance_date = ? AND check_out_time IS NULL`,
         [employee_id, attendanceDate],
       );
@@ -1360,7 +1360,7 @@ exports.recordBreakEnd = async (req, res) => {
 
       if (breakFields) {
         await connection.query(
-          `UPDATE Employee_Attendance 
+          `UPDATE employee_attendance 
            SET total_breaks_taken = total_breaks_taken + 1,
                ${breakFields.count} = ${breakFields.count} + 1,
                ${breakFields.duration} = ${breakFields.duration} + ?,
@@ -1383,7 +1383,7 @@ exports.recordBreakEnd = async (req, res) => {
       if (break_type === "Dinner" && !currentDinnerBreakTaken) {
         if (breakDurationMinutes >= 45) {
           await connection.query(
-            `UPDATE Employee_Attendance 
+            `UPDATE employee_attendance 
              SET dinner_break_taken = 1 
              WHERE id = ?`,
             [attendanceId],
@@ -1401,7 +1401,7 @@ exports.recordBreakEnd = async (req, res) => {
       // Check smoke break limit (only when smoke break count reaches 9)
       if (break_type === "Smoke") {
         const [newSmokeCount] = await connection.query(
-          `SELECT smoke_break_count FROM Employee_Attendance WHERE id = ?`,
+          `SELECT smoke_break_count FROM employee_attendance WHERE id = ?`,
           [attendanceId],
         );
         if (newSmokeCount[0]?.smoke_break_count >= 9) {
@@ -1413,7 +1413,7 @@ exports.recordBreakEnd = async (req, res) => {
 
       // Recalculate net_working_time_minutes
       await connection.query(
-        `UPDATE Employee_Attendance 
+        `UPDATE employee_attendance 
          SET net_working_time_minutes = GREATEST(0, gross_working_time_minutes - total_break_duration_minutes - total_inactivity_minutes)
          WHERE id = ?`,
         [attendanceId],
@@ -1503,7 +1503,7 @@ exports.recordBreakProgress = async (req, res) => {
     try {
       // Get today's attendance record using calculated attendance date
       const [attendanceRecord] = await connection.query(
-        `SELECT id FROM Employee_Attendance 
+        `SELECT id FROM employee_attendance 
          WHERE employee_id = ? AND attendance_date = ? AND check_out_time IS NULL`,
         [employee_id, attendanceDate],
       );
@@ -1560,7 +1560,7 @@ exports.recordBreakProgress = async (req, res) => {
         const breakDurationField = durationFieldMap[break_type];
         try {
           await connection.query(
-            `UPDATE Employee_Attendance
+            `UPDATE employee_attendance
              SET ${breakDurationField} = ?,
                  updated_at = NOW()
              WHERE id = ?`,
@@ -1647,7 +1647,7 @@ exports.getOngoingBreaks = async (req, res) => {
     try {
       // Get today's attendance record using calculated attendance date
       const [attendanceRecord] = await connection.query(
-        `SELECT id FROM Employee_Attendance 
+        `SELECT id FROM employee_attendance 
          WHERE employee_id = ? AND attendance_date = ? AND check_out_time IS NULL`,
         [employee_id, attendanceDate],
       );
@@ -1800,7 +1800,7 @@ exports.getTodayBreaks = async (req, res) => {
 
       // Get today's attendance record using calculated attendance date
       const [attendanceRecord] = await connection.query(
-        `SELECT id FROM Employee_Attendance 
+        `SELECT id FROM employee_attendance 
          WHERE employee_id = ? AND attendance_date = ?`,
         [finalEmployeeId, attendanceDate],
       );
@@ -1913,7 +1913,7 @@ exports.recordBreak = async (req, res) => {
     try {
       // Get today's attendance record using calculated attendance date
       const [attendanceRecord] = await connection.query(
-        `SELECT id, check_in_time FROM Employee_Attendance 
+        `SELECT id, check_in_time FROM employee_attendance 
          WHERE employee_id = ? AND attendance_date = ? AND check_out_time IS NULL`,
         [employee_id, attendanceDate],
       );
@@ -1986,7 +1986,7 @@ exports.recordBreak = async (req, res) => {
           break_type.toLowerCase() + "_break_duration_minutes";
 
         updateQueryParts = [
-          "UPDATE Employee_Attendance",
+          "UPDATE employee_attendance",
           "SET total_breaks_taken = total_breaks_taken + 1,",
           `    ${breakCountField} = ${breakCountField} + 1,`,
           `    ${breakDurationField} = ${breakDurationField} + ?,`,
@@ -2002,7 +2002,7 @@ exports.recordBreak = async (req, res) => {
       } else {
         // For 'Other' type, only update total breaks and total duration
         updateQueryParts = [
-          "UPDATE Employee_Attendance",
+          "UPDATE employee_attendance",
           "SET total_breaks_taken = total_breaks_taken + 1,",
           "    total_break_duration_minutes = total_break_duration_minutes + ?,",
           "    updated_at = NOW()",
@@ -2099,7 +2099,7 @@ exports.getTodayAttendance = async (req, res) => {
           COALESCE(a.dinner_inactivity_minutes, 0) as dinner_inactivity_minutes,
           COALESCE(a.washroom_inactivity_minutes, 0) as washroom_inactivity_minutes,
           COALESCE(a.prayer_inactivity_minutes, 0) as prayer_inactivity_minutes
-         FROM Employee_Attendance a
+         FROM employee_attendance a
          WHERE a.employee_id = ? AND a.attendance_date = ?`,
         [finalEmployeeId, searchDate],
       );
@@ -2118,7 +2118,7 @@ exports.getTodayAttendance = async (req, res) => {
             COALESCE(a.dinner_inactivity_minutes, 0) as dinner_inactivity_minutes,
             COALESCE(a.washroom_inactivity_minutes, 0) as washroom_inactivity_minutes,
             COALESCE(a.prayer_inactivity_minutes, 0) as prayer_inactivity_minutes
-           FROM Employee_Attendance a
+           FROM employee_attendance a
            WHERE a.employee_id = ? AND a.check_out_time IS NULL AND a.attendance_date >= ?
            ORDER BY a.attendance_date DESC, a.check_in_time DESC 
            LIMIT 1`,
@@ -2196,7 +2196,7 @@ exports.getTodayAttendance = async (req, res) => {
             const overtimeHours = (overtimeMinutes / 60).toFixed(2);
 
             await connection.query(
-              `UPDATE Employee_Attendance
+              `UPDATE employee_attendance
                SET check_out_time = ?, 
                    gross_working_time_minutes = ?,
                    net_working_time_minutes = ?, 
@@ -2365,7 +2365,7 @@ exports.getMonthlyAttendance = async (req, res) => {
       }
 
       const [monthlyData] = await connection.query(
-        `SELECT * FROM Employee_Attendance 
+        `SELECT * FROM employee_attendance 
          WHERE employee_id = ? AND YEAR(attendance_date) = ? AND MONTH(attendance_date) = ?
          ORDER BY attendance_date ASC`,
         [finalEmployeeId, currentYear, currentMonth],
@@ -2428,7 +2428,7 @@ exports.getMonthlyAttendance = async (req, res) => {
 
           // Also update the database to persist these calculations
           await connection.query(
-            `UPDATE Employee_Attendance 
+            `UPDATE employee_attendance 
              SET gross_working_time_minutes = ?,
                  net_working_time_minutes = ?,
                  overtime_minutes = ?,
@@ -2636,7 +2636,7 @@ exports.getAllAttendance = async (req, res) => {
           eo.address,
           eo.join_date
 
-        FROM Employee_Attendance ea
+        FROM employee_attendance ea
         LEFT JOIN employee_onboarding eo ON ea.employee_id = eo.id
         WHERE 1=1
       `;
@@ -2857,7 +2857,7 @@ exports.getAllAttendance = async (req, res) => {
       });
 
       // Get total count for proper pagination
-      let countQuery = `SELECT COUNT(*) as total FROM Employee_Attendance ea WHERE 1=1`;
+      let countQuery = `SELECT COUNT(*) as total FROM employee_attendance ea WHERE 1=1`;
       const countParams = [];
       if (date) {
         countQuery += ` AND ea.attendance_date = ?`;
@@ -2916,7 +2916,7 @@ exports.getAllAttendanceWithAbsent = async (req, res) => {
         `SELECT id, employee_id, name, email, department, status FROM employee_onboarding WHERE status = 'Active'`,
       );
 
-      let attendanceQuery = `SELECT * FROM Employee_Attendance WHERE 1=1`;
+      let attendanceQuery = `SELECT * FROM employee_attendance WHERE 1=1`;
       const attendanceParams = [];
 
       if (date) {
@@ -3301,7 +3301,7 @@ exports.autoFixMissingWorkingHours = async (req, res) => {
 
     // SQL query to recalculate missing working hours for all records
     const query = `
-      UPDATE Employee_Attendance
+      UPDATE employee_attendance
       SET 
           gross_working_time_minutes = CASE
               WHEN check_in_time IS NOT NULL AND check_out_time IS NOT NULL 
@@ -3513,7 +3513,7 @@ exports.getBreakSummary = async (req, res) => {
            ea.prayer_break_duration_minutes,
            ea.check_in_time,
            ea.check_out_time
-         FROM Employee_Attendance ea
+         FROM employee_attendance ea
          WHERE ea.employee_id = ? AND ea.attendance_date = ?`,
         [finalEmployeeId, date],
       );
@@ -3738,7 +3738,7 @@ exports.autoCheckoutExpiredSessions = async (req, res) => {
         check_in_time,
         total_break_duration_minutes,
         status
-       FROM Employee_Attendance 
+       FROM employee_attendance 
        WHERE check_out_time IS NULL 
          AND attendance_date <= ?
          AND attendance_date >= DATE_SUB(?, INTERVAL 7 DAY)
@@ -3860,7 +3860,7 @@ exports.autoCheckoutExpiredSessions = async (req, res) => {
 
         // Update the attendance record with auto-checkout
         await connection.query(
-          `UPDATE Employee_Attendance 
+          `UPDATE employee_attendance 
            SET check_out_time = ?,
                gross_working_time_minutes = ?,
                net_working_time_minutes = ?,
@@ -3962,7 +3962,7 @@ exports.fixStatusById = async (req, res) => {
     connection = await pool.getConnection();
 
     const [rows] = await connection.query(
-      "SELECT id, check_in_time FROM Employee_Attendance WHERE id = ? LIMIT 1",
+      "SELECT id, check_in_time FROM employee_attendance WHERE id = ? LIMIT 1",
       [attendanceId],
     );
 
@@ -4017,7 +4017,7 @@ exports.fixStatusById = async (req, res) => {
 
     // Update the record
     await connection.query(
-      `UPDATE Employee_Attendance SET status = ?, late_by_minutes = ?, on_time = ?, updated_at = NOW() WHERE id = ?`,
+      `UPDATE employee_attendance SET status = ?, late_by_minutes = ?, on_time = ?, updated_at = NOW() WHERE id = ?`,
       [newStatus, newLateByMinutes, newOnTime, attendanceId],
     );
 
@@ -4101,7 +4101,7 @@ exports.fixCheckoutById = async (req, res) => {
     connection = await pool.getConnection();
 
     const [rows] = await connection.query(
-      "SELECT id, employee_id, attendance_date, check_in_time, total_break_duration_minutes, status FROM Employee_Attendance WHERE id = ? LIMIT 1",
+      "SELECT id, employee_id, attendance_date, check_in_time, total_break_duration_minutes, status FROM employee_attendance WHERE id = ? LIMIT 1",
       [attendanceId],
     );
 
@@ -4122,7 +4122,7 @@ exports.fixCheckoutById = async (req, res) => {
 
     // If already has checkout, return
     const [existing] = await connection.query(
-      "SELECT check_out_time FROM Employee_Attendance WHERE id = ?",
+      "SELECT check_out_time FROM employee_attendance WHERE id = ?",
       [attendanceId],
     );
 
@@ -4179,7 +4179,7 @@ exports.fixCheckoutById = async (req, res) => {
     );
 
     await connection.query(
-      `UPDATE Employee_Attendance SET check_out_time = ?, gross_working_time_minutes = ?, net_working_time_minutes = ?, overtime_minutes = ?, overtime_hours = ?, updated_at = NOW() WHERE id = ?`,
+      `UPDATE employee_attendance SET check_out_time = ?, gross_working_time_minutes = ?, net_working_time_minutes = ?, overtime_minutes = ?, overtime_hours = ?, updated_at = NOW() WHERE id = ?`,
       [
         autoCheckoutTime,
         working.gross,
@@ -4252,7 +4252,7 @@ exports.getTodayAbsentEmployees = async (req, res) => {
               e.designation AS position,
               e.status
        FROM employee_onboarding e
-       LEFT JOIN Employee_Attendance a
+       LEFT JOIN employee_attendance a
          ON a.employee_id = e.id
         AND a.attendance_date = ?
         AND a.check_in_time IS NOT NULL
@@ -4722,7 +4722,7 @@ exports.autoMarkAbsentByDateRange = async (req, res) => {
 
       // Get employees who checked in on this date
       const [checkedInToday] = await connection.query(
-        `SELECT DISTINCT employee_id FROM Employee_Attendance WHERE attendance_date = ?`,
+        `SELECT DISTINCT employee_id FROM employee_attendance WHERE attendance_date = ?`,
         [checkDate],
       );
 
@@ -4886,7 +4886,7 @@ exports.getPendingCheckout = async (req, res) => {
            status,
            created_at,
            updated_at
-         FROM Employee_Attendance
+         FROM employee_attendance
          WHERE employee_id = ? AND check_out_time IS NULL AND attendance_date = ?
          LIMIT 1`,
         [employee_id, searchDate],
@@ -4988,7 +4988,7 @@ exports.hrUpdateAttendance = async (req, res) => {
 
     // Check if record exists
     const [existing] = await connection.query(
-      "SELECT * FROM Employee_Attendance WHERE id = ?",
+      "SELECT * FROM employee_attendance WHERE id = ?",
       [id],
     );
 
@@ -5105,7 +5105,7 @@ exports.hrUpdateAttendance = async (req, res) => {
     updateFields.push("updated_at = NOW()");
     updateValues.push(id);
 
-    const updateQuery = `UPDATE Employee_Attendance SET ${updateFields.join(", ")} WHERE id = ?`;
+    const updateQuery = `UPDATE employee_attendance SET ${updateFields.join(", ")} WHERE id = ?`;
     console.log("🔧 HR Update Query:", updateQuery);
     console.log("📊 HR Update Values:", updateValues);
 
@@ -5113,7 +5113,7 @@ exports.hrUpdateAttendance = async (req, res) => {
 
     // Fetch and return updated record
     const [updated] = await connection.query(
-      "SELECT * FROM Employee_Attendance WHERE id = ?",
+      "SELECT * FROM employee_attendance WHERE id = ?",
       [id],
     );
 
@@ -5163,7 +5163,7 @@ exports.hrCreateAttendance = async (req, res) => {
 
     // Check if a record already exists for this employee+date
     const [existing] = await connection.query(
-      "SELECT id FROM Employee_Attendance WHERE employee_id = ? AND attendance_date = ?",
+      "SELECT id FROM employee_attendance WHERE employee_id = ? AND attendance_date = ?",
       [employee_id, attendance_date],
     );
 
@@ -5239,7 +5239,7 @@ exports.hrCreateAttendance = async (req, res) => {
       : `[HR CREATED - ${new Date().toISOString()}]`;
 
     const [result] = await connection.query(
-      `INSERT INTO Employee_Attendance
+      `INSERT INTO employee_attendance
         (employee_id, email, name, attendance_date, check_in_time, check_out_time,
          status, gross_working_time_minutes, net_working_time_minutes,
          expected_working_time_minutes, overtime_minutes, overtime_hours,
@@ -5275,7 +5275,7 @@ exports.hrCreateAttendance = async (req, res) => {
 
     // Fetch the newly created record
     const [newRecord] = await connection.query(
-      "SELECT * FROM Employee_Attendance WHERE id = ?",
+      "SELECT * FROM employee_attendance WHERE id = ?",
       [result.insertId],
     );
 

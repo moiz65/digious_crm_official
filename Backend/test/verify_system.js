@@ -36,7 +36,7 @@ async function verifySystem() {
       `SELECT 
         id, employee_id, name, attendance_date, check_in_time, check_out_time, 
         status, net_working_time_minutes, total_break_duration_minutes, created_at
-      FROM Employee_Attendance 
+      FROM employee_attendance 
       WHERE name = 'Fatima Khan' 
       AND YEAR(attendance_date) = 2026 
       AND MONTH(attendance_date) = 2
@@ -89,7 +89,7 @@ async function verifySystem() {
     console.log('\n\n🔄 CHECKOUT FUNCTIONALITY TEST:\n');
     const [recentCheckouts] = await connection.execute(
       `SELECT DISTINCT name, COUNT(*) as checkout_count, MAX(attendance_date) as last_checkout
-       FROM Employee_Attendance 
+       FROM employee_attendance 
        WHERE check_out_time IS NOT NULL
        AND attendance_date >= DATE_SUB(NOW(), INTERVAL 30 DAY)
        GROUP BY name

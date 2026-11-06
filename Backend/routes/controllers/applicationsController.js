@@ -77,7 +77,7 @@ const processLeaveApproval = async (connection, app) => {
 
       // Upsert attendance record as Paid Leave
       const [existingAtt] = await connection.query(
-        'SELECT id FROM Employee_Attendance WHERE employee_id = ? AND attendance_date = ?',
+        'SELECT id FROM employee_attendance WHERE employee_id = ? AND attendance_date = ?',
         [employeeId, dateStr]
       );
       if (existingAtt.length === 0) {
@@ -88,7 +88,7 @@ const processLeaveApproval = async (connection, app) => {
         );
         if (empInfo.length > 0) {
           await connection.query(
-            `INSERT INTO Employee_Attendance
+            `INSERT INTO employee_attendance
              (employee_id, email, name, attendance_date, status, on_time, late_by_minutes, remarks)
              VALUES (?, ?, ?, ?, 'Paid Leave', 1, 0, ?)`,
             [
@@ -99,7 +99,7 @@ const processLeaveApproval = async (connection, app) => {
         }
       } else {
         await connection.query(
-          `UPDATE Employee_Attendance
+          `UPDATE employee_attendance
            SET status = 'Paid Leave',
                remarks = CONCAT(COALESCE(remarks, ''), ' [Paid leave (${leaveTypeKey}) approved]')
            WHERE id = ?`,

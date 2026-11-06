@@ -107,7 +107,7 @@ const createManagedLeave = async (req, res) => {
     if (leave_scenario === 'mark_absent_as_leave') {
       const placeholders = leaveDates.map(() => '?').join(',');
       const [absentRows] = await pool.query(
-        `SELECT attendance_date FROM Employee_Attendance
+        `SELECT attendance_date FROM employee_attendance
          WHERE employee_id = ? AND attendance_date IN (${placeholders})
          AND status IN ('Absent', 'Uninformed Absent')`,
         [employeeId, ...leaveDates]
@@ -437,14 +437,14 @@ const applyManagedLeave = async (ticket) => {
   for (const dateStr of leaveDates) {
     // Check if attendance record already exists for this date
     const [existing] = await pool.query(
-      `SELECT id FROM Employee_Attendance WHERE employee_id = ? AND attendance_date = ?`,
+      `SELECT id FROM employee_attendance WHERE employee_id = ? AND attendance_date = ?`,
       [employee_id, dateStr]
     );
 
     if (existing.length > 0) {
       // Update existing record to Paid Leave
       await pool.query(
-        `UPDATE Employee_Attendance 
+        `UPDATE employee_attendance 
          SET status = 'Paid Leave',
              check_in_time = NULL,
              check_out_time = NULL,
@@ -467,7 +467,7 @@ const applyManagedLeave = async (ticket) => {
     } else {
       // Create new attendance record as Paid Leave
       await pool.query(
-        `INSERT INTO Employee_Attendance
+        `INSERT INTO employee_attendance
           (employee_id, email, name, attendance_date,
            check_in_time, check_out_time,
            status, gross_working_time_minutes, net_working_time_minutes,

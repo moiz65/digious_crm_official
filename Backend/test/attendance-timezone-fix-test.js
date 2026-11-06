@@ -108,7 +108,7 @@ async function testCheckInTimeStorage() {
     
     // First, clean up any existing test records from today
     await connection.query(
-      `DELETE FROM Employee_Attendance WHERE email = ? AND attendance_date = ?`,
+      `DELETE FROM employee_attendance WHERE email = ? AND attendance_date = ?`,
       [testEmail, currentPkDate]
     );
     
@@ -116,7 +116,7 @@ async function testCheckInTimeStorage() {
     
     // Insert test record with current Pakistan time
     const [insertResult] = await connection.query(
-      `INSERT INTO Employee_Attendance 
+      `INSERT INTO employee_attendance 
        (employee_id, email, name, attendance_date, check_in_time, status, on_time, late_by_minutes)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [testEmployeeId, testEmail, testName, currentPkDate, currentPkTime, 'Present', 1, 0]
@@ -128,7 +128,7 @@ async function testCheckInTimeStorage() {
     
     // Retrieve the record to verify
     const [retrievedRecords] = await connection.query(
-      `SELECT id, check_in_time, attendance_date, created_at FROM Employee_Attendance WHERE id = ?`,
+      `SELECT id, check_in_time, attendance_date, created_at FROM employee_attendance WHERE id = ?`,
       [insertedId]
     );
     
@@ -156,7 +156,7 @@ async function testCheckInTimeStorage() {
       }
       
       // Clean up test record
-      await connection.query(`DELETE FROM Employee_Attendance WHERE id = ?`, [insertedId]);
+      await connection.query(`DELETE FROM employee_attendance WHERE id = ?`, [insertedId]);
       console.log(`\n${colors.yellow}Test record cleaned up${colors.reset}`);
       
       return storedTime === retrievedTime;
@@ -188,14 +188,14 @@ async function testCheckOutTimeStorage() {
     
     // Clean up
     await connection.query(
-      `DELETE FROM Employee_Attendance WHERE email = ?`,
+      `DELETE FROM employee_attendance WHERE email = ?`,
       [testEmail]
     );
     
     // Insert check-in record
     const checkInTime = '16:17:00'; // 4:17 PM as mentioned in user's issue
     const [insertResult] = await connection.query(
-      `INSERT INTO Employee_Attendance 
+      `INSERT INTO employee_attendance 
        (employee_id, email, name, attendance_date, check_in_time, status, on_time, late_by_minutes)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [1, testEmail, 'Checkout Test User', currentPkDate, checkInTime, 'Present', 1, 0]
@@ -209,7 +209,7 @@ async function testCheckOutTimeStorage() {
     // Update with check-out time
     const checkOutTime = currentPkTime;
     await connection.query(
-      `UPDATE Employee_Attendance SET check_out_time = ? WHERE id = ?`,
+      `UPDATE employee_attendance SET check_out_time = ? WHERE id = ?`,
       [checkOutTime, recordId]
     );
     
@@ -217,7 +217,7 @@ async function testCheckOutTimeStorage() {
     
     // Retrieve and verify
     const [records] = await connection.query(
-      `SELECT check_in_time, check_out_time FROM Employee_Attendance WHERE id = ?`,
+      `SELECT check_in_time, check_out_time FROM employee_attendance WHERE id = ?`,
       [recordId]
     );
     
@@ -235,7 +235,7 @@ async function testCheckOutTimeStorage() {
       console.log(`   Check-out: ${checkOutMatch ? colors.green + '✅ Match' : colors.red + '❌ Mismatch'}${colors.reset}`);
       
       // Clean up
-      await connection.query(`DELETE FROM Employee_Attendance WHERE id = ?`, [recordId]);
+      await connection.query(`DELETE FROM employee_attendance WHERE id = ?`, [recordId]);
       
       return checkInMatch && checkOutMatch;
     }
@@ -262,7 +262,7 @@ async function testRealAttendanceRecords() {
     // Get recent attendance records
     const [records] = await connection.query(
       `SELECT id, name, attendance_date, check_in_time, check_out_time, created_at 
-       FROM Employee_Attendance 
+       FROM employee_attendance 
        WHERE attendance_date >= DATE_SUB(?, INTERVAL 7 DAY)
        ORDER BY created_at DESC 
        LIMIT 10`,

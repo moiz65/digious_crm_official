@@ -183,7 +183,7 @@ const getEmployeeData = async (req, res) => {
              gross_working_time_minutes, net_working_time_minutes,
              expected_working_time_minutes, overtime_minutes, overtime_hours,
              on_time, late_by_minutes, remarks
-      FROM Employee_Attendance 
+      FROM employee_attendance 
       WHERE employee_id = ? AND attendance_date BETWEEN ? AND ?
       ORDER BY attendance_date DESC
     `, [employeeId, start, end]);
@@ -223,7 +223,7 @@ const getEmployeeData = async (req, res) => {
              eb.break_start_time, eb.break_end_time, eb.break_duration_minutes,
              eb.reason, ea.attendance_date
       FROM Employee_Breaks eb
-      JOIN Employee_Attendance ea ON eb.attendance_id = ea.id
+      JOIN employee_attendance ea ON eb.attendance_id = ea.id
       WHERE eb.employee_id = ? AND ea.attendance_date BETWEEN ? AND ?
       ORDER BY ea.attendance_date DESC, eb.break_start_time DESC
     `, [employeeId, start, end]);
@@ -253,7 +253,7 @@ const updateAttendance = async (req, res) => {
     const { check_in_time, check_out_time, status, remarks } = req.body;
 
     // Get the current record first
-    const [existing] = await pool.query('SELECT * FROM Employee_Attendance WHERE id = ?', [id]);
+    const [existing] = await pool.query('SELECT * FROM employee_attendance WHERE id = ?', [id]);
     if (existing.length === 0) {
       return res.status(404).json({ success: false, message: 'Attendance record not found' });
     }
@@ -300,10 +300,10 @@ const updateAttendance = async (req, res) => {
     const setClause = Object.keys(updates).map(key => `${key} = ?`).join(', ');
     const values = Object.values(updates);
 
-    await pool.query(`UPDATE Employee_Attendance SET ${setClause} WHERE id = ?`, [...values, id]);
+    await pool.query(`UPDATE employee_attendance SET ${setClause} WHERE id = ?`, [...values, id]);
 
     // Fetch updated record
-    const [updated] = await pool.query('SELECT * FROM Employee_Attendance WHERE id = ?', [id]);
+    const [updated] = await pool.query('SELECT * FROM employee_attendance WHERE id = ?', [id]);
 
     res.status(200).json({
       success: true,
@@ -333,7 +333,7 @@ const addAttendance = async (req, res) => {
 
     // Check if record already exists for this date
     const [existing] = await pool.query(
-      'SELECT id FROM Employee_Attendance WHERE employee_id = ? AND attendance_date = ?',
+      'SELECT id FROM employee_attendance WHERE employee_id = ? AND attendance_date = ?',
       [employee_id, attendance_date]
     );
     if (existing.length > 0) {
@@ -362,7 +362,7 @@ const addAttendance = async (req, res) => {
     }
 
     const [result] = await pool.query(`
-      INSERT INTO Employee_Attendance 
+      INSERT INTO employee_attendance 
       (employee_id, email, name, attendance_date, check_in_time, check_out_time, status,
        gross_working_time_minutes, net_working_time_minutes, expected_working_time_minutes,
        overtime_minutes, overtime_hours, on_time, late_by_minutes, remarks)
@@ -374,7 +374,7 @@ const addAttendance = async (req, res) => {
       remarks || null
     ]);
 
-    const [newRecord] = await pool.query('SELECT * FROM Employee_Attendance WHERE id = ?', [result.insertId]);
+    const [newRecord] = await pool.query('SELECT * FROM employee_attendance WHERE id = ?', [result.insertId]);
 
     res.status(201).json({
       success: true,
@@ -583,7 +583,7 @@ const resolveCheckoutMissing = async (req, res) => {
       const grossMinutes = Math.max(0, (h2 * 60 + m2) - (h1 * 60 + m1));
 
       await pool.query(`
-        UPDATE Employee_Attendance SET 
+        UPDATE employee_attendance SET 
           check_out_time = ?, 
           gross_working_time_minutes = ?,
           net_working_time_minutes = ? - COALESCE(total_break_duration_minutes, 0),
@@ -737,7 +737,7 @@ const convertAbsentToPaidLeave = async (req, res) => {
 
     // 3. Check if there's already an attendance record for this date; if not, insert Paid Leave
     const [existingAtt] = await connection.query(
-      'SELECT id FROM Employee_Attendance WHERE employee_id = ? AND attendance_date = ?',
+      'SELECT id FROM employee_attendance WHERE employee_id = ? AND attendance_date = ?',
       [record.employee_id, record.absent_date]
     );
 
@@ -752,7 +752,7 @@ const convertAbsentToPaidLeave = async (req, res) => {
       const empEmail = empInfo.length > 0 ? empInfo[0].email : '';
 
       await connection.query(
-        `INSERT INTO Employee_Attendance
+        `INSERT INTO employee_attendance
          (employee_id, email, name, attendance_date, status, on_time, late_by_minutes, remarks)
          VALUES (?, ?, ?, ?, 'Paid Leave', 1, 0, ?)`,
         [
@@ -763,7 +763,7 @@ const convertAbsentToPaidLeave = async (req, res) => {
       );
     } else {
       await connection.query(
-        `UPDATE Employee_Attendance SET status = 'Paid Leave', remarks = ? WHERE id = ?`,
+        `UPDATE employee_attendance SET status = 'Paid Leave', remarks = ? WHERE id = ?`,
         [`Paid leave (${leave_type_key}) approved by HR`, existingAtt[0].id]
       );
     }

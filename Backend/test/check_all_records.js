@@ -19,7 +19,7 @@ async function checkAll() {
       `SELECT 
         id, name, attendance_date, check_in_time, check_out_time, status,
         net_working_time_minutes, total_break_duration_minutes
-      FROM Employee_Attendance 
+      FROM employee_attendance 
       WHERE name = 'Fatima Khan' 
       AND YEAR(attendance_date) = 2026 
       AND MONTH(attendance_date) = 2

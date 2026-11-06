@@ -52,7 +52,7 @@ async function checkFatimaAttendance() {
         late_by_minutes,
         created_at,
         updated_at
-      FROM Employee_Attendance 
+      FROM employee_attendance 
       WHERE employee_id = ? 
       AND YEAR(attendance_date) = 2026 
       AND MONTH(attendance_date) = 2

@@ -4,7 +4,7 @@ async function test() {
   const connection = await pool.getConnection();
   try {
     const [rows] = await connection.query(
-      'SELECT id, attendance_date, check_in_time, check_out_time, created_at FROM Employee_Attendance WHERE employee_id = 1 ORDER BY created_at DESC LIMIT 10'
+      'SELECT id, attendance_date, check_in_time, check_out_time, created_at FROM employee_attendance WHERE employee_id = 1 ORDER BY created_at DESC LIMIT 10'
     );
     console.log('Records found:', rows.length);
     rows.forEach(r => {

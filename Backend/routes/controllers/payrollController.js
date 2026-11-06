@@ -7,7 +7,7 @@
  * - employee_allowances (allowances)
  * - employee_bank_accounts (bank info)
  * - Monthly_Attendance_Summary (view - attendance stats)
- * - Employee_Attendance (for detailed late count)
+ * - employee_attendance (for detailed late count)
  * - Employee_Absent (absent records)
  * - payroll_records (stores generated payroll)
  *
@@ -340,7 +340,7 @@ const generatePayroll = async (req, res) => {
     const [paidHolidayAttendanceRows] = await pool.query(
       `SELECT ea.employee_id,
               DATE_FORMAT(ea.attendance_date, '%Y-%m-%d') AS calendar_date
-       FROM Employee_Attendance ea
+       FROM employee_attendance ea
        INNER JOIN company_calendar cc
          ON cc.calendar_date = ea.attendance_date
         AND cc.day_type = 'holiday'
@@ -368,7 +368,7 @@ const generatePayroll = async (req, res) => {
       SUM(CASE WHEN status = 'Late' AND DAY(attendance_date) <= ? THEN 1 ELSE 0 END) AS late_days,
       SUM(CASE WHEN status IN ('Leave', 'Paid Leave') AND DAY(attendance_date) <= ? THEN 1 ELSE 0 END) AS leave_days,
       SUM(CASE WHEN status = 'Half Day' AND DAY(attendance_date) <= ? THEN 1 ELSE 0 END) AS half_days
-    FROM Employee_Attendance
+    FROM employee_attendance
     WHERE YEAR(attendance_date) = ? AND MONTH(attendance_date) = ?
       AND DAY(attendance_date) <= ?
     GROUP BY employee_id
@@ -385,7 +385,7 @@ const generatePayroll = async (req, res) => {
         ],
       );
     } else {
-      // For previous months, query Employee_Attendance directly instead of using view
+      // For previous months, query employee_attendance directly instead of using view
       [attendanceSummary] = await pool.query(
         `
     SELECT 
@@ -395,7 +395,7 @@ const generatePayroll = async (req, res) => {
       SUM(CASE WHEN status = 'Late' THEN 1 ELSE 0 END) AS late_days,
       SUM(CASE WHEN status IN ('Leave', 'Paid Leave') THEN 1 ELSE 0 END) AS leave_days,
       SUM(CASE WHEN status = 'Half Day' THEN 1 ELSE 0 END) AS half_days
-    FROM Employee_Attendance
+    FROM employee_attendance
     WHERE YEAR(attendance_date) = ? AND MONTH(attendance_date) = ?
     GROUP BY employee_id
   `,
@@ -416,7 +416,7 @@ const generatePayroll = async (req, res) => {
         SELECT 
           employee_id,
           SUM(CASE WHEN status = 'Paid Leave' AND DAY(attendance_date) <= ? THEN 1 ELSE 0 END) AS paid_leave_days
-        FROM Employee_Attendance
+        FROM employee_attendance
         WHERE YEAR(attendance_date) = ? AND MONTH(attendance_date) = ?
           AND DAY(attendance_date) <= ?
         GROUP BY employee_id
@@ -429,7 +429,7 @@ const generatePayroll = async (req, res) => {
         SELECT 
           employee_id,
           SUM(CASE WHEN status = 'Paid Leave' THEN 1 ELSE 0 END) AS paid_leave_days
-        FROM Employee_Attendance
+        FROM employee_attendance
         WHERE YEAR(attendance_date) = ? AND MONTH(attendance_date) = ?
         GROUP BY employee_id
       `,
@@ -515,7 +515,7 @@ const generatePayroll = async (req, res) => {
             WHEN LOWER(COALESCE(ea.remarks, '')) LIKE '%(sick)%' THEN 'sick'
             WHEN LOWER(COALESCE(ea.remarks, '')) LIKE '%(annual)%' THEN 'annual'
           END AS leave_type_key
-        FROM Employee_Attendance ea
+        FROM employee_attendance ea
         WHERE ea.attendance_date BETWEEN ? AND ?
           AND ea.status = 'Paid Leave'
           AND (
@@ -544,7 +544,7 @@ const generatePayroll = async (req, res) => {
           absent_date
         FROM (
           SELECT ea.employee_id, DATE_FORMAT(ea.attendance_date, '%Y-%m-%d') AS absent_date
-          FROM Employee_Attendance ea
+          FROM employee_attendance ea
           LEFT JOIN company_calendar cc ON cc.calendar_date = ea.attendance_date
           WHERE YEAR(ea.attendance_date) = ? AND MONTH(ea.attendance_date) = ?
             AND DAY(ea.attendance_date) <= ?
@@ -572,7 +572,7 @@ const generatePayroll = async (req, res) => {
           absent_date
         FROM (
           SELECT ea.employee_id, DATE_FORMAT(ea.attendance_date, '%Y-%m-%d') AS absent_date
-          FROM Employee_Attendance ea
+          FROM employee_attendance ea
           LEFT JOIN company_calendar cc ON cc.calendar_date = ea.attendance_date
           WHERE YEAR(ea.attendance_date) = ? AND MONTH(ea.attendance_date) = ?
             AND ea.status IN ('Absent', 'Uninformed Absent')
@@ -597,7 +597,7 @@ const generatePayroll = async (req, res) => {
       [recordedAttendanceDates] = await pool.query(
         `
         SELECT employee_id, DATE_FORMAT(attendance_date, '%Y-%m-%d') AS attendance_date
-        FROM Employee_Attendance
+        FROM employee_attendance
         WHERE YEAR(attendance_date) = ? AND MONTH(attendance_date) = ?
           AND DAY(attendance_date) <= ?
           AND (check_in_time IS NOT NULL OR status IN ('Leave', 'Paid Leave'))
@@ -608,7 +608,7 @@ const generatePayroll = async (req, res) => {
       [recordedAttendanceDates] = await pool.query(
         `
         SELECT employee_id, DATE_FORMAT(attendance_date, '%Y-%m-%d') AS attendance_date
-        FROM Employee_Attendance
+        FROM employee_attendance
         WHERE YEAR(attendance_date) = ? AND MONTH(attendance_date) = ?
           AND (check_in_time IS NOT NULL OR status IN ('Leave', 'Paid Leave'))
       `,
