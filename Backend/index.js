@@ -37,7 +37,8 @@ const io = socketIO(server, {
       "http://100.126.74.55:3000",
       "http://169.254.83.107:3000",
       "http://localhost:5000",
-      "https://digious-crm-old-official.vercel.app"
+      "https://digious-crm-old-official.vercel.app",
+      "https://digious-crm.vercel.app"
 
     ],
     credentials: true,
@@ -118,6 +119,7 @@ const corsOptions = {
       "http://100.114.9.93:3000",
       "http://localhost:5000",
       "http://169.254.83.107:3000",
+      "https://digious-crm.vercel.app"
     ];
 
     // Add environment-specific origins from .env
