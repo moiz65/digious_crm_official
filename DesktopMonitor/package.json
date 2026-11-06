@@ -1,0 +1,40 @@
+{
+  "name": "digious-crm-desktop-monitor",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Visible Windows desktop companion for consent-based CRM idle and screenshot monitoring",
+  "author": "Digious Team",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win nsis"
+  },
+  "devDependencies": {
+    "electron": "^45.2.3",
+    "electron-builder": "^26.0.12"
+  },
+  "overrides": {
+    "minimatch": "^11.0.1"
+  },
+  "build": {
+    "appId": "com.digious.crm.desktopmonitor",
+    "productName": "Digious CRM Desktop",
+    "files": [
+      "main.js",
+      "preload.js",
+      "setup.html",
+      "setup.js"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
+}

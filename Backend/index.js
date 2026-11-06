@@ -229,6 +229,8 @@ const passcodeRoutes = require('./routes/passcodeRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const paymentTypes = require('./routes/paymentTypeRoutes');
 const salesTiersRoutes = require('./routes/salesTiers');
+const desktopMonitorRoutes = require('./routes/desktopMonitor');
+const { cleanupExpiredDesktopScreenshots } = require('./services/desktopMonitorRetention');
 
 app.use(`/api/${process.env.API_VERSION}`, onboardingRoutes);
 app.use(`/api/${process.env.API_VERSION}/auth`, authRoutes);
@@ -236,6 +238,17 @@ app.use(`/api/${process.env.API_VERSION}/system-info`, userSystemInfoRoutes);
 app.use(`/api/${process.env.API_VERSION}/attendance`, attendanceRoutes);
 app.use(`/api/${process.env.API_VERSION}/company-calendar`, companyCalendarRoutes);
 app.use(`/api/${process.env.API_VERSION}/activities`, activitiesRoutes);
+app.use(`/api/${process.env.API_VERSION}/desktop-monitor`, desktopMonitorRoutes);
+
+const monitorRetentionJob = async () => {
+  try {
+    await cleanupExpiredDesktopScreenshots();
+  } catch (error) {
+    console.error('Desktop screenshot retention cleanup failed:', error);
+  }
+};
+monitorRetentionJob();
+schedule.scheduleJob('0 * * * *', monitorRetentionJob);
 app.use(`/api/${process.env.API_VERSION}/rules`, rulesRoutes);
 app.use(`/api/${process.env.API_VERSION}/employees`, employeeProfileRoutes);
 app.use(`/api/${process.env.API_VERSION}/leaves`, leavesRoutes);

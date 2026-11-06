@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digious CRM Desktop setup</title>
+    <style>
+      body { font: 15px Segoe UI, sans-serif; margin: 28px; color: #172033; }
+      label { display: block; margin: 20px 0 8px; font-weight: 600; }
+      input { box-sizing: border-box; width: 100%; padding: 10px; }
+      button { margin-top: 16px; padding: 9px 16px; }
+      #error { color: #b91c1c; }
+    </style>
+  </head>
+  <body>
+    <h2>Connect to Digious CRM</h2>
+    <p>This visible desktop app opens your CRM in its own window. Monitoring remains off until you sign in and explicitly enable it.</p>
+    <form id="setup-form">
+      <label for="crm-url">CRM website URL</label>
+      <input id="crm-url" type="url" placeholder="https://crm.example.com" required>
+      <button type="submit">Open CRM</button>
+    </form>
+    <p id="error" role="alert"></p>
+    <script src="./setup.js"></script>
+  </body>
+</html>

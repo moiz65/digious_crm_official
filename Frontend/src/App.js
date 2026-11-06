@@ -70,6 +70,7 @@ import { PasscodeProvider } from "../src/context/PasscodeContext";
 import { ChatProvider } from "../src/context/ChatContext";
 import DesktopNotificationManager from "./components/DesktopNotificationManager";
 import ChatDashboard from "./components/ChatDashboard";
+import DesktopMonitor from "./components/DesktopMonitor";
 
 
 // ✅ Wrapper component for ChatDashboard
@@ -539,6 +540,7 @@ function AppContent() {
 
         {/* ✅ ChatDashboard ONLY on protected routes */}
         <ChatDashboardWrapper />
+        <DesktopMonitor />
         {/* <DesktopNotificationManager /> */}
       </div>
     </ChatProvider>
