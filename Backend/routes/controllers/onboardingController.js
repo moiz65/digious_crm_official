@@ -69,7 +69,7 @@ exports.createEmployee = async (req, res) => {
 
     // Normalize field names
     const normalizedData = {
-      employeeId,  // DG-0010 (display only)
+      employeeId,
       name,
       email,
       password,
@@ -207,7 +207,6 @@ exports.createEmployee = async (req, res) => {
         ],
       );
 
-      // ✅ Get the auto-increment ID (e.g., 44)
       const crmEmployeeId = employeeResult.insertId;
       
       console.log(`✅ Employee created in CRM with ID: ${crmEmployeeId}, Employee Code: ${normalizedData.employeeId}`);
@@ -289,58 +288,9 @@ exports.createEmployee = async (req, res) => {
       );
 
       // ============================================================
-      // STEP 2: Create user in ZKTeco device using CRM auto-increment ID
+      // ✅ ZKTeco integration REMOVED — Employee onboarded in CRM only
+      // Device user creation will be handled separately by HR when needed
       // ============================================================
-      let deviceUserCreated = false;
-      let deviceError = null;
-
-      try {
-        // ✅ SIMPLE: Use CRM auto-increment ID directly
-        const deviceUserId = String(crmEmployeeId); // "44"
-        
-        console.log(`📱 Creating ZKTeco user with ID: ${deviceUserId} for employee: ${normalizedData.name}`);
-
-        const zkResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/v1/zkTime/users/create`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            user_id: deviceUserId,  // ✅ "44" not "DG-0010"
-            name: normalizedData.name,
-            role: 0,
-            cardno: 0
-          })
-        });
-
-        const zkData = await zkResponse.json();
-
-        if (zkData.success) {
-          deviceUserCreated = true;
-          console.log(`✅ ZKTeco user created successfully with ID: ${deviceUserId}`);
-          
-          await connection.query(
-            `UPDATE employee_onboarding SET device_user_id = ?, device_sync_status = 'synced', device_sync_error = NULL WHERE id = ?`,
-            [deviceUserId, crmEmployeeId]
-          );
-        } else {
-          deviceError = zkData.error;
-          console.error(`❌ ZKTeco user creation failed:`, deviceError);
-          
-          await connection.query(
-            `UPDATE employee_onboarding SET device_sync_status = 'failed', device_sync_error = ? WHERE id = ?`,
-            [deviceError, crmEmployeeId]
-          );
-        }
-      } catch (zkError) {
-        deviceError = zkError.message;
-        console.error(`❌ ZKTeco API call failed:`, zkError);
-        
-        await connection.query(
-          `UPDATE employee_onboarding SET device_sync_status = 'failed', device_sync_error = ? WHERE id = ?`,
-          [deviceError, crmEmployeeId]
-        );
-      }
 
       await connection.commit();
 
@@ -352,9 +302,7 @@ exports.createEmployee = async (req, res) => {
 
       res.status(201).json({
         success: true,
-        message: deviceUserCreated 
-          ? "Employee onboarded successfully and ZKTeco user created"
-          : `Employee onboarded successfully but ZKTeco user creation failed. You can retry later.`,
+        message: "Employee onboarded successfully",
         data: {
           id: crmEmployeeId,
           employeeId: normalizedData.employeeId,
@@ -363,9 +311,6 @@ exports.createEmployee = async (req, res) => {
           department: normalizedData.department,
           sub_department: normalizedData.sub_department,
           status: "Active",
-          device_user_created: deviceUserCreated,
-          device_user_id: deviceUserCreated ? String(crmEmployeeId) : null,
-          device_sync_error: deviceError,
           dynamicResourcesCreated: createdDynamicResources,
         },
       });

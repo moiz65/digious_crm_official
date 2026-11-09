@@ -5,6 +5,7 @@ import AttendanceCorrectionModal from "../../components/AttendanceCorrectionModa
 // import { useAuth } from '../context/AuthContext';
 import { endpoints } from "../../config/api";
 import { getPakistanDate } from "../../utils/timezone";
+import { getBreakElapsedSeconds } from "../../utils/breakTimer";
 import HrSidebar from "../../components/HrSidebar";
 import PagePreloader from "../../components/PagePreloader";
 import HRAttendanceSync from "../../components/HRAttendanceSync";
@@ -134,32 +135,16 @@ const HRMyAttendance = () => {
   useEffect(() => {
     if (activeBreaks.length === 0) return;
 
-    const timerInterval = setInterval(() => {
+    const updateTimers = () => {
       const newTimers = {};
       activeBreaks.forEach((breakItem) => {
-        if (breakItem.break_start_time) {
-          const [startHour, startMin, startSec] = breakItem.break_start_time
-            .split(":")
-            .map(Number);
-          const now = new Date();
-          const currentHour = now.getHours();
-          const currentMin = now.getMinutes();
-          const currentSec = now.getSeconds();
-
-          const startTotalSeconds =
-            startHour * 3600 + startMin * 60 + (startSec || 0);
-          const nowTotalSeconds =
-            currentHour * 3600 + currentMin * 60 + currentSec;
-
-          let elapsedSeconds = nowTotalSeconds - startTotalSeconds;
-          if (elapsedSeconds < 0) elapsedSeconds += 24 * 3600;
-
-          newTimers[breakItem.id] = elapsedSeconds;
-        }
+        newTimers[breakItem.id] = getBreakElapsedSeconds(breakItem);
       });
       setBreakTimers(newTimers);
-    }, 1000);
+    };
 
+    updateTimers();
+    const timerInterval = setInterval(updateTimers, 1000);
     return () => clearInterval(timerInterval);
   }, [activeBreaks]);
 
@@ -317,7 +302,13 @@ const HRMyAttendance = () => {
 
       const data = await response.json();
       if (data.success) {
-        setActiveBreaks(data.data || []);
+        const receivedAt = Date.now();
+        setActiveBreaks(
+          (data.data || []).map((breakItem) => ({
+            ...breakItem,
+            _durationReceivedAt: receivedAt,
+          })),
+        );
       }
     } catch (error) {
       console.error("Error fetching active breaks:", error);
@@ -487,22 +478,8 @@ const HRMyAttendance = () => {
         return;
       }
 
-      const [startHour, startMin, startSec] = breakRecord.break_start_time
-        .split(":")
-        .map(Number);
-      const now = new Date();
-      const currentHour = now.getHours();
-      const currentMin = now.getMinutes();
-      const currentSec = now.getSeconds();
-
-      const startTotalSeconds =
-        startHour * 3600 + startMin * 60 + (startSec || 0);
-      const nowTotalSeconds = currentHour * 3600 + currentMin * 60 + currentSec;
-
-      let durationSeconds = nowTotalSeconds - startTotalSeconds;
-      if (durationSeconds < 0) {
-        durationSeconds += 24 * 3600;
-      }
+      const durationSeconds =
+        breakTimers[breakId] ?? getBreakElapsedSeconds(breakRecord);
       const duration = Math.max(0, Math.floor(durationSeconds / 60));
 
       const response = await fetch(endpoints.attendance.breakEnd, {
@@ -514,7 +491,6 @@ const HRMyAttendance = () => {
         body: JSON.stringify({
           employee_id: employeeId,
           break_type: breakRecord.break_type,
-          break_end_time: now.toTimeString().split(" ")[0],
           break_duration_minutes: duration,
         }),
       });

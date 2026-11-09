@@ -1073,17 +1073,15 @@ exports.recordBreakStart = async (req, res) => {
     const { break_type, break_start_time, reason } = req.body;
 
     // Calculate attendance_date using same night shift logic
-    const now = new Date();
+    const now = getPakistanDate();
     const checkInHour = now.getHours();
     let attendanceDate;
     if (checkInHour >= 0 && checkInHour < 6) {
       // Early morning (00:00-05:59) - belongs to yesterday's shift
-      const yesterday = new Date(now);
-      yesterday.setDate(yesterday.getDate() - 1);
-      attendanceDate = getLocalDateString(yesterday);
+      attendanceDate = getPakistanYesterdayString();
     } else {
       // Evening/normal hours - use today
-      attendanceDate = getLocalDateString(now);
+      attendanceDate = getPakistanDateString();
     }
 
     console.log("⏸️ Record break START request received:");
@@ -1119,8 +1117,7 @@ exports.recordBreakStart = async (req, res) => {
         [employee_id, attendanceDate],
       );
 
-      const breakStart =
-        break_start_time || new Date().toTimeString().split(" ")[0];
+      const breakStart = break_start_time || getPakistanTimeString();
 
       let attendanceId;
 
@@ -1614,19 +1611,17 @@ exports.getOngoingBreaks = async (req, res) => {
     const reqEmployeeId = req.params.employee_id;
     let employee_id = jwtEmployeeId || reqEmployeeId || jwtUserId;
 
-    const now = new Date();
+    const now = getPakistanDate();
     const checkInHour = now.getHours();
 
     // Calculate attendance_date using same night shift logic as check-in
     let attendanceDate;
     if (checkInHour >= 0 && checkInHour < 6) {
       // Early morning (00:00-05:59) - belongs to yesterday's shift
-      const yesterday = new Date(now);
-      yesterday.setDate(yesterday.getDate() - 1);
-      attendanceDate = getLocalDateString(yesterday);
+      attendanceDate = getPakistanYesterdayString();
     } else {
       // Evening/normal hours - use today
-      attendanceDate = getLocalDateString(now);
+      attendanceDate = getPakistanDateString();
     }
 
     console.log("📋 Get ongoing breaks request received:");
@@ -1676,38 +1671,49 @@ exports.getOngoingBreaks = async (req, res) => {
       );
 
       // Compute real-time duration for each ongoing break using the attendance date
-      const now = new Date();
+      const now = getPakistanDate();
       const result = ongoingBreaks.map((brk) => {
         // Construct break start using the calculated attendanceDate.
         // Note: For early-morning times (00:00 - 05:59), the actual datetime is on the next calendar day
         // even though attendance_date represents the previous shift day. Handle that here.
-        const hourPart =
-          parseInt(
-            String(brk.break_start_time || "00:00:00").split(":")[0],
-            10,
-          ) || 0;
-        let breakDateObj = new Date(`${attendanceDate}T00:00:00`);
+        const [year, month, day] = attendanceDate.split("-").map(Number);
+        const [hour, minute, second] = String(
+          brk.break_start_time || "00:00:00",
+        )
+          .split(":")
+          .map(Number);
+        let startDay = day;
+        const hourPart = hour || 0;
         if (hourPart >= 0 && hourPart < 6) {
-          // move to next calendar day for the real timestamp
-          breakDateObj.setDate(breakDateObj.getDate() + 1);
+          startDay += 1;
         }
-        const pad = (n) => String(n).padStart(2, "0");
-        const dateForBreak = `${breakDateObj.getFullYear()}-${pad(breakDateObj.getMonth() + 1)}-${pad(breakDateObj.getDate())}`;
-        const breakStart = new Date(`${dateForBreak}T${brk.break_start_time}`);
-        const durationNow = Math.floor((now - breakStart) / (1000 * 60));
-
-        // Prefer the real-time calculated duration if it differs significantly from stored value
-        const storedDuration = brk.break_duration_minutes || 0;
-        const chosenDuration =
-          Math.abs(storedDuration - durationNow) > 10
-            ? durationNow
-            : Math.max(storedDuration, durationNow);
+        const breakStart = Date.UTC(
+          year,
+          month - 1,
+          startDay,
+          hourPart,
+          minute || 0,
+          second || 0,
+        );
+        const nowTimestamp = Date.UTC(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate(),
+          now.getHours(),
+          now.getMinutes(),
+          now.getSeconds(),
+        );
+        const durationSeconds = Math.max(
+          0,
+          Math.floor((nowTimestamp - breakStart) / 1000),
+        );
 
         return {
           id: brk.id,
           break_type: brk.break_type,
           break_start_time: brk.break_start_time,
-          break_duration_minutes: chosenDuration,
+          break_duration_seconds: durationSeconds,
+          break_duration_minutes: Math.floor(durationSeconds / 60),
           created_at: brk.created_at,
           status: "ongoing",
           attendance_date: attendanceDate,
