@@ -146,15 +146,15 @@ const DesktopMonitoring = () => {
             </p>
             <h1 className="mt-1 text-2xl font-bold text-slate-900">Desktop activity</h1>
             <p className="mt-2 text-sm text-slate-600">
-              Employee consent ke baad record huay idle periods aur primary-display screenshots.
-              Primary display par doosri open apps/windows bhi screenshot mein aa sakti hain.
-              Screenshots sirf authenticated monitoring roles dekh sakte hain.
+              View recorded idle periods and primary-display screenshots after an employee has
+              provided consent. Screenshots may also include other apps or windows visible on the
+              primary display. Access is restricted to authorized monitoring roles.
             </p>
           </header>
 
           <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <label htmlFor="monitor-employee" className="block text-sm font-semibold text-slate-700">
-              Employee select karein
+              Select an employee
             </label>
             <select
               id="monitor-employee"
@@ -164,7 +164,7 @@ const DesktopMonitoring = () => {
               className="mt-2 w-full max-w-xl rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
             >
               <option value="">
-                {loadingEmployees ? "Employees load ho rahe hain..." : "Employee select karein"}
+                {loadingEmployees ? "Loading employees..." : "Select an employee"}
               </option>
               {employees.map((employee) => (
                 <option key={employee.employee_id} value={employee.employee_id}>
@@ -227,7 +227,7 @@ const DesktopMonitoring = () => {
                     ))}
                   </div>
                 ) : (
-                  <p className="mt-4 text-sm text-slate-500">Is employee ke liye koi screenshot record nahi mila.</p>
+                  <p className="mt-4 text-sm text-slate-500">No screenshots were found for this employee.</p>
                 )}
               </section>
 
@@ -247,7 +247,7 @@ const DesktopMonitoring = () => {
                     ))}
                   </div>
                 ) : (
-                  <p className="mt-4 text-sm text-slate-500">Koi completed idle period record nahi hua.</p>
+                  <p className="mt-4 text-sm text-slate-500">No completed idle periods were recorded.</p>
                 )}
               </section>
             </>

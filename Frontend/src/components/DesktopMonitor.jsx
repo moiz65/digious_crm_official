@@ -140,6 +140,14 @@ const DesktopMonitor = () => {
           && !passwordInputFocused
           && !sensitivePage
         ) {
+          if (typeof bridge.captureScreen !== "function") {
+            nextScreenshotAt = Number.POSITIVE_INFINITY;
+            setError(
+              "This desktop app version does not support full-display capture. Install the latest Digious CRM Desktop app and restart it.",
+            );
+            return;
+          }
+
           const screenshot = await bridge.captureScreen();
           if (screenshot) {
             let lastError;
@@ -295,9 +303,9 @@ const DesktopMonitor = () => {
     <aside style={panelStyle} aria-live="polite">
       <strong>Desktop monitoring {sessionId ? (idle ? "— idle" : "— active") : "— paused"}</strong>
       <p style={{ margin: "8px 0" }}>
-        CRM window active ho to primary display ka screenshot har 15 minute liya jayega.
-        Screen par doosri apps bhi nazar aa sakti hain. 3 minute idle ya CRM unfocused/
-        hidden ho to screenshot nahi liya jayega.
+        When the CRM window is active, a primary-display screenshot is captured every{" "}
+        {SCREENSHOT_INTERVAL_MS / 60000} minutes. Other visible apps and windows may also appear.
+        Screenshots are not captured while you are idle or the CRM window is unfocused or hidden.
       </p>
       {lastCapture && (
         <p style={{ margin: "6px 0" }}>
@@ -314,9 +322,9 @@ const DesktopMonitor = () => {
               onChange={(event) => setConsentChecked(event.target.checked)}
             />
             <span>
-              Main system-wide idle tracking aur primary display ke screenshots ki ijazat deta/deti hoon.
-              Screen par CRM ke ilawa doosri apps/windows bhi capture ho sakti hain. Main monitoring
-              kabhi bhi pause ya band kar sakta/sakti hoon.
+              I consent to system-wide idle tracking and primary-display screenshots. Other apps or
+              windows visible on the display may also be captured. I can pause monitoring or withdraw
+              my consent at any time.
             </span>
           </label>
           <button type="button" disabled={!consentChecked || busy} onClick={handleStart}>
