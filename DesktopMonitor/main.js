@@ -1,4 +1,12 @@
-const { app, BrowserWindow, dialog, ipcMain, shell } = require('electron');
+const {
+  app,
+  BrowserWindow,
+  desktopCapturer,
+  dialog,
+  ipcMain,
+  screen,
+  shell,
+} = require('electron');
 const fs = require('fs/promises');
 const path = require('path');
 const { pathToFileURL } = require('url');
@@ -134,7 +142,17 @@ ipcMain.handle('desktop-monitor:capture', async (event) => {
   if (!isCrmSender(event)) throw new Error('Screenshot capture is available only in the CRM window');
   if (!crmWindow.isFocused() || !crmWindow.isVisible() || crmWindow.isMinimized()) return null;
 
-  const image = await crmWindow.webContents.capturePage();
+  const primaryDisplayId = String(screen.getPrimaryDisplay().id);
+  const sources = await desktopCapturer.getSources({
+    types: ['screen'],
+    thumbnailSize: { width: 1280, height: 720 },
+  });
+  const primaryDisplay = sources.find((source) => source.display_id === primaryDisplayId);
+  if (!primaryDisplay) {
+    throw new Error('Could not access the primary display for screenshot capture.');
+  }
+
+  const image = primaryDisplay.thumbnail;
   if (image.isEmpty()) return null;
   const size = image.getSize();
   const resized = size.width > 1280

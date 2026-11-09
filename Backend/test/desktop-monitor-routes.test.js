@@ -1,5 +1,5 @@
 jest.mock('../middleware/auth', () => (req, res, next) => {
-  req.user = { employeeId: 42, role: 'employee' };
+  req.user = global.__desktopMonitorUser || { employeeId: 42, role: 'employee' };
   next();
 });
 
@@ -31,14 +31,21 @@ beforeAll((done) => {
 afterAll((done) => {
   server.close(done);
 });
-beforeEach(() => pool.query.mockReset());
+beforeEach(() => {
+  pool.query.mockReset();
+  global.__desktopMonitorUser = { employeeId: 42, role: 'employee' };
+});
+
+afterAll(() => {
+  delete global.__desktopMonitorUser;
+});
 
 describe('desktop monitor API', () => {
   test('requires explicit consent before starting a session', async () => {
     const response = await fetch(`${baseUrl}/sessions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ consentVersion: 'wrong-version' }),
+      body: JSON.stringify({ consentVersion: 'desktop-monitor-v1' }),
     });
 
     expect(response.status).toBe(400);
@@ -50,7 +57,7 @@ describe('desktop monitor API', () => {
     const response = await fetch(`${baseUrl}/sessions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ consentVersion: 'desktop-monitor-v1' }),
+      body: JSON.stringify({ consentVersion: 'desktop-monitor-v2' }),
     });
     const result = await response.json();
 
@@ -60,7 +67,7 @@ describe('desktop monitor API', () => {
     );
     expect(pool.query).toHaveBeenCalledWith(
       expect.stringContaining('INSERT INTO desktop_monitor_sessions'),
-      [result.data.sessionId, '42', 'desktop-monitor-v1'],
+      [result.data.sessionId, '42', 'desktop-monitor-v2'],
     );
   });
 
@@ -104,5 +111,72 @@ describe('desktop monitor API', () => {
 
     expect(response.status).toBe(413);
     expect(pool.query).not.toHaveBeenCalled();
+  });
+
+  test('does not expose another employee activity to a regular employee', async () => {
+    const response = await fetch(`${baseUrl}/employees/EMP-7/activity`);
+
+    expect(response.status).toBe(403);
+    expect(pool.query).not.toHaveBeenCalled();
+  });
+
+  test('does not expose the employee picker to a regular employee', async () => {
+    const response = await fetch(`${baseUrl}/employees`);
+
+    expect(response.status).toBe(403);
+    expect(pool.query).not.toHaveBeenCalled();
+  });
+
+  test('returns only active employee picker fields to an HR user', async () => {
+    global.__desktopMonitorUser = { employeeId: 7, role: 'hr' };
+    const employees = [{ employee_id: 'EMP-7', name: 'Employee Name', department: 'Sales' }];
+    pool.query.mockResolvedValueOnce([employees, []]);
+
+    const response = await fetch(`${baseUrl}/employees`);
+    const result = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(result.data).toEqual(employees);
+    expect(pool.query).toHaveBeenCalledWith(
+      expect.stringContaining("WHERE status = 'Active'"),
+    );
+  });
+
+  test('allows a super admin without an employee ID to load the employee picker', async () => {
+    global.__desktopMonitorUser = { role: 'superadmin' };
+    pool.query.mockResolvedValueOnce([[{ employee_id: 'EMP-7', name: 'Employee Name' }], []]);
+
+    const response = await fetch(`${baseUrl}/employees`);
+
+    expect(response.status).toBe(200);
+  });
+
+  test('returns selected employee screenshots and idle totals to an operations manager', async () => {
+    global.__desktopMonitorUser = {
+      employeeId: 42,
+      role: 'employee',
+      designation: 'Operations Manager',
+    };
+    const screenshotRows = [{ id: 8, capturedAt: '2026-11-09 09:00:00', fileSize: 1024 }];
+    const idleRows = [{ id: 11, idleSeconds: 240, occurredAt: '2026-11-09 09:10:00' }];
+    pool.query
+      .mockResolvedValueOnce([screenshotRows, []])
+      .mockResolvedValueOnce([idleRows, []])
+      .mockResolvedValueOnce([[{ totalIdleSeconds: '240' }], []]);
+
+    const response = await fetch(`${baseUrl}/employees/EMP-7/activity`);
+    const result = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(result.data).toEqual({
+      screenshots: screenshotRows,
+      idleEvents: idleRows,
+      totalIdleSeconds: 240,
+    });
+    expect(pool.query).toHaveBeenCalledTimes(3);
+    expect(pool.query).toHaveBeenCalledWith(
+      expect.stringContaining('FROM desktop_monitor_screenshots'),
+      ['EMP-7'],
+    );
   });
 });

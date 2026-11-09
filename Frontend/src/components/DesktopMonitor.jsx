@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { config } from "../config/api";
 
-const CONSENT_VERSION = "desktop-monitor-v1";
+const CONSENT_VERSION = "desktop-monitor-v2";
 const IDLE_THRESHOLD_SECONDS = 3 * 60;
 const SCREENSHOT_INTERVAL_MS = 15 * 60 * 1000;
 const ACTIVITY_CHECK_INTERVAL_MS = 15 * 1000;
@@ -140,7 +140,7 @@ const DesktopMonitor = () => {
           && !passwordInputFocused
           && !sensitivePage
         ) {
-          const screenshot = await bridge.captureCrmWindow();
+          const screenshot = await bridge.captureScreen();
           if (screenshot) {
             let lastError;
             for (let attempt = 0; attempt < 3; attempt += 1) {
@@ -295,8 +295,9 @@ const DesktopMonitor = () => {
     <aside style={panelStyle} aria-live="polite">
       <strong>Desktop monitoring {sessionId ? (idle ? "— idle" : "— active") : "— paused"}</strong>
       <p style={{ margin: "8px 0" }}>
-        Sirf is CRM window ka screenshot har 15 minute; 3 minute inactivity par idle.
-        Idle ya window unfocused ho to screenshot nahi liya jayega.
+        CRM window active ho to primary display ka screenshot har 15 minute liya jayega.
+        Screen par doosri apps bhi nazar aa sakti hain. 3 minute idle ya CRM unfocused/
+        hidden ho to screenshot nahi liya jayega.
       </p>
       {lastCapture && (
         <p style={{ margin: "6px 0" }}>
@@ -312,7 +313,11 @@ const DesktopMonitor = () => {
               checked={consentChecked}
               onChange={(event) => setConsentChecked(event.target.checked)}
             />
-            <span>Main idle tracking aur sirf CRM window ke screenshots ki ijazat deta/deti hoon.</span>
+            <span>
+              Main system-wide idle tracking aur primary display ke screenshots ki ijazat deta/deti hoon.
+              Screen par CRM ke ilawa doosri apps/windows bhi capture ho sakti hain. Main monitoring
+              kabhi bhi pause ya band kar sakta/sakti hoon.
+            </span>
           </label>
           <button type="button" disabled={!consentChecked || busy} onClick={handleStart}>
             {busy ? "Starting..." : "Agree and start"}

@@ -77,6 +77,7 @@ const HrSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem = ()
   const menuItems = [
     { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard', path: '/hr/dashboard' },
     { id: 'employees', icon: Users, label: 'Employees', path: '/hr/employee-management' },
+    { id: 'desktop-monitor', icon: BarChart3, label: 'Desktop Monitor', path: '/hr/desktop-monitor' },
     {
       id: 'attendance',
       icon: UserCheck,

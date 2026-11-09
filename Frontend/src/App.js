@@ -51,6 +51,7 @@ import HrMemos from "./pages/HR/HrMemos";
 import HrReportsManagement from "./pages/HR/HrReportsManagement";
 import HrSettings from "./pages/HR/HrSettings";
 import AttendanceAdjustment from "./pages/HR/AttendanceAdjustment";
+import DesktopMonitoring from "./pages/DesktopMonitoring";
 
 
 // Employee Pages
@@ -235,6 +236,14 @@ function AppContent() {
             }
           />
           <Route
+            path="/admin/desktop-monitor"
+            element={
+              <ProtectedRoute requiredRole={["admin", "superadmin", "super admin"]}>
+                <DesktopMonitoring />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/admin/memos"
             element={
               <ProtectedRoute requiredRole="admin">
@@ -258,6 +267,22 @@ function AppContent() {
             element={
               <ProtectedRoute requiredRole="hr">
                 <EmployeeManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/hr/desktop-monitor"
+            element={
+              <ProtectedRoute requiredRole="hr">
+                <DesktopMonitoring />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/operations-manager/desktop-monitor"
+            element={
+              <ProtectedRoute requiredRole="employee" requiredDesignation="Operations Manager">
+                <DesktopMonitoring />
               </ProtectedRoute>
             }
           />

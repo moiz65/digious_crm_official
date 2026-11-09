@@ -16,7 +16,8 @@ import {
   ChevronRight,
   DollarSign,
   ClipboardCheck,
-  Banknote
+  Banknote,
+  Monitor
 } from 'lucide-react';
 
 const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem = () => {} }) => {
@@ -40,7 +41,10 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveIte
     // Sales menu only visible for Sales department employees
     ...(user?.department === 'Sales' ? [{ id: 'sales', icon: DollarSign, label: 'Sales', path: '/employee/sales' }] : []),
     ...(user?.designation?.trim().toLowerCase() === 'operations manager'
-      ? [{ id: 'expenses', icon: Wallet, label: 'Expense', path: '/operations-manager/expenses' }]
+      ? [
+        { id: 'expenses', icon: Wallet, label: 'Expense', path: '/operations-manager/expenses' },
+        { id: 'desktop-monitor', icon: Monitor, label: 'Desktop Monitor', path: '/operations-manager/desktop-monitor' }
+      ]
       : []),
     { id: 'corrections', icon: ClipboardCheck, label: 'Corrections', path: '/employee/attendance-corrections' },
     { id: 'applications', icon: FileText, label: 'Applications', path: '/employee/applications' },

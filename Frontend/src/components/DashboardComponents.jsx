@@ -384,12 +384,14 @@ export const RoleBasedNav = ({ role }) => {
       { id: 'attendance', label: 'Attendance', path: '/admin/attendance', icon: Calendar, color: 'orange' },
       { id: 'employees', label: 'Employees', path: '/admin/employees', icon: Users, color: 'purple' },
       { id: 'applications', label: 'Applications', path: '/admin/applications', icon: FileText, color: 'pink' },
-      { id: 'activity', label: 'Activity Tracker', path: '/admin/activity', icon: Activity, color: 'teal' }
+      { id: 'activity', label: 'Activity Tracker', path: '/admin/activity', icon: Activity, color: 'teal' },
+      { id: 'desktop-monitor', label: 'Desktop Monitor', path: '/admin/desktop-monitor', icon: Activity, color: 'teal' }
     ],
     hr: [
       { id: 'dashboard', label: 'Dashboard', path: '/hr/dashboard', icon: LayoutDashboard, color: 'blue' },
       { id: 'my_attendance', label: 'My Attendance', path: '/hr/my-attendance', icon: Calendar, color: 'orange' },
       { id: 'employees', label: 'Team', path: '/hr/employee-management', icon: Users, color: 'purple' },
+      { id: 'desktop-monitor', label: 'Desktop Monitor', path: '/hr/desktop-monitor', icon: Activity, color: 'teal' },
       { id: 'leaves', label: 'Leave Management', path: '/hr/attendance-corrections', icon: Calendar, color: 'green' },
       { id: 'attendance', label: 'Attendance', path: '/hr/attendance/overview', icon: ClipboardList, color: 'orange' },
       { id: 'applications', label: 'Applications', path: '/hr/applications', icon: FileText, color: 'pink' },
@@ -401,7 +403,10 @@ export const RoleBasedNav = ({ role }) => {
         : '/employee/dashboard', icon: LayoutDashboard, color: 'blue' },
       { id: 'attendance', label: 'My Attendance', path: '/employee/attendance', icon: Calendar, color: 'orange' },
       { id: 'profile', label: 'My Profile', path: '/employee/profile', icon: User, color: 'green' },
-      { id: 'applications', label: 'My Applications', path: '/employee/applications', icon: FileText, color: 'pink' }
+      { id: 'applications', label: 'My Applications', path: '/employee/applications', icon: FileText, color: 'pink' },
+      ...(user?.designation?.trim().toLowerCase() === 'operations manager'
+        ? [{ id: 'desktop-monitor', label: 'Desktop Monitor', path: '/operations-manager/desktop-monitor', icon: Activity, color: 'teal' }]
+        : [])
     ]
   };
 

@@ -35,9 +35,11 @@ function parseScreenshot(req, res, next) {
 }
 
 const getEmployeeId = (req) => req.user && req.user.employeeId;
-const isPrivileged = (req) => ['admin', 'hr', 'super admin'].includes(
-  String(req.user && req.user.role || '').toLowerCase(),
+const isPrivileged = (req) => ['admin', 'hr', 'super admin', 'superadmin'].includes(
+  String(req.user && req.user.role || '').trim().toLowerCase(),
 );
+const canViewOtherEmployees = (req) => isPrivileged(req)
+  || String(req.user && req.user.designation || '').trim().toLowerCase() === 'operations manager';
 
 async function findOwnedSession(sessionId, employeeId) {
   const [rows] = await pool.query(
@@ -56,7 +58,7 @@ router.post('/sessions', async (req, res) => {
   if (!employeeId) {
     return res.status(403).json({ success: false, message: 'Employee identity is required' });
   }
-  if (consentVersion !== 'desktop-monitor-v1') {
+  if (consentVersion !== 'desktop-monitor-v2') {
     return res.status(400).json({ success: false, message: 'Explicit monitoring consent is required' });
   }
 
@@ -171,18 +173,40 @@ router.post('/sessions/:sessionId/screenshots', parseScreenshot, async (req, res
   }
 });
 
+router.get('/employees', async (req, res) => {
+  if (!canViewOtherEmployees(req)) {
+    return res.status(403).json({ success: false, message: 'Monitoring access is required' });
+  }
+
+  try {
+    const [rows] = await pool.query(
+      `SELECT employee_id, name, department
+       FROM employee_onboarding
+       WHERE status = 'Active'
+       ORDER BY name ASC`,
+    );
+    return res.status(200).json({ success: true, data: rows });
+  } catch (error) {
+    console.error('Desktop monitoring employee list failed:', error);
+    return res.status(500).json({ success: false, message: 'Could not load monitoring employees' });
+  }
+});
+
 router.get('/screenshots', async (req, res) => {
   const employeeId = getEmployeeId(req);
-  if (!employeeId) {
+  if (!employeeId && !req.query.employeeId) {
     return res.status(403).json({ success: false, message: 'Employee identity is required' });
   }
   const requestedEmployeeId = req.query.employeeId;
-  if (requestedEmployeeId && !isPrivileged(req)) {
-    return res.status(403).json({ success: false, message: 'Admin access is required' });
+  if (requestedEmployeeId && !canViewOtherEmployees(req)) {
+    return res.status(403).json({ success: false, message: 'Monitoring access is required' });
   }
-  const targetEmployeeId = isPrivileged(req) && requestedEmployeeId
+  const targetEmployeeId = canViewOtherEmployees(req) && requestedEmployeeId
     ? String(requestedEmployeeId)
     : String(employeeId);
+  if (targetEmployeeId === 'undefined') {
+    return res.status(400).json({ success: false, message: 'Employee ID is required' });
+  }
 
   try {
     const [rows] = await pool.query(
@@ -199,9 +223,57 @@ router.get('/screenshots', async (req, res) => {
   }
 });
 
+router.get('/employees/:employeeId/activity', async (req, res) => {
+  if (!canViewOtherEmployees(req)) {
+    return res.status(403).json({ success: false, message: 'Monitoring access is required' });
+  }
+
+  const targetEmployeeId = String(req.params.employeeId || '').trim();
+  if (!targetEmployeeId || targetEmployeeId.length > 64) {
+    return res.status(400).json({ success: false, message: 'Invalid employee ID' });
+  }
+
+  try {
+    const [screenshots, idleEvents, idleTotals] = await Promise.all([
+      pool.query(
+        `SELECT id, captured_at AS capturedAt, file_size AS fileSize
+         FROM desktop_monitor_screenshots
+         WHERE employee_id = ?
+         ORDER BY captured_at DESC LIMIT 100`,
+        [targetEmployeeId],
+      ),
+      pool.query(
+        `SELECT id, idle_seconds AS idleSeconds, occurred_at AS occurredAt
+         FROM desktop_monitor_events
+         WHERE employee_id = ? AND event_type = 'idle_ended' AND idle_seconds IS NOT NULL
+         ORDER BY occurred_at DESC LIMIT 500`,
+        [targetEmployeeId],
+      ),
+      pool.query(
+        `SELECT COALESCE(SUM(idle_seconds), 0) AS totalIdleSeconds
+         FROM desktop_monitor_events
+         WHERE employee_id = ? AND event_type = 'idle_ended' AND idle_seconds IS NOT NULL`,
+        [targetEmployeeId],
+      ),
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        screenshots: screenshots[0],
+        idleEvents: idleEvents[0],
+        totalIdleSeconds: Number(idleTotals[0][0].totalIdleSeconds) || 0,
+      },
+    });
+  } catch (error) {
+    console.error('Desktop monitoring employee activity lookup failed:', error);
+    return res.status(500).json({ success: false, message: 'Could not load employee monitoring activity' });
+  }
+});
+
 router.get('/screenshots/:id/content', async (req, res) => {
   const employeeId = getEmployeeId(req);
-  if (!employeeId) {
+  if (!employeeId && !canViewOtherEmployees(req)) {
     return res.status(403).json({ success: false, message: 'Employee identity is required' });
   }
   try {
@@ -211,7 +283,9 @@ router.get('/screenshots/:id/content', async (req, res) => {
       [req.params.id],
     );
     const screenshot = rows[0];
-    if (!screenshot || (String(screenshot.employee_id) !== String(employeeId) && !isPrivileged(req))) {
+    if (!screenshot || (
+      String(screenshot.employee_id) !== String(employeeId) && !canViewOtherEmployees(req)
+    )) {
       return res.status(404).json({ success: false, message: 'Screenshot not found' });
     }
 

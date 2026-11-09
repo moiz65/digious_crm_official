@@ -1,13 +1,15 @@
 # Digious CRM Desktop
 
-The Windows desktop companion opens the CRM in a dedicated, visible Electron window. It does not monitor other applications, browser tabs, or the full desktop.
+The Windows desktop companion opens the CRM in a dedicated, visible Electron window. With fresh, explicit consent, it captures the primary display; other visible applications or windows may appear in those screenshots.
 
 ## Monitoring behavior
 
-- Monitoring is off by default and requires an explicit in-app consent checkbox.
+- Monitoring is off by default and requires an explicit in-app consent checkbox. The full-display consent is separate from the earlier CRM-window-only consent.
 - A persistent in-window status panel lets the signed-in user pause or withdraw consent.
 - System-wide keyboard/mouse inactivity is checked every 15 seconds; 3 minutes without input is recorded as idle.
-- One JPEG of the CRM window is uploaded every 15 minutes only while the user is active and the CRM window is focused and visible.
+- One JPEG of the primary display is uploaded every 15 minutes only while the user is active and the CRM window is focused and visible.
+- Screenshots may include any other applications or windows visible on the primary display. The employee must accept the updated consent before capture starts.
+- The employee picker and screenshot/activity viewer are available to Admin/Super Admin, HR, and Operations Managers through authenticated routes.
 - Screenshots are uploaded separately from normal CRM API calls, with bounded retries.
 - The backend keeps screenshots outside its public `/uploads` directory. Access requires an authenticated API request.
 - Screenshots, idle events, and session records are automatically deleted after 30 days by default; set `DESKTOP_MONITOR_RETENTION_DAYS` to a value from 1 to 3650 to change this.

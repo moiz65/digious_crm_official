@@ -53,6 +53,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) => 
       children: [
         { id: 'attendance', label: 'Attendance', icon: SheetIcon, path: '/attendance' },
         // { id: 'activity-tracker', label: 'Activity Tracker', icon: RefreshCw, path: '/activity-tracker' },
+        { id: 'desktop-monitor', label: 'Desktop Monitor', icon: RefreshCw, path: '/admin/desktop-monitor' },
         { id: 'employees', label: 'Employees', icon: Users, path: '/employees' },
         { id: 'applications-memos', label: 'Applications', icon: FileText, path: '/admin/applications' },
         // { id: 'employee-feedback', label: 'Employee Feedback', icon: MessageSquare, path: '/employee-feedback' },
