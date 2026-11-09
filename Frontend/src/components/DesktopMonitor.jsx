@@ -4,7 +4,7 @@ import { config } from "../config/api";
 
 const CONSENT_VERSION = "desktop-monitor-v2";
 const IDLE_THRESHOLD_SECONDS = 3 * 60;
-const SCREENSHOT_INTERVAL_MS = 15 * 60 * 1000;
+const SCREENSHOT_INTERVAL_MS = 3 * 60 * 1000;
 const ACTIVITY_CHECK_INTERVAL_MS = 15 * 1000;
 const SENSITIVE_PATHS = /^\/(login|change-password|forgot-password|verify-otp)(\/|$)/;
 
