@@ -125,7 +125,7 @@ const DesktopMonitoring = () => {
   };
 
   const selectedEmployee = employees.find(
-    (employee) => String(employee.employee_id) === String(employeeId),
+    (employee) => String(employee.employeeId) === String(employeeId),
   );
   const recentIdleEvents = activity?.idleEvents?.slice(0, 20) || [];
   const screenshots = activity?.screenshots || [];
@@ -167,8 +167,8 @@ const DesktopMonitoring = () => {
                 {loadingEmployees ? "Loading employees..." : "Select an employee"}
               </option>
               {employees.map((employee) => (
-                <option key={employee.employee_id} value={employee.employee_id}>
-                  {employee.name} ({employee.employee_id}){employee.department ? ` — ${employee.department}` : ""}
+                <option key={employee.employeeId} value={employee.employeeId}>
+                  {employee.name} ({employee.employeeCode}){employee.department ? ` — ${employee.department}` : ""}{employee.status !== "Active" ? ` — ${employee.status}` : ""}
                 </option>
               ))}
             </select>

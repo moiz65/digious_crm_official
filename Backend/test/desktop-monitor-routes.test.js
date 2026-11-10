@@ -127,9 +127,15 @@ describe('desktop monitor API', () => {
     expect(pool.query).not.toHaveBeenCalled();
   });
 
-  test('returns only active employee picker fields to an HR user', async () => {
+  test('returns employee database IDs and codes to an HR user', async () => {
     global.__desktopMonitorUser = { employeeId: 7, role: 'hr' };
-    const employees = [{ employee_id: 'EMP-7', name: 'Employee Name', department: 'Sales' }];
+    const employees = [{
+      employeeId: 7,
+      employeeCode: 'EMP-7',
+      name: 'Employee Name',
+      department: 'Sales',
+      status: 'Inactive',
+    }];
     pool.query.mockResolvedValueOnce([employees, []]);
 
     const response = await fetch(`${baseUrl}/employees`);
@@ -138,13 +144,15 @@ describe('desktop monitor API', () => {
     expect(response.status).toBe(200);
     expect(result.data).toEqual(employees);
     expect(pool.query).toHaveBeenCalledWith(
-      expect.stringContaining("WHERE status = 'Active'"),
+      expect.stringContaining('id AS employeeId'),
     );
   });
 
   test('allows a super admin without an employee ID to load the employee picker', async () => {
     global.__desktopMonitorUser = { role: 'superadmin' };
-    pool.query.mockResolvedValueOnce([[{ employee_id: 'EMP-7', name: 'Employee Name' }], []]);
+    pool.query.mockResolvedValueOnce([[
+      { employeeId: 7, employeeCode: 'EMP-7', name: 'Employee Name', status: 'Inactive' },
+    ], []]);
 
     const response = await fetch(`${baseUrl}/employees`);
 
@@ -164,7 +172,7 @@ describe('desktop monitor API', () => {
       .mockResolvedValueOnce([idleRows, []])
       .mockResolvedValueOnce([[{ totalIdleSeconds: '240' }], []]);
 
-    const response = await fetch(`${baseUrl}/employees/EMP-7/activity`);
+    const response = await fetch(`${baseUrl}/employees/7/activity`);
     const result = await response.json();
 
     expect(response.status).toBe(200);
@@ -176,7 +184,7 @@ describe('desktop monitor API', () => {
     expect(pool.query).toHaveBeenCalledTimes(3);
     expect(pool.query).toHaveBeenCalledWith(
       expect.stringContaining('FROM desktop_monitor_screenshots'),
-      ['EMP-7'],
+      ['7'],
     );
   });
 });

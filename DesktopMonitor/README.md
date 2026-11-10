@@ -4,16 +4,16 @@ The Windows desktop companion opens the CRM in a dedicated, visible Electron win
 
 ## Monitoring behavior
 
-- Monitoring is off by default and requires an explicit in-app consent checkbox. The full-display consent is separate from the earlier CRM-window-only consent.
+- Monitoring is off by default and requires one explicit, in-app consent from the signed-in employee. Installing the desktop app does not grant consent.
 - A persistent in-window status panel lets the signed-in user pause or withdraw consent.
 - System-wide keyboard/mouse inactivity is checked every 15 seconds; 3 minutes without input is recorded as idle.
-- One JPEG of the primary display is uploaded every 15 minutes only while the user is active and the CRM window is focused and visible.
+- One JPEG of the primary display is uploaded every 3 minutes while the user is active, including when the CRM window is minimized or hidden to the system tray.
 - Screenshots may include any other applications or windows visible on the primary display. The employee must accept the updated consent before capture starts.
 - The employee picker and screenshot/activity viewer are available to Admin/Super Admin, HR, and Operations Managers through authenticated routes.
 - Screenshots are uploaded separately from normal CRM API calls, with bounded retries.
 - The backend keeps screenshots outside its public `/uploads` directory. Access requires an authenticated API request.
 - Screenshots, idle events, and session records are automatically deleted after 30 days by default; set `DESKTOP_MONITOR_RETENTION_DAYS` to a value from 1 to 3650 to change this.
-- The installer does not run hidden, start at login, or continue monitoring after its window is closed.
+- Closing the CRM window hides it in the system tray so consented monitoring can continue. The tray icon can reopen the CRM or quit the app; monitoring stops when the user signs out or quits the app.
 
 ## Setup and packaging
 

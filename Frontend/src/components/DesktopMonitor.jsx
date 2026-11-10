@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { config } from "../config/api";
 
@@ -7,6 +8,7 @@ const IDLE_THRESHOLD_SECONDS = 3 * 60;
 const SCREENSHOT_INTERVAL_MS = 3 * 60 * 1000;
 const ACTIVITY_CHECK_INTERVAL_MS = 15 * 1000;
 const SENSITIVE_PATHS = /^\/(login|change-password|forgot-password|verify-otp)(\/|$)/;
+const PUBLIC_PATHS = /^\/(login|signup|change-password|forgot-password|verify-otp|unauthorized)(\/|$)/;
 
 const requestJson = async (url, token, options = {}) => {
   const controller = new AbortController();
@@ -37,9 +39,11 @@ const requestJson = async (url, token, options = {}) => {
 };
 
 const DesktopMonitor = () => {
-  const { user, token } = useAuth();
+  const { user, token, isAuthenticated } = useAuth();
+  const location = useLocation();
   const employeeId = user?.employeeId || user?.employee_id || user?.userId || user?.id;
   const bridge = window.desktopMonitor;
+  const isMonitoringSurface = isAuthenticated && !PUBLIC_PATHS.test(location.pathname);
   const consentKey = `desktop-monitor-consent:${employeeId || ""}`;
   const enabledKey = `desktop-monitor-enabled:${employeeId || ""}`;
   const [consentChecked, setConsentChecked] = useState(false);
@@ -74,7 +78,7 @@ const DesktopMonitor = () => {
   }, [employeeId, token]);
 
   useEffect(() => {
-    if (!bridge || !employeeId) return undefined;
+    if (!bridge || !employeeId || !isMonitoringSurface) return undefined;
     const hasConsent = localStorage.getItem(consentKey) === CONSENT_VERSION;
     setConsented(hasConsent);
     const shouldResume = localStorage.getItem(enabledKey) === "true";
@@ -83,7 +87,7 @@ const DesktopMonitor = () => {
       startSession().catch((startError) => setError(startError.message));
     }
     return undefined;
-  }, [bridge, consentKey, employeeId, enabledKey, startSession, token]);
+  }, [bridge, consentKey, employeeId, enabledKey, isMonitoringSurface, startSession, token]);
 
   useEffect(() => {
     if (!sessionId || !token || !bridge) return undefined;
@@ -102,7 +106,7 @@ const DesktopMonitor = () => {
     const uploadScreenshot = async (dataUrl) => {
       const image = await fetch(dataUrl).then((response) => response.blob());
       const formData = new FormData();
-      formData.append("screenshot", image, "crm-window.jpg");
+      formData.append("screenshot", image, "primary-display.jpg");
       await requestJson(
         `${config.FULL_API_URL}/desktop-monitor/sessions/${sessionId}/screenshots`,
         token,
@@ -111,7 +115,7 @@ const DesktopMonitor = () => {
     };
 
     const check = async () => {
-      if (!active || checkingRef.current) return;
+      if (!active || checkingRef.current || !isMonitoringSurface) return;
       checkingRef.current = true;
       try {
         const state = await bridge.getSystemState();
@@ -135,8 +139,6 @@ const DesktopMonitor = () => {
         if (
           Date.now() >= nextScreenshotAt
           && !isIdle
-          && state.isFocused
-          && !document.hidden
           && !passwordInputFocused
           && !sensitivePage
         ) {
@@ -183,7 +185,7 @@ const DesktopMonitor = () => {
       window.clearInterval(timer);
       checkingRef.current = false;
     };
-  }, [bridge, sessionId, token]);
+  }, [bridge, isMonitoringSurface, sessionId, token]);
 
   useEffect(() => {
     if (!sessionId || !token) return undefined;
@@ -282,7 +284,7 @@ const DesktopMonitor = () => {
     }
   };
 
-  if (!bridge || !token || !employeeId) return null;
+  if (!bridge || !isAuthenticated || !isMonitoringSurface || !token || !employeeId) return null;
 
   const panelStyle = {
     position: "fixed",

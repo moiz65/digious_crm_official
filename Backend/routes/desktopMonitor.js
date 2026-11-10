@@ -180,9 +180,8 @@ router.get('/employees', async (req, res) => {
 
   try {
     const [rows] = await pool.query(
-      `SELECT employee_id, name, department
+      `SELECT id AS employeeId, employee_id AS employeeCode, name, department, status
        FROM employee_onboarding
-       WHERE status = 'Active'
        ORDER BY name ASC`,
     );
     return res.status(200).json({ success: true, data: rows });

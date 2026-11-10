@@ -4,8 +4,11 @@ const {
   desktopCapturer,
   dialog,
   ipcMain,
+  Menu,
+  nativeImage,
   screen,
   shell,
+  Tray,
 } = require('electron');
 const fs = require('fs/promises');
 const path = require('path');
@@ -14,6 +17,8 @@ const { pathToFileURL } = require('url');
 const settingsPath = () => path.join(app.getPath('userData'), 'settings.json');
 let settings = null;
 let crmWindow = null;
+let tray = null;
+let isQuitting = false;
 
 function isAllowedCrmUrl(value) {
   try {
@@ -101,6 +106,7 @@ async function openCrmWindow() {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
+      backgroundThrottling: false,
     },
   });
 
@@ -119,6 +125,12 @@ async function openCrmWindow() {
   crmWindow.on('closed', () => {
     crmWindow = null;
   });
+  crmWindow.on('close', (event) => {
+    if (!isQuitting && tray) {
+      event.preventDefault();
+      crmWindow.hide();
+    }
+  });
 
   try {
     await crmWindow.loadURL(settings.crmUrl);
@@ -134,13 +146,11 @@ ipcMain.handle('desktop-monitor:state', (event) => {
   const { powerMonitor } = require('electron');
   return {
     idleSeconds: powerMonitor.getSystemIdleTime(),
-    isFocused: crmWindow.isFocused() && crmWindow.isVisible() && !crmWindow.isMinimized(),
   };
 });
 
 ipcMain.handle('desktop-monitor:capture', async (event) => {
   if (!isCrmSender(event)) throw new Error('Screenshot capture is available only in the CRM window');
-  if (!crmWindow.isFocused() || !crmWindow.isVisible() || crmWindow.isMinimized()) return null;
 
   const primaryDisplayId = String(screen.getPrimaryDisplay().id);
   const sources = await desktopCapturer.getSources({
@@ -165,6 +175,36 @@ ipcMain.handle('desktop-monitor:save-settings', saveSettings);
 
 app.whenReady().then(async () => {
   try {
+    const icon = nativeImage.createFromPath(path.join(__dirname, 'assets', 'icons', 'icon.ico'));
+    if (icon.isEmpty()) throw new Error('Could not load the Digious CRM desktop icon.');
+    tray = new Tray(icon.resize({ width: 16, height: 16 }));
+    tray.setToolTip('Digious CRM Desktop — monitoring follows employee consent');
+    tray.setContextMenu(Menu.buildFromTemplate([
+      {
+        label: 'Open Digious CRM',
+        click: () => {
+          if (crmWindow && !crmWindow.isDestroyed()) {
+            crmWindow.show();
+            crmWindow.focus();
+          }
+        },
+      },
+      { type: 'separator' },
+      {
+        label: 'Quit Digious CRM Desktop',
+        click: () => {
+          isQuitting = true;
+          app.quit();
+        },
+      },
+    ]));
+    tray.on('double-click', () => {
+      if (crmWindow && !crmWindow.isDestroyed()) {
+        crmWindow.show();
+        crmWindow.focus();
+      }
+    });
+
     settings = await loadSettings();
     if (settings) await openCrmWindow();
     else openSetupWindow();
@@ -174,6 +214,10 @@ app.whenReady().then(async () => {
   }
 });
 
+app.on('before-quit', () => {
+  isQuitting = true;
+});
+
 app.on('window-all-closed', () => {
-  app.quit();
+  if (!settings) app.quit();
 });
