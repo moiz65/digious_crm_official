@@ -6,6 +6,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { prepareLoginDeviceInfo, collectAdditionalDeviceInfoBackground } from '../utils/systemDeviceInfo';
 import { endpoints } from '../config/api';
+import DforDigious from '../../src/DforDigious.png';
 
 const LoginPage = () => {
   const { login } = useAuth();
@@ -170,16 +171,14 @@ const LoginPage = () => {
         {/* Header Section */}
         <div className="p-8 border-b border-gray-200 bg-gradient-to-r from-white to-blue-50">
           <div className="flex items-center justify-center mb-6">
-            <div className="w-16 h-16 bg-[#349dff] rounded-xl flex items-center justify-center shadow-lg">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
+            <div className="w-16 h-16 bg-[#FFFFF] rounded-xl flex items-center justify-center">
+              <img src={DforDigious} alt={DforDigious} />
             </div>
           </div>
           <div className="text-center">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-[#349dff] to-[#1e87e6] bg-clip-text text-transparent mb-2">
+            {/* <h1 className="text-3xl font-bold bg-gradient-to-r from-[#349dff] to-[#1e87e6] bg-clip-text text-transparent mb-2">
               Digious CRM
-            </h1>
+            </h1> */}
             <p className="text-gray-600 text-sm mb-4">Internal Employee Portal</p>
             <h2 className="text-2xl font-bold text-gray-900">Welcome Back</h2>
             <p className="text-gray-600 mt-2">Sign in to your account</p>
@@ -326,7 +325,7 @@ const LoginPage = () => {
       {/* Footer */}
       <div className="absolute bottom-[2rem] left-1/2 transform -translate-x-1/2 text-center">
         <p className="text-gray-500 text-sm">
-          © 2025 Digious Solutions. All rights reserved.
+          © 2026 Digious Solutions. All rights reserved.
         </p>
         <p className="text-gray-400 text-xs mt-1">
           Secure employee portal v2.1.0

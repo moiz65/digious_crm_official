@@ -25,6 +25,8 @@ const DesktopMonitoring = () => {
   const [activeItem, setActiveItem] = useState("desktop-monitor");
   const [employees, setEmployees] = useState([]);
   const [employeeId, setEmployeeId] = useState("");
+  const [employeeSearch, setEmployeeSearch] = useState("");
+  const [employeeMenuOpen, setEmployeeMenuOpen] = useState(false);
   const [activity, setActivity] = useState(null);
   const [loadingEmployees, setLoadingEmployees] = useState(true);
   const [loadingActivity, setLoadingActivity] = useState(false);
@@ -39,6 +41,17 @@ const DesktopMonitoring = () => {
     : normalizedRole === "employee"
       ? EmployeeSidebar
       : Sidebar;
+  const activeEmployees = employees.filter(
+    (employee) => String(employee.status || "").trim().toLowerCase() === "active",
+  );
+  const filteredEmployees = activeEmployees.filter((employee) => {
+    const search = employeeSearch.trim().toLowerCase();
+    return !search || [
+      employee.name,
+      employee.employeeCode,
+      employee.department,
+    ].some((value) => String(value || "").toLowerCase().includes(search));
+  });
 
   useEffect(() => {
     let active = true;
@@ -127,6 +140,11 @@ const DesktopMonitoring = () => {
   const selectedEmployee = employees.find(
     (employee) => String(employee.employeeId) === String(employeeId),
   );
+  const selectEmployee = (employee) => {
+    setEmployeeId(String(employee.employeeId));
+    setEmployeeSearch(`${employee.name} (${employee.employeeCode})`);
+    setEmployeeMenuOpen(false);
+  };
   const recentIdleEvents = activity?.idleEvents?.slice(0, 20) || [];
   const screenshots = activity?.screenshots || [];
 
@@ -146,32 +164,69 @@ const DesktopMonitoring = () => {
             </p>
             <h1 className="mt-1 text-2xl font-bold text-slate-900">Desktop activity</h1>
             <p className="mt-2 text-sm text-slate-600">
-              View recorded idle periods and primary-display screenshots after an employee has
-              provided consent. Screenshots may also include other apps or windows visible on the
-              primary display. Access is restricted to authorized monitoring roles.
+              View recorded idle periods and primary display screenshots after an employee has
+              provided consent.
             </p>
           </header>
 
-          <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <section>
             <label htmlFor="monitor-employee" className="block text-sm font-semibold text-slate-700">
               Select an employee
             </label>
-            <select
+            <input
               id="monitor-employee"
-              value={employeeId}
-              onChange={(event) => setEmployeeId(event.target.value)}
+              type="search"
+              role="combobox"
+              aria-autocomplete="list"
+              aria-expanded={employeeMenuOpen}
+              aria-controls="monitor-employee-options"
+              autoComplete="off"
+              placeholder="Search active employees by name, code, or department"
+              value={employeeSearch}
+              onFocus={() => setEmployeeMenuOpen(true)}
+              onChange={(event) => {
+                setEmployeeSearch(event.target.value);
+                setEmployeeId("");
+                setEmployeeMenuOpen(true);
+              }}
               disabled={loadingEmployees}
               className="mt-2 w-full max-w-xl rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
-            >
-              <option value="">
-                {loadingEmployees ? "Loading employees..." : "Select an employee"}
-              </option>
-              {employees.map((employee) => (
-                <option key={employee.employeeId} value={employee.employeeId}>
-                  {employee.name} ({employee.employeeCode}){employee.department ? ` — ${employee.department}` : ""}{employee.status !== "Active" ? ` — ${employee.status}` : ""}
-                </option>
-              ))}
-            </select>
+            />
+            {employeeMenuOpen && !loadingEmployees && (
+              <ul
+                id="monitor-employee-options"
+                role="listbox"
+                className="mt-1 max-h-60 w-full max-w-xl overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 shadow-lg"
+              >
+                {filteredEmployees.length ? filteredEmployees.map((employee) => (
+                  <li key={employee.employeeId} role="option" aria-selected={String(employee.employeeId) === String(employeeId)}>
+                    <button
+                      type="button"
+                      onClick={() => selectEmployee(employee)}
+                      className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm text-slate-800 hover:bg-slate-50"
+                    >
+                      <span>
+                        <span className="font-medium">{employee.name}</span>
+                        <span className="ml-2 text-slate-500">{employee.employeeCode}</span>
+                        {employee.department && (
+                          <span className="ml-2 text-slate-500">— {employee.department}</span>
+                        )}
+                      </span>
+                      {Boolean(employee.isWorking) && (
+                        <span className="flex shrink-0 items-center gap-2 text-xs font-semibold text-green-700">
+                          <span className="h-2 w-2 animate-pulse rounded-full bg-green-500" aria-hidden="true" />
+                          Working
+                        </span>
+                      )}
+                    </button>
+                  </li>
+                )) : (
+                  <li className="px-3 py-2 text-sm text-slate-500">
+                    {activeEmployees.length ? "No matching active employees." : "No active employees found."}
+                  </li>
+                )}
+              </ul>
+            )}
           </section>
 
           {error && (

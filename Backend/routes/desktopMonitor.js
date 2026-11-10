@@ -180,9 +180,17 @@ router.get('/employees', async (req, res) => {
 
   try {
     const [rows] = await pool.query(
-      `SELECT id AS employeeId, employee_id AS employeeCode, name, department, status
-       FROM employee_onboarding
-       ORDER BY name ASC`,
+      `SELECT employee.id AS employeeId, employee.employee_id AS employeeCode,
+              employee.name, employee.department, employee.status,
+              EXISTS (
+                SELECT 1
+                FROM desktop_monitor_sessions AS monitoring_session
+                WHERE monitoring_session.employee_id = CAST(employee.id AS CHAR)
+                  AND monitoring_session.ended_at IS NULL
+              ) AS isWorking
+       FROM employee_onboarding AS employee
+       WHERE LOWER(TRIM(employee.status)) = 'active'
+       ORDER BY employee.name ASC`,
     );
     return res.status(200).json({ success: true, data: rows });
   } catch (error) {

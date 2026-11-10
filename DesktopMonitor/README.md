@@ -21,6 +21,6 @@ The Windows desktop companion opens the CRM in a dedicated, visible Electron win
 2. Deploy the backend and CRM frontend with the desktop-monitor API route enabled.
 3. From this directory run `npm install`, then `npm start` for local development.
 4. Run `npm run dist` on Windows to create an NSIS installer under `dist/`.
-5. On first launch enter the CRM HTTPS URL. The user signs in normally inside the CRM window.
+5. On first launch the desktop app opens `https://digious-crm.vercel.app` automatically. The user signs in normally inside the CRM window.
 
 The frontend's `REACT_APP_API_URL` must point to the deployed backend. For local development, set `CRM_DESKTOP_URL=http://localhost:3000` before starting Electron.

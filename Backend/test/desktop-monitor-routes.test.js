@@ -127,14 +127,15 @@ describe('desktop monitor API', () => {
     expect(pool.query).not.toHaveBeenCalled();
   });
 
-  test('returns employee database IDs and codes to an HR user', async () => {
+  test('returns active employee database IDs and working status to an HR user', async () => {
     global.__desktopMonitorUser = { employeeId: 7, role: 'hr' };
     const employees = [{
       employeeId: 7,
       employeeCode: 'EMP-7',
       name: 'Employee Name',
       department: 'Sales',
-      status: 'Inactive',
+      status: 'Active',
+      isWorking: 1,
     }];
     pool.query.mockResolvedValueOnce([employees, []]);
 
@@ -146,12 +147,14 @@ describe('desktop monitor API', () => {
     expect(pool.query).toHaveBeenCalledWith(
       expect.stringContaining('id AS employeeId'),
     );
+    expect(pool.query.mock.calls[0][0]).toContain("LOWER(TRIM(employee.status)) = 'active'");
+    expect(pool.query.mock.calls[0][0]).toContain('monitoring_session.ended_at IS NULL');
   });
 
   test('allows a super admin without an employee ID to load the employee picker', async () => {
     global.__desktopMonitorUser = { role: 'superadmin' };
     pool.query.mockResolvedValueOnce([[
-      { employeeId: 7, employeeCode: 'EMP-7', name: 'Employee Name', status: 'Inactive' },
+      { employeeId: 7, employeeCode: 'EMP-7', name: 'Employee Name', status: 'Active', isWorking: 0 },
     ], []]);
 
     const response = await fetch(`${baseUrl}/employees`);

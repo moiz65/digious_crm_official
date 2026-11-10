@@ -47,7 +47,9 @@ const DesktopMonitor = () => {
   const consentKey = `desktop-monitor-consent:${employeeId || ""}`;
   const enabledKey = `desktop-monitor-enabled:${employeeId || ""}`;
   const [consentChecked, setConsentChecked] = useState(false);
-  const [consented, setConsented] = useState(false);
+  const [consented, setConsented] = useState(
+    () => localStorage.getItem(consentKey) === CONSENT_VERSION,
+  );
   const [sessionId, setSessionId] = useState(null);
   const [idle, setIdle] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -303,7 +305,7 @@ const DesktopMonitor = () => {
 
   return (
     <aside style={panelStyle} aria-live="polite">
-      <strong>Desktop monitoring {sessionId ? (idle ? "— idle" : "— active") : "— paused"}</strong>
+      <strong>Desktop monitoring {sessionId ? (idle ? "— Idle" : "— Active") : "— Paused"}</strong>
       <p style={{ margin: "8px 0" }}>
         When the CRM window is active, a primary-display screenshot is captured every{" "}
         {SCREENSHOT_INTERVAL_MS / 60000} minutes. Other visible apps and windows may also appear.

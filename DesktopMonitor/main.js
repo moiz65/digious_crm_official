@@ -14,6 +14,7 @@ const fs = require('fs/promises');
 const path = require('path');
 const { pathToFileURL } = require('url');
 
+const DEFAULT_CRM_URL = 'https://digious-crm.vercel.app';
 const settingsPath = () => path.join(app.getPath('userData'), 'settings.json');
 let settings = null;
 let crmWindow = null;
@@ -46,7 +47,7 @@ async function loadSettings() {
     }
     return { crmUrl: process.env.CRM_DESKTOP_URL };
   }
-  return null;
+  return { crmUrl: DEFAULT_CRM_URL };
 }
 
 function isCrmSender(event) {
