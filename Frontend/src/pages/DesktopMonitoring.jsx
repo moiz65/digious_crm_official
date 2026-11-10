@@ -156,7 +156,7 @@ const DesktopMonitoring = () => {
         activeItem={activeItem}
         setActiveItem={setActiveItem}
       />
-      <main className="min-w-0 flex-1 overflow-y-auto p-4 md:p-8">
+      <main className="min-w-0 h-[100vh] flex-1 overflow-y-auto p-4 md:p-8">
         <div className="mx-auto max-w-7xl space-y-6">
           <header>
             <p className="text-sm font-semibold uppercase tracking-wide text-blue-600">
@@ -257,6 +257,26 @@ const DesktopMonitoring = () => {
               </div>
 
               <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                <h2 className="text-lg font-semibold text-slate-900">Recent idle periods</h2>
+                {loadingActivity ? (
+                  <p className="mt-4 text-sm text-slate-500">Loading idle records...</p>
+                ) : recentIdleEvents.length ? (
+                  <div className="mt-4 divide-y divide-slate-100">
+                    {recentIdleEvents.map((event) => (
+                      <div key={event.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+                        <p className="text-sm text-slate-700">{formatDate(event.occurredAt)}</p>
+                        <span className="rounded-full bg-amber-50 px-3 py-1 text-sm font-semibold text-amber-800">
+                          {formatDuration(event.idleSeconds)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mt-4 text-sm text-slate-500">No completed idle periods were recorded.</p>
+                )}
+              </section>
+
+              <section className="rounded-xl h-[600px] overflow-scroll overflow-x-hidden border border-slate-200 bg-white p-5 shadow-sm">
                 <h2 className="text-lg font-semibold text-slate-900">Screenshots</h2>
                 {loadingActivity ? (
                   <p className="mt-4 text-sm text-slate-500">Loading screenshots...</p>
@@ -283,26 +303,6 @@ const DesktopMonitoring = () => {
                   </div>
                 ) : (
                   <p className="mt-4 text-sm text-slate-500">No screenshots were found for this employee.</p>
-                )}
-              </section>
-
-              <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-                <h2 className="text-lg font-semibold text-slate-900">Recent idle periods</h2>
-                {loadingActivity ? (
-                  <p className="mt-4 text-sm text-slate-500">Loading idle records...</p>
-                ) : recentIdleEvents.length ? (
-                  <div className="mt-4 divide-y divide-slate-100">
-                    {recentIdleEvents.map((event) => (
-                      <div key={event.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
-                        <p className="text-sm text-slate-700">{formatDate(event.occurredAt)}</p>
-                        <span className="rounded-full bg-amber-50 px-3 py-1 text-sm font-semibold text-amber-800">
-                          {formatDuration(event.idleSeconds)}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="mt-4 text-sm text-slate-500">No completed idle periods were recorded.</p>
                 )}
               </section>
             </>
