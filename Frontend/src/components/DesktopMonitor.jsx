@@ -276,6 +276,7 @@ const DesktopMonitor = () => {
         localStorage.removeItem(consentKey);
         localStorage.removeItem(enabledKey);
         setConsented(false);
+        setConsentChecked(false);
       } else {
         localStorage.setItem(enabledKey, "false");
       }
@@ -290,66 +291,119 @@ const DesktopMonitor = () => {
 
   const panelStyle = {
     position: "fixed",
-    right: 16,
-    bottom: 16,
+    left: "50%",
+    bottom: 20,
+    transform: "translateX(-50%)",
     zIndex: 10000,
-    width: 330,
-    padding: 14,
-    borderRadius: 10,
-    background: "#fff",
+    width: "min(560px, calc(100vw - 32px))",
+    padding: 18,
+    borderRadius: 18,
+    background: "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
     color: "#172033",
-    border: "1px solid #cbd5e1",
-    boxShadow: "0 6px 24px rgba(15, 23, 42, .2)",
+    border: "1px solid #dbe3ee",
+    boxShadow: "0 16px 48px rgba(15, 23, 42, .22)",
     fontSize: 13,
+  };
+  const buttonStyle = {
+    border: 0,
+    borderRadius: 10,
+    padding: "10px 14px",
+    fontSize: 13,
+    fontWeight: 600,
+    cursor: busy ? "wait" : "pointer",
   };
 
   return (
     <aside style={panelStyle} aria-live="polite">
-      <strong>Desktop monitoring {sessionId ? (idle ? "— Idle" : "— Active") : "— Paused"}</strong>
-      <p style={{ margin: "8px 0" }}>
-        When the CRM window is active, a primary-display screenshot is captured every{" "}
-        {SCREENSHOT_INTERVAL_MS / 60000} minutes. Other visible apps and windows may also appear.
-        Screenshots are not captured while you are idle or the CRM window is unfocused or hidden.
-      </p>
-      {lastCapture && (
-        <p style={{ margin: "6px 0" }}>
-          Last screenshot: {lastCapture.toLocaleTimeString()}
-        </p>
+      {!consented ? (
+        <>
+          <strong style={{ display: "block", fontSize: 15, marginBottom: 8 }}>
+            Desktop monitoring consent
+          </strong>
+          <p style={{ color: "#475569", lineHeight: 1.5, margin: "0 0 12px" }}>
+            When the CRM window is active, a primary-display screenshot is captured every{" "}
+            {SCREENSHOT_INTERVAL_MS / 60000} minutes. Other apps or windows visible on the display
+            may also be captured. Screenshots are not captured while you are idle or the CRM window
+            is unfocused or hidden.
+          </p>
+        </>
+      ) : (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+          <div>
+            <strong style={{ fontSize: 15 }}>Desktop monitoring</strong>
+            <div style={{ color: "#64748b", fontSize: 12, marginTop: 3 }}>
+              {sessionId ? (idle ? "Idle" : "Active") : "Paused"}
+              {lastCapture && ` · Last screenshot ${lastCapture.toLocaleTimeString()}`}
+            </div>
+          </div>
+          <span
+            aria-hidden="true"
+            style={{
+              width: 9,
+              height: 9,
+              flexShrink: 0,
+              borderRadius: "50%",
+              background: sessionId ? (idle ? "#f59e0b" : "#22c55e") : "#94a3b8",
+              boxShadow: sessionId ? "0 0 0 4px rgba(34, 197, 94, .12)" : "none",
+            }}
+          />
+        </div>
       )}
       {error && <p role="alert" style={{ color: "#b91c1c", margin: "6px 0" }}>{error}</p>}
       {!consented ? (
         <>
-          <label style={{ display: "flex", gap: 8, alignItems: "flex-start", margin: "8px 0" }}>
+          <label style={{ display: "flex", gap: 9, alignItems: "flex-start", margin: "10px 0 14px" }}>
             <input
               type="checkbox"
               checked={consentChecked}
               onChange={(event) => setConsentChecked(event.target.checked)}
             />
             <span>
-              I consent to system-wide idle tracking and primary-display screenshots. Other apps or
-              windows visible on the display may also be captured. I can pause monitoring or withdraw
-              my consent at any time.
+              I consent to system-wide idle tracking and primary-display screenshots. I can pause
+              monitoring or withdraw my consent at any time.
             </span>
           </label>
-          <button type="button" disabled={!consentChecked || busy} onClick={handleStart}>
+          <button
+            type="button"
+            disabled={!consentChecked || busy}
+            onClick={handleStart}
+            style={{
+              ...buttonStyle,
+              width: "100%",
+              color: "#fff",
+              background: !consentChecked || busy ? "#94a3b8" : "#2563eb",
+            }}
+          >
             {busy ? "Starting..." : "Agree and start"}
           </button>
         </>
-      ) : sessionId ? (
-        <div style={{ display: "flex", gap: 8 }}>
-          <button type="button" disabled={busy} onClick={() => stopSession(false)}>
-            {busy ? "Saving..." : "Pause"}
-          </button>
-          <button type="button" disabled={busy} onClick={() => stopSession(true)}>
-            Stop and withdraw consent
-          </button>
-        </div>
       ) : (
-        <div style={{ display: "flex", gap: 8 }}>
-          <button type="button" disabled={busy} onClick={handleStart}>
-            {busy ? "Starting..." : "Resume"}
+        <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={sessionId ? () => stopSession(false) : handleStart}
+            style={{
+              ...buttonStyle,
+              flex: 1,
+              color: "#fff",
+              background: sessionId ? "#334155" : "#2563eb",
+              opacity: busy ? 0.7 : 1,
+            }}
+          >
+            {busy ? "Saving..." : sessionId ? "Pause monitoring" : "Resume monitoring"}
           </button>
-          <button type="button" disabled={busy} onClick={() => stopSession(true)}>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => stopSession(true)}
+            style={{
+              ...buttonStyle,
+              color: "#b91c1c",
+              background: "#fee2e2",
+              opacity: busy ? 0.7 : 1,
+            }}
+          >
             Withdraw consent
           </button>
         </div>
