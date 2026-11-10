@@ -23,7 +23,8 @@
       "main.js",
       "preload.js",
       "setup.html",
-      "setup.js"
+      "setup.js",
+      "assets/icons/icon.ico"
     ],
     "directories": {
       "output": "dist"
