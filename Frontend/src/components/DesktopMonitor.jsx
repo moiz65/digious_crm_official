@@ -336,18 +336,19 @@ const DesktopMonitor = () => {
               {sessionId ? (idle ? "Idle" : "Active") : "Paused"}
               {lastCapture && ` · Last screenshot ${lastCapture.toLocaleTimeString()}`}
             </div>
+            <span
+              aria-hidden="true"
+              style={{
+                width: 9,
+                height: 9,
+                flexShrink: 0,
+                borderRadius: "50%",
+                background: sessionId ? (idle ? "#f59e0b" : "#22c55e") : "#94a3b8",
+                boxShadow: sessionId ? "0 0 0 4px rgba(34, 197, 94, .12)" : "none",
+              }}
+            />
           </div>
-          <span
-            aria-hidden="true"
-            style={{
-              width: 9,
-              height: 9,
-              flexShrink: 0,
-              borderRadius: "50%",
-              background: sessionId ? (idle ? "#f59e0b" : "#22c55e") : "#94a3b8",
-              boxShadow: sessionId ? "0 0 0 4px rgba(34, 197, 94, .12)" : "none",
-            }}
-          />
+
           <button
             type="button"
             onClick={() => setIsMinimized((minimized) => !minimized)}
