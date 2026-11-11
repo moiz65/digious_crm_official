@@ -373,7 +373,6 @@ const DesktopMonitor = () => {
           )}
         </span>
         <span style={{ fontSize: 9, fontWeight: 700, writingMode: "vertical-rl", letterSpacing: ".04em" }}>
-          Monitor
         </span>
       </button>
       <aside
