@@ -293,11 +293,12 @@ const DesktopMonitor = () => {
 
   const panelStyle = {
     position: "fixed",
-    left: "50%",
-    bottom: 20,
-    transform: "translateX(-50%)",
+    right: 16,
+    bottom: 92,
     zIndex: 10000,
-    width: isMinimized ? "min(360px, calc(100vw - 32px))" : "min(560px, calc(100vw - 32px))",
+    width: isMinimized ? "min(340px, calc(100vw - 32px))" : "min(420px, calc(100vw - 32px))",
+    maxHeight: "calc(100dvh - 112px)",
+    overflowY: "auto",
     padding: isMinimized ? "12px 14px" : 18,
     borderRadius: 18,
     background: "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
@@ -305,6 +306,7 @@ const DesktopMonitor = () => {
     border: "1px solid #dbe3ee",
     boxShadow: "0 16px 48px rgba(15, 23, 42, .22)",
     fontSize: 13,
+    boxSizing: "border-box",
   };
   const buttonStyle = {
     border: 0,
