@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronLeft, ChevronRight, Monitor } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { config } from "../config/api";
 
@@ -56,7 +56,7 @@ const DesktopMonitor = () => {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [lastCapture, setLastCapture] = useState(null);
-  const [isMinimized, setIsMinimized] = useState(false);
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
   const idleSinceRef = useRef(null);
   const checkingRef = useRef(false);
   const startedRef = useRef(false);
@@ -293,13 +293,13 @@ const DesktopMonitor = () => {
 
   const panelStyle = {
     position: "fixed",
-    right: 16,
-    bottom: 92,
+    top: "50%",
+    right: 68,
     zIndex: 10000,
-    width: isMinimized ? "min(340px, calc(100vw - 32px))" : "min(420px, calc(100vw - 32px))",
-    maxHeight: "calc(100dvh - 112px)",
+    width: "min(420px, calc(100vw - 84px))",
+    maxHeight: "calc(100dvh - 32px)",
     overflowY: "auto",
-    padding: isMinimized ? "12px 14px" : 18,
+    padding: 18,
     borderRadius: 18,
     background: "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
     color: "#172033",
@@ -307,6 +307,11 @@ const DesktopMonitor = () => {
     boxShadow: "0 16px 48px rgba(15, 23, 42, .22)",
     fontSize: 13,
     boxSizing: "border-box",
+    transform: `translate(${isPanelOpen ? "0" : "calc(100% + 24px)"}, -50%)`,
+    opacity: isPanelOpen ? 1 : 0,
+    visibility: isPanelOpen ? "visible" : "hidden",
+    pointerEvents: isPanelOpen ? "auto" : "none",
+    transition: `transform 240ms ease, opacity 180ms ease, visibility 0s linear ${isPanelOpen ? "0s" : "240ms"}`,
   };
   const buttonStyle = {
     border: 0,
@@ -318,7 +323,66 @@ const DesktopMonitor = () => {
   };
 
   return (
-    <aside id="desktop-monitor-panel" style={panelStyle} aria-live="polite">
+    <>
+      <button
+        type="button"
+        onClick={() => setIsPanelOpen((open) => !open)}
+        aria-label={isPanelOpen ? "Close desktop monitoring controls" : "Open desktop monitoring controls"}
+        aria-expanded={isPanelOpen}
+        aria-controls="desktop-monitor-panel"
+        title="Desktop Monitoring"
+        style={{
+          position: "fixed",
+          top: "50%",
+          right: 12,
+          transform: "translateY(-50%)",
+          zIndex: 10001,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 7,
+          width: 44,
+          minHeight: 76,
+          padding: "10px 0",
+          border: "1px solid #cbd5e1",
+          borderRadius: 14,
+          color: "#fff",
+          background: "#1e40af",
+          boxShadow: "0 8px 24px rgba(15, 23, 42, .22)",
+          cursor: "pointer",
+        }}
+      >
+        {isPanelOpen ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+        <span style={{ position: "relative", display: "flex" }}>
+          <Monitor size={20} />
+          {sessionId && (
+            <span
+              aria-label={idle ? "Monitoring idle" : "Monitoring active"}
+              style={{
+                position: "absolute",
+                top: -3,
+                right: -4,
+                width: 8,
+                height: 8,
+                borderRadius: "50%",
+                background: idle ? "#fbbf24" : "#4ade80",
+                border: "1px solid #1e40af",
+              }}
+            />
+          )}
+        </span>
+        <span style={{ fontSize: 9, fontWeight: 700, writingMode: "vertical-rl", letterSpacing: ".04em" }}>
+          Monitor
+        </span>
+      </button>
+      <aside
+        id="desktop-monitor-panel"
+        style={panelStyle}
+        aria-live="polite"
+        aria-hidden={!isPanelOpen}
+        inert={!isPanelOpen}
+      >
       {!consented ? (
         <>
           <strong style={{ display: "block", fontSize: 15, marginBottom: 8 }}>
@@ -374,28 +438,6 @@ const DesktopMonitor = () => {
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setIsMinimized((minimized) => !minimized)}
-            aria-label={isMinimized ? "Expand monitoring controls" : "Minimize monitoring controls"}
-            aria-expanded={!isMinimized}
-            aria-controls="desktop-monitor-panel"
-            title={isMinimized ? "Expand controls" : "Minimize controls"}
-            style={{
-              display: "grid",
-              placeItems: "center",
-              width: 34,
-              height: 34,
-              flexShrink: 0,
-              border: "1px solid #e2e8f0",
-              borderRadius: 10,
-              color: "#475569",
-              background: "#f8fafc",
-              cursor: "pointer",
-            }}
-          >
-            {isMinimized ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-          </button>
         </div>
       )}
       {error && <p role="alert" style={{ color: "#b91c1c", margin: "6px 0" }}>{error}</p>}
@@ -426,7 +468,7 @@ const DesktopMonitor = () => {
             {busy ? "Starting..." : "Agree and start"}
           </button>
         </>
-      ) : !isMinimized ? (
+      ) : (
         <div id="desktop-monitor-controls" style={{ display: "flex", gap: 8, marginTop: 14 }}>
           <button
             type="button"
@@ -456,8 +498,9 @@ const DesktopMonitor = () => {
             Withdraw consent
           </button>
         </div>
-      ) : null}
-    </aside>
+      )}
+      </aside>
+    </>
   );
 };
 
