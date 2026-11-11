@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { config } from "../config/api";
 
@@ -55,6 +56,7 @@ const DesktopMonitor = () => {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [lastCapture, setLastCapture] = useState(null);
+  const [isMinimized, setIsMinimized] = useState(false);
   const idleSinceRef = useRef(null);
   const checkingRef = useRef(false);
   const startedRef = useRef(false);
@@ -174,7 +176,7 @@ const DesktopMonitor = () => {
           }
         }
       } catch (monitorError) {
-        if (active) setError(monitorError.message || "Desktop monitoring request failed.");
+        if (active) setError(monitorError.message || "Desktop Monitoring request failed.");
       } finally {
         checkingRef.current = false;
       }
@@ -295,8 +297,8 @@ const DesktopMonitor = () => {
     bottom: 20,
     transform: "translateX(-50%)",
     zIndex: 10000,
-    width: "min(560px, calc(100vw - 32px))",
-    padding: 18,
+    width: isMinimized ? "min(360px, calc(100vw - 32px))" : "min(560px, calc(100vw - 32px))",
+    padding: isMinimized ? "12px 14px" : 18,
     borderRadius: 18,
     background: "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
     color: "#172033",
@@ -314,23 +316,22 @@ const DesktopMonitor = () => {
   };
 
   return (
-    <aside style={panelStyle} aria-live="polite">
+    <aside id="desktop-monitor-panel" style={panelStyle} aria-live="polite">
       {!consented ? (
         <>
           <strong style={{ display: "block", fontSize: 15, marginBottom: 8 }}>
             Desktop monitoring consent
           </strong>
           <p style={{ color: "#475569", lineHeight: 1.5, margin: "0 0 12px" }}>
-            When the CRM window is active, a primary-display screenshot is captured every{" "}
+            When the CRM window is active, a primary display screenshot is captured every{" "}
             {SCREENSHOT_INTERVAL_MS / 60000} minutes. Other apps or windows visible on the display
-            may also be captured. Screenshots are not captured while you are idle or the CRM window
-            is unfocused or hidden.
+            may also be captured.
           </p>
         </>
       ) : (
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
           <div>
-            <strong style={{ fontSize: 15 }}>Desktop monitoring</strong>
+            <strong style={{ fontSize: 15 }}>Desktop Monitoring</strong>
             <div style={{ color: "#64748b", fontSize: 12, marginTop: 3 }}>
               {sessionId ? (idle ? "Idle" : "Active") : "Paused"}
               {lastCapture && ` · Last screenshot ${lastCapture.toLocaleTimeString()}`}
@@ -347,6 +348,28 @@ const DesktopMonitor = () => {
               boxShadow: sessionId ? "0 0 0 4px rgba(34, 197, 94, .12)" : "none",
             }}
           />
+          <button
+            type="button"
+            onClick={() => setIsMinimized((minimized) => !minimized)}
+            aria-label={isMinimized ? "Expand monitoring controls" : "Minimize monitoring controls"}
+            aria-expanded={!isMinimized}
+            aria-controls="desktop-monitor-panel"
+            title={isMinimized ? "Expand controls" : "Minimize controls"}
+            style={{
+              display: "grid",
+              placeItems: "center",
+              width: 34,
+              height: 34,
+              flexShrink: 0,
+              border: "1px solid #e2e8f0",
+              borderRadius: 10,
+              color: "#475569",
+              background: "#f8fafc",
+              cursor: "pointer",
+            }}
+          >
+            {isMinimized ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+          </button>
         </div>
       )}
       {error && <p role="alert" style={{ color: "#b91c1c", margin: "6px 0" }}>{error}</p>}
@@ -377,8 +400,8 @@ const DesktopMonitor = () => {
             {busy ? "Starting..." : "Agree and start"}
           </button>
         </>
-      ) : (
-        <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
+      ) : !isMinimized ? (
+        <div id="desktop-monitor-controls" style={{ display: "flex", gap: 8, marginTop: 14 }}>
           <button
             type="button"
             disabled={busy}
@@ -407,7 +430,7 @@ const DesktopMonitor = () => {
             Withdraw consent
           </button>
         </div>
-      )}
+      ) : null}
     </aside>
   );
 };
