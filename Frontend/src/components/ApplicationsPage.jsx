@@ -79,6 +79,24 @@ const fmtDate = (dateStr, opts) => {
   return d.toLocaleDateString('en-US', opts || { month: 'short', day: 'numeric', year: 'numeric' });
 };
 
+const getCurrentMonthRange = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const lastDay = String(new Date(year, now.getMonth() + 1, 0).getDate()).padStart(2, '0');
+  return {
+    start: `${year}-${month}-01`,
+    end: `${year}-${month}-${lastDay}`,
+  };
+};
+
+const getApplicationDateKey = (application) => {
+  const date = application.submission_date || application.created_at;
+  if (!date) return '';
+  const dateOnly = String(date).match(/^(\d{4}-\d{2}-\d{2})/);
+  return dateOnly ? dateOnly[1] : '';
+};
+
 // ─── Status Badge ────────────────────────────────────────────
 const StatusBadge = ({ status }) => {
   const styles = {
@@ -917,6 +935,8 @@ const ApplicationsPage = () => {
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [dateRange, setDateRange] = useState(getCurrentMonthRange);
   const [selectedApp, setSelectedApp] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -955,9 +975,34 @@ const ApplicationsPage = () => {
   const normalizeApps = (rows) =>
     (rows || []).map((app) => ({
       ...app,
+      created_at: app.created_at || app.submission_date,
       employee_name:
         app.employee_name || app.applicant_name || app.name || 'Unknown',
     }));
+
+  const filteredApplications = applications.filter((app) => {
+    const query = searchQuery.trim().toLowerCase();
+    const matchesSearch =
+      !query ||
+      [
+        app.application_number,
+        app.id,
+        app.employee_name,
+        app.department,
+        app.application_type,
+        app.subject,
+        app.description,
+        app.assigned_to,
+        app.priority,
+        app.status,
+      ].some((value) => String(value || '').toLowerCase().includes(query));
+
+    const dateKey = getApplicationDateKey(app);
+    const matchesStartDate = !dateRange.start || (dateKey && dateKey >= dateRange.start);
+    const matchesEndDate = !dateRange.end || (dateKey && dateKey <= dateRange.end);
+
+    return matchesSearch && matchesStartDate && matchesEndDate;
+  });
 
   // ── Fetch applications ────────────────────────────────────
   const fetchApplications = useCallback(async () => {
@@ -974,10 +1019,12 @@ const ApplicationsPage = () => {
       }
 
       // Add status filter query param
-      const separator = url.includes('?') ? '&' : '?';
-      const filterParam = statusFilter !== 'all' ? `${separator}status=${statusFilter}` : '';
+      const params = new URLSearchParams();
+      if (statusFilter !== 'all') params.set('status', statusFilter);
+      if (activeTab === 'all') params.set('limit', '1000');
 
-      const res = await fetch(`${url}${filterParam}`, { headers: getAuthHeaders() });
+      const queryString = params.toString();
+      const res = await fetch(`${url}${queryString ? `?${queryString}` : ''}`, { headers: getAuthHeaders() });
       const data = await res.json();
       if (data.success) {
         setApplications(normalizeApps(data.data));
@@ -1204,35 +1251,81 @@ const ApplicationsPage = () => {
 
         <main className="flex-1 overflow-y-auto p-6">
           {/* Filters + Actions */}
-          <div className="flex items-center justify-between flex-wrap gap-3 mb-5">
-            <div className="flex items-center gap-2 flex-wrap">
-              <Filter className="w-4 h-4 text-gray-400" />
-              {STATUS_FILTERS.map(s => (
+          <div className="space-y-3 mb-5">
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <div className="flex items-center gap-2 flex-wrap">
+                <Filter className="w-4 h-4 text-gray-400" />
+                {STATUS_FILTERS.map(s => (
+                  <button
+                    key={s}
+                    onClick={() => setStatusFilter(s)}
+                    className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
+                      statusFilter === s
+                        ? 'bg-indigo-600 text-white shadow-sm'
+                        : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                    }`}
+                  >
+                    {s === 'all' ? 'All' : s.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-2">
                 <button
-                  key={s}
-                  onClick={() => setStatusFilter(s)}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
-                    statusFilter === s
-                      ? 'bg-indigo-600 text-white shadow-sm'
-                      : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
-                  }`}
+                  onClick={fetchApplications}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
                 >
-                  {s === 'all' ? 'All' : s.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
+                  <RefreshCw className="w-3.5 h-3.5" /> Refresh
                 </button>
-              ))}
+                <button
+                  onClick={() => setView('create')}
+                  className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
+                >
+                  <Plus className="w-3.5 h-3.5" /> New Application
+                </button>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
+
+            <div className="grid grid-cols-1 md:grid-cols-[minmax(220px,1fr)_auto_auto_auto] items-end gap-3 p-3 bg-white rounded-xl border border-gray-200">
+              <label className="block">
+                <span className="block text-xs font-semibold text-gray-600 mb-1">Search applications</span>
+                <span className="relative block">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="search"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Application #, employee, subject..."
+                    className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus-visible:outline-gray-300"
+                  />
+                </span>
+              </label>
+              <label className="block">
+                <span className="block text-xs font-semibold text-gray-600 mb-1">From</span>
+                <input
+                  type="date"
+                  value={dateRange.start}
+                  onChange={(e) => setDateRange((range) => ({ ...range, start: e.target.value }))}
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </label>
+              <label className="block">
+                <span className="block text-xs font-semibold text-gray-600 mb-1">To</span>
+                <input
+                  type="date"
+                  value={dateRange.end}
+                  onChange={(e) => setDateRange((range) => ({ ...range, end: e.target.value }))}
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </label>
               <button
-                onClick={fetchApplications}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                type="button"
+                onClick={() => {
+                  setSearchQuery('');
+                  setDateRange(getCurrentMonthRange());
+                }}
+                className="px-3 py-2 text-sm font-semibold text-indigo-700 border border-indigo-200 rounded-lg hover:bg-indigo-50 transition-colors"
               >
-                <RefreshCw className="w-3.5 h-3.5" /> Refresh
-              </button>
-              <button
-                onClick={() => setView('create')}
-                className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
-              >
-                <Plus className="w-3.5 h-3.5" /> New Application
+                This month
               </button>
             </div>
           </div>
@@ -1243,18 +1336,22 @@ const ApplicationsPage = () => {
               <div className="flex items-center justify-center py-20">
                 <div className="animate-spin rounded-full h-7 w-7 border-2 border-indigo-600 border-t-transparent" />
               </div>
-            ) : applications.length === 0 ? (
+            ) : filteredApplications.length === 0 ? (
               <div className="py-16 text-center">
                 <Inbox className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-                <h3 className="text-base font-semibold text-gray-500">No applications found</h3>
+                <h3 className="text-base font-semibold text-gray-500">
+                  {applications.length > 0 ? 'No matching applications' : 'No applications found'}
+                </h3>
                 <p className="text-sm text-gray-400 mt-1">
-                  {activeTab === 'my'
+                  {applications.length > 0
+                    ? 'Try changing your search or date range.'
+                    : activeTab === 'my'
                     ? "You haven't submitted any applications yet."
                     : activeTab === 'assigned'
                     ? 'No applications are assigned to you.'
                     : 'No applications to review.'}
                 </p>
-                {activeTab === 'my' && (
+                {activeTab === 'my' && applications.length === 0 && (
                   <button
                     onClick={() => setView('create')}
                     className="mt-4 inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors"
@@ -1282,7 +1379,7 @@ const ApplicationsPage = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
-                    {applications.map((app) => (
+                    {filteredApplications.map((app) => (
                       <tr
                         key={app.id}
                         className="hover:bg-indigo-50 border-b border-gray-100 cursor-pointer transition-all duration-200 hover:shadow-sm"

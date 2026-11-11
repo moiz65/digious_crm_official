@@ -77,6 +77,27 @@ const withCurrentOption = (options, current) => {
   return [current, ...options];
 };
 
+const toDateInputValue = (value) => {
+  if (!value) return "";
+  const dateOnly = String(value).match(/^(\d{4}-\d{2}-\d{2})/);
+  if (dateOnly) return dateOnly[1];
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const formatDateOnly = (value) => {
+  const dateOnly = toDateInputValue(value);
+  if (!dateOnly) return "N/A";
+
+  const [year, month, day] = dateOnly.split("-").map(Number);
+  return new Date(year, month - 1, day).toLocaleDateString();
+};
+
 const EmployeeManagement = () => {
   const { role } = useAuth();
   const navigate = useNavigate();
@@ -274,6 +295,11 @@ const EmployeeManagement = () => {
 
   const handleEditEmployee = (employee) => {
     const formData = { ...employee };
+    ["join_date", "dob", "cnic_issue_date", "cnic_expiry_date"].forEach(
+      (field) => {
+        formData[field] = toDateInputValue(formData[field]);
+      },
+    );
     if (!formData.allowances) {
       formData.allowances = [];
     }
@@ -354,6 +380,12 @@ const EmployeeManagement = () => {
   const handleSaveEmployee = async () => {
     try {
       setIsSaving(true);
+      const employeeName = (editFormData?.name || "").trim();
+      if (!employeeName) {
+        toast.error("Employee name is required");
+        return;
+      }
+
       const normalizedAllowances = (editFormData.allowances || []).map((a) => ({
         allowance_name: a.allowance_name || a.name,
         allowance_amount: Number(a.allowance_amount || a.amount || 0),
@@ -383,6 +415,7 @@ const EmployeeManagement = () => {
 
       const payload = {
         ...editFormData,
+        name: employeeName,
         salary: {
           base_salary: baseSalary,
           total_salary: totalSalary,
@@ -404,6 +437,7 @@ const EmployeeManagement = () => {
       if (response.ok && result.success) {
         const updatedEmployee = {
           ...editFormData,
+          name: employeeName,
           base_salary: baseSalary,
           total_salary: totalSalary,
           allowances: normalizedAllowances,
@@ -703,9 +737,7 @@ const EmployeeManagement = () => {
                           <td className="py-5 px-7">
                             <p className="text-gray-700 text-sm font-medium">
                               {employee.join_date
-                                ? new Date(
-                                    employee.join_date,
-                                  ).toLocaleDateString()
+                                ? formatDateOnly(employee.join_date)
                                 : "N/A"}
                             </p>
                           </td>
@@ -795,12 +827,27 @@ const EmployeeManagement = () => {
               {/* Top Summary */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                 <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-2xl flex items-center justify-center text-white text-3xl sm:text-4xl font-bold shadow-lg shrink-0">
-                  {selectedEmployee.name?.charAt(0) || "U"}
+                  {(isEditMode
+                    ? editFormData?.name
+                    : selectedEmployee.name
+                  )?.charAt(0) || "U"}
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-2xl sm:text-3xl font-bold text-slate-800">
-                    {selectedEmployee.name}
-                  </h3>
+                  {isEditMode ? (
+                    <input
+                      type="text"
+                      aria-label="Employee name"
+                      value={editFormData?.name || ""}
+                      onChange={(e) =>
+                        handleEditFormChange("name", e.target.value)
+                      }
+                      className="w-full bg-white text-slate-800 text-2xl sm:text-3xl font-bold border border-blue-300 rounded px-2 py-1 outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  ) : (
+                    <h3 className="text-2xl sm:text-3xl font-bold text-slate-800">
+                      {selectedEmployee.name}
+                    </h3>
+                  )}
                   <p className="text-sm sm:text-lg text-slate-600 mt-1">
                     {selectedEmployee.sub_department || ""}
                   </p>
@@ -853,19 +900,9 @@ const EmployeeManagement = () => {
                 <CompactField
                   icon={Calendar}
                   label="Join Date"
-                  value={
-                    selectedEmployee.join_date
-                      ? new Date(
-                          selectedEmployee.join_date,
-                        ).toLocaleDateString()
-                      : "N/A"
-                  }
+                  value={formatDateOnly(selectedEmployee.join_date)}
                   isEditMode={isEditMode}
-                  editValue={
-                    editFormData?.join_date
-                      ? editFormData.join_date.split("T")[0]
-                      : ""
-                  }
+                  editValue={toDateInputValue(editFormData?.join_date)}
                   onChange={(val) => handleEditFormChange("join_date", val)}
                   type="date"
                 />
@@ -912,45 +949,27 @@ const EmployeeManagement = () => {
                   )}
                   placeholder="Select Designation"
                 />
-                {selectedEmployee.cnic && (
-                  <CompactField
-                    label="CNIC"
-                    value={selectedEmployee.cnic}
-                    isEditMode={isEditMode}
-                    editValue={editFormData?.cnic}
-                    onChange={(val) => handleEditFormChange("cnic", val)}
-                  />
-                )}
+                <CompactField
+                  label="CNIC"
+                  value={selectedEmployee.cnic}
+                  isEditMode={isEditMode}
+                  editValue={editFormData?.cnic}
+                  onChange={(val) => handleEditFormChange("cnic", val)}
+                />
                 <CompactField
                   icon={Calendar}
                   label="Date of Birth"
-                  value={
-                    selectedEmployee.dob
-                      ? new Date(selectedEmployee.dob).toLocaleDateString()
-                      : "N/A"
-                  }
+                  value={formatDateOnly(selectedEmployee.dob)}
                   isEditMode={isEditMode}
-                  editValue={
-                    editFormData?.dob ? editFormData.dob.split("T")[0] : ""
-                  }
+                  editValue={toDateInputValue(editFormData?.dob)}
                   onChange={(val) => handleEditFormChange("dob", val)}
                   type="date"
                 />
                 <CompactField
                   label="CNIC Issue"
-                  value={
-                    selectedEmployee.cnic_issue_date
-                      ? new Date(
-                          selectedEmployee.cnic_issue_date,
-                        ).toLocaleDateString()
-                      : "N/A"
-                  }
+                  value={formatDateOnly(selectedEmployee.cnic_issue_date)}
                   isEditMode={isEditMode}
-                  editValue={
-                    editFormData?.cnic_issue_date
-                      ? editFormData.cnic_issue_date.split("T")[0]
-                      : ""
-                  }
+                  editValue={toDateInputValue(editFormData?.cnic_issue_date)}
                   onChange={(val) =>
                     handleEditFormChange("cnic_issue_date", val)
                   }
@@ -958,19 +977,9 @@ const EmployeeManagement = () => {
                 />
                 <CompactField
                   label="CNIC Expiry"
-                  value={
-                    selectedEmployee.cnic_expiry_date
-                      ? new Date(
-                          selectedEmployee.cnic_expiry_date,
-                        ).toLocaleDateString()
-                      : "N/A"
-                  }
+                  value={formatDateOnly(selectedEmployee.cnic_expiry_date)}
                   isEditMode={isEditMode}
-                  editValue={
-                    editFormData?.cnic_expiry_date
-                      ? editFormData.cnic_expiry_date.split("T")[0]
-                      : ""
-                  }
+                  editValue={toDateInputValue(editFormData?.cnic_expiry_date)}
                   onChange={(val) =>
                     handleEditFormChange("cnic_expiry_date", val)
                   }
@@ -981,27 +990,23 @@ const EmployeeManagement = () => {
                   value={selectedEmployee.cnic_document_status || "N/A"}
                   isEditMode={false}
                 />
-                {selectedEmployee.emergency_contact && (
-                  <CompactField
-                    label="Emergency Contact"
-                    value={selectedEmployee.emergency_contact}
-                    isEditMode={isEditMode}
-                    editValue={editFormData?.emergency_contact}
-                    onChange={(val) =>
-                      handleEditFormChange("emergency_contact", val)
-                    }
-                  />
-                )}
-                {selectedEmployee.address && (
-                  <CompactField
-                    icon={MapPin}
-                    label="Address"
-                    value={selectedEmployee.address}
-                    isEditMode={isEditMode}
-                    editValue={editFormData?.address}
-                    onChange={(val) => handleEditFormChange("address", val)}
-                  />
-                )}
+                <CompactField
+                  label="Emergency Contact"
+                  value={selectedEmployee.emergency_contact}
+                  isEditMode={isEditMode}
+                  editValue={editFormData?.emergency_contact}
+                  onChange={(val) =>
+                    handleEditFormChange("emergency_contact", val)
+                  }
+                />
+                <CompactField
+                  icon={MapPin}
+                  label="Address"
+                  value={selectedEmployee.address}
+                  isEditMode={isEditMode}
+                  editValue={editFormData?.address}
+                  onChange={(val) => handleEditFormChange("address", val)}
+                />
                 <CompactField
                   label="Account Title"
                   value={selectedEmployee.account_title_name}
@@ -1025,25 +1030,25 @@ const EmployeeManagement = () => {
                   editValue={editFormData?.bank_account}
                   onChange={(val) => handleEditFormChange("bank_account", val)}
                 />
-                {selectedEmployee.tax_id && (
-                  <CompactField
-                    label="Tax ID"
-                    value={selectedEmployee.tax_id}
-                    isEditMode={isEditMode}
-                    editValue={editFormData?.tax_id}
-                    onChange={(val) => handleEditFormChange("tax_id", val)}
-                  />
-                )}
-                {selectedEmployee.base_salary && (
-                  <CompactField
-                    label="Base Salary"
-                    value={`PKR ${Number(selectedEmployee.base_salary).toLocaleString()}`}
-                    isEditMode={isEditMode}
-                    editValue={editFormData?.base_salary || ""}
-                    onChange={(val) => handleEditFormChange("base_salary", val)}
-                    type="number"
-                  />
-                )}
+                <CompactField
+                  label="Tax ID"
+                  value={selectedEmployee.tax_id}
+                  isEditMode={isEditMode}
+                  editValue={editFormData?.tax_id}
+                  onChange={(val) => handleEditFormChange("tax_id", val)}
+                />
+                <CompactField
+                  label="Base Salary"
+                  value={
+                    selectedEmployee.base_salary
+                      ? `PKR ${Number(selectedEmployee.base_salary).toLocaleString()}`
+                      : "—"
+                  }
+                  isEditMode={isEditMode}
+                  editValue={editFormData?.base_salary ?? ""}
+                  onChange={(val) => handleEditFormChange("base_salary", val)}
+                  type="number"
+                />
               </div>
 
               {/* Allowances Section */}

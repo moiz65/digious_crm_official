@@ -367,7 +367,7 @@ async function autoMarkAbsentOnStartup() {
       );
 
       console.log(
-        `   ✅ Checked in: ${checkedInIds.size}, ❌ Absent: ${absentEmployees.length}`,
+        `Checked in: ${checkedInIds.size}, Absent: ${absentEmployees.length}`,
       );
 
       // Auto-mark absent employees

@@ -395,12 +395,12 @@ exports.getAllEmployees = async (req, res) => {
         eo.sub_department,
         eo.designation,
         eo.employment_status,
-        eo.join_date,
+        DATE_FORMAT(eo.join_date, '%Y-%m-%d') AS join_date,
         eo.status,
         eo.created_at,
         eo.cnic,
         eo.address,
-        eo.dob,
+        DATE_FORMAT(eo.dob, '%Y-%m-%d') AS dob,
         eo.profile_photo,
         es.base_salary,
         es.total_salary
@@ -545,7 +545,13 @@ exports.getEmployeeById = async (req, res) => {
     try {
       // Get basic employee info
       const [employees] = await connection.query(
-        `SELECT eo.*, es.base_salary, es.total_salary,
+        `SELECT eo.*,
+                DATE_FORMAT(eo.join_date, '%Y-%m-%d') AS join_date_date,
+                DATE_FORMAT(eo.confirmation_date, '%Y-%m-%d') AS confirmation_date_date,
+                DATE_FORMAT(eo.dob, '%Y-%m-%d') AS dob_date,
+                DATE_FORMAT(eo.cnic_issue_date, '%Y-%m-%d') AS cnic_issue_date_date,
+                DATE_FORMAT(eo.cnic_expiry_date, '%Y-%m-%d') AS cnic_expiry_date_date,
+                es.base_salary, es.total_salary,
                 ba.account_number AS primary_bank_account,
                 ba.account_title_name AS primary_account_title_name,
                 ba.bank_name AS primary_bank_name
@@ -565,6 +571,16 @@ exports.getEmployeeById = async (req, res) => {
       }
 
       const employee = employees[0];
+      employee.join_date = employee.join_date_date;
+      employee.confirmation_date = employee.confirmation_date_date;
+      employee.dob = employee.dob_date;
+      employee.cnic_issue_date = employee.cnic_issue_date_date;
+      employee.cnic_expiry_date = employee.cnic_expiry_date_date;
+      delete employee.join_date_date;
+      delete employee.confirmation_date_date;
+      delete employee.dob_date;
+      delete employee.cnic_issue_date_date;
+      delete employee.cnic_expiry_date_date;
       employee.bank_account =
         employee.primary_bank_account || employee.bank_account || "";
       employee.account_title_name =
@@ -811,6 +827,7 @@ exports.updateEmployee = async (req, res) => {
       "status",
       "designation",
       "employment_status",
+      "join_date",
       "confirmation_date",
       "cnic_issue_date",
       "cnic_expiry_date",

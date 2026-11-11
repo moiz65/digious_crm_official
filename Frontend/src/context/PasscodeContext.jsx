@@ -168,7 +168,7 @@ export const PasscodeProvider = ({ children }) => {
           });
           setLockedModules(allUnlocked);
           writeSessionUnlock({ all: true, modules: {} });
-          toast.success("✅ Confidential modules unlocked for this session!");
+          toast.success("Confidential modules unlocked for this session!");
         } else {
           setTempUnlocked((prev) => ({ ...prev, [moduleName]: true }));
           setTimeout(() => {

@@ -1,8 +1,3 @@
--- Repair bank-account values that contain an employee code plus a 13-digit
--- timestamp instead of the account number already stored on employee_onboarding.
--- Run:
---   mysql -u root -p Digious_CRM_DataBase < Backend/migrations/repair_generated_bank_account_numbers.sql
-
 UPDATE employee_bank_accounts ba
 JOIN employee_onboarding eo ON eo.id = ba.employee_id
 SET ba.account_number = eo.bank_account
