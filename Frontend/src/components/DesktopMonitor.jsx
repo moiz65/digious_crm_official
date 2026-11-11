@@ -332,21 +332,44 @@ const DesktopMonitor = () => {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
           <div>
             <strong style={{ fontSize: 15 }}>Desktop Monitoring</strong>
-            <div style={{ color: "#64748b", fontSize: 12, marginTop: 3 }}>
-              {sessionId ? (idle ? "Idle" : "Active") : "Paused"}
+            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "4px 10px", color: "#64748b", fontSize: 12, marginTop: 3 }}>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                <span
+                  aria-hidden="true"
+                  style={{
+                    position: "relative",
+                    display: "inline-flex",
+                    width: 9,
+                    height: 9,
+                    flexShrink: 0,
+                  }}
+                >
+                  {sessionId && !idle && (
+                    <span
+                      className="animate-ping"
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        borderRadius: "50%",
+                        background: "#22c55e",
+                        opacity: 0.6,
+                      }}
+                    />
+                  )}
+                  <span
+                    style={{
+                      position: "relative",
+                      width: 9,
+                      height: 9,
+                      borderRadius: "50%",
+                      background: sessionId ? (idle ? "#f59e0b" : "#22c55e") : "#94a3b8",
+                    }}
+                  />
+                </span>
+                {sessionId ? (idle ? "Idle" : "Active") : "Paused"}
+              </span>
               {lastCapture && ` · Last screenshot ${lastCapture.toLocaleTimeString()}`}
             </div>
-            <span
-              aria-hidden="true"
-              style={{
-                width: 9,
-                height: 9,
-                flexShrink: 0,
-                borderRadius: "50%",
-                background: sessionId ? (idle ? "#f59e0b" : "#22c55e") : "#94a3b8",
-                boxShadow: sessionId ? "0 0 0 4px rgba(34, 197, 94, .12)" : "none",
-              }}
-            />
           </div>
 
           <button
