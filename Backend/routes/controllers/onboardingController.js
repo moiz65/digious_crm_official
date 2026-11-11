@@ -2,6 +2,19 @@ const pool = require("../../config/database");
 const bcrypt = require("bcryptjs");
 const cloudinary = require("../../config/cloudinary");
 
+const isGeneratedEmployeeCodeAccountNumber = (accountNumber, employeeId) => {
+  const account = String(accountNumber ?? "").trim();
+  const employeeCode = String(employeeId ?? "").trim();
+  const prefix = `${employeeCode}-`.toLowerCase();
+  const normalizedAccount = account.toLowerCase();
+
+  return (
+    employeeCode.length > 0 &&
+    normalizedAccount.startsWith(prefix) &&
+    /^\d{13}$/.test(normalizedAccount.slice(prefix.length))
+  );
+};
+
 // Create new employee onboarding
 exports.createEmployee = async (req, res) => {
   let connection;
@@ -135,6 +148,18 @@ exports.createEmployee = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Missing required fields",
+      });
+    }
+
+    if (
+      isGeneratedEmployeeCodeAccountNumber(
+        normalizedData.bankAccount,
+        normalizedData.employeeId,
+      )
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Enter the employee's actual bank account number, not an employee code with a timestamp",
       });
     }
 
@@ -704,6 +729,26 @@ exports.updateEmployee = async (req, res) => {
 
   try {
     await connection.beginTransaction();
+
+    if (employeeFields.bank_account !== undefined) {
+      const [employeeRows] = await connection.query(
+        `SELECT employee_id FROM employee_onboarding WHERE id = ? LIMIT 1`,
+        [id],
+      );
+      if (
+        employeeRows.length > 0 &&
+        isGeneratedEmployeeCodeAccountNumber(
+          employeeFields.bank_account,
+          employeeRows[0].employee_id,
+        )
+      ) {
+        await connection.rollback();
+        return res.status(400).json({
+          success: false,
+          message: "Enter the employee's actual bank account number, not an employee code with a timestamp",
+        });
+      }
+    }
 
     /* 0. Handle Profile Picture Upload (if provided as base64/data URL) */
 
