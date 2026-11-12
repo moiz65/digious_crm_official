@@ -1,4 +1,4 @@
-const SCREENSHOT_BLUR_FILTER = "blur(1.5px)";
+const SCREENSHOT_BLUR_FILTER = "blur(2.5px)";
 const SCREENSHOT_JPEG_QUALITY = 0.55;
 
 export const blurScreenshot = (dataUrl) => new Promise((resolve, reject) => {
