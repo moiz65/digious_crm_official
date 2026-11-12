@@ -8,6 +8,7 @@ The Windows desktop companion opens the CRM in a dedicated, visible Electron win
 - A persistent in-window status panel lets the signed-in user pause or withdraw consent.
 - System-wide keyboard/mouse inactivity is checked every 15 seconds; 3 minutes without input is recorded as idle.
 - One JPEG of the primary display is uploaded every 3 minutes while the user is active, including when the CRM window is minimized or hidden to the system tray.
+- Screenshots are lightly blurred before upload.
 - Screenshots may include any other applications or windows visible on the primary display. The employee must accept the updated consent before capture starts.
 - The employee picker and screenshot/activity viewer are available to Admin/Super Admin, HR, and Operations Managers through authenticated routes.
 - Screenshots are uploaded separately from normal CRM API calls, with bounded retries.

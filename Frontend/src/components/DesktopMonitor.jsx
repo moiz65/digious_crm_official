@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Monitor } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { config } from "../config/api";
+import { blurScreenshot } from "../utils/blurScreenshot";
 
 const CONSENT_VERSION = "desktop-monitor-v2";
 const IDLE_THRESHOLD_SECONDS = 3 * 60;
@@ -154,8 +155,9 @@ const DesktopMonitor = () => {
             return;
           }
 
-          const screenshot = await bridge.captureScreen();
-          if (screenshot) {
+          const capturedScreenshot = await bridge.captureScreen();
+          if (capturedScreenshot) {
+            const screenshot = await blurScreenshot(capturedScreenshot);
             let lastError;
             for (let attempt = 0; attempt < 3; attempt += 1) {
               try {
@@ -390,7 +392,7 @@ const DesktopMonitor = () => {
           <p style={{ color: "#475569", lineHeight: 1.5, margin: "0 0 12px" }}>
             When the CRM window is active, a primary display screenshot is captured every{" "}
             {SCREENSHOT_INTERVAL_MS / 60000} minutes. Other apps or windows visible on the display
-            may also be captured.
+            may also be captured. Screenshots are lightly blurred before upload.
           </p>
         </>
       ) : (
