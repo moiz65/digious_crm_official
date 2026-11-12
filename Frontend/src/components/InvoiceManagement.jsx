@@ -1188,7 +1188,7 @@ const InvoiceManagement = () => {
 };
 
 
-// ==================== BLACK & WHITE PRINT STYLES ====================
+// ==================== INVOICE PRINT STYLES ====================
 const PRINT_STYLES = `
   @page { size: A4; margin: 12mm; }
   * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -1221,6 +1221,14 @@ const PRINT_STYLES = `
   .bw-box { border: 1px solid #000; padding: 10px 12px; }
   .bw-box-title { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #000; padding-bottom: 4px; margin-bottom: 6px; }
   .bw-box-row { display: grid; grid-template-columns: 90px 1fr; gap: 4px; font-size: 10px; margin-bottom: 3px; }
+  .payment_status .status-badge {width:100%; text-align:center; padding: 2px 7px; border-radius: 9999px; font-weight: 600; }
+  .payment_status .status-badge.bg-emerald-100 { background-color: #d1fae5; color: #047857; }
+  .payment_status .status-badge.bg-rose-100 { background-color: #ffe4e6; color: #be123c; }
+  .payment_status .status-badge.bg-red-100 { background-color: #fee2e2; color: #b91c1c; }
+  .payment_status .status-badge.bg-amber-100 { background-color: #fef3c7; color: #b45309; }
+  .payment_status .status-badge.bg-slate-100 { background-color: #f1f5f9; color: #334155; }
+  .payment_status .status-badge.bg-gray-100 { background-color: #f3f4f6; color: #374151; }
+  .payment_status .status-badge.bg-blue-100 { background-color: #dbeafe; color: #1d4ed8; }
   .bw-box-row strong { font-weight: 700; }
   .bw-client-name { font-size: 12px; font-weight: 700; margin-bottom: 4px; }
   .bw-client-line { font-size: 10px; margin-bottom: 2px; }
@@ -1264,6 +1272,7 @@ const PRINT_STYLES = `
   .bw-footer .line1 { font-weight: 600; margin-bottom: 2px; }
   .bw-footer .line2 { margin-bottom: 2px; }
   .bw-footer .thanks { font-size: 11px; font-weight: 700; margin-bottom: 3px; }
+  .bw-footer a { color: inherit; text-decoration: underline; }
 `;
 
 // ==================== INVOICE DETAIL MODAL ====================
@@ -1338,7 +1347,12 @@ const InvoiceDetailModal = ({ invoice, onClose, onEdit, onSend, isSending }) => 
               <div className="bw-box-row"><strong>Issue Date:</strong><span>{formatDate(invoice.issue_date)}</span></div>
               <div className="bw-box-row"><strong>Due Date:</strong><span>{formatDate(invoice.due_date)}</span></div>
               <div className="bw-box-row"><strong>Project:</strong><span>{invoice.project_title || "-"}</span></div>
-              <div className="bw-box-row"><strong>Status:</strong><span>{invoice.status}</span></div>
+              <div className="bw-box-row payment_status">
+                <strong>Status:</strong>
+                <span className={`status-badge ${getStatusColor(invoice.status)}`}>
+                  {invoice.status}
+                </span>
+              </div>
               {/* <div className="bw-box-row"><strong>Priority:</strong><span>{invoice.priority || "Medium"}</span></div> */}
             </div>
           </div>
@@ -1454,7 +1468,8 @@ const InvoiceDetailModal = ({ invoice, onClose, onEdit, onSend, isSending }) => 
               Please quote invoice #{invoice.invoice_number} in your payment reference.
             </div>
             <div>
-              © {new Date().getFullYear()} {COMPANY_DETAILS.name}. All rights reserved.
+              © {new Date().getFullYear()} All rights reserved.{" "}
+              <a href={`https://${COMPANY_DETAILS.website}`}>{COMPANY_DETAILS.name}</a>
             </div>
           </div>
         </div>
