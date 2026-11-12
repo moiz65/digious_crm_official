@@ -1,5 +1,4 @@
 // App.js - COMPLETE FIXED VERSION
-
 import React from "react";
 import {
   BrowserRouter as Router,

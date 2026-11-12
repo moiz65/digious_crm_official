@@ -74,7 +74,7 @@ function buildInvoiceHtml(invoice) {
     <div class="header">
       <div class="company">
         <h1>Digious Solutions</h1>
-        <p>B-71 Block B, North Nazimabad, Karachi</p>
+        <p>B-71 Block D, North Nazimabad, Karachi</p>
         <p>Phone: (+92) 33 127 38475</p>
         <p>Email: ${process.env.COMPANY_EMAIL}</p>
       </div>

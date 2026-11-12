@@ -157,9 +157,9 @@ const getPriorityIcon = (priority) => {
 const COMPANY_DETAILS = {
   name: "Digious Solutions",
   phone: "(+92) 33 127 38475",
-  email: "digioussolutions123@gmail.com",
+  email: "digious.info@gmail.com",
   website: "www.digioussolutions.com",
-  address: "B-71 Block B, North Nazimabad, Karachi",
+  address: "B-71 Block D, North Nazimabad, Karachi",
   logo: "../assets/digious_logo.png",
   pdf_logo: pdfLogo,
   bank: {
@@ -1208,12 +1208,12 @@ const PRINT_STYLES = `
   /* Header */
   .bw-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 16px; }
   .bw-header-left { display: flex; gap: 12px; align-items: flex-start; }
-  .bw-logo { width: 140px; height: 80px; object-fit: contain; filter: grayscale(100%) contrast(1.2); }
+  .bw-logo { width: 140px; height: 80px; object-fit: contain; }
   .bw-company-name { font-size: 18px; font-weight: 700; letter-spacing: 0.5px; margin: 0 0 4px 0; }
   .bw-company-meta { font-size: 9.5px; color: #222; line-height: 1.5; }
   .bw-company-meta div { white-space: nowrap; }
   .bw-header-right { text-align: right; }
-  .bw-title { font-size: 26px; font-weight: 800; letter-spacing: 3px; margin: 0; }
+  .bw-title { font-size: 26px; font-weight: 800; letter-spacing: 3px; margin: 0; background: linear-gradient(to right, #2563eb, #4f46e5); background-clip: text; -webkit-background-clip: text; color: transparent; -webkit-text-fill-color: transparent;}
   .bw-inv-no { font-size: 12px; font-weight: 700; margin-top: 4px; font-family: monospace; }
 
   /* Info grid */
@@ -1227,7 +1227,7 @@ const PRINT_STYLES = `
 
   /* Items table */
   .bw-items { width: 100%; margin-bottom: 14px; }
-  .bw-items thead th { background: #000; color: #fff; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; padding: 7px 8px; text-align: left; border: 1px solid #000; }
+  .bw-items thead th { background: #f1f5f9; color: #000000; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; padding: 7px 8px; text-align: left; border: 1px solid #000; }
   .bw-items thead th.center { text-align: center; }
   .bw-items thead th.right { text-align: right; }
   .bw-items tbody td { padding: 6px 8px; font-size: 10.5px; border: 1px solid #000; vertical-align: top; }
@@ -1239,10 +1239,10 @@ const PRINT_STYLES = `
   .bw-totals-wrap { display: flex; justify-content: flex-end; margin-bottom: 14px; }
   .bw-totals { width: 55%; }
   .bw-totals td { padding: 5px 8px; font-size: 10.5px; border: 1px solid #000; }
-  .bw-totals .lbl { background: #f4f4f4; font-weight: 600; width: 55%; }
+  .bw-totals .lbl { background: #ffffff; font-weight: 600; width: 55%; }
   .bw-totals .val { text-align: right; }
-  .bw-totals .grand td { font-size: 13px; font-weight: 800; background: #000; color: #fff; }
-  .bw-totals .balance td { background: #e8e8e8; font-weight: 800; font-size: 12px; }
+  .bw-totals .grand td { font-size: 13px; font-weight: 800; background: #f1f5f9; color: #000000; }
+  .bw-totals .balance td { background: #f1f5f9; font-weight: 800; font-size: 12px; }
 
   /* Bank details */
   .bw-bank { border: 1.5px solid #000; padding: 10px 12px; margin-bottom: 14px; }
@@ -1388,7 +1388,7 @@ const InvoiceDetailModal = ({ invoice, onClose, onEdit, onSend, isSending }) => 
                   </tr>
                 )}
                 <tr className="grand">
-                  <td className="lbl" style={{ background: "#000", color: "#fff" }}>Total</td>
+                  <td className="lbl" style={{ background: "#f1f5f9", color: "#000000" }}>Total</td>
                   <td className="val">{formatCurrency(total)}</td>
                 </tr>
                 {isPartiallyPaid && (
