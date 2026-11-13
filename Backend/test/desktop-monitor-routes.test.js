@@ -134,6 +134,7 @@ describe('desktop monitor API', () => {
       employeeCode: 'EMP-7',
       name: 'Employee Name',
       department: 'Sales',
+      profilePhoto: 'https://example.com/employee.jpg',
       status: 'Active',
       isWorking: 1,
     }];
@@ -147,6 +148,7 @@ describe('desktop monitor API', () => {
     expect(pool.query).toHaveBeenCalledWith(
       expect.stringContaining('id AS employeeId'),
     );
+    expect(pool.query.mock.calls[0][0]).toContain('employee.profile_photo AS profilePhoto');
     expect(pool.query.mock.calls[0][0]).toContain("LOWER(TRIM(employee.status)) = 'active'");
     expect(pool.query.mock.calls[0][0]).toContain('monitoring_session.ended_at IS NULL');
   });

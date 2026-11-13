@@ -19,6 +19,14 @@ const formatDate = (value) => {
   return Number.isNaN(date.getTime()) ? "Unknown date" : date.toLocaleString();
 };
 
+const getEmployeeInitials = (name) => String(name || "Employee")
+  .trim()
+  .split(/\s+/)
+  .filter(Boolean)
+  .slice(0, 2)
+  .map((part) => part.charAt(0).toUpperCase())
+  .join("") || "E";
+
 const DesktopMonitoring = () => {
   const { role, token } = useAuth();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -192,43 +200,99 @@ const DesktopMonitoring = () => {
                 Loading active employees...
               </p>
             ) : filteredEmployees.length ? (
-              <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {filteredEmployees.map((employee) => {
-                  const isSelected = String(employee.employeeId) === String(employeeId);
-                  return (
-                    <button
-                      key={employee.employeeId}
-                      type="button"
-                      aria-pressed={isSelected}
-                      onClick={() => selectEmployee(employee)}
-                      className={`rounded-xl border p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-300 ${
-                        isSelected
-                          ? "border-blue-500 bg-blue-50 ring-1 ring-blue-500"
-                          : "border-slate-200 bg-white hover:border-blue-300"
-                      }`}
-                    >
-                      <span className="flex items-start justify-between gap-3">
-                        <span className="min-w-0">
-                          <span className="block truncate font-semibold text-slate-900">
-                            {employee.name}
+              <div className={`mt-4 grid items-start gap-4 ${selectedEmployee ? "lg:grid-cols-[minmax(0,1fr)_320px]" : ""}`}>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {filteredEmployees.map((employee) => {
+                    const isSelected = String(employee.employeeId) === String(employeeId);
+                    return (
+                      <button
+                        key={employee.employeeId}
+                        type="button"
+                        aria-pressed={isSelected}
+                        onClick={() => selectEmployee(employee)}
+                        className={`rounded-xl border p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-300 ${
+                          isSelected
+                            ? "border-blue-500 bg-blue-50 ring-1 ring-blue-500"
+                            : "border-slate-200 bg-white hover:border-blue-300"
+                        }`}
+                      >
+                        <span className="flex items-center gap-3">
+                          <span className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-100 text-sm font-bold text-blue-700">
+                            {getEmployeeInitials(employee.name)}
+                            {(employee.profilePhoto || employee.profile_photo || employee.profile_picture) && (
+                              <img
+                                src={employee.profilePhoto || employee.profile_photo || employee.profile_picture}
+                                alt=""
+                                className="absolute inset-0 h-full w-full object-cover"
+                                onError={(event) => { event.currentTarget.style.display = "none"; }}
+                              />
+                            )}
                           </span>
-                          <span className="mt-1 block text-sm text-slate-500">
-                            {employee.employeeCode}
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate font-semibold text-slate-900">
+                              {employee.name}
+                            </span>
+                            <span className="mt-1 block truncate text-sm text-slate-500">
+                              {employee.employeeCode}
+                            </span>
                           </span>
                         </span>
-                        {Boolean(employee.isWorking) && (
-                          <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-green-50 px-2 py-1 text-xs font-semibold text-green-700">
-                            <span className="h-2 w-2 animate-pulse rounded-full bg-green-500" aria-hidden="true" />
-                            Working
+                        <span className="mt-4 flex min-h-8 items-center justify-between gap-2 border-t border-slate-100 pt-3">
+                          <span className="truncate text-xs text-slate-500">
+                            {employee.department || "No department"}
                           </span>
+                          {Boolean(employee.isWorking) && (
+                            <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-green-50 px-2 py-1 text-xs font-semibold text-green-700">
+                              <span className="h-2 w-2 animate-pulse rounded-full bg-green-500" aria-hidden="true" />
+                              Working
+                            </span>
+                          )}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {selectedEmployee && (
+                  <aside
+                    aria-label={`${selectedEmployee.name} employee details`}
+                    className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+                  >
+                    <div className="flex flex-col items-center text-center">
+                      <span className="relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-blue-100 text-2xl font-bold text-blue-700 ring-4 ring-blue-50">
+                        {getEmployeeInitials(selectedEmployee.name)}
+                        {(selectedEmployee.profilePhoto || selectedEmployee.profile_photo || selectedEmployee.profile_picture) && (
+                          <img
+                            src={selectedEmployee.profilePhoto || selectedEmployee.profile_photo || selectedEmployee.profile_picture}
+                            alt={`${selectedEmployee.name} profile`}
+                            className="absolute inset-0 h-full w-full object-cover"
+                            onError={(event) => { event.currentTarget.style.display = "none"; }}
+                          />
                         )}
                       </span>
-                      <span className="mt-4 block truncate border-t border-slate-100 pt-3 text-xs text-slate-500">
-                        {employee.department || "No department"}
+                      <h3 className="mt-4 text-lg font-bold text-slate-900">{selectedEmployee.name}</h3>
+                      <p className="mt-1 text-sm text-slate-500">{selectedEmployee.employeeCode}</p>
+                      <span className={`mt-3 rounded-full px-3 py-1 text-xs font-semibold ${
+                        selectedEmployee.isWorking
+                          ? "bg-green-50 text-green-700"
+                          : "bg-slate-100 text-slate-600"
+                      }`}>
+                        {selectedEmployee.isWorking ? "Working now" : "Not currently working"}
                       </span>
-                    </button>
-                  );
-                })}
+                    </div>
+                    <dl className="mt-5 space-y-3 border-t border-slate-100 pt-4 text-sm">
+                      <div className="flex justify-between gap-3">
+                        <dt className="text-slate-500">Department</dt>
+                        <dd className="text-right font-medium text-slate-800">
+                          {selectedEmployee.department || "Not specified"}
+                        </dd>
+                      </div>
+                      <div className="flex justify-between gap-3">
+                        <dt className="text-slate-500">Employment status</dt>
+                        <dd className="font-medium text-slate-800">{selectedEmployee.status || "Active"}</dd>
+                      </div>
+                    </dl>
+                  </aside>
+                )}
               </div>
             ) : (
               <p className="mt-4 rounded-xl border border-slate-200 bg-white p-5 text-sm text-slate-500">

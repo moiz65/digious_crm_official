@@ -182,6 +182,7 @@ router.get('/employees', async (req, res) => {
     const [rows] = await pool.query(
       `SELECT employee.id AS employeeId, employee.employee_id AS employeeCode,
               employee.name, employee.department, employee.status,
+              employee.profile_photo AS profilePhoto,
               EXISTS (
                 SELECT 1
                 FROM desktop_monitor_sessions AS monitoring_session
