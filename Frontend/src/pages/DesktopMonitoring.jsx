@@ -26,7 +26,6 @@ const DesktopMonitoring = () => {
   const [employees, setEmployees] = useState([]);
   const [employeeId, setEmployeeId] = useState("");
   const [employeeSearch, setEmployeeSearch] = useState("");
-  const [employeeMenuOpen, setEmployeeMenuOpen] = useState(false);
   const [activity, setActivity] = useState(null);
   const [loadingEmployees, setLoadingEmployees] = useState(true);
   const [loadingActivity, setLoadingActivity] = useState(false);
@@ -140,11 +139,7 @@ const DesktopMonitoring = () => {
   const selectedEmployee = employees.find(
     (employee) => String(employee.employeeId) === String(employeeId),
   );
-  const selectEmployee = (employee) => {
-    setEmployeeId(String(employee.employeeId));
-    setEmployeeSearch(`${employee.name} (${employee.employeeCode})`);
-    setEmployeeMenuOpen(false);
-  };
+  const selectEmployee = (employee) => setEmployeeId(String(employee.employeeId));
   const recentIdleEvents = activity?.idleEvents?.slice(0, 20) || [];
   const screenshots = activity?.screenshots || [];
 
@@ -170,62 +165,75 @@ const DesktopMonitoring = () => {
           </header>
 
           <section>
-            <label htmlFor="monitor-employee" className="block text-sm font-semibold text-slate-700">
-              Select an employee
-            </label>
-            <input
-              id="monitor-employee"
-              type="search"
-              role="combobox"
-              aria-autocomplete="list"
-              aria-expanded={employeeMenuOpen}
-              aria-controls="monitor-employee-options"
-              autoComplete="off"
-              placeholder="Search active employees by name, code, or department"
-              value={employeeSearch}
-              onFocus={() => setEmployeeMenuOpen(true)}
-              onChange={(event) => {
-                setEmployeeSearch(event.target.value);
-                setEmployeeId("");
-                setEmployeeMenuOpen(true);
-              }}
-              disabled={loadingEmployees}
-              className="mt-2 w-full max-w-xl rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
-            />
-            {employeeMenuOpen && !loadingEmployees && (
-              <ul
-                id="monitor-employee-options"
-                role="listbox"
-                className="mt-1 max-h-60 w-full max-w-xl overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 shadow-lg"
-              >
-                {filteredEmployees.length ? filteredEmployees.map((employee) => (
-                  <li key={employee.employeeId} role="option" aria-selected={String(employee.employeeId) === String(employeeId)}>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h2 className="text-sm font-semibold text-slate-700">Select an employee</h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  {loadingEmployees
+                    ? "Loading employees..."
+                    : `${filteredEmployees.length} of ${activeEmployees.length} active employees`}
+                </p>
+              </div>
+              <label className="w-full sm:max-w-sm">
+                <span className="sr-only">Search employees</span>
+                <input
+                  type="search"
+                  autoComplete="off"
+                  placeholder="Search by name, code, or department"
+                  value={employeeSearch}
+                  onChange={(event) => setEmployeeSearch(event.target.value)}
+                  disabled={loadingEmployees}
+                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 disabled:bg-slate-100"
+                />
+              </label>
+            </div>
+            {loadingEmployees ? (
+              <p className="mt-4 rounded-xl border border-slate-200 bg-white p-5 text-sm text-slate-500">
+                Loading active employees...
+              </p>
+            ) : filteredEmployees.length ? (
+              <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {filteredEmployees.map((employee) => {
+                  const isSelected = String(employee.employeeId) === String(employeeId);
+                  return (
                     <button
+                      key={employee.employeeId}
                       type="button"
+                      aria-pressed={isSelected}
                       onClick={() => selectEmployee(employee)}
-                      className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm text-slate-800 hover:bg-slate-50"
+                      className={`rounded-xl border p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-300 ${
+                        isSelected
+                          ? "border-blue-500 bg-blue-50 ring-1 ring-blue-500"
+                          : "border-slate-200 bg-white hover:border-blue-300"
+                      }`}
                     >
-                      <span>
-                        <span className="font-medium">{employee.name}</span>
-                        <span className="ml-2 text-slate-500">{employee.employeeCode}</span>
-                        {employee.department && (
-                          <span className="ml-2 text-slate-500">— {employee.department}</span>
+                      <span className="flex items-start justify-between gap-3">
+                        <span className="min-w-0">
+                          <span className="block truncate font-semibold text-slate-900">
+                            {employee.name}
+                          </span>
+                          <span className="mt-1 block text-sm text-slate-500">
+                            {employee.employeeCode}
+                          </span>
+                        </span>
+                        {Boolean(employee.isWorking) && (
+                          <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-green-50 px-2 py-1 text-xs font-semibold text-green-700">
+                            <span className="h-2 w-2 animate-pulse rounded-full bg-green-500" aria-hidden="true" />
+                            Working
+                          </span>
                         )}
                       </span>
-                      {Boolean(employee.isWorking) && (
-                        <span className="flex shrink-0 items-center gap-2 text-xs font-semibold text-green-700">
-                          <span className="h-2 w-2 animate-pulse rounded-full bg-green-500" aria-hidden="true" />
-                          Working
-                        </span>
-                      )}
+                      <span className="mt-4 block truncate border-t border-slate-100 pt-3 text-xs text-slate-500">
+                        {employee.department || "No department"}
+                      </span>
                     </button>
-                  </li>
-                )) : (
-                  <li className="px-3 py-2 text-sm text-slate-500">
-                    {activeEmployees.length ? "No matching active employees." : "No active employees found."}
-                  </li>
-                )}
-              </ul>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="mt-4 rounded-xl border border-slate-200 bg-white p-5 text-sm text-slate-500">
+                {activeEmployees.length ? "No matching active employees." : "No active employees found."}
+              </p>
             )}
           </section>
 

@@ -18,6 +18,7 @@ export const blurScreenshot = (dataUrl) => new Promise((resolve, reject) => {
       reject(new Error("Screenshot blurring is not supported by this desktop app."));
       return;
     }
+    
     context.drawImage(image, 0, 0);
 
     try {
