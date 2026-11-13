@@ -200,7 +200,7 @@ const DesktopMonitoring = () => {
                 Loading active employees...
               </p>
             ) : filteredEmployees.length ? (
-              <div className={`mt-4 grid items-start gap-4 ${selectedEmployee ? "lg:grid-cols-[minmax(0,1fr)_320px]" : ""}`}>
+              <div className={`mt-4 grid items-start gap-4 ${selectedEmployee ? "lg:grid-cols-[minmax(0,1fr)_360px]" : ""}`}>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {filteredEmployees.map((employee) => {
                     const isSelected = String(employee.employeeId) === String(employeeId);
@@ -255,42 +255,152 @@ const DesktopMonitoring = () => {
                 {selectedEmployee && (
                   <aside
                     aria-label={`${selectedEmployee.name} employee details`}
-                    className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+                    className="rounded-2xl border border-slate-200 bg-white shadow-sm lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto"
                   >
-                    <div className="flex flex-col items-center text-center">
-                      <span className="relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-blue-100 text-2xl font-bold text-blue-700 ring-4 ring-blue-50">
-                        {getEmployeeInitials(selectedEmployee.name)}
-                        {(selectedEmployee.profilePhoto || selectedEmployee.profile_photo || selectedEmployee.profile_picture) && (
-                          <img
-                            src={selectedEmployee.profilePhoto || selectedEmployee.profile_photo || selectedEmployee.profile_picture}
-                            alt={`${selectedEmployee.name} profile`}
-                            className="absolute inset-0 h-full w-full object-cover"
-                            onError={(event) => { event.currentTarget.style.display = "none"; }}
-                          />
-                        )}
-                      </span>
-                      <h3 className="mt-4 text-lg font-bold text-slate-900">{selectedEmployee.name}</h3>
-                      <p className="mt-1 text-sm text-slate-500">{selectedEmployee.employeeCode}</p>
-                      <span className={`mt-3 rounded-full px-3 py-1 text-xs font-semibold ${
-                        selectedEmployee.isWorking
-                          ? "bg-green-50 text-green-700"
-                          : "bg-slate-100 text-slate-600"
-                      }`}>
-                        {selectedEmployee.isWorking ? "Working now" : "Not currently working"}
-                      </span>
+                    <div className="rounded-t-2xl bg-gradient-to-br from-blue-700 to-indigo-800 px-5 py-6 text-white">
+                      <div className="flex items-center gap-4">
+                        <span className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/20 text-xl font-bold ring-2 ring-white/70">
+                          {getEmployeeInitials(selectedEmployee.name)}
+                          {(selectedEmployee.profilePhoto || selectedEmployee.profile_photo || selectedEmployee.profile_picture) && (
+                            <img
+                              src={selectedEmployee.profilePhoto || selectedEmployee.profile_photo || selectedEmployee.profile_picture}
+                              alt={`${selectedEmployee.name} profile`}
+                              className="absolute inset-0 h-full w-full object-cover"
+                              onError={(event) => { event.currentTarget.style.display = "none"; }}
+                            />
+                          )}
+                        </span>
+                        <div className="min-w-0">
+                          <h3 className="truncate text-lg font-bold">{selectedEmployee.name}</h3>
+                          <p className="mt-1 text-sm text-blue-100">{selectedEmployee.employeeCode}</p>
+                          <span className={`mt-2 inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-xs font-semibold ${
+                            selectedEmployee.isWorking
+                              ? "bg-green-400/20 text-green-50"
+                              : "bg-white/15 text-blue-50"
+                          }`}>
+                            <span className={`h-2 w-2 rounded-full ${
+                              selectedEmployee.isWorking ? "animate-pulse bg-green-300" : "bg-slate-300"
+                            }`} aria-hidden="true" />
+                            {selectedEmployee.isWorking ? "Working now" : "Not currently working"}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                    <dl className="mt-5 space-y-3 border-t border-slate-100 pt-4 text-sm">
-                      <div className="flex justify-between gap-3">
-                        <dt className="text-slate-500">Department</dt>
-                        <dd className="text-right font-medium text-slate-800">
-                          {selectedEmployee.department || "Not specified"}
-                        </dd>
-                      </div>
-                      <div className="flex justify-between gap-3">
-                        <dt className="text-slate-500">Employment status</dt>
-                        <dd className="font-medium text-slate-800">{selectedEmployee.status || "Active"}</dd>
-                      </div>
-                    </dl>
+                    <div className="space-y-5 p-5">
+                      <section aria-label="Employee information">
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                          Employee details
+                        </h4>
+                        <dl className="mt-3 space-y-3 text-sm">
+                          <div className="flex justify-between gap-3">
+                            <dt className="text-slate-500">Department</dt>
+                            <dd className="text-right font-medium text-slate-800">
+                              {selectedEmployee.department || "Not specified"}
+                            </dd>
+                          </div>
+                          <div className="flex justify-between gap-3">
+                            <dt className="text-slate-500">Employment status</dt>
+                            <dd className="font-medium text-slate-800">{selectedEmployee.status || "Active"}</dd>
+                          </div>
+                        </dl>
+                      </section>
+
+                      <section aria-label="Monitoring summary">
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                          Monitoring summary
+                        </h4>
+                        <div className="mt-3 grid grid-cols-2 gap-3">
+                          <div className="rounded-xl bg-amber-50 p-3">
+                            <p className="text-xs font-medium text-amber-700">Total idle time</p>
+                            <p className="mt-1 text-lg font-bold text-amber-900">
+                              {loadingActivity ? "..." : formatDuration(activity?.totalIdleSeconds)}
+                            </p>
+                          </div>
+                          <div className="rounded-xl bg-blue-50 p-3">
+                            <p className="text-xs font-medium text-blue-700">Screenshots</p>
+                            <p className="mt-1 text-lg font-bold text-blue-900">
+                              {loadingActivity ? "..." : screenshots.length}
+                            </p>
+                          </div>
+                        </div>
+                      </section>
+
+                      <section aria-label="Recent idle periods">
+                        <div className="flex items-center justify-between gap-2">
+                          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                            Recent idle periods
+                          </h4>
+                          {!loadingActivity && (
+                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
+                              {recentIdleEvents.length}
+                            </span>
+                          )}
+                        </div>
+                        {loadingActivity ? (
+                          <p className="mt-3 text-sm text-slate-500">Loading idle records...</p>
+                        ) : recentIdleEvents.length ? (
+                          <div className="mt-2 divide-y divide-slate-100">
+                            {recentIdleEvents.map((event) => (
+                              <div key={event.id} className="flex items-center justify-between gap-3 py-2.5">
+                                <p className="min-w-0 truncate text-xs text-slate-600">
+                                  {formatDate(event.occurredAt)}
+                                </p>
+                                <span className="shrink-0 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800">
+                                  {formatDuration(event.idleSeconds)}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="mt-3 rounded-lg bg-slate-50 p-3 text-sm text-slate-500">
+                            No completed idle periods recorded.
+                          </p>
+                        )}
+                      </section>
+
+                      <section aria-label="Employee screenshots">
+                        <div className="flex items-center justify-between gap-2">
+                          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                            Screenshots
+                          </h4>
+                          {!loadingActivity && (
+                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
+                              {screenshots.length}
+                            </span>
+                          )}
+                        </div>
+                        {loadingActivity ? (
+                          <p className="mt-3 text-sm text-slate-500">Loading screenshots...</p>
+                        ) : screenshots.length ? (
+                          <div className="mt-2 divide-y divide-slate-100">
+                            {screenshots.map((screenshot) => (
+                              <div key={screenshot.id} className="flex items-center justify-between gap-3 py-3">
+                                <div className="min-w-0">
+                                  <p className="truncate text-xs font-medium text-slate-700">
+                                    {formatDate(screenshot.capturedAt)}
+                                  </p>
+                                  <p className="mt-1 text-xs text-slate-400">
+                                    {(Number(screenshot.fileSize) / 1024).toFixed(0)} KB
+                                  </p>
+                                </div>
+                                <button
+                                  type="button"
+                                  disabled={previewLoading}
+                                  onClick={() => openScreenshot(screenshot)}
+                                  className="shrink-0 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 disabled:cursor-wait disabled:opacity-60"
+                                >
+                                  {previewLoading ? "Loading..." : "View"}
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="mt-3 rounded-lg bg-slate-50 p-3 text-sm text-slate-500">
+                            No screenshots found for this employee.
+                          </p>
+                        )}
+                      </section>
+                    </div>
                   </aside>
                 )}
               </div>
@@ -307,78 +417,6 @@ const DesktopMonitoring = () => {
             </div>
           )}
 
-          {employeeId && (
-            <>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-                  <p className="text-sm text-slate-500">Recorded idle time</p>
-                  <p className="mt-2 text-3xl font-bold text-slate-900">
-                    {loadingActivity ? "..." : formatDuration(activity?.totalIdleSeconds)}
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    {selectedEmployee?.name || employeeId} — all retained idle records
-                  </p>
-                </section>
-                <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-                  <p className="text-sm text-slate-500">Saved screenshots</p>
-                  <p className="mt-2 text-3xl font-bold text-slate-900">
-                    {loadingActivity ? "..." : screenshots.length}
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500">Most recent 100 records</p>
-                </section>
-              </div>
-
-              <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-                <h2 className="text-lg font-semibold text-slate-900">Recent idle periods</h2>
-                {loadingActivity ? (
-                  <p className="mt-4 text-sm text-slate-500">Loading idle records...</p>
-                ) : recentIdleEvents.length ? (
-                  <div className="mt-4 divide-y divide-slate-100">
-                    {recentIdleEvents.map((event) => (
-                      <div key={event.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
-                        <p className="text-sm text-slate-700">{formatDate(event.occurredAt)}</p>
-                        <span className="rounded-full bg-amber-50 px-3 py-1 text-sm font-semibold text-amber-800">
-                          {formatDuration(event.idleSeconds)}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="mt-4 text-sm text-slate-500">No completed idle periods were recorded.</p>
-                )}
-              </section>
-
-              <section className="rounded-xl h-[600px] overflow-scroll overflow-x-hidden border border-slate-200 bg-white p-5 shadow-sm">
-                <h2 className="text-lg font-semibold text-slate-900">Screenshots</h2>
-                {loadingActivity ? (
-                  <p className="mt-4 text-sm text-slate-500">Loading screenshots...</p>
-                ) : screenshots.length ? (
-                  <div className="mt-4 divide-y divide-slate-100">
-                    {screenshots.map((screenshot) => (
-                      <div key={screenshot.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
-                        <div>
-                          <p className="text-sm font-medium text-slate-800">{formatDate(screenshot.capturedAt)}</p>
-                          <p className="text-xs text-slate-500">
-                            {(Number(screenshot.fileSize) / 1024).toFixed(0)} KB
-                          </p>
-                        </div>
-                        <button
-                          type="button"
-                          disabled={previewLoading}
-                          onClick={() => openScreenshot(screenshot)}
-                          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-wait disabled:opacity-60"
-                        >
-                          {previewLoading ? "Loading..." : "View screenshot"}
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="mt-4 text-sm text-slate-500">No screenshots were found for this employee.</p>
-                )}
-              </section>
-            </>
-          )}
         </div>
       </main>
 
