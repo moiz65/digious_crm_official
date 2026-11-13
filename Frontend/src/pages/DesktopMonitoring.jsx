@@ -189,6 +189,12 @@ const DesktopMonitoring = () => {
             </p>
           </header>
 
+          {error && (
+            <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {error}
+            </div>
+          )}
+
           <section>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <div>
@@ -485,12 +491,6 @@ const DesktopMonitoring = () => {
               </p>
             )}
           </section>
-
-          {error && (
-            <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              {error}
-            </div>
-          )}
 
         </div>
       </main>
