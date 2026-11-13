@@ -40,6 +40,11 @@ const isPrivileged = (req) => ['admin', 'hr', 'super admin', 'superadmin'].inclu
 );
 const canViewOtherEmployees = (req) => isPrivileged(req)
   || String(req.user && req.user.designation || '').trim().toLowerCase() === 'operations manager';
+const isValidDateOnly = (value) => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value || '')) return false;
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+};
 
 async function findOwnedSession(sessionId, employeeId) {
   const [rows] = await pool.query(
@@ -240,28 +245,52 @@ router.get('/employees/:employeeId/activity', async (req, res) => {
   if (!targetEmployeeId || targetEmployeeId.length > 64) {
     return res.status(400).json({ success: false, message: 'Invalid employee ID' });
   }
+  const { from, to } = req.query;
+  const hasDateRange = from !== undefined || to !== undefined;
+  if (hasDateRange && (
+    !isValidDateOnly(from)
+    || !isValidDateOnly(to)
+    || from > to
+  )) {
+    return res.status(400).json({ success: false, message: 'A valid date range is required' });
+  }
+
+  const screenshotDateFilter = hasDateRange
+    ? ' AND captured_at >= ? AND captured_at < DATE_ADD(?, INTERVAL 1 DAY)'
+    : '';
+  const idleDateFilter = hasDateRange
+    ? ' AND occurred_at >= ? AND occurred_at < DATE_ADD(?, INTERVAL 1 DAY)'
+    : '';
+  const screenshotParams = hasDateRange
+    ? [targetEmployeeId, from, to]
+    : [targetEmployeeId];
+  const idleParams = hasDateRange
+    ? [targetEmployeeId, from, to]
+    : [targetEmployeeId];
+  const screenshotLimit = hasDateRange ? '' : ' LIMIT 100';
+  const idleLimit = hasDateRange ? '' : ' LIMIT 500';
 
   try {
     const [screenshots, idleEvents, idleTotals] = await Promise.all([
       pool.query(
         `SELECT id, captured_at AS capturedAt, file_size AS fileSize
          FROM desktop_monitor_screenshots
-         WHERE employee_id = ?
-         ORDER BY captured_at DESC LIMIT 100`,
-        [targetEmployeeId],
+         WHERE employee_id = ?${screenshotDateFilter}
+         ORDER BY captured_at DESC${screenshotLimit}`,
+        screenshotParams,
       ),
       pool.query(
         `SELECT id, idle_seconds AS idleSeconds, occurred_at AS occurredAt
          FROM desktop_monitor_events
-         WHERE employee_id = ? AND event_type = 'idle_ended' AND idle_seconds IS NOT NULL
-         ORDER BY occurred_at DESC LIMIT 500`,
-        [targetEmployeeId],
+         WHERE employee_id = ? AND event_type = 'idle_ended' AND idle_seconds IS NOT NULL${idleDateFilter}
+         ORDER BY occurred_at DESC${idleLimit}`,
+        idleParams,
       ),
       pool.query(
         `SELECT COALESCE(SUM(idle_seconds), 0) AS totalIdleSeconds
          FROM desktop_monitor_events
-         WHERE employee_id = ? AND event_type = 'idle_ended' AND idle_seconds IS NOT NULL`,
-        [targetEmployeeId],
+         WHERE employee_id = ? AND event_type = 'idle_ended' AND idle_seconds IS NOT NULL${idleDateFilter}`,
+        idleParams,
       ),
     ]);
 

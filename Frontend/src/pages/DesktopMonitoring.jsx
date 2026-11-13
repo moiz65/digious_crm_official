@@ -27,6 +27,14 @@ const getEmployeeInitials = (name) => String(name || "Employee")
   .map((part) => part.charAt(0).toUpperCase())
   .join("") || "E";
 
+const getLocalDateInputValue = () => {
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 const DesktopMonitoring = () => {
   const { role, token } = useAuth();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -35,6 +43,9 @@ const DesktopMonitoring = () => {
   const [employeeId, setEmployeeId] = useState("");
   const [employeeSearch, setEmployeeSearch] = useState("");
   const [activity, setActivity] = useState(null);
+  const [activityFromDate, setActivityFromDate] = useState(getLocalDateInputValue);
+  const [activityToDate, setActivityToDate] = useState(getLocalDateInputValue);
+  const [activeActivityTab, setActiveActivityTab] = useState("idle");
   const [loadingEmployees, setLoadingEmployees] = useState(true);
   const [loadingActivity, setLoadingActivity] = useState(false);
   const [error, setError] = useState("");
@@ -59,6 +70,9 @@ const DesktopMonitoring = () => {
       employee.department,
     ].some((value) => String(value || "").toLowerCase().includes(search));
   });
+  const validActivityDateRange = Boolean(
+    activityFromDate && activityToDate && activityFromDate <= activityToDate,
+  );
 
   useEffect(() => {
     let active = true;
@@ -83,23 +97,26 @@ const DesktopMonitoring = () => {
   }, [token]);
 
   useEffect(() => {
-    if (!employeeId) {
+    if (!employeeId || !validActivityDateRange) {
       setActivity(null);
+      setLoadingActivity(false);
       return undefined;
     }
 
     const controller = new AbortController();
     const loadActivity = async () => {
       setLoadingActivity(true);
+      setActivity(null);
       setError("");
       try {
         const response = await fetch(
-          `${API_URL}/employees/${encodeURIComponent(employeeId)}/activity`,
+          `${API_URL}/employees/${encodeURIComponent(employeeId)}/activity?from=${encodeURIComponent(activityFromDate)}&to=${encodeURIComponent(activityToDate)}`,
           {
             headers: { Authorization: `Bearer ${token}` },
             signal: controller.signal,
           },
         );
+
         const result = await response.json();
         if (!response.ok || !result.success) {
           throw new Error(result.message || "Could not load employee monitoring activity.");
@@ -116,7 +133,7 @@ const DesktopMonitoring = () => {
     };
     loadActivity();
     return () => controller.abort();
-  }, [employeeId, token]);
+  }, [employeeId, token, activityFromDate, activityToDate, validActivityDateRange]);
 
   useEffect(() => () => {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
@@ -148,7 +165,7 @@ const DesktopMonitoring = () => {
     (employee) => String(employee.employeeId) === String(employeeId),
   );
   const selectEmployee = (employee) => setEmployeeId(String(employee.employeeId));
-  const recentIdleEvents = activity?.idleEvents?.slice(0, 20) || [];
+  const idleEvents = activity?.idleEvents || [];
   const screenshots = activity?.screenshots || [];
 
   return (
@@ -305,98 +322,156 @@ const DesktopMonitoring = () => {
                         </dl>
                       </section>
 
-                      <section aria-label="Monitoring summary">
+                      <section aria-label="Activity date filter">
                         <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                          Monitoring summary
+                          Activity date range
                         </h4>
                         <div className="mt-3 grid grid-cols-2 gap-3">
-                          <div className="rounded-xl bg-amber-50 p-3">
-                            <p className="text-xs font-medium text-amber-700">Total idle time</p>
-                            <p className="mt-1 text-lg font-bold text-amber-900">
-                              {loadingActivity ? "..." : formatDuration(activity?.totalIdleSeconds)}
-                            </p>
-                          </div>
-                          <div className="rounded-xl bg-blue-50 p-3">
-                            <p className="text-xs font-medium text-blue-700">Screenshots</p>
-                            <p className="mt-1 text-lg font-bold text-blue-900">
-                              {loadingActivity ? "..." : screenshots.length}
-                            </p>
-                          </div>
+                          <label className="min-w-0">
+                            <span className="mb-1 block text-xs font-medium text-slate-600">From</span>
+                            <input
+                              type="date"
+                              value={activityFromDate}
+                              max={activityToDate || undefined}
+                              onChange={(event) => {
+                                setActivity(null);
+                                setActivityFromDate(event.target.value);
+                              }}
+                              className="w-full min-w-0 rounded-lg border border-slate-200 px-2 py-2 text-xs text-slate-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                            />
+                          </label>
+                          <label className="min-w-0">
+                            <span className="mb-1 block text-xs font-medium text-slate-600">To</span>
+                            <input
+                              type="date"
+                              value={activityToDate}
+                              min={activityFromDate || undefined}
+                              onChange={(event) => {
+                                setActivity(null);
+                                setActivityToDate(event.target.value);
+                              }}
+                              className="w-full min-w-0 rounded-lg border border-slate-200 px-2 py-2 text-xs text-slate-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                            />
+                          </label>
                         </div>
-                      </section>
-
-                      <section aria-label="Recent idle periods">
-                        <div className="flex items-center justify-between gap-2">
-                          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                            Recent idle periods
-                          </h4>
-                          {!loadingActivity && (
-                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
-                              {recentIdleEvents.length}
-                            </span>
-                          )}
-                        </div>
-                        {loadingActivity ? (
-                          <p className="mt-3 text-sm text-slate-500">Loading idle records...</p>
-                        ) : recentIdleEvents.length ? (
-                          <div className="mt-2 divide-y divide-slate-100">
-                            {recentIdleEvents.map((event) => (
-                              <div key={event.id} className="flex items-center justify-between gap-3 py-2.5">
-                                <p className="min-w-0 truncate text-xs text-slate-600">
-                                  {formatDate(event.occurredAt)}
-                                </p>
-                                <span className="shrink-0 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800">
-                                  {formatDuration(event.idleSeconds)}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="mt-3 rounded-lg bg-slate-50 p-3 text-sm text-slate-500">
-                            No completed idle periods recorded.
+                        {!validActivityDateRange && (
+                          <p role="alert" className="mt-2 text-xs text-amber-700">
+                            Select a valid start and end date.
                           </p>
                         )}
                       </section>
 
-                      <section aria-label="Employee screenshots">
-                        <div className="flex items-center justify-between gap-2">
-                          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                            Screenshots
-                          </h4>
-                          {!loadingActivity && (
-                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
-                              {screenshots.length}
-                            </span>
-                          )}
-                        </div>
-                        {loadingActivity ? (
-                          <p className="mt-3 text-sm text-slate-500">Loading screenshots...</p>
-                        ) : screenshots.length ? (
-                          <div className="mt-2 divide-y divide-slate-100">
-                            {screenshots.map((screenshot) => (
-                              <div key={screenshot.id} className="flex items-center justify-between gap-3 py-3">
-                                <div className="min-w-0">
-                                  <p className="truncate text-xs font-medium text-slate-700">
-                                    {formatDate(screenshot.capturedAt)}
-                                  </p>
-                                  <p className="mt-1 text-xs text-slate-400">
-                                    {(Number(screenshot.fileSize) / 1024).toFixed(0)} KB
-                                  </p>
-                                </div>
-                                <button
-                                  type="button"
-                                  disabled={previewLoading}
-                                  onClick={() => openScreenshot(screenshot)}
-                                  className="shrink-0 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 disabled:cursor-wait disabled:opacity-60"
-                                >
-                                  {previewLoading ? "Loading..." : "View"}
-                                </button>
+                      <div role="tablist" aria-label="Employee activity" className="grid grid-cols-2 rounded-xl bg-slate-100 p-1">
+                        <button
+                          id="idle-activity-tab"
+                          type="button"
+                          role="tab"
+                          aria-selected={activeActivityTab === "idle"}
+                          aria-controls="employee-activity-panel"
+                          onClick={() => setActiveActivityTab("idle")}
+                          className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${
+                            activeActivityTab === "idle"
+                              ? "bg-white text-blue-700 shadow-sm"
+                              : "text-slate-500 hover:text-slate-700"
+                          }`}
+                        >
+                          Idle time
+                        </button>
+                        <button
+                          id="screenshots-activity-tab"
+                          type="button"
+                          role="tab"
+                          aria-selected={activeActivityTab === "screenshots"}
+                          aria-controls="employee-activity-panel"
+                          onClick={() => setActiveActivityTab("screenshots")}
+                          className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${
+                            activeActivityTab === "screenshots"
+                              ? "bg-white text-blue-700 shadow-sm"
+                              : "text-slate-500 hover:text-slate-700"
+                          }`}
+                        >
+                          Screenshots
+                        </button>
+                      </div>
+
+                      <section
+                        id="employee-activity-panel"
+                        role="tabpanel"
+                        aria-labelledby={activeActivityTab === "idle" ? "idle-activity-tab" : "screenshots-activity-tab"}
+                        className="min-h-32"
+                      >
+                        {!validActivityDateRange ? (
+                          <p className="rounded-lg bg-slate-50 p-3 text-sm text-slate-500">
+                            Choose a valid date range to view activity.
+                          </p>
+                        ) : loadingActivity ? (
+                          <p className="rounded-lg bg-slate-50 p-3 text-sm text-slate-500">
+                            Loading {activeActivityTab === "idle" ? "idle activity" : "screenshots"}...
+                          </p>
+                        ) : activeActivityTab === "idle" ? (
+                          <div>
+                            <div className="rounded-xl bg-amber-50 p-4">
+                              <p className="text-xs font-medium text-amber-700">Total idle time in range</p>
+                              <p className="mt-1 text-2xl font-bold text-amber-900">
+                                {formatDuration(activity?.totalIdleSeconds)}
+                              </p>
+                              <p className="mt-1 text-xs text-amber-700">
+                                {idleEvents.length} idle {idleEvents.length === 1 ? "period" : "periods"}
+                              </p>
+                            </div>
+                            <h4 className="mt-5 text-xs font-bold uppercase tracking-wider text-slate-400">
+                              Idle periods
+                            </h4>
+                            {idleEvents.length ? (
+                              <div className="mt-2 divide-y divide-slate-100">
+                                {idleEvents.map((event) => (
+                                  <div key={event.id} className="flex items-center justify-between gap-3 py-2.5">
+                                    <p className="min-w-0 truncate text-xs text-slate-600">
+                                      {formatDate(event.occurredAt)}
+                                    </p>
+                                    <span className="shrink-0 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800">
+                                      {formatDuration(event.idleSeconds)}
+                                    </span>
+                                  </div>
+                                ))}
                               </div>
-                            ))}
+                            ) : (
+                              <p className="mt-3 rounded-lg bg-slate-50 p-3 text-sm text-slate-500">
+                                No idle periods recorded for this date range.
+                              </p>
+                            )}
+                          </div>
+                        ) : screenshots.length ? (
+                          <div>
+                            <p className="mb-2 text-xs text-slate-500">
+                              {screenshots.length} screenshots in selected date range
+                            </p>
+                            <div className="divide-y divide-slate-100">
+                              {screenshots.map((screenshot) => (
+                                <div key={screenshot.id} className="flex items-center justify-between gap-3 py-3">
+                                  <div className="min-w-0">
+                                    <p className="truncate text-xs font-medium text-slate-700">
+                                      {formatDate(screenshot.capturedAt)}
+                                    </p>
+                                    <p className="mt-1 text-xs text-slate-400">
+                                      {(Number(screenshot.fileSize) / 1024).toFixed(0)} KB
+                                    </p>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    disabled={previewLoading}
+                                    onClick={() => openScreenshot(screenshot)}
+                                    className="shrink-0 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 disabled:cursor-wait disabled:opacity-60"
+                                  >
+                                    {previewLoading ? "Loading..." : "View"}
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
                           </div>
                         ) : (
-                          <p className="mt-3 rounded-lg bg-slate-50 p-3 text-sm text-slate-500">
-                            No screenshots found for this employee.
+                          <p className="rounded-lg bg-slate-50 p-3 text-sm text-slate-500">
+                            No screenshots found for this date range.
                           </p>
                         )}
                       </section>

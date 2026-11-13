@@ -192,4 +192,47 @@ describe('desktop monitor API', () => {
       ['7'],
     );
   });
+
+  test('filters screenshots and idle totals to the requested date range', async () => {
+    global.__desktopMonitorUser = { employeeId: 42, role: 'hr' };
+    const screenshotRows = [{ id: 8, capturedAt: '2026-11-09 09:00:00', fileSize: 1024 }];
+    const idleRows = [{ id: 11, idleSeconds: 240, occurredAt: '2026-11-09 09:10:00' }];
+    pool.query
+      .mockResolvedValueOnce([screenshotRows, []])
+      .mockResolvedValueOnce([idleRows, []])
+      .mockResolvedValueOnce([[{ totalIdleSeconds: '240' }], []]);
+
+    const response = await fetch(
+      `${baseUrl}/employees/7/activity?from=2026-11-09&to=2026-11-10`,
+    );
+    const result = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(result.data.totalIdleSeconds).toBe(240);
+    expect(pool.query).toHaveBeenNthCalledWith(
+      1,
+      expect.stringContaining('captured_at < DATE_ADD(?, INTERVAL 1 DAY)'),
+      ['7', '2026-11-09', '2026-11-10'],
+    );
+    expect(pool.query).toHaveBeenNthCalledWith(
+      2,
+      expect.stringContaining('occurred_at < DATE_ADD(?, INTERVAL 1 DAY)'),
+      ['7', '2026-11-09', '2026-11-10'],
+    );
+    expect(pool.query).toHaveBeenNthCalledWith(
+      3,
+      expect.stringContaining('occurred_at < DATE_ADD(?, INTERVAL 1 DAY)'),
+      ['7', '2026-11-09', '2026-11-10'],
+    );
+  });
+
+  test('rejects invalid activity date ranges', async () => {
+    global.__desktopMonitorUser = { employeeId: 42, role: 'hr' };
+    const response = await fetch(
+      `${baseUrl}/employees/7/activity?from=2026-02-30&to=2026-03-01`,
+    );
+
+    expect(response.status).toBe(400);
+    expect(pool.query).not.toHaveBeenCalled();
+  });
 });
