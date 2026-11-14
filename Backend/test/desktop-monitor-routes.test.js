@@ -71,6 +71,47 @@ describe('desktop monitor API', () => {
     );
   });
 
+  test('records an explicit pause and refreshes the session heartbeat', async () => {
+    pool.query
+      .mockResolvedValueOnce([{ affectedRows: 1 }, []])
+      .mockResolvedValueOnce([{ affectedRows: 1 }, []]);
+
+    const pauseResponse = await fetch(`${baseUrl}/sessions/session-id/stop`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason: 'paused' }),
+    });
+    const heartbeatResponse = await fetch(`${baseUrl}/sessions/session-id/heartbeat`, {
+      method: 'POST',
+    });
+
+    expect(pauseResponse.status).toBe(200);
+    expect(heartbeatResponse.status).toBe(200);
+    expect(pool.query).toHaveBeenNthCalledWith(
+      1,
+      expect.stringContaining('ended_reason = ?'),
+      ['paused', 'session-id', '42'],
+    );
+    expect(pool.query).toHaveBeenNthCalledWith(
+      2,
+      expect.stringContaining('last_seen_at = CURRENT_TIMESTAMP'),
+      ['session-id', '42'],
+    );
+  });
+
+  test('marks the latest paused session disconnected after logout', async () => {
+    pool.query.mockResolvedValueOnce([{ affectedRows: 1 }, []]);
+    const response = await fetch(`${baseUrl}/sessions/disconnect`, {
+      method: 'POST',
+    });
+
+    expect(response.status).toBe(200);
+    expect(pool.query).toHaveBeenCalledWith(
+      expect.stringContaining("ended_reason = 'disconnected'"),
+      ['42'],
+    );
+  });
+
   test('rejects unknown event types without writing to the database', async () => {
     const response = await fetch(`${baseUrl}/sessions/session-id/events`, {
       method: 'POST',
@@ -137,6 +178,7 @@ describe('desktop monitor API', () => {
       profilePhoto: 'https://example.com/employee.jpg',
       status: 'Active',
       isWorking: 1,
+      monitoringStatus: 'idle',
     }];
     pool.query.mockResolvedValueOnce([employees, []]);
 
@@ -151,6 +193,10 @@ describe('desktop monitor API', () => {
     expect(pool.query.mock.calls[0][0]).toContain('employee.profile_photo AS profilePhoto');
     expect(pool.query.mock.calls[0][0]).toContain("LOWER(TRIM(employee.status)) = 'active'");
     expect(pool.query.mock.calls[0][0]).toContain('monitoring_session.ended_at IS NULL');
+    expect(pool.query.mock.calls[0][0]).toContain('monitoring_session.last_seen_at');
+    expect(pool.query.mock.calls[0][0]).toContain("latest_session.ended_reason = 'paused'");
+    expect(pool.query.mock.calls[0][0]).toContain("latest_event.event_type = 'idle_started'");
+    expect(pool.query.mock.calls[0][0]).toContain('AS monitoringStatus');
   });
 
   test('allows a super admin without an employee ID to load the employee picker', async () => {

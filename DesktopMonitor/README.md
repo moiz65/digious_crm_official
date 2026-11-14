@@ -6,6 +6,7 @@ The Windows desktop companion opens the CRM in a dedicated, visible Electron win
 
 - Monitoring is off by default and requires one explicit, in-app consent from the signed-in employee. Installing the desktop app does not grant consent.
 - A persistent in-window status panel lets the signed-in user pause or withdraw consent.
+- Admin/HR monitoring cards refresh automatically; live sessions send a heartbeat every 15 seconds and appear disconnected after 45 seconds without one.
 - System-wide keyboard/mouse inactivity is checked every 15 seconds; 3 minutes without input is recorded as idle.
 - One JPEG of the primary display is uploaded every 3 minutes while the user is active, including when the CRM window is minimized or hidden to the system tray.
 - Screenshots are lightly blurred before upload.
@@ -19,9 +20,10 @@ The Windows desktop companion opens the CRM in a dedicated, visible Electron win
 ## Setup and packaging
 
 1. Apply `Backend/migrations/create_desktop_monitor_tables.sql` to the CRM database.
-2. Deploy the backend and CRM frontend with the desktop-monitor API route enabled.
-3. From this directory run `npm install`, then `npm start` for local development.
-4. Run `npm run dist` on Windows to create an NSIS installer under `dist/`.
-5. On first launch the desktop app opens `https://digious-crm.vercel.app` automatically. The user signs in normally inside the CRM window.
+2. For databases that already have desktop monitoring tables, apply `Backend/migrations/add_desktop_monitor_session_presence.sql`.
+3. Deploy the backend and CRM frontend with the desktop-monitor API route enabled.
+4. From this directory run `npm install`, then `npm start` for local development.
+5. Run `npm run dist` on Windows to create an NSIS installer under `dist/`.
+6. On first launch the desktop app opens `https://digious-crm.vercel.app` automatically. The user signs in normally inside the CRM window.
 
 The frontend's `REACT_APP_API_URL` must point to the deployed backend. For local development, set `CRM_DESKTOP_URL=http://localhost:3000` before starting Electron.

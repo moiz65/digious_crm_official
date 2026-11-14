@@ -83,14 +83,19 @@ router.post('/sessions', async (req, res) => {
 
 router.post('/sessions/:sessionId/stop', async (req, res) => {
   const employeeId = getEmployeeId(req);
+  const reason = req.body && req.body.reason || 'disconnected';
   if (!employeeId) {
     return res.status(403).json({ success: false, message: 'Employee identity is required' });
   }
+  if (!['paused', 'disconnected'].includes(reason)) {
+    return res.status(400).json({ success: false, message: 'Invalid monitoring session end reason' });
+  }
   try {
     const [result] = await pool.query(
-      `UPDATE desktop_monitor_sessions SET ended_at = CURRENT_TIMESTAMP
+      `UPDATE desktop_monitor_sessions
+       SET ended_at = CURRENT_TIMESTAMP, ended_reason = ?
        WHERE id = ? AND employee_id = ? AND ended_at IS NULL`,
-      [req.params.sessionId, String(employeeId)],
+      [reason, req.params.sessionId, String(employeeId)],
     );
     if (!result.affectedRows) {
       return res.status(404).json({ success: false, message: 'Active monitoring session not found' });
@@ -99,6 +104,46 @@ router.post('/sessions/:sessionId/stop', async (req, res) => {
   } catch (error) {
     console.error('Desktop monitoring session stop failed:', error);
     return res.status(500).json({ success: false, message: 'Could not stop monitoring session' });
+  }
+});
+
+router.post('/sessions/:sessionId/heartbeat', async (req, res) => {
+  const employeeId = getEmployeeId(req);
+  if (!employeeId) {
+    return res.status(403).json({ success: false, message: 'Employee identity is required' });
+  }
+  try {
+    const [result] = await pool.query(
+      `UPDATE desktop_monitor_sessions SET last_seen_at = CURRENT_TIMESTAMP
+       WHERE id = ? AND employee_id = ? AND ended_at IS NULL`,
+      [req.params.sessionId, String(employeeId)],
+    );
+    if (!result.affectedRows) {
+      return res.status(404).json({ success: false, message: 'Active monitoring session not found' });
+    }
+    return res.status(200).json({ success: true });
+  } catch (error) {
+    console.error('Desktop monitoring session heartbeat failed:', error);
+    return res.status(500).json({ success: false, message: 'Could not update monitoring session status' });
+  }
+});
+
+router.post('/sessions/disconnect', async (req, res) => {
+  const employeeId = getEmployeeId(req);
+  if (!employeeId) {
+    return res.status(403).json({ success: false, message: 'Employee identity is required' });
+  }
+  try {
+    await pool.query(
+      `UPDATE desktop_monitor_sessions SET ended_reason = 'disconnected'
+       WHERE employee_id = ? AND ended_at IS NOT NULL
+       ORDER BY started_at DESC LIMIT 1`,
+      [String(employeeId)],
+    );
+    return res.status(200).json({ success: true });
+  } catch (error) {
+    console.error('Desktop monitoring disconnect status update failed:', error);
+    return res.status(500).json({ success: false, message: 'Could not update monitoring status' });
   }
 });
 
@@ -193,7 +238,31 @@ router.get('/employees', async (req, res) => {
                 FROM desktop_monitor_sessions AS monitoring_session
                 WHERE monitoring_session.employee_id = CAST(employee.id AS CHAR)
                   AND monitoring_session.ended_at IS NULL
-              ) AS isWorking
+                  AND monitoring_session.last_seen_at >= DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 45 SECOND)
+              ) AS isWorking,
+              COALESCE((
+                SELECT CASE
+                  WHEN latest_session.ended_at IS NULL
+                    AND latest_session.last_seen_at >= DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 45 SECOND)
+                    THEN COALESCE((
+                      SELECT CASE
+                        WHEN latest_event.event_type = 'idle_started' THEN 'idle'
+                        ELSE 'working'
+                      END
+                      FROM desktop_monitor_events AS latest_event
+                      WHERE latest_event.session_id = latest_session.id
+                      ORDER BY latest_event.occurred_at DESC, latest_event.id DESC
+                      LIMIT 1
+                    ), 'working')
+                  WHEN latest_session.ended_at IS NULL THEN 'disconnected'
+                  WHEN latest_session.ended_reason = 'paused' THEN 'paused'
+                  ELSE 'disconnected'
+                END
+                FROM desktop_monitor_sessions AS latest_session
+                WHERE latest_session.employee_id = CAST(employee.id AS CHAR)
+                ORDER BY latest_session.started_at DESC
+                LIMIT 1
+              ), 'disconnected') AS monitoringStatus
        FROM employee_onboarding AS employee
        WHERE LOWER(TRIM(employee.status)) = 'active'
        ORDER BY employee.name ASC`,

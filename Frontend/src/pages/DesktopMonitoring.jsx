@@ -35,6 +35,17 @@ const getLocalDateInputValue = () => {
   return `${year}-${month}-${day}`;
 };
 
+const getMonitoringStatus = (employee) => {
+  const status = employee.monitoringStatus || (employee.isWorking ? "working" : "disconnected");
+  const statuses = {
+    working: { label: "Working now", className: "bg-green-50 text-green-700", dotClassName: "bg-green-500" },
+    idle: { label: "Idle", className: "bg-amber-50 text-amber-700", dotClassName: "bg-amber-500" },
+    paused: { label: "Paused", className: "bg-slate-100 text-slate-700", dotClassName: "bg-slate-400" },
+    disconnected: { label: "Disconnected", className: "bg-slate-100 text-slate-500", dotClassName: "bg-slate-400" },
+  };
+  return statuses[status] || statuses.disconnected;
+};
+
 const DesktopMonitoring = () => {
   const { role, token } = useAuth();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -76,7 +87,10 @@ const DesktopMonitoring = () => {
 
   useEffect(() => {
     let active = true;
+    let requestInFlight = false;
     const loadEmployees = async () => {
+      if (requestInFlight) return;
+      requestInFlight = true;
       try {
         const response = await fetch(`${API_URL}/employees`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -89,11 +103,16 @@ const DesktopMonitoring = () => {
       } catch (loadError) {
         if (active) setError(loadError.message || "Could not load employees.");
       } finally {
+        requestInFlight = false;
         if (active) setLoadingEmployees(false);
       }
     };
     loadEmployees();
-    return () => { active = false; };
+    const refreshTimer = window.setInterval(loadEmployees, 3000);
+    return () => {
+      active = false;
+      window.clearInterval(refreshTimer);
+    };
   }, [token]);
 
   useEffect(() => {
@@ -164,6 +183,9 @@ const DesktopMonitoring = () => {
   const selectedEmployee = employees.find(
     (employee) => String(employee.employeeId) === String(employeeId),
   );
+  const selectedMonitoringStatus = selectedEmployee
+    ? getMonitoringStatus(selectedEmployee)
+    : null;
   const selectEmployee = (employee) => setEmployeeId(String(employee.employeeId));
   const idleEvents = activity?.idleEvents || [];
   const screenshots = activity?.screenshots || [];
@@ -227,6 +249,7 @@ const DesktopMonitoring = () => {
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {filteredEmployees.map((employee) => {
                     const isSelected = String(employee.employeeId) === String(employeeId);
+                    const monitoringStatus = getMonitoringStatus(employee);
                     return (
                       <button
                         key={employee.employeeId}
@@ -264,12 +287,10 @@ const DesktopMonitoring = () => {
                           <span className="truncate text-xs text-slate-500">
                             {employee.department || "No department"}
                           </span>
-                          {Boolean(employee.isWorking) && (
-                            <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-green-50 px-2 py-1 text-xs font-semibold text-green-700">
-                              <span className="h-2 w-2 animate-pulse rounded-full bg-green-500" aria-hidden="true" />
-                              Working
-                            </span>
-                          )}
+                          <span className={`flex shrink-0 items-center gap-1.5 rounded-full px-2 py-1 text-xs font-semibold ${monitoringStatus.className}`}>
+                            <span className={`h-2 w-2 rounded-full ${monitoringStatus.dotClassName}`} aria-hidden="true" />
+                            {monitoringStatus.label}
+                          </span>
                         </span>
                       </button>
                     );
@@ -296,15 +317,9 @@ const DesktopMonitoring = () => {
                         <div className="min-w-0">
                           <h3 className="truncate text-lg font-bold">{selectedEmployee.name}</h3>
                           <p className="mt-1 text-sm text-blue-100">{selectedEmployee.employeeCode}</p>
-                          <span className={`mt-2 inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-xs font-semibold ${
-                            selectedEmployee.isWorking
-                              ? "bg-green-400/20 text-green-50"
-                              : "bg-white/15 text-blue-50"
-                          }`}>
-                            <span className={`h-2 w-2 rounded-full ${
-                              selectedEmployee.isWorking ? "animate-pulse bg-green-300" : "bg-slate-300"
-                            }`} aria-hidden="true" />
-                            {selectedEmployee.isWorking ? "Working now" : "Not currently working"}
+                          <span className="mt-2 inline-flex items-center gap-2 rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold text-blue-50">
+                            <span className={`h-2 w-2 rounded-full ${selectedMonitoringStatus.dotClassName}`} aria-hidden="true" />
+                            {selectedMonitoringStatus.label}
                           </span>
                         </div>
                       </div>

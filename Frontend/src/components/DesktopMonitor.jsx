@@ -107,6 +107,11 @@ const DesktopMonitor = () => {
         body: JSON.stringify({ eventType, idleSeconds }),
       },
     );
+    const sendHeartbeat = () => requestJson(
+      `${config.FULL_API_URL}/desktop-monitor/sessions/${sessionId}/heartbeat`,
+      token,
+      { method: "POST" },
+    );
 
     const uploadScreenshot = async (dataUrl) => {
       const image = await fetch(dataUrl).then((response) => response.blob());
@@ -123,6 +128,7 @@ const DesktopMonitor = () => {
       if (!active || checkingRef.current || !isMonitoringSurface) return;
       checkingRef.current = true;
       try {
+        await sendHeartbeat();
         const state = await bridge.getSystemState();
         if (!active) return;
 
@@ -194,8 +200,18 @@ const DesktopMonitor = () => {
   }, [bridge, isMonitoringSurface, sessionId, token]);
 
   useEffect(() => {
-    if (!sessionId || !token) return undefined;
+    if (!token) return undefined;
     const stopOnClose = () => {
+      if (!sessionId) {
+        if (consented) {
+          fetch(`${config.FULL_API_URL}/desktop-monitor/sessions/disconnect`, {
+            method: "POST",
+            keepalive: true,
+            headers: { Authorization: `Bearer ${token}` },
+          }).catch((stopError) => console.error("Could not close desktop monitoring session", stopError));
+        }
+        return;
+      }
       fetch(`${config.FULL_API_URL}/desktop-monitor/sessions/${sessionId}/stop`, {
         method: "POST",
         keepalive: true,
@@ -203,23 +219,28 @@ const DesktopMonitor = () => {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
+        body: JSON.stringify({ reason: "disconnected" }),
       }).catch((stopError) => console.error("Could not close desktop monitoring session", stopError));
     };
     window.addEventListener("pagehide", stopOnClose);
     return () => window.removeEventListener("pagehide", stopOnClose);
-  }, [sessionId, token]);
+  }, [consented, sessionId, token]);
 
   useEffect(() => {
-    if (token || !sessionId || !lastTokenRef.current) return undefined;
+    if (token || !lastTokenRef.current) return undefined;
     const previousToken = lastTokenRef.current;
     const currentSession = sessionId;
-    fetch(`${config.FULL_API_URL}/desktop-monitor/sessions/${currentSession}/stop`, {
+    const endpoint = currentSession
+      ? `${config.FULL_API_URL}/desktop-monitor/sessions/${currentSession}/stop`
+      : `${config.FULL_API_URL}/desktop-monitor/sessions/disconnect`;
+    fetch(endpoint, {
       method: "POST",
       keepalive: true,
       headers: {
         Authorization: `Bearer ${previousToken}`,
         "Content-Type": "application/json",
       },
+      ...(currentSession ? { body: JSON.stringify({ reason: "disconnected" }) } : {}),
     }).catch((stopError) => console.error("Could not close desktop monitoring session", stopError));
     setSessionId(null);
     return undefined;
@@ -248,7 +269,7 @@ const DesktopMonitor = () => {
     }
   };
 
-  const stopSession = async (withdrawConsent) => {
+  const stopSession = async (withdrawConsent, reason = "disconnected") => {
     setBusy(true);
     setError("");
     try {
@@ -268,6 +289,15 @@ const DesktopMonitor = () => {
         }
         await requestJson(
           `${config.FULL_API_URL}/desktop-monitor/sessions/${sessionId}/stop`,
+          token,
+          {
+            method: "POST",
+            body: JSON.stringify({ reason }),
+          },
+        );
+      } else if (withdrawConsent && token) {
+        await requestJson(
+          `${config.FULL_API_URL}/desktop-monitor/sessions/disconnect`,
           token,
           { method: "POST" },
         );
@@ -386,9 +416,12 @@ const DesktopMonitor = () => {
       >
       {!consented ? (
         <>
-          <strong style={{ display: "block", fontSize: 15, marginBottom: 8 }}>
-            Desktop monitoring consent
-          </strong>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 8 }}>
+            <strong style={{ fontSize: 15 }}>Desktop monitoring consent</strong>
+            <span style={{ borderRadius: 999, padding: "4px 8px", background: "#f1f5f9", color: "#64748b", fontSize: 11, fontWeight: 700 }}>
+              Disconnected
+            </span>
+          </div>
           <p style={{ color: "#475569", lineHeight: 1.5, margin: "0 0 12px" }}>
             When the CRM window is active, a primary display screenshot is captured every{" "}
             {SCREENSHOT_INTERVAL_MS / 60000} minutes. Other apps or windows visible on the display
@@ -433,7 +466,7 @@ const DesktopMonitor = () => {
                     }}
                   />
                 </span>
-                {sessionId ? (idle ? "Idle" : "Active") : "Paused"}
+                {sessionId ? (idle ? "Idle" : "Working") : "Paused"}
               </span>
               {lastCapture && ` · Last screenshot ${lastCapture.toLocaleTimeString()}`}
             </div>
@@ -474,7 +507,7 @@ const DesktopMonitor = () => {
           <button
             type="button"
             disabled={busy}
-            onClick={sessionId ? () => stopSession(false) : handleStart}
+            onClick={sessionId ? () => stopSession(false, "paused") : handleStart}
             style={{
               ...buttonStyle,
               flex: 1,
