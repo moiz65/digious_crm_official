@@ -841,7 +841,7 @@ exports.checkOut = async (req, res) => {
       );
       await pool.query(
         `UPDATE desktop_monitor_sessions
-         SET ended_at = CURRENT_TIMESTAMP, ended_reason = 'disconnected'
+         SET ended_at = CURRENT_TIMESTAMP, ended_reason = 'checked-out'
          WHERE employee_id = ? AND ended_at IS NULL`,
         [String(employee_id)],
       );
@@ -1132,7 +1132,7 @@ exports.recordBreakStart = async (req, res) => {
       console.log(`   Break ID: ${breakResult.insertId}`);
       await pool.query(
         `UPDATE desktop_monitor_sessions
-         SET ended_at = CURRENT_TIMESTAMP, ended_reason = 'paused'
+         SET ended_at = CURRENT_TIMESTAMP, ended_reason = 'break'
          WHERE employee_id = ? AND ended_at IS NULL`,
         [String(employee_id)],
       );

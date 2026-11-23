@@ -40,6 +40,8 @@ const getMonitoringStatus = (employee) => {
   const statuses = {
     working: { label: "Working now", className: "bg-green-50 text-green-700", dotClassName: "bg-green-500" },
     idle: { label: "Idle", className: "bg-amber-50 text-amber-700", dotClassName: "bg-amber-500" },
+    break: { label: "On break", className: "bg-amber-50 text-amber-700", dotClassName: "bg-amber-500" },
+    "checked-out": { label: "Checked out", className: "bg-slate-100 text-slate-600", dotClassName: "bg-slate-400" },
     paused: { label: "Paused", className: "bg-slate-100 text-slate-700", dotClassName: "bg-slate-400" },
     disconnected: { label: "Disconnected", className: "bg-slate-100 text-slate-500", dotClassName: "bg-slate-400" },
   };

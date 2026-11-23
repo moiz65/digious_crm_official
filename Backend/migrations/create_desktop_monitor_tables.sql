@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS desktop_monitor_sessions (
   consent_version VARCHAR(32) NOT NULL,
   started_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   ended_at DATETIME NULL,
-  ended_reason ENUM('paused', 'disconnected') NULL,
+  ended_reason ENUM('paused', 'disconnected', 'break', 'checked-out') NULL,
   last_seen_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   INDEX idx_desktop_monitor_employee_started (employee_id, started_at)
 );

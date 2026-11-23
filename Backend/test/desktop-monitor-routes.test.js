@@ -99,6 +99,30 @@ describe('desktop monitor API', () => {
     );
   });
 
+  test('treats a stop for an already-ended owned session as successful', async () => {
+    pool.query
+      .mockResolvedValueOnce([{ affectedRows: 0 }, []])
+      .mockResolvedValueOnce([[{ id: 'session-id' }], []]);
+
+    const response = await fetch(`${baseUrl}/sessions/session-id/stop`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason: 'checked-out' }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(pool.query).toHaveBeenNthCalledWith(
+      1,
+      expect.stringContaining('ended_reason = ?'),
+      ['checked-out', 'session-id', '42'],
+    );
+    expect(pool.query).toHaveBeenNthCalledWith(
+      2,
+      expect.stringContaining('WHERE id = ? AND employee_id = ? LIMIT 1'),
+      ['session-id', '42'],
+    );
+  });
+
   test('marks the latest paused session disconnected after logout', async () => {
     pool.query.mockResolvedValueOnce([{ affectedRows: 1 }, []]);
     const response = await fetch(`${baseUrl}/sessions/disconnect`, {
@@ -195,6 +219,8 @@ describe('desktop monitor API', () => {
     expect(pool.query.mock.calls[0][0]).toContain('monitoring_session.ended_at IS NULL');
     expect(pool.query.mock.calls[0][0]).toContain('monitoring_session.last_seen_at');
     expect(pool.query.mock.calls[0][0]).toContain("latest_session.ended_reason = 'paused'");
+    expect(pool.query.mock.calls[0][0]).toContain("latest_session.ended_reason = 'break'");
+    expect(pool.query.mock.calls[0][0]).toContain("latest_session.ended_reason = 'checked-out'");
     expect(pool.query.mock.calls[0][0]).toContain("latest_event.event_type = 'idle_started'");
     expect(pool.query.mock.calls[0][0]).toContain('AS monitoringStatus');
   });

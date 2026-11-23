@@ -10,3 +10,4 @@ export function emitDesktopMonitorEvent(type) {
     window.dispatchEvent(new CustomEvent(type));
   }
 }
+  

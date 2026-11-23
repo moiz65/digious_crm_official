@@ -28,7 +28,9 @@ const requestJson = async (url, token, options = {}) => {
     });
     const result = await response.json().catch(() => null);
     if (!response.ok) {
-      throw new Error(result?.message || `Monitoring request failed (${response.status})`);
+      const requestError = new Error(result?.message || `Monitoring request failed (${response.status})`);
+      requestError.status = response.status;
+      throw requestError;
     }
     return result;
   } catch (error) {
@@ -55,11 +57,13 @@ const DesktopMonitor = () => {
   );
   const [sessionId, setSessionId] = useState(null);
   const [idle, setIdle] = useState(false);
+  const [attendanceStatus, setAttendanceStatus] = useState("paused");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [lastCapture, setLastCapture] = useState(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const idleSinceRef = useRef(null);
+  const attendanceStatusRef = useRef("paused");
   const checkingRef = useRef(false);
   const startedRef = useRef(false);
   const sessionIdRef = useRef(null);
@@ -68,6 +72,11 @@ const DesktopMonitor = () => {
   const lastTokenRef = useRef(token);
 
   if (token) lastTokenRef.current = token;
+
+  const updateAttendanceStatus = useCallback((status) => {
+    attendanceStatusRef.current = status;
+    setAttendanceStatus(status);
+  }, []);
 
   const startSession = useCallback(async () => {
     if (!token || !employeeId) {
@@ -84,10 +93,11 @@ const DesktopMonitor = () => {
     );
     sessionIdRef.current = result.data.sessionId;
     setSessionId(result.data.sessionId);
+    updateAttendanceStatus("working");
     setConsented(true);
     setError("");
     return result.data.sessionId;
-  }, [employeeId, token]);
+  }, [employeeId, token, updateAttendanceStatus]);
 
   useEffect(() => {
     if (!bridge || !employeeId || !isMonitoringSurface) return undefined;
@@ -191,7 +201,24 @@ const DesktopMonitor = () => {
           }
         }
       } catch (monitorError) {
-        if (active) setError(monitorError.message || "Desktop Monitoring request failed.");
+        if (active && [404, 409].includes(monitorError.status)) {
+          sessionIdRef.current = null;
+          setSessionId(null);
+          setIdle(false);
+          idleSinceRef.current = null;
+          startedRef.current = false;
+          localStorage.setItem(enabledKey, "false");
+          if (!["break", "checked-out"].includes(attendanceStatusRef.current)) {
+            updateAttendanceStatus(
+              monitorError.status === 409
+                ? (monitorError.message.toLowerCase().includes("checked out") ? "checked-out" : "break")
+                : "paused",
+            );
+          }
+          setError("");
+        } else if (active) {
+          setError(monitorError.message || "Desktop Monitoring request failed.");
+        }
       } finally {
         checkingRef.current = false;
       }
@@ -204,7 +231,7 @@ const DesktopMonitor = () => {
       window.clearInterval(timer);
       checkingRef.current = false;
     };
-  }, [bridge, isMonitoringSurface, sessionId, token]);
+  }, [bridge, enabledKey, isMonitoringSurface, sessionId, token, updateAttendanceStatus]);
 
   useEffect(() => {
     if (!token) return undefined;
@@ -310,9 +337,12 @@ const DesktopMonitor = () => {
           { method: "POST" },
         );
       }
+      sessionIdRef.current = null;
       setSessionId(null);
       setIdle(false);
       idleSinceRef.current = null;
+      startedRef.current = false;
+      updateAttendanceStatus(reason === "break" ? "break" : reason === "checked-out" ? "checked-out" : "paused");
       startedRef.current = false;
       if (withdrawConsent) {
         localStorage.removeItem(consentKey);
@@ -323,7 +353,17 @@ const DesktopMonitor = () => {
         localStorage.setItem(enabledKey, "false");
       }
     } catch (stopError) {
-      setError(stopError.message);
+      if (stopError.status === 404) {
+        sessionIdRef.current = null;
+        setSessionId(null);
+        setIdle(false);
+        idleSinceRef.current = null;
+        startedRef.current = false;
+        updateAttendanceStatus(reason === "break" ? "break" : reason === "checked-out" ? "checked-out" : "paused");
+        setError("");
+      } else {
+        setError(stopError.message);
+      }
     } finally {
       setBusy(false);
     }
@@ -337,17 +377,20 @@ const DesktopMonitor = () => {
 
     const stopForBreak = () => {
       localStorage.setItem(enabledKey, "false");
-      stopSessionRef.current?.(false, "paused");
+      updateAttendanceStatus("break");
+      stopSessionRef.current?.(false, "break");
     };
     const startForWork = () => {
       const hasConsent = localStorage.getItem(consentKey) === CONSENT_VERSION;
       if (!hasConsent) return;
       localStorage.setItem(enabledKey, "true");
+      updateAttendanceStatus("working");
       startSessionRef.current?.().catch((startError) => setError(startError.message));
     };
     const stopForCheckout = () => {
       localStorage.setItem(enabledKey, "false");
-      stopSessionRef.current?.(false, "disconnected");
+      updateAttendanceStatus("checked-out");
+      stopSessionRef.current?.(false, "checked-out");
     };
 
     window.addEventListener(DESKTOP_MONITOR_EVENTS.BREAK_STARTED, stopForBreak);
@@ -360,7 +403,7 @@ const DesktopMonitor = () => {
       window.removeEventListener(DESKTOP_MONITOR_EVENTS.CHECKED_IN, startForWork);
       window.removeEventListener(DESKTOP_MONITOR_EVENTS.CHECKED_OUT, stopForCheckout);
     };
-  }, [bridge, consentKey, enabledKey, employeeId, token]);
+  }, [bridge, consentKey, enabledKey, employeeId, token, updateAttendanceStatus]);
 
   useEffect(() => {
     if (!bridge || !employeeId || !token) return undefined;
@@ -382,11 +425,12 @@ const DesktopMonitor = () => {
         const isCheckedIn = todayResponse?.success && todayResponse.isCheckedIn;
         const isOnBreak = breaksResponse?.success && Array.isArray(breaksResponse.data)
           && breaksResponse.data.length > 0;
+        updateAttendanceStatus(isOnBreak ? "break" : isCheckedIn ? "working" : "checked-out");
 
         if (!isCheckedIn || isOnBreak) {
           if (sessionIdRef.current) {
             localStorage.setItem(enabledKey, "false");
-            await stopSessionRef.current?.(false, "paused");
+            await stopSessionRef.current?.(false, isOnBreak ? "break" : "checked-out");
           }
         } else if (localStorage.getItem(enabledKey) !== "false") {
           await startSessionRef.current?.();
@@ -402,7 +446,7 @@ const DesktopMonitor = () => {
       active = false;
       window.clearInterval(timer);
     };
-  }, [bridge, consentKey, enabledKey, employeeId, token]);
+  }, [bridge, consentKey, enabledKey, employeeId, token, updateAttendanceStatus]);
 
   if (!bridge || !isAuthenticated || !isMonitoringSurface || !token || !employeeId) return null;
 
@@ -549,7 +593,13 @@ const DesktopMonitor = () => {
                     }}
                   />
                 </span>
-                {sessionId ? (idle ? "Idle" : "Working") : "Paused"}
+                {sessionId
+                  ? (idle ? "Idle" : "Working")
+                  : attendanceStatus === "break"
+                    ? "On break"
+                    : attendanceStatus === "checked-out"
+                      ? "Checked out"
+                      : "Paused"}
               </span>
               {lastCapture && ` · Last screenshot ${lastCapture.toLocaleTimeString()}`}
             </div>

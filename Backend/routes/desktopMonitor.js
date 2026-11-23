@@ -112,7 +112,7 @@ router.post('/sessions/:sessionId/stop', async (req, res) => {
   if (!employeeId) {
     return res.status(403).json({ success: false, message: 'Employee identity is required' });
   }
-  if (!['paused', 'disconnected'].includes(reason)) {
+  if (!['paused', 'disconnected', 'break', 'checked-out'].includes(reason)) {
     return res.status(400).json({ success: false, message: 'Invalid monitoring session end reason' });
   }
   try {
@@ -123,7 +123,14 @@ router.post('/sessions/:sessionId/stop', async (req, res) => {
       [reason, req.params.sessionId, String(employeeId)],
     );
     if (!result.affectedRows) {
-      return res.status(404).json({ success: false, message: 'Active monitoring session not found' });
+      const [rows] = await pool.query(
+        `SELECT id FROM desktop_monitor_sessions
+         WHERE id = ? AND employee_id = ? LIMIT 1`,
+        [req.params.sessionId, String(employeeId)],
+      );
+      if (!rows.length) {
+        return res.status(404).json({ success: false, message: 'Monitoring session not found' });
+      }
     }
     return res.status(200).json({ success: true });
   } catch (error) {
@@ -285,6 +292,15 @@ router.get('/employees', async (req, res) => {
               ) AS isWorking,
               COALESCE((
                 SELECT CASE
+                  WHEN EXISTS (
+                    SELECT 1
+                    FROM employee_attendance AS attendance
+                    JOIN employee_breaks AS active_break
+                      ON active_break.attendance_id = attendance.id
+                    WHERE attendance.employee_id = CAST(employee.id AS CHAR)
+                      AND attendance.check_out_time IS NULL
+                      AND active_break.break_end_time IS NULL
+                  ) THEN 'break'
                   WHEN latest_session.ended_at IS NULL
                     AND latest_session.last_seen_at >= DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 45 SECOND)
                     THEN COALESCE((
@@ -298,6 +314,8 @@ router.get('/employees', async (req, res) => {
                       LIMIT 1
                     ), 'working')
                   WHEN latest_session.ended_at IS NULL THEN 'disconnected'
+                  WHEN latest_session.ended_reason = 'break' THEN 'break'
+                  WHEN latest_session.ended_reason = 'checked-out' THEN 'checked-out'
                   WHEN latest_session.ended_reason = 'paused' THEN 'paused'
                   ELSE 'disconnected'
                 END
