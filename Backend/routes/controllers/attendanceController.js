@@ -294,58 +294,14 @@ exports.checkIn = async (req, res) => {
       );
 
       if (existingAttendance.length > 0) {
-        if (existingAttendance[0].check_out_time === null) {
-          const [fullRecord] = await connection.query(
-            `SELECT id, check_in_time, created_at FROM employee_attendance WHERE id = ?`,
-            [existingAttendance[0].id],
-          );
+        if (existingAttendance[0].check_out_time === null && !isDeviceSync) {
+          return res.status(409).json({
+            success: false,
+            message: "You are still checked in. Please checkout first.",
+          });
+        }
 
-          if (fullRecord.length > 0) {
-            const createdAt = new Date(fullRecord[0].created_at);
-            const pkNow = getPakistanDate();
-            const currentHourCheck = pkNow.getHours();
-            const currentMinute = pkNow.getMinutes();
-            const isAfter9AM = currentHourCheck >= 9;
-            
-            const createdDate = new Date(createdAt);
-            const currentDate = new Date(pkNow);
-            const isNewShiftAttempt = checkInTotalMinutes >= 21 * 60;
-
-            // Auto-checkout for manual, skip for device sync
-            if ((isAfter9AM || isNewShiftAttempt) && !isDeviceSync) {
-              console.log(`🔧 AUTO-COMPLETING PREVIOUS CHECKOUT`);
-              const autoCheckOutTime = getPakistanTimeString();
-              
-              const [breakResult] = await connection.query(
-                `SELECT total_break_duration_minutes FROM employee_attendance WHERE id = ?`,
-                [existingAttendance[0].id],
-              );
-              const breakMinutes = breakResult[0]?.total_break_duration_minutes || 0;
-              const workingHours = calculateWorkingHours(
-                fullRecord[0].check_in_time,
-                autoCheckOutTime,
-                breakMinutes,
-              );
-
-              await connection.query(
-                `UPDATE employee_attendance 
-                 SET check_out_time = ?, 
-                     gross_working_time_minutes = ?,
-                     net_working_time_minutes = ?,
-                     overtime_minutes = ?,
-                     overtime_hours = ?
-                 WHERE id = ?`,
-                [autoCheckOutTime, workingHours.gross, workingHours.net, workingHours.overtime, workingHours.overtimeHours, existingAttendance[0].id],
-              );
-              console.log(`✅ Previous checkout auto-completed at ${autoCheckOutTime}`);
-            } else if (!isDeviceSync) {
-              return res.status(409).json({
-                success: false,
-                message: "You are still checked in. Please checkout first.",
-              });
-            }
-          }
-        } else if (!isDeviceSync) {
+        if (existingAttendance[0].check_out_time !== null && !isDeviceSync) {
           return res.status(409).json({
             success: false,
             message: "Already checked in today",

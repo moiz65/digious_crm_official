@@ -12,8 +12,7 @@ const Attendance = () => {
   const [activeItem, setActiveItem] = useState("profile");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [employeeId, setEmployeeId] = useState(null);
-
-  // Get logged-in user's employee ID
+  
   useEffect(() => {
     const loadEmployeeId = () => {
       try {
