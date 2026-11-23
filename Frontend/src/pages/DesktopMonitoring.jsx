@@ -432,14 +432,34 @@ const DesktopMonitoring = () => {
                             Loading {activeActivityTab === "idle" ? "idle activity" : "screenshots"}...
                           </p>
                         ) : activeActivityTab === "idle" ? (
-                          <div>
+                          <div className="space-y-3">
                             <div className="rounded-xl bg-amber-50 p-4">
-                              <p className="text-xs font-medium text-amber-700">Total idle time in range</p>
+                              <p className="text-xs font-medium text-amber-700">
+                                Total inactivity in range
+                              </p>
                               <p className="mt-1 text-2xl font-bold text-amber-900">
-                                {formatDuration(activity?.totalIdleSeconds)}
+                                {formatDuration(activity?.totalInactivitySeconds)}
+                              </p>
+                              <p className="mt-1 text-xs text-amber-700">
+                                Desktop idle: {formatDuration(activity?.totalIdleSeconds)}
+                                {" · "}
+                                Break overrun: {formatDuration(
+                                  (Number(activity?.breakInactivityMinutes) || 0) * 60,
+                                )}
                               </p>
                               <p className="mt-1 text-xs text-amber-700">
                                 {idleEvents.length} idle {idleEvents.length === 1 ? "period" : "periods"}
+                              </p>
+                            </div>
+                            <div className="rounded-xl bg-green-50 p-4">
+                              <p className="text-xs font-medium text-green-700">
+                                Productive hours in range
+                              </p>
+                              <p className="mt-1 text-2xl font-bold text-green-900">
+                                {formatDuration(activity?.productiveSeconds)}
+                              </p>
+                              <p className="mt-1 text-xs text-green-700">
+                                Net attendance time minus desktop idle
                               </p>
                             </div>
                             <h4 className="mt-5 text-xs font-bold uppercase tracking-wider text-slate-400">

@@ -247,7 +247,10 @@ describe('desktop monitor API', () => {
     pool.query
       .mockResolvedValueOnce([screenshotRows, []])
       .mockResolvedValueOnce([idleRows, []])
-      .mockResolvedValueOnce([[{ totalIdleSeconds: '240' }], []]);
+      .mockResolvedValueOnce([[{ totalIdleSeconds: '240' }], []])
+      .mockResolvedValueOnce([[
+        { breakInactivityMinutes: '15', netWorkingMinutes: '300' },
+      ], []]);
 
     const response = await fetch(`${baseUrl}/employees/7/activity`);
     const result = await response.json();
@@ -257,8 +260,11 @@ describe('desktop monitor API', () => {
       screenshots: screenshotRows,
       idleEvents: idleRows,
       totalIdleSeconds: 240,
+      breakInactivityMinutes: 15,
+      totalInactivitySeconds: 1140,
+      productiveSeconds: 17760,
     });
-    expect(pool.query).toHaveBeenCalledTimes(3);
+    expect(pool.query).toHaveBeenCalledTimes(4);
     expect(pool.query).toHaveBeenCalledWith(
       expect.stringContaining('FROM desktop_monitor_screenshots'),
       ['7'],
@@ -272,7 +278,10 @@ describe('desktop monitor API', () => {
     pool.query
       .mockResolvedValueOnce([screenshotRows, []])
       .mockResolvedValueOnce([idleRows, []])
-      .mockResolvedValueOnce([[{ totalIdleSeconds: '240' }], []]);
+      .mockResolvedValueOnce([[{ totalIdleSeconds: '240' }], []])
+      .mockResolvedValueOnce([[
+        { breakInactivityMinutes: '10', netWorkingMinutes: '300' },
+      ], []]);
 
     const response = await fetch(
       `${baseUrl}/employees/7/activity?from=2026-11-09&to=2026-11-10`,
@@ -281,6 +290,9 @@ describe('desktop monitor API', () => {
 
     expect(response.status).toBe(200);
     expect(result.data.totalIdleSeconds).toBe(240);
+    expect(result.data.totalInactivitySeconds).toBe(840);
+    expect(result.data.breakInactivityMinutes).toBe(10);
+    expect(result.data.productiveSeconds).toBe(17760);
     expect(pool.query).toHaveBeenNthCalledWith(
       1,
       expect.stringContaining('captured_at < DATE_ADD(?, INTERVAL 1 DAY)'),
@@ -294,6 +306,11 @@ describe('desktop monitor API', () => {
     expect(pool.query).toHaveBeenNthCalledWith(
       3,
       expect.stringContaining('occurred_at < DATE_ADD(?, INTERVAL 1 DAY)'),
+      ['7', '2026-11-09', '2026-11-10'],
+    );
+    expect(pool.query).toHaveBeenNthCalledWith(
+      4,
+      expect.stringContaining('attendance_date >= ? AND attendance_date <= ?'),
       ['7', '2026-11-09', '2026-11-10'],
     );
   });
