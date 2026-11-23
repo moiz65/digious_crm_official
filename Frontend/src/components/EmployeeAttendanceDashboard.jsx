@@ -797,8 +797,8 @@ const EmployeeAttendanceDashboard = () => {
 
         return {
           date,
-          productiveHours: Number((productiveMinutes / 60).toFixed(2)),
-          inactivityHours: Number((totalInactivityMinutes / 60).toFixed(2)),
+          productiveMinutes,
+          inactivityMinutes: totalInactivityMinutes,
         };
       });
   };
@@ -1648,15 +1648,21 @@ const EmployeeAttendanceDashboard = () => {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="date" />
                   <YAxis
+                    tickFormatter={(value) => formatTimeDisplay(Math.round(value))}
                     label={{
-                      value: "Hours",
+                      value: "Duration",
                       angle: -90,
                       position: "insideLeft",
                     }}
                   />
-                  <Tooltip formatter={(value, name) => [`${value}h`, name]} />
-                  <Bar dataKey="productiveHours" fill="#22c55e" name="Productive" />
-                  <Bar dataKey="inactivityHours" fill="#ef4444" name="Inactivity" />
+                  <Tooltip
+                    formatter={(value, name) => [
+                      formatTimeDisplay(Math.round(value)),
+                      name,
+                    ]}
+                  />
+                  <Bar dataKey="productiveMinutes" fill="#22c55e" name="Productive" />
+                  <Bar dataKey="inactivityMinutes" fill="#ef4444" name="Inactivity" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
