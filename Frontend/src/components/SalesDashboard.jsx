@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import { TrendingUp, Users, CheckCircle, XCircle, RefreshCw, Calendar, DollarSign, FileText, Target, Clock, LogIn, LogOut } from 'lucide-react';
 import { useAttendance } from '../hooks/UseAttendance';
 import TopNavMenu from './TopNavMenu';
+import { emitDesktopMonitorEvent, DESKTOP_MONITOR_EVENTS } from '../utils/desktopMonitoringEvents';
 
 export function SalesDashboard() {
   // State management
@@ -48,6 +49,7 @@ export function SalesDashboard() {
 
     try {
       const result = await handleSystemCheckIn();
+      emitDesktopMonitorEvent(DESKTOP_MONITOR_EVENTS.CHECKED_IN);
       
       // Update sales data on check-in
       setSalesData(prev => ({
@@ -74,6 +76,7 @@ export function SalesDashboard() {
 
     try {
       const result = await handleSystemCheckOut();
+      emitDesktopMonitorEvent(DESKTOP_MONITOR_EVENTS.CHECKED_OUT);
       
       // Update sales data on check-out
       setSalesData(prev => ({

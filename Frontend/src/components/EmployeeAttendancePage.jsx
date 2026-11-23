@@ -6,6 +6,7 @@ import { useAuth } from "../context/AuthContext";
 import { endpoints } from "../config/api";
 import { getPakistanDate } from "../utils/timezone";
 import { getBreakElapsedSeconds } from "../utils/breakTimer";
+import { emitDesktopMonitorEvent, DESKTOP_MONITOR_EVENTS } from "../utils/desktopMonitoringEvents";
 import {
   CheckCircle,
   Clock,
@@ -847,6 +848,7 @@ const HRMyAttendance = () => {
       if (data.success) {
         console.log("[SUCCESS] Check-in successful:", data);
         setIsCheckedIn(true);
+        emitDesktopMonitorEvent(DESKTOP_MONITOR_EVENTS.CHECKED_IN);
         await fetchTodayAttendance();
         await fetchPendingCheckout();
         await fetchMonthlyAttendance();
@@ -886,6 +888,7 @@ const HRMyAttendance = () => {
         console.log("[SUCCESS] Check-out successful:", data);
         toast.success("Checked out successfully");
         setIsCheckedIn(false);
+        emitDesktopMonitorEvent(DESKTOP_MONITOR_EVENTS.CHECKED_OUT);
         await fetchTodayAttendance();
         await fetchPendingCheckout();
         await fetchMonthlyAttendance();
@@ -917,6 +920,7 @@ const HRMyAttendance = () => {
 
       const data = await response.json();
       if (data.success) {
+        emitDesktopMonitorEvent(DESKTOP_MONITOR_EVENTS.BREAK_STARTED);
         fetchActiveBreaks();
       } else {
         toast.error(data.message || "Failed to start break");
@@ -957,6 +961,7 @@ const HRMyAttendance = () => {
 
       const data = await response.json();
       if (data.success) {
+        emitDesktopMonitorEvent(DESKTOP_MONITOR_EVENTS.BREAK_ENDED);
         fetchActiveBreaks();
         fetchTodayAttendance();
       } else {

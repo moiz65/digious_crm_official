@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, Monitor } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { config } from "../config/api";
 import { blurScreenshot } from "../utils/blurScreenshot";
+import { DESKTOP_MONITOR_EVENTS } from "../utils/desktopMonitoringEvents";
 
 const CONSENT_VERSION = "desktop-monitor-v2";
 const IDLE_THRESHOLD_SECONDS = 3 * 60;
@@ -61,6 +62,9 @@ const DesktopMonitor = () => {
   const idleSinceRef = useRef(null);
   const checkingRef = useRef(false);
   const startedRef = useRef(false);
+  const sessionIdRef = useRef(null);
+  const startSessionRef = useRef(null);
+  const stopSessionRef = useRef(null);
   const lastTokenRef = useRef(token);
 
   if (token) lastTokenRef.current = token;
@@ -69,6 +73,7 @@ const DesktopMonitor = () => {
     if (!token || !employeeId) {
       throw new Error("Please sign in again before enabling desktop monitoring.");
     }
+    if (sessionIdRef.current) return sessionIdRef.current;
     const result = await requestJson(
       `${config.FULL_API_URL}/desktop-monitor/sessions`,
       token,
@@ -77,9 +82,11 @@ const DesktopMonitor = () => {
         body: JSON.stringify({ consentVersion: CONSENT_VERSION }),
       },
     );
+    sessionIdRef.current = result.data.sessionId;
     setSessionId(result.data.sessionId);
     setConsented(true);
     setError("");
+    return result.data.sessionId;
   }, [employeeId, token]);
 
   useEffect(() => {
@@ -242,6 +249,7 @@ const DesktopMonitor = () => {
       },
       ...(currentSession ? { body: JSON.stringify({ reason: "disconnected" }) } : {}),
     }).catch((stopError) => console.error("Could not close desktop monitoring session", stopError));
+    sessionIdRef.current = null;
     setSessionId(null);
     return undefined;
   }, [sessionId, token]);
@@ -320,6 +328,81 @@ const DesktopMonitor = () => {
       setBusy(false);
     }
   };
+
+  startSessionRef.current = startSession;
+  stopSessionRef.current = stopSession;
+
+  useEffect(() => {
+    if (!bridge || !employeeId || !token) return undefined;
+
+    const stopForBreak = () => {
+      localStorage.setItem(enabledKey, "false");
+      stopSessionRef.current?.(false, "paused");
+    };
+    const startForWork = () => {
+      const hasConsent = localStorage.getItem(consentKey) === CONSENT_VERSION;
+      if (!hasConsent) return;
+      localStorage.setItem(enabledKey, "true");
+      startSessionRef.current?.().catch((startError) => setError(startError.message));
+    };
+    const stopForCheckout = () => {
+      localStorage.setItem(enabledKey, "false");
+      stopSessionRef.current?.(false, "disconnected");
+    };
+
+    window.addEventListener(DESKTOP_MONITOR_EVENTS.BREAK_STARTED, stopForBreak);
+    window.addEventListener(DESKTOP_MONITOR_EVENTS.BREAK_ENDED, startForWork);
+    window.addEventListener(DESKTOP_MONITOR_EVENTS.CHECKED_IN, startForWork);
+    window.addEventListener(DESKTOP_MONITOR_EVENTS.CHECKED_OUT, stopForCheckout);
+    return () => {
+      window.removeEventListener(DESKTOP_MONITOR_EVENTS.BREAK_STARTED, stopForBreak);
+      window.removeEventListener(DESKTOP_MONITOR_EVENTS.BREAK_ENDED, startForWork);
+      window.removeEventListener(DESKTOP_MONITOR_EVENTS.CHECKED_IN, startForWork);
+      window.removeEventListener(DESKTOP_MONITOR_EVENTS.CHECKED_OUT, stopForCheckout);
+    };
+  }, [bridge, consentKey, enabledKey, employeeId, token]);
+
+  useEffect(() => {
+    if (!bridge || !employeeId || !token) return undefined;
+    let active = true;
+
+    const syncWithAttendance = async () => {
+      const hasConsent = localStorage.getItem(consentKey) === CONSENT_VERSION;
+      if (!hasConsent) return;
+      try {
+        const [todayResponse, breaksResponse] = await Promise.all([
+          fetch(`${config.FULL_API_URL}/attendance/today/${employeeId}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }).then((response) => response.json()),
+          fetch(`${config.FULL_API_URL}/attendance/ongoing-breaks/${employeeId}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }).then((response) => response.json()),
+        ]);
+        if (!active) return;
+        const isCheckedIn = todayResponse?.success && todayResponse.isCheckedIn;
+        const isOnBreak = breaksResponse?.success && Array.isArray(breaksResponse.data)
+          && breaksResponse.data.length > 0;
+
+        if (!isCheckedIn || isOnBreak) {
+          if (sessionIdRef.current) {
+            localStorage.setItem(enabledKey, "false");
+            await stopSessionRef.current?.(false, "paused");
+          }
+        } else if (localStorage.getItem(enabledKey) !== "false") {
+          await startSessionRef.current?.();
+        }
+      } catch (syncError) {
+        console.error("Could not sync desktop monitoring with attendance:", syncError);
+      }
+    };
+
+    syncWithAttendance();
+    const timer = window.setInterval(syncWithAttendance, 30000);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
+  }, [bridge, consentKey, enabledKey, employeeId, token]);
 
   if (!bridge || !isAuthenticated || !isMonitoringSurface || !token || !employeeId) return null;
 

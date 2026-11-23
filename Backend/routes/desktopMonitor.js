@@ -55,6 +55,31 @@ async function findOwnedSession(sessionId, employeeId) {
   return rows[0] || null;
 }
 
+async function isEmployeeUnavailableForMonitoring(employeeId) {
+  const [breakRows] = await pool.query(
+    `SELECT 1
+       FROM employee_attendance a
+       JOIN employee_breaks b ON b.attendance_id = a.id
+      WHERE a.employee_id = ?
+        AND a.check_out_time IS NULL
+        AND b.break_end_time IS NULL
+      LIMIT 1`,
+    [String(employeeId)],
+  );
+  if (breakRows.length) return { unavailable: true, reason: 'break' };
+
+  const [checkoutRows] = await pool.query(
+    `SELECT 1
+       FROM employee_attendance
+      WHERE employee_id = ? AND check_out_time IS NULL
+      LIMIT 1`,
+    [String(employeeId)],
+  );
+  return checkoutRows.length
+    ? { unavailable: false, reason: null }
+    : { unavailable: true, reason: 'checked-out' };
+}
+
 router.use(authMiddleware);
 
 router.post('/sessions', async (req, res) => {
@@ -164,6 +189,15 @@ router.post('/sessions/:sessionId/events', async (req, res) => {
     if (!await findOwnedSession(req.params.sessionId, String(employeeId))) {
       return res.status(404).json({ success: false, message: 'Active monitoring session not found' });
     }
+    const availability = await isEmployeeUnavailableForMonitoring(String(employeeId));
+    if (availability.unavailable) {
+      return res.status(409).json({
+        success: false,
+        message: availability.reason === 'break'
+          ? 'Desktop monitoring is paused during breaks'
+          : 'Desktop monitoring is unavailable while checked out',
+      });
+    }
     await pool.query(
       `INSERT INTO desktop_monitor_events (session_id, employee_id, event_type, idle_seconds)
        VALUES (?, ?, ?, ?)`,
@@ -195,6 +229,15 @@ router.post('/sessions/:sessionId/screenshots', parseScreenshot, async (req, res
   try {
     if (!await findOwnedSession(req.params.sessionId, String(employeeId))) {
       return res.status(404).json({ success: false, message: 'Active monitoring session not found' });
+    }
+    const availability = await isEmployeeUnavailableForMonitoring(String(employeeId));
+    if (availability.unavailable) {
+      return res.status(409).json({
+        success: false,
+        message: availability.reason === 'break'
+          ? 'Desktop monitoring is paused during breaks'
+          : 'Desktop monitoring is unavailable while checked out',
+      });
     }
 
     await fs.mkdir(screenshotDirectory, { recursive: true });

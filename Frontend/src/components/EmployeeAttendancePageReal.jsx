@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { endpoints } from '../config/api';
 import { getPakistanTimeString } from '../utils/timezone';
+import { emitDesktopMonitorEvent, DESKTOP_MONITOR_EVENTS } from '../utils/desktopMonitoringEvents';
 import {
   Clock, LogIn, LogOut, Coffee, Calendar, AlertCircle, CheckCircle,
   TrendingUp, Users, Download, Filter, RefreshCw, Cigarette, Utensils,
@@ -117,6 +118,7 @@ export function EmployeeAttendancePage() {
       if (data.success) {
         toast.success('Check In Successful');
         setCheckedIn(true);
+        emitDesktopMonitorEvent(DESKTOP_MONITOR_EVENTS.CHECKED_IN);
         fetchTodayAttendance();
       } else {
         toast.error(data.message);
@@ -149,6 +151,7 @@ export function EmployeeAttendancePage() {
       if (data.success) {
         toast.success('Check Out Successful');
         setCheckedOut(true);
+        emitDesktopMonitorEvent(DESKTOP_MONITOR_EVENTS.CHECKED_OUT);
         fetchTodayAttendance();
       } else {
         toast.error(data.message);

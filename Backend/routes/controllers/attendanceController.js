@@ -839,6 +839,12 @@ exports.checkOut = async (req, res) => {
       console.log(
         `[SUCCESS] Check Out: Employee ${employee_id} at ${checkOutTime}`,
       );
+      await pool.query(
+        `UPDATE desktop_monitor_sessions
+         SET ended_at = CURRENT_TIMESTAMP, ended_reason = 'disconnected'
+         WHERE employee_id = ? AND ended_at IS NULL`,
+        [String(employee_id)],
+      );
 
       res.status(200).json({
         success: true,
@@ -1124,6 +1130,12 @@ exports.recordBreakStart = async (req, res) => {
         `✅ Break START recorded: ${break_type} for employee ${employee_id} at ${breakStart}`,
       );
       console.log(`   Break ID: ${breakResult.insertId}`);
+      await pool.query(
+        `UPDATE desktop_monitor_sessions
+         SET ended_at = CURRENT_TIMESTAMP, ended_reason = 'paused'
+         WHERE employee_id = ? AND ended_at IS NULL`,
+        [String(employee_id)],
+      );
 
       res.status(201).json({
         success: true,
