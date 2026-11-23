@@ -97,6 +97,10 @@ const EmployeeAttendanceDashboard = () => {
       fetchMonthlyAttendance(),
       fetchLeaveBalance(),
     ]).catch((err) => console.error("Initial fetch error:", err));
+    const attendanceRefresh = setInterval(() => {
+      fetchTodayAttendance(false);
+    }, 30000);
+    return () => clearInterval(attendanceRefresh);
   }, []);
 
   useEffect(() => {
@@ -176,14 +180,14 @@ const EmployeeAttendanceDashboard = () => {
     }
   };
 
-  const fetchTodayAttendance = async () => {
+  const fetchTodayAttendance = async (showLoading = true) => {
     try {
-      setLoading(true);
+      if (showLoading) setLoading(true);
       const token = localStorage.getItem("token");
       const employeeId = getEmployeeId();
 
       if (!employeeId) {
-        setLoading(false);
+        if (showLoading) setLoading(false);
         return;
       }
 
@@ -199,6 +203,12 @@ const EmployeeAttendanceDashboard = () => {
         const todayRecord = data.data;
         console.log("[SUCCESS] Today attendance data:", todayRecord);
         setAttendanceData(todayRecord);
+        setMonthlyAttendance((records) => records.map((record) => (
+          String(record.attendance_date).slice(0, 10)
+            === String(todayRecord.attendance_date).slice(0, 10)
+            ? { ...record, ...todayRecord }
+            : record
+        )));
         setIsCheckedIn(
           data.isCheckedIn ||
             (todayRecord.check_in_time && !todayRecord.check_out_time),
@@ -209,7 +219,7 @@ const EmployeeAttendanceDashboard = () => {
     } catch (error) {
       console.error("Error fetching attendance:", error);
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
@@ -746,6 +756,53 @@ const EmployeeAttendanceDashboard = () => {
         ];
   };
 
+  const getProductivityChartData = () => {
+    const today = new Date();
+    const dailyHours = new Map(
+      getMonthlyChartData().map((record) => [record.date, record.total || 0]),
+    );
+
+    return monthlyAttendance
+      .filter((record) => {
+        const recordDate = parseAttendanceDate(record.attendance_date);
+        return recordDate.getFullYear() === today.getFullYear()
+          && recordDate.getMonth() === today.getMonth()
+          && recordDate.getDate() <= today.getDate();
+      })
+      .map((record) => {
+        const recordDate = parseAttendanceDate(record.attendance_date);
+        const date = recordDate.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        });
+        const totalBreakMinutes = Number(record.total_break_duration_minutes) || 0;
+        const breakInactivityMinutes = Number(record.break_inactivity_minutes) || 0;
+        const desktopIdleMinutes = Number(record.desktop_idle_minutes) || 0;
+        const totalInactivityMinutes = Number(record.total_inactivity_minutes) || 0;
+        const isCurrentSession = recordDate.toDateString() === today.toDateString()
+          && record.check_in_time
+          && !record.check_out_time;
+        const grossMinutes = isCurrentSession
+          ? (dailyHours.get(date) || 0) + totalBreakMinutes
+          : Number(record.gross_working_time_minutes)
+            || (Number(record.net_working_time_minutes) + totalBreakMinutes + breakInactivityMinutes)
+            || 0;
+        const productiveMinutes = Math.max(
+          0,
+          grossMinutes
+            - totalBreakMinutes
+            - breakInactivityMinutes
+            - desktopIdleMinutes,
+        );
+
+        return {
+          date,
+          productiveHours: Number((productiveMinutes / 60).toFixed(2)),
+          inactivityHours: Number((totalInactivityMinutes / 60).toFixed(2)),
+        };
+      });
+  };
+
   const getStatusDistribution = () => {
     const statusCount = monthlyAttendance.reduce((acc, record) => {
       acc[record.status] = (acc[record.status] || 0) + 1;
@@ -947,7 +1004,7 @@ const EmployeeAttendanceDashboard = () => {
                   </p>
                   <p className="text-[10px] text-gray-500">
                     {attendanceData?.total_inactivity_minutes > 0
-                      ? "⚠️ Extra time"
+                      ? "⚠️ Break overrun + desktop idle"
                       : "No inactivity"}
                   </p>
                 </div>
@@ -956,7 +1013,8 @@ const EmployeeAttendanceDashboard = () => {
               {(attendanceData?.smoke_inactivity_minutes > 0 ||
                 attendanceData?.dinner_inactivity_minutes > 0 ||
                 attendanceData?.washroom_inactivity_minutes > 0 ||
-                attendanceData?.prayer_inactivity_minutes > 0) && (
+                attendanceData?.prayer_inactivity_minutes > 0 ||
+                attendanceData?.desktop_idle_minutes > 0) && (
                 <div className="mt-3 pt-2 border-t border-red-200">
                   <div className="flex flex-wrap gap-2 text-[10px]">
                     {attendanceData?.smoke_inactivity_minutes > 0 && (
@@ -996,6 +1054,14 @@ const EmployeeAttendanceDashboard = () => {
                           {formatTimeDisplay(
                             attendanceData.prayer_inactivity_minutes,
                           )}
+                        </span>
+                      </span>
+                    )}
+                    {attendanceData?.desktop_idle_minutes > 0 && (
+                      <span className="flex items-center gap-1">
+                        <span className="text-red-500">Desktop idle:</span>
+                        <span className="font-medium">
+                          {formatTimeDisplay(attendanceData.desktop_idle_minutes)}
                         </span>
                       </span>
                     )}
@@ -1573,6 +1639,28 @@ const EmployeeAttendanceDashboard = () => {
 
           {/* Charts Section */}
           <div className="space-y-6 mt-8">
+            <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
+              <h3 className="text-lg font-bold text-gray-900 mb-6">
+                Daily Productivity
+              </h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={getProductivityChartData()}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" />
+                  <YAxis
+                    label={{
+                      value: "Hours",
+                      angle: -90,
+                      position: "insideLeft",
+                    }}
+                  />
+                  <Tooltip formatter={(value, name) => [`${value}h`, name]} />
+                  <Bar dataKey="productiveHours" fill="#22c55e" name="Productive" />
+                  <Bar dataKey="inactivityHours" fill="#ef4444" name="Inactivity" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
             {/* Chart View Filter */}
             <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
               <div className="flex items-center justify-between mb-6">

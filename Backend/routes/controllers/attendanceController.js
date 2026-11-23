@@ -27,6 +27,98 @@ const getLocalDateString = (date) => {
   return `${year}-${month}-${day}`;
 };
 
+const getDesktopIdleSecondsByAttendanceDate = async (
+  connection,
+  employeeId,
+  fromDate,
+  toDate,
+) => {
+  const [rows] = await connection.query(
+    `SELECT idle_segments.attendance_date AS attendanceDate,
+            SUM(idle_segments.idle_seconds) AS idleSeconds
+     FROM (
+       SELECT DATE(
+                CASE
+                  WHEN TIME(COALESCE(started.occurred_at, ended.occurred_at)) < '09:00:00'
+                    THEN DATE_SUB(COALESCE(started.occurred_at, ended.occurred_at), INTERVAL 1 DAY)
+                  ELSE COALESCE(started.occurred_at, ended.occurred_at)
+                END
+              ) AS attendance_date,
+              COALESCE(ended.idle_seconds, 0) AS idle_seconds
+       FROM desktop_monitor_events AS ended
+       LEFT JOIN desktop_monitor_events AS started
+         ON started.id = (
+           SELECT candidate.id
+           FROM desktop_monitor_events AS candidate
+           WHERE candidate.session_id = ended.session_id
+             AND candidate.employee_id = ended.employee_id
+             AND candidate.event_type = 'idle_started'
+             AND candidate.occurred_at <= ended.occurred_at
+           ORDER BY candidate.occurred_at DESC, candidate.id DESC
+           LIMIT 1
+         )
+       WHERE ended.employee_id = ?
+         AND ended.event_type = 'idle_ended'
+         AND ended.occurred_at >= ?
+         AND ended.occurred_at < DATE_ADD(?, INTERVAL 2 DAY)
+
+       UNION ALL
+
+       SELECT DATE(
+                CASE
+                  WHEN TIME(started.occurred_at) < '09:00:00'
+                    THEN DATE_SUB(started.occurred_at, INTERVAL 1 DAY)
+                  ELSE started.occurred_at
+                END
+              ) AS attendance_date,
+              GREATEST(
+                0,
+                TIMESTAMPDIFF(
+                  SECOND,
+                  started.occurred_at,
+                  COALESCE(monitor_session.ended_at, CURRENT_TIMESTAMP)
+                )
+              ) AS idle_seconds
+       FROM desktop_monitor_events AS started
+       JOIN desktop_monitor_sessions AS monitor_session
+         ON monitor_session.id = started.session_id
+        AND monitor_session.employee_id = started.employee_id
+       WHERE started.employee_id = ?
+         AND started.event_type = 'idle_started'
+         AND started.occurred_at >= ?
+         AND started.occurred_at < DATE_ADD(?, INTERVAL 2 DAY)
+         AND NOT EXISTS (
+           SELECT 1
+           FROM desktop_monitor_events AS ended
+           WHERE ended.session_id = started.session_id
+             AND ended.employee_id = started.employee_id
+             AND ended.event_type = 'idle_ended'
+             AND ended.id > started.id
+         )
+     ) AS idle_segments
+     WHERE idle_segments.attendance_date BETWEEN ? AND ?
+     GROUP BY idle_segments.attendance_date`,
+    [
+      String(employeeId),
+      fromDate,
+      toDate,
+      String(employeeId),
+      fromDate,
+      toDate,
+      fromDate,
+      toDate,
+    ],
+  );
+  return new Map(
+    rows.map((row) => [
+      row.attendanceDate instanceof Date
+        ? formatCalendarDate(row.attendanceDate)
+        : String(row.attendanceDate).slice(0, 10),
+      Number(row.idleSeconds) || 0,
+    ]),
+  );
+};
+
 // ============================================================
 // HELPER FUNCTION: Calculate working hours for any check-in/out
 // ============================================================
@@ -2218,6 +2310,15 @@ exports.getTodayAttendance = async (req, res) => {
           : new Date(record.attendance_date);
       const localDateStr = getLocalDateString(d);
       const isCheckedIn = record.check_out_time === null;
+      const idleSecondsByDate = await getDesktopIdleSecondsByAttendanceDate(
+        connection,
+        finalEmployeeId,
+        localDateStr,
+        localDateStr,
+      );
+      const desktopIdleSeconds = idleSecondsByDate.get(localDateStr) || 0;
+      const desktopIdleMinutes = Math.floor(desktopIdleSeconds / 60);
+      const breakInactivityMinutes = Number(record.total_inactivity_minutes) || 0;
 
       // Calculate current session minutes
       let currentSessionMinutes = 0;
@@ -2265,7 +2366,14 @@ exports.getTodayAttendance = async (req, res) => {
         attendance_date: localDateStr,
         check_in_time: record.check_in_time,
         check_out_time: record.check_out_time || null,
-        total_inactivity_minutes: record.total_inactivity_minutes || 0,
+        break_inactivity_minutes: breakInactivityMinutes,
+        desktop_idle_seconds: desktopIdleSeconds,
+        desktop_idle_minutes: desktopIdleMinutes,
+        total_inactivity_minutes: breakInactivityMinutes + desktopIdleMinutes,
+        productive_working_time_minutes: Math.max(
+          0,
+          (Number(record.net_working_time_minutes) || 0) - desktopIdleMinutes,
+        ),
         smoke_inactivity_minutes: record.smoke_inactivity_minutes || 0,
         dinner_inactivity_minutes: record.dinner_inactivity_minutes || 0,
         washroom_inactivity_minutes: record.washroom_inactivity_minutes || 0,
@@ -2310,6 +2418,8 @@ exports.getMonthlyAttendance = async (req, res) => {
     const pkDate = getPakistanDate(); // USE PAKISTAN TIMEZONE
     const currentYear = year ? parseInt(year) : pkDate.getFullYear();
     const currentMonth = month ? parseInt(month) : pkDate.getMonth() + 1;
+    const monthStart = `${currentYear}-${String(currentMonth).padStart(2, "0")}-01`;
+    const monthEnd = `${currentYear}-${String(currentMonth).padStart(2, "0")}-${String(new Date(currentYear, currentMonth, 0).getDate()).padStart(2, "0")}`;
 
     const connection = await pool.getConnection();
 
@@ -2343,6 +2453,12 @@ exports.getMonthlyAttendance = async (req, res) => {
          WHERE employee_id = ? AND YEAR(attendance_date) = ? AND MONTH(attendance_date) = ?
          ORDER BY attendance_date ASC`,
         [finalEmployeeId, currentYear, currentMonth],
+      );
+      const desktopIdleSecondsByDate = await getDesktopIdleSecondsByAttendanceDate(
+        connection,
+        finalEmployeeId,
+        monthStart,
+        monthEnd,
       );
 
       // Format dates immediately after database retrieval to ensure consistency
@@ -2420,8 +2536,6 @@ exports.getMonthlyAttendance = async (req, res) => {
         }
       }
 
-      const monthStart = `${currentYear}-${String(currentMonth).padStart(2, "0")}-01`;
-      const monthEnd = `${currentYear}-${String(currentMonth).padStart(2, "0")}-${String(new Date(currentYear, currentMonth, 0).getDate()).padStart(2, "0")}`;
       const calendarEntries = await getCompanyCalendarEntries(
         monthStart,
         monthEnd,
@@ -2521,6 +2635,21 @@ exports.getMonthlyAttendance = async (req, res) => {
             ? b.attendance_date
             : new Date(b.attendance_date);
         return dateA - dateB;
+      });
+
+      monthlyData.forEach((record) => {
+        const attendanceDate = String(record.attendance_date).slice(0, 10);
+        const breakInactivityMinutes = Number(record.total_inactivity_minutes) || 0;
+        const desktopIdleSeconds = desktopIdleSecondsByDate.get(attendanceDate) || 0;
+        const desktopIdleMinutes = Math.floor(desktopIdleSeconds / 60);
+        record.break_inactivity_minutes = breakInactivityMinutes;
+        record.desktop_idle_seconds = desktopIdleSeconds;
+        record.desktop_idle_minutes = desktopIdleMinutes;
+        record.total_inactivity_minutes = breakInactivityMinutes + desktopIdleMinutes;
+        record.productive_working_time_minutes = Math.max(
+          0,
+          (Number(record.net_working_time_minutes) || 0) - desktopIdleMinutes,
+        );
       });
 
       // Convert dates to proper format for frontend
