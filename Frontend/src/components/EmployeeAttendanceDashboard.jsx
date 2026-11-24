@@ -1610,15 +1610,20 @@ const EmployeeAttendanceDashboard = () => {
 
           {/* Charts Section */}
           <div className="space-y-6 mt-8">
-            <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
-              <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-                <h3 className="text-lg font-bold text-gray-900">
-                  Daily Productivity
-                </h3>
-                <div className="flex flex-wrap items-center gap-2">
+            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-br from-white via-white to-slate-50 p-6 shadow-xl">
+              <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900">
+                    Daily Productivity
+                  </h3>
+                  <p className="mt-1 text-sm text-slate-500">
+                    Compare working, productive, and unproductive time by day
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-3">
                   <label
                     htmlFor="productivity-month"
-                    className="text-sm font-medium text-gray-600"
+                    className="text-sm font-medium text-slate-600"
                   >
                     Month
                   </label>
@@ -1632,10 +1637,10 @@ const EmployeeAttendanceDashboard = () => {
                         setProductivityMonth(event.target.value);
                       }
                     }}
-                    className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700"
+                    className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
                   />
                   <div
-                    className="flex gap-2"
+                    className="inline-flex gap-1 rounded-xl bg-slate-100 p-1"
                     role="group"
                     aria-label="Daily productivity chart type"
                   >
@@ -1645,10 +1650,10 @@ const EmployeeAttendanceDashboard = () => {
                         type="button"
                         aria-pressed={productivityChartType === type}
                         onClick={() => setProductivityChartType(type)}
-                        className={`px-3 py-1.5 rounded-lg font-semibold transition-all text-sm ${
+                        className={`rounded-lg px-3 py-1.5 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 ${
                           productivityChartType === type
-                            ? "bg-blue-500 text-white shadow-lg"
-                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                            ? "bg-white text-blue-700 shadow-sm"
+                            : "text-slate-500 hover:bg-white/70 hover:text-slate-800"
                         }`}
                       >
                         {type === "bar" ? "Bar" : "Line"}
@@ -1670,13 +1675,46 @@ const EmployeeAttendanceDashboard = () => {
                   No productivity data for this month.
                 </p>
               ) : (
-                <ResponsiveContainer width="100%" height={300}>
+                <ResponsiveContainer width="100%" height={340}>
                   {productivityChartType === "bar" ? (
-                    <BarChart data={productivityChartData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" />
+                    <BarChart
+                      data={productivityChartData}
+                      margin={{ top: 12, right: 12, left: 8, bottom: 8 }}
+                      barCategoryGap="24%"
+                      barGap={3}
+                    >
+                      <defs>
+                        <linearGradient id="working-hours-gradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#60a5fa" />
+                          <stop offset="100%" stopColor="#2563eb" />
+                        </linearGradient>
+                        <linearGradient id="productive-time-gradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#4ade80" />
+                          <stop offset="100%" stopColor="#16a34a" />
+                        </linearGradient>
+                        <linearGradient id="unproductive-time-gradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#fb7185" />
+                          <stop offset="100%" stopColor="#e11d48" />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid
+                        stroke="#e2e8f0"
+                        strokeDasharray="4 4"
+                        vertical={false}
+                      />
+                      <XAxis
+                        dataKey="date"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: "#64748b", fontSize: 12 }}
+                        minTickGap={16}
+                      />
                       <YAxis
                         tickFormatter={(value) => formatTimeDisplay(Math.round(value))}
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: "#64748b", fontSize: 12 }}
+                        width={58}
                         label={{
                           value: "Duration",
                           angle: -90,
@@ -1684,22 +1722,70 @@ const EmployeeAttendanceDashboard = () => {
                         }}
                       />
                       <Tooltip
+                        cursor={{ fill: "#e2e8f0", fillOpacity: 0.35 }}
                         formatter={(value, name) => [
                           formatTimeDisplay(Math.round(value)),
                           name,
                         ]}
+                        contentStyle={{
+                          border: "1px solid #e2e8f0",
+                          borderRadius: 12,
+                          boxShadow: "0 12px 30px rgba(15, 23, 42, 0.12)",
+                          backgroundColor: "rgba(255, 255, 255, 0.96)",
+                        }}
+                        labelStyle={{ color: "#0f172a", fontWeight: 700 }}
+                        itemStyle={{ color: "#334155", fontSize: 12 }}
                       />
-                      <Legend />
-                      <Bar dataKey="workingMinutes" fill="#3b82f6" name="Working Hours" />
-                      <Bar dataKey="productiveMinutes" fill="#22c55e" name="Productive" />
-                      <Bar dataKey="unproductiveMinutes" fill="#ef4444" name="Unproductive" />
+                      <Legend
+                        iconType="circle"
+                        iconSize={8}
+                        wrapperStyle={{ paddingTop: 12, fontSize: 12 }}
+                      />
+                      <Bar
+                        dataKey="workingMinutes"
+                        fill="url(#working-hours-gradient)"
+                        name="Working Hours"
+                        radius={[6, 6, 1, 1]}
+                        maxBarSize={14}
+                      />
+                      <Bar
+                        dataKey="productiveMinutes"
+                        fill="url(#productive-time-gradient)"
+                        name="Productive"
+                        radius={[6, 6, 1, 1]}
+                        maxBarSize={14}
+                      />
+                      <Bar
+                        dataKey="unproductiveMinutes"
+                        fill="url(#unproductive-time-gradient)"
+                        name="Unproductive"
+                        radius={[6, 6, 1, 1]}
+                        maxBarSize={14}
+                      />
                     </BarChart>
                   ) : (
-                    <LineChart data={productivityChartData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" />
+                    <LineChart
+                      data={productivityChartData}
+                      margin={{ top: 12, right: 16, left: 8, bottom: 8 }}
+                    >
+                      <CartesianGrid
+                        stroke="#e2e8f0"
+                        strokeDasharray="4 4"
+                        vertical={false}
+                      />
+                      <XAxis
+                        dataKey="date"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: "#64748b", fontSize: 12 }}
+                        minTickGap={16}
+                      />
                       <YAxis
                         tickFormatter={(value) => formatTimeDisplay(Math.round(value))}
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: "#64748b", fontSize: 12 }}
+                        width={58}
                         label={{
                           value: "Duration",
                           angle: -90,
@@ -1707,37 +1793,89 @@ const EmployeeAttendanceDashboard = () => {
                         }}
                       />
                       <Tooltip
+                        cursor={{ stroke: "#94a3b8", strokeDasharray: "4 4" }}
                         formatter={(value, name) => [
                           formatTimeDisplay(Math.round(value)),
                           name,
                         ]}
+                        contentStyle={{
+                          border: "1px solid #e2e8f0",
+                          borderRadius: 12,
+                          boxShadow: "0 12px 30px rgba(15, 23, 42, 0.12)",
+                          backgroundColor: "rgba(255, 255, 255, 0.96)",
+                        }}
+                        labelStyle={{ color: "#0f172a", fontWeight: 700 }}
+                        itemStyle={{ color: "#334155", fontSize: 12 }}
                       />
-                      <Legend />
+                      <Legend
+                        iconType="circle"
+                        iconSize={8}
+                        wrapperStyle={{ paddingTop: 12, fontSize: 12 }}
+                      />
                       <Line
                         type="monotone"
                         dataKey="workingMinutes"
                         stroke="#3b82f6"
-                        strokeWidth={2}
+                        strokeWidth={3}
                         name="Working Hours"
+                        dot={{ r: 2, fill: "#3b82f6", strokeWidth: 0 }}
+                        activeDot={{ r: 6, stroke: "#fff", strokeWidth: 2 }}
                       />
                       <Line
                         type="monotone"
                         dataKey="productiveMinutes"
                         stroke="#22c55e"
-                        strokeWidth={2}
+                        strokeWidth={3}
                         name="Productive"
+                        dot={{ r: 2, fill: "#22c55e", strokeWidth: 0 }}
+                        activeDot={{ r: 6, stroke: "#fff", strokeWidth: 2 }}
                       />
                       <Line
                         type="monotone"
                         dataKey="unproductiveMinutes"
                         stroke="#ef4444"
-                        strokeWidth={2}
+                        strokeWidth={3}
                         name="Unproductive"
+                        dot={{ r: 2, fill: "#ef4444", strokeWidth: 0 }}
+                        activeDot={{ r: 6, stroke: "#fff", strokeWidth: 2 }}
                       />
                     </LineChart>
                   )}
                 </ResponsiveContainer>
               )}
+              <div className="mt-5 grid gap-3 border-t border-slate-200 pt-5 sm:grid-cols-3">
+                <div className="rounded-xl border border-blue-100 bg-blue-50/70 p-4">
+                  <p className="text-xs font-bold uppercase tracking-wide text-blue-700">
+                    Working Hours
+                  </p>
+                  <p className="mt-2 text-sm font-semibold text-slate-800">
+                    Elapsed time from check-in to check-out
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">Gross tracked time</p>
+                </div>
+                <div className="rounded-xl border border-emerald-100 bg-emerald-50/70 p-4">
+                  <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">
+                    Productive Time
+                  </p>
+                  <p className="mt-2 text-sm font-semibold text-slate-800">
+                    Working Hours - Breaks - Idle Time
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Productive time cannot be less than zero
+                  </p>
+                </div>
+                <div className="rounded-xl border border-rose-100 bg-rose-50/70 p-4">
+                  <p className="text-xs font-bold uppercase tracking-wide text-rose-700">
+                    Unproductive Time
+                  </p>
+                  <p className="mt-2 text-sm font-semibold text-slate-800">
+                    Breaks + Idle Time
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Total break duration plus desktop idle time
+                  </p>
+                </div>
+              </div>
             </div>
 
             {/* Status Distribution Chart */}
