@@ -13,6 +13,7 @@ export const calculateProductivityMinutes = ({
     + nonNegativeMinutes(idleMinutes);
 
   return {
+    workingMinutes: totalWorkingMinutes,
     productiveMinutes: Math.max(0, totalWorkingMinutes - unproductiveMinutes),
     unproductiveMinutes,
   };

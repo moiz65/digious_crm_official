@@ -52,16 +52,23 @@ const parseAttendanceDate = (dateStr) => {
 
 const EmployeeAttendanceDashboard = () => {
   const { user, role } = useAuth();
+  const employeeId = user?.employeeId || user?.employee_id || user?.id;
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [activeItem, setActiveItem] = useState("dashboard");
   const [currentTime, setCurrentTime] = useState(new Date());
   const [attendanceData, setAttendanceData] = useState(null);
   const [monthlyAttendance, setMonthlyAttendance] = useState([]);
+  const [productivityAttendance, setProductivityAttendance] = useState([]);
+  const [productivityMonth, setProductivityMonth] = useState(() => {
+    const date = getPakistanDate();
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+  });
+  const [isProductivityLoading, setIsProductivityLoading] = useState(true);
+  const [productivityError, setProductivityError] = useState("");
   const [isCheckedIn, setIsCheckedIn] = useState(false);
   const [activeBreaks, setActiveBreaks] = useState([]);
   const [breakTimers, setBreakTimers] = useState({});
   const [loading, setLoading] = useState(true);
-  const [chartView, setChartView] = useState("monthly");
   const [productivityChartType, setProductivityChartType] = useState("bar");
   const [pendingCheckout, setPendingCheckout] = useState(null);
   const [isOverlapWindow, setIsOverlapWindow] = useState(false);
@@ -75,7 +82,7 @@ const EmployeeAttendanceDashboard = () => {
   });
 
   const getEmployeeId = () => {
-    const id = user?.employeeId || user?.employee_id || user?.id;
+    const id = employeeId;
     console.log("[INFO] Getting employee ID:", {
       user,
       employeeId: user?.employeeId,
@@ -107,6 +114,49 @@ const EmployeeAttendanceDashboard = () => {
     }, 30000);
     return () => clearInterval(attendanceRefresh);
   }, []);
+
+  useEffect(() => {
+    let active = true;
+    const loadProductivityAttendance = async () => {
+      setIsProductivityLoading(true);
+      setProductivityError("");
+      setProductivityAttendance([]);
+
+      if (!employeeId || !/^\d{4}-\d{2}$/.test(productivityMonth)) {
+        setIsProductivityLoading(false);
+        return;
+      }
+
+      const [year, month] = productivityMonth.split("-").map(Number);
+      try {
+        const token = localStorage.getItem("token");
+        const response = await fetch(
+          endpoints.attendance.monthly(employeeId, year, month),
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          },
+        );
+        const data = await response.json();
+        if (!response.ok || !data.success || !Array.isArray(data.data)) {
+          throw new Error(data.message || "Could not load productivity analytics.");
+        }
+        if (active) setProductivityAttendance(data.data);
+      } catch (error) {
+        console.error("Error fetching productivity attendance:", error);
+        if (active) setProductivityError(error.message);
+      } finally {
+        if (active) setIsProductivityLoading(false);
+      }
+    };
+
+    loadProductivityAttendance();
+    return () => {
+      active = false;
+    };
+  }, [employeeId, productivityMonth]);
 
   useEffect(() => {
     if (activeBreaks.length === 0) return;
@@ -568,101 +618,6 @@ const EmployeeAttendanceDashboard = () => {
     return attendanceData?.status || "Present";
   };
 
-  const getWeeklyData = () => {
-    const today = new Date();
-    const dayOfWeek = today.getDay();
-    const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
-    const startOfWeek = new Date(today.setDate(diff));
-    startOfWeek.setHours(0, 0, 0, 0);
-
-    const endOfWeek = new Date(startOfWeek);
-    endOfWeek.setDate(endOfWeek.getDate() + 6);
-    endOfWeek.setHours(23, 59, 59, 999);
-
-    const weekDays = {};
-    for (let i = 0; i < 7; i++) {
-      const date = new Date(startOfWeek);
-      date.setDate(date.getDate() + i);
-      const dateStr = date.toLocaleDateString("en-US", {
-        weekday: "short",
-        month: "numeric",
-        day: "numeric",
-      });
-      weekDays[dateStr] = { hours: 0, status: "Absent", raw_minutes: 0 };
-    }
-
-    monthlyAttendance
-      .filter((r) => {
-        const recordDate = parseAttendanceDate(r.attendance_date);
-        return recordDate >= startOfWeek && recordDate <= endOfWeek;
-      })
-      .forEach((record) => {
-        const dateStr = parseAttendanceDate(
-          record.attendance_date,
-        ).toLocaleDateString("en-US", {
-          weekday: "short",
-          month: "numeric",
-          day: "numeric",
-        });
-        let hours = record.net_working_time_minutes
-          ? Math.floor(record.net_working_time_minutes / 60)
-          : 0;
-        let rawMinutes = record.net_working_time_minutes || 0;
-
-        const recordDate = parseAttendanceDate(record.attendance_date);
-        const isToday = recordDate.toDateString() === today.toDateString();
-        if (isToday && record.check_in_time && !record.check_out_time) {
-          const [checkInHour, checkInMin, checkInSec] = record.check_in_time
-            .split(":")
-            .map(Number);
-          const checkInTotalMinutes = checkInHour * 60 + checkInMin;
-
-          const now = new Date();
-          const currentTotalMinutes = now.getHours() * 60 + now.getMinutes();
-
-          let grossMinutes = 0;
-          const isNightShift = checkInTotalMinutes >= 21 * 60;
-
-          if (isNightShift) {
-            const minutesUntilMidnight = 24 * 60 - checkInTotalMinutes;
-            const minutesAfterMidnight = currentTotalMinutes;
-            grossMinutes = minutesUntilMidnight + minutesAfterMidnight;
-          } else {
-            const timeDifferenceMinutes =
-              currentTotalMinutes - checkInTotalMinutes;
-            if (timeDifferenceMinutes >= 0) {
-              grossMinutes = timeDifferenceMinutes;
-            } else {
-              const minutesUntilMidnight = 24 * 60 - checkInTotalMinutes;
-              const minutesAfterMidnight = currentTotalMinutes;
-              grossMinutes = minutesUntilMidnight + minutesAfterMidnight;
-            }
-          }
-
-          const breakMinutes = record.total_break_duration_minutes || 0;
-          const netMinutes = Math.max(0, grossMinutes - breakMinutes);
-
-          hours = Math.floor(netMinutes / 60);
-          rawMinutes = netMinutes;
-        }
-
-        weekDays[dateStr] = {
-          hours: hours,
-          status: record.status,
-          raw_minutes: rawMinutes,
-        };
-      });
-
-    const weekData = Object.entries(weekDays).map(([date, data]) => ({
-      date: date,
-      hours: data.hours,
-      status: data.status,
-      raw_minutes: data.raw_minutes,
-    }));
-
-    return weekData;
-  };
-
   const getMonthlyChartData = () => {
     const today = new Date();
     const currentYear = today.getFullYear();
@@ -762,17 +717,20 @@ const EmployeeAttendanceDashboard = () => {
   };
 
   const getProductivityChartData = () => {
-    const today = new Date();
+    const today = getPakistanDate();
+    const [selectedYear, selectedMonth] = productivityMonth.split("-").map(Number);
     const dailyHours = new Map(
       getMonthlyChartData().map((record) => [record.date, record.total || 0]),
     );
 
-    return monthlyAttendance
+    return productivityAttendance
       .filter((record) => {
         const recordDate = parseAttendanceDate(record.attendance_date);
-        return recordDate.getFullYear() === today.getFullYear()
-          && recordDate.getMonth() === today.getMonth()
-          && recordDate.getDate() <= today.getDate();
+        const inSelectedMonth = recordDate.getFullYear() === selectedYear
+          && recordDate.getMonth() === selectedMonth - 1;
+        const isCurrentMonth = selectedYear === today.getFullYear()
+          && selectedMonth === today.getMonth() + 1;
+        return inSelectedMonth && (!isCurrentMonth || recordDate.getDate() <= today.getDate());
       })
       .map((record) => {
         const recordDate = parseAttendanceDate(record.attendance_date);
@@ -791,7 +749,11 @@ const EmployeeAttendanceDashboard = () => {
           : Number(record.gross_working_time_minutes)
             || (Number(record.net_working_time_minutes) + totalBreakMinutes + breakInactivityMinutes)
             || 0;
-        const { productiveMinutes, unproductiveMinutes } = calculateProductivityMinutes({
+        const {
+          workingMinutes,
+          productiveMinutes,
+          unproductiveMinutes,
+        } = calculateProductivityMinutes({
           grossMinutes,
           breakMinutes: totalBreakMinutes,
           idleMinutes: desktopIdleMinutes,
@@ -799,6 +761,7 @@ const EmployeeAttendanceDashboard = () => {
 
         return {
           date,
+          workingMinutes,
           productiveMinutes,
           unproductiveMinutes,
         };
@@ -868,6 +831,12 @@ const EmployeeAttendanceDashboard = () => {
       duration: 10,
     },
   ];
+
+  const currentDate = getPakistanDate();
+  const currentProductivityMonth = `${currentDate.getFullYear()}-${String(
+    currentDate.getMonth() + 1,
+  ).padStart(2, "0")}`;
+  const productivityChartData = getProductivityChartData();
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-cyan-50">
@@ -1642,138 +1611,133 @@ const EmployeeAttendanceDashboard = () => {
           {/* Charts Section */}
           <div className="space-y-6 mt-8">
             <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
                 <h3 className="text-lg font-bold text-gray-900">
                   Daily Productivity
                 </h3>
-                <div
-                  className="flex gap-2"
-                  role="group"
-                  aria-label="Daily productivity chart type"
-                >
-                  {["bar", "line"].map((type) => (
-                    <button
-                      key={type}
-                      type="button"
-                      aria-pressed={productivityChartType === type}
-                      onClick={() => setProductivityChartType(type)}
-                      className={`px-3 py-1.5 rounded-lg font-semibold transition-all text-sm ${
-                        productivityChartType === type
-                          ? "bg-blue-500 text-white shadow-lg"
-                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                      }`}
-                    >
-                      {type === "bar" ? "Bar" : "Line"}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <ResponsiveContainer width="100%" height={300}>
-                {productivityChartType === "bar" ? (
-                  <BarChart data={getProductivityChartData()}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis
-                      tickFormatter={(value) => formatTimeDisplay(Math.round(value))}
-                      label={{
-                        value: "Duration",
-                        angle: -90,
-                        position: "insideLeft",
-                      }}
-                    />
-                    <Tooltip
-                      formatter={(value, name) => [
-                        formatTimeDisplay(Math.round(value)),
-                        name,
-                      ]}
-                    />
-                    <Legend />
-                    <Bar dataKey="productiveMinutes" fill="#22c55e" name="Productive" />
-                    <Bar dataKey="unproductiveMinutes" fill="#ef4444" name="Unproductive" />
-                  </BarChart>
-                ) : (
-                  <LineChart data={getProductivityChartData()}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis
-                      tickFormatter={(value) => formatTimeDisplay(Math.round(value))}
-                      label={{
-                        value: "Duration",
-                        angle: -90,
-                        position: "insideLeft",
-                      }}
-                    />
-                    <Tooltip
-                      formatter={(value, name) => [
-                        formatTimeDisplay(Math.round(value)),
-                        name,
-                      ]}
-                    />
-                    <Legend />
-                    <Line
-                      type="monotone"
-                      dataKey="productiveMinutes"
-                      stroke="#22c55e"
-                      strokeWidth={2}
-                      name="Productive"
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="unproductiveMinutes"
-                      stroke="#ef4444"
-                      strokeWidth={2}
-                      name="Unproductive"
-                    />
-                  </LineChart>
-                )}
-              </ResponsiveContainer>
-            </div>
-
-            {/* Chart View Filter */}
-            <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-bold text-gray-900">
-                  Working Hours Trend
-                </h3>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setChartView("monthly")}
-                    className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${
-                      chartView === "monthly"
-                        ? "bg-blue-500 text-white shadow-lg"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }`}
+                <div className="flex flex-wrap items-center gap-2">
+                  <label
+                    htmlFor="productivity-month"
+                    className="text-sm font-medium text-gray-600"
                   >
-                    Monthly
-                  </button>
+                    Month
+                  </label>
+                  <input
+                    id="productivity-month"
+                    type="month"
+                    value={productivityMonth}
+                    max={currentProductivityMonth}
+                    onChange={(event) => {
+                      if (/^\d{4}-\d{2}$/.test(event.target.value)) {
+                        setProductivityMonth(event.target.value);
+                      }
+                    }}
+                    className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700"
+                  />
+                  <div
+                    className="flex gap-2"
+                    role="group"
+                    aria-label="Daily productivity chart type"
+                  >
+                    {["bar", "line"].map((type) => (
+                      <button
+                        key={type}
+                        type="button"
+                        aria-pressed={productivityChartType === type}
+                        onClick={() => setProductivityChartType(type)}
+                        className={`px-3 py-1.5 rounded-lg font-semibold transition-all text-sm ${
+                          productivityChartType === type
+                            ? "bg-blue-500 text-white shadow-lg"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        }`}
+                      >
+                        {type === "bar" ? "Bar" : "Line"}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
-
-              {/* Working Hours Chart */}
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart
-                  data={
-                    chartView === "monthly"
-                      ? getMonthlyChartData()
-                      : getWeeklyData()
-                  }
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis
-                    label={{
-                      value: "Hours",
-                      angle: -90,
-                      position: "insideLeft",
-                    }}
-                  />
-                  <Tooltip
-                    formatter={(value) => `${value}h`}
-                    labelFormatter={(label) => `${label}`}
-                  />
-                  <Bar dataKey="hours" fill="#3b82f6" name="Working Hours" />
-                </BarChart>
-              </ResponsiveContainer>
+              {productivityError ? (
+                <p role="alert" className="py-12 text-center text-sm text-red-600">
+                  {productivityError}
+                </p>
+              ) : isProductivityLoading ? (
+                <p role="status" className="py-12 text-center text-sm text-gray-500">
+                  Loading productivity analytics...
+                </p>
+              ) : productivityChartData.length === 0 ? (
+                <p className="py-12 text-center text-sm text-gray-500">
+                  No productivity data for this month.
+                </p>
+              ) : (
+                <ResponsiveContainer width="100%" height={300}>
+                  {productivityChartType === "bar" ? (
+                    <BarChart data={productivityChartData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" />
+                      <YAxis
+                        tickFormatter={(value) => formatTimeDisplay(Math.round(value))}
+                        label={{
+                          value: "Duration",
+                          angle: -90,
+                          position: "insideLeft",
+                        }}
+                      />
+                      <Tooltip
+                        formatter={(value, name) => [
+                          formatTimeDisplay(Math.round(value)),
+                          name,
+                        ]}
+                      />
+                      <Legend />
+                      <Bar dataKey="workingMinutes" fill="#3b82f6" name="Working Hours" />
+                      <Bar dataKey="productiveMinutes" fill="#22c55e" name="Productive" />
+                      <Bar dataKey="unproductiveMinutes" fill="#ef4444" name="Unproductive" />
+                    </BarChart>
+                  ) : (
+                    <LineChart data={productivityChartData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" />
+                      <YAxis
+                        tickFormatter={(value) => formatTimeDisplay(Math.round(value))}
+                        label={{
+                          value: "Duration",
+                          angle: -90,
+                          position: "insideLeft",
+                        }}
+                      />
+                      <Tooltip
+                        formatter={(value, name) => [
+                          formatTimeDisplay(Math.round(value)),
+                          name,
+                        ]}
+                      />
+                      <Legend />
+                      <Line
+                        type="monotone"
+                        dataKey="workingMinutes"
+                        stroke="#3b82f6"
+                        strokeWidth={2}
+                        name="Working Hours"
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="productiveMinutes"
+                        stroke="#22c55e"
+                        strokeWidth={2}
+                        name="Productive"
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="unproductiveMinutes"
+                        stroke="#ef4444"
+                        strokeWidth={2}
+                        name="Unproductive"
+                      />
+                    </LineChart>
+                  )}
+                </ResponsiveContainer>
+              )}
             </div>
 
             {/* Status Distribution Chart */}

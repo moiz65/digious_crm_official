@@ -7,6 +7,7 @@ describe("calculateProductivityMinutes", () => {
       breakMinutes: 45,
       idleMinutes: 30,
     })).toEqual({
+      workingMinutes: 480,
       productiveMinutes: 405,
       unproductiveMinutes: 75,
     });
@@ -18,6 +19,7 @@ describe("calculateProductivityMinutes", () => {
       breakMinutes: 45,
       idleMinutes: 30,
     })).toEqual({
+      workingMinutes: 60,
       productiveMinutes: 0,
       unproductiveMinutes: 75,
     });
@@ -29,6 +31,7 @@ describe("calculateProductivityMinutes", () => {
       breakMinutes: -5,
       idleMinutes: undefined,
     })).toEqual({
+      workingMinutes: 0,
       productiveMinutes: 0,
       unproductiveMinutes: 0,
     });
