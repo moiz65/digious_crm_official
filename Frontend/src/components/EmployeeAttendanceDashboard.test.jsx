@@ -21,6 +21,21 @@ jest.mock("recharts", () => {
   const Series = ({ dataKey, hide }) => (
     hide ? null : <g data-testid={`series-${dataKey}`} />
   );
+  const Tooltip = ({ content, ...props }) => (
+    <foreignObject>
+      <div data-testid="productivity-tooltip">
+        {content({
+          ...props,
+          label: "10 Nov",
+          payload: [
+            { dataKey: "workingMinutes", name: "Working Hours", value: 480, color: "url(#working-hours-gradient)" },
+            { dataKey: "productiveMinutes", name: "Productive", value: 440, color: "url(#productive-time-gradient)" },
+            { dataKey: "unproductiveMinutes", name: "Unproductive", value: 40, color: "url(#unproductive-time-gradient)" },
+          ],
+        })}
+      </div>
+    </foreignObject>
+  );
   const Empty = () => null;
   return {
     ResponsiveContainer: Container,
@@ -31,7 +46,8 @@ jest.mock("recharts", () => {
     XAxis: Empty,
     YAxis: Empty,
     CartesianGrid: Empty,
-    Tooltip: Empty,
+    Tooltip,
+    DefaultTooltipContent: jest.requireActual("recharts").DefaultTooltipContent,
   };
 });
 
@@ -85,4 +101,24 @@ test("legend toggles series independently and keeps the selection between chart 
   fireEvent.click(working);
   expect(working).toHaveAttribute("aria-pressed", "true");
   expect(screen.getByTestId("series-workingMinutes")).toBeInTheDocument();
+});
+
+test("tooltip labels use series colors in both chart types", async () => {
+  render(<EmployeeAttendanceDashboard />);
+
+  const checkTooltip = () => {
+    const tooltip = within(screen.getByTestId("productivity-tooltip"));
+    expect(tooltip.getByText("10 Nov")).toBeInTheDocument();
+    expect(tooltip.getByText("Working Hours").closest("li")).toHaveStyle({ color: "#2563eb" });
+    expect(tooltip.getByText("Productive").closest("li")).toHaveStyle({ color: "#16a34a" });
+    expect(tooltip.getByText("Unproductive").closest("li")).toHaveStyle({ color: "#e11d48" });
+    expect(tooltip.getByText("8h")).toBeInTheDocument();
+    expect(tooltip.getByText("7h 20m")).toBeInTheDocument();
+    expect(tooltip.getByText("40m")).toBeInTheDocument();
+  };
+
+  await screen.findByTestId("productivity-tooltip");
+  checkTooltip();
+  fireEvent.click(screen.getByRole("button", { name: "Line" }));
+  checkTooltip();
 });

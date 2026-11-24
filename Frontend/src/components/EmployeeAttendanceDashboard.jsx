@@ -35,6 +35,7 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
+  DefaultTooltipContent,
   ResponsiveContainer,
 } from "recharts";
 
@@ -779,6 +780,21 @@ const EmployeeAttendanceDashboard = () => {
     if (mins === 0) return `${hours}h`;
     return `${hours}h ${mins}m`;
   };
+
+  const formatProductivityTooltip = (value, name) => [
+    formatTimeDisplay(Math.round(value)),
+    name,
+  ];
+
+  const renderProductivityTooltip = (props) => (
+    <DefaultTooltipContent
+      {...props}
+      payload={props.payload.map((entry) => ({
+        ...entry,
+        color: productivitySeries.find((series) => series.key === entry.dataKey)?.color || entry.color,
+      }))}
+    />
+  );
 
   const breakTypes = [
     {
@@ -1701,10 +1717,8 @@ const EmployeeAttendanceDashboard = () => {
                       />
                       <Tooltip
                         cursor={{ fill: "#e2e8f0", fillOpacity: 0.35 }}
-                        formatter={(value, name) => [
-                          formatTimeDisplay(Math.round(value)),
-                          name,
-                        ]}
+                        formatter={formatProductivityTooltip}
+                        content={renderProductivityTooltip}
                         contentStyle={{
                           border: "1px solid #e2e8f0",
                           borderRadius: 12,
@@ -1712,7 +1726,7 @@ const EmployeeAttendanceDashboard = () => {
                           backgroundColor: "rgba(255, 255, 255, 0.96)",
                         }}
                         labelStyle={{ color: "#0f172a", fontWeight: 700 }}
-                        itemStyle={{ color: "#334155", fontSize: 12 }}
+                        itemStyle={{ fontSize: 12 }}
                       />
                       <Bar
                         dataKey="workingMinutes"
@@ -1765,10 +1779,8 @@ const EmployeeAttendanceDashboard = () => {
                       />
                       <Tooltip
                         cursor={{ stroke: "#94a3b8", strokeDasharray: "4 4" }}
-                        formatter={(value, name) => [
-                          formatTimeDisplay(Math.round(value)),
-                          name,
-                        ]}
+                        formatter={formatProductivityTooltip}
+                        content={renderProductivityTooltip}
                         contentStyle={{
                           border: "1px solid #e2e8f0",
                           borderRadius: 12,
@@ -1776,7 +1788,7 @@ const EmployeeAttendanceDashboard = () => {
                           backgroundColor: "rgba(255, 255, 255, 0.96)",
                         }}
                         labelStyle={{ color: "#0f172a", fontWeight: 700 }}
-                        itemStyle={{ color: "#334155", fontSize: 12 }}
+                        itemStyle={{ fontSize: 12 }}
                       />
                       <Line
                         type="monotone"
