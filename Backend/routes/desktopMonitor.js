@@ -286,7 +286,8 @@ router.get('/employees', async (req, res) => {
               EXISTS (
                 SELECT 1
                 FROM desktop_monitor_sessions AS monitoring_session
-                WHERE monitoring_session.employee_id = CAST(employee.id AS CHAR)
+                WHERE monitoring_session.employee_id COLLATE utf8mb4_unicode_ci
+                      = CAST(employee.id AS CHAR) COLLATE utf8mb4_unicode_ci
                   AND monitoring_session.ended_at IS NULL
                   AND monitoring_session.last_seen_at >= DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 45 SECOND)
               ) AS isWorking,
@@ -297,7 +298,7 @@ router.get('/employees', async (req, res) => {
                     FROM employee_attendance AS attendance
                     JOIN employee_breaks AS active_break
                       ON active_break.attendance_id = attendance.id
-                    WHERE attendance.employee_id = CAST(employee.id AS CHAR)
+                    WHERE attendance.employee_id = employee.id
                       AND attendance.check_out_time IS NULL
                       AND active_break.break_end_time IS NULL
                   ) THEN 'break'
@@ -320,7 +321,8 @@ router.get('/employees', async (req, res) => {
                   ELSE 'disconnected'
                 END
                 FROM desktop_monitor_sessions AS latest_session
-                WHERE latest_session.employee_id = CAST(employee.id AS CHAR)
+                WHERE latest_session.employee_id COLLATE utf8mb4_unicode_ci
+                      = CAST(employee.id AS CHAR) COLLATE utf8mb4_unicode_ci
                 ORDER BY latest_session.started_at DESC
                 LIMIT 1
               ), 'disconnected') AS monitoringStatus

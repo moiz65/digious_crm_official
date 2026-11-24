@@ -6,6 +6,7 @@ import AttendanceCorrectionModal from "./AttendanceCorrectionModal";
 import { endpoints } from "../config/api";
 import { getPakistanDate } from "../utils/timezone";
 import { getBreakElapsedSeconds } from "../utils/breakTimer";
+import { calculateProductivityMinutes } from "../utils/productivity";
 import { emitDesktopMonitorEvent, DESKTOP_MONITOR_EVENTS } from "../utils/desktopMonitoringEvents";
 import EmployeeSidebar from "./EmployeeSidebar";
 import { DashboardHeader, RoleBasedNav } from "./DashboardComponents";
@@ -27,7 +28,10 @@ import {
 } from "lucide-react";
 import {
   BarChart,
+  LineChart,
   Bar,
+  Line,
+  Legend,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -58,6 +62,7 @@ const EmployeeAttendanceDashboard = () => {
   const [breakTimers, setBreakTimers] = useState({});
   const [loading, setLoading] = useState(true);
   const [chartView, setChartView] = useState("monthly");
+  const [productivityChartType, setProductivityChartType] = useState("bar");
   const [pendingCheckout, setPendingCheckout] = useState(null);
   const [isOverlapWindow, setIsOverlapWindow] = useState(false);
   const [correctionModalOpen, setCorrectionModalOpen] = useState(false);
@@ -778,7 +783,6 @@ const EmployeeAttendanceDashboard = () => {
         const totalBreakMinutes = Number(record.total_break_duration_minutes) || 0;
         const breakInactivityMinutes = Number(record.break_inactivity_minutes) || 0;
         const desktopIdleMinutes = Number(record.desktop_idle_minutes) || 0;
-        const totalInactivityMinutes = Number(record.total_inactivity_minutes) || 0;
         const isCurrentSession = recordDate.toDateString() === today.toDateString()
           && record.check_in_time
           && !record.check_out_time;
@@ -787,18 +791,16 @@ const EmployeeAttendanceDashboard = () => {
           : Number(record.gross_working_time_minutes)
             || (Number(record.net_working_time_minutes) + totalBreakMinutes + breakInactivityMinutes)
             || 0;
-        const productiveMinutes = Math.max(
-          0,
-          grossMinutes
-            - totalBreakMinutes
-            - breakInactivityMinutes
-            - desktopIdleMinutes,
-        );
+        const { productiveMinutes, unproductiveMinutes } = calculateProductivityMinutes({
+          grossMinutes,
+          breakMinutes: totalBreakMinutes,
+          idleMinutes: desktopIdleMinutes,
+        });
 
         return {
           date,
           productiveMinutes,
-          inactivityMinutes: totalInactivityMinutes,
+          unproductiveMinutes,
         };
       });
   };
@@ -1640,30 +1642,90 @@ const EmployeeAttendanceDashboard = () => {
           {/* Charts Section */}
           <div className="space-y-6 mt-8">
             <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
-              <h3 className="text-lg font-bold text-gray-900 mb-6">
-                Daily Productivity
-              </h3>
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-bold text-gray-900">
+                  Daily Productivity
+                </h3>
+                <div
+                  className="flex gap-2"
+                  role="group"
+                  aria-label="Daily productivity chart type"
+                >
+                  {["bar", "line"].map((type) => (
+                    <button
+                      key={type}
+                      type="button"
+                      aria-pressed={productivityChartType === type}
+                      onClick={() => setProductivityChartType(type)}
+                      className={`px-3 py-1.5 rounded-lg font-semibold transition-all text-sm ${
+                        productivityChartType === type
+                          ? "bg-blue-500 text-white shadow-lg"
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      }`}
+                    >
+                      {type === "bar" ? "Bar" : "Line"}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={getProductivityChartData()}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis
-                    tickFormatter={(value) => formatTimeDisplay(Math.round(value))}
-                    label={{
-                      value: "Duration",
-                      angle: -90,
-                      position: "insideLeft",
-                    }}
-                  />
-                  <Tooltip
-                    formatter={(value, name) => [
-                      formatTimeDisplay(Math.round(value)),
-                      name,
-                    ]}
-                  />
-                  <Bar dataKey="productiveMinutes" fill="#22c55e" name="Productive" />
-                  <Bar dataKey="inactivityMinutes" fill="#ef4444" name="Inactivity" />
-                </BarChart>
+                {productivityChartType === "bar" ? (
+                  <BarChart data={getProductivityChartData()}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" />
+                    <YAxis
+                      tickFormatter={(value) => formatTimeDisplay(Math.round(value))}
+                      label={{
+                        value: "Duration",
+                        angle: -90,
+                        position: "insideLeft",
+                      }}
+                    />
+                    <Tooltip
+                      formatter={(value, name) => [
+                        formatTimeDisplay(Math.round(value)),
+                        name,
+                      ]}
+                    />
+                    <Legend />
+                    <Bar dataKey="productiveMinutes" fill="#22c55e" name="Productive" />
+                    <Bar dataKey="unproductiveMinutes" fill="#ef4444" name="Unproductive" />
+                  </BarChart>
+                ) : (
+                  <LineChart data={getProductivityChartData()}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" />
+                    <YAxis
+                      tickFormatter={(value) => formatTimeDisplay(Math.round(value))}
+                      label={{
+                        value: "Duration",
+                        angle: -90,
+                        position: "insideLeft",
+                      }}
+                    />
+                    <Tooltip
+                      formatter={(value, name) => [
+                        formatTimeDisplay(Math.round(value)),
+                        name,
+                      ]}
+                    />
+                    <Legend />
+                    <Line
+                      type="monotone"
+                      dataKey="productiveMinutes"
+                      stroke="#22c55e"
+                      strokeWidth={2}
+                      name="Productive"
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="unproductiveMinutes"
+                      stroke="#ef4444"
+                      strokeWidth={2}
+                      name="Unproductive"
+                    />
+                  </LineChart>
+                )}
               </ResponsiveContainer>
             </div>
 

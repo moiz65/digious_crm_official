@@ -218,6 +218,12 @@ describe('desktop monitor API', () => {
     expect(pool.query.mock.calls[0][0]).toContain("LOWER(TRIM(employee.status)) = 'active'");
     expect(pool.query.mock.calls[0][0]).toContain('monitoring_session.ended_at IS NULL');
     expect(pool.query.mock.calls[0][0]).toContain('monitoring_session.last_seen_at');
+    expect(pool.query.mock.calls[0][0]).toContain(
+      'monitoring_session.employee_id COLLATE utf8mb4_unicode_ci',
+    );
+    expect(pool.query.mock.calls[0][0]).toContain(
+      'latest_session.employee_id COLLATE utf8mb4_unicode_ci',
+    );
     expect(pool.query.mock.calls[0][0]).toContain("latest_session.ended_reason = 'paused'");
     expect(pool.query.mock.calls[0][0]).toContain("latest_session.ended_reason = 'break'");
     expect(pool.query.mock.calls[0][0]).toContain("latest_session.ended_reason = 'checked-out'");
