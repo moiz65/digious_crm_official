@@ -5,6 +5,7 @@ const fs = require('fs/promises');
 const path = require('path');
 const pool = require('../config/database');
 const authMiddleware = require('../middleware/auth');
+const { getPakistanMySQLDateTime } = require('../utils/timezone');
 
 const router = express.Router();
 const screenshotDirectory = path.join(__dirname, '../private_uploads/desktop-monitor');
@@ -69,14 +70,15 @@ async function isEmployeeUnavailableForMonitoring(employeeId) {
   if (breakRows.length) return { unavailable: true, reason: 'break' };
 
   const [checkoutRows] = await pool.query(
-    `SELECT 1
+    `SELECT id
        FROM employee_attendance
       WHERE employee_id = ? AND check_out_time IS NULL
+      ORDER BY attendance_date DESC, id DESC
       LIMIT 1`,
     [String(employeeId)],
   );
   return checkoutRows.length
-    ? { unavailable: false, reason: null }
+    ? { unavailable: false, reason: null, attendanceId: checkoutRows[0].id }
     : { unavailable: true, reason: 'checked-out' };
 }
 
@@ -206,9 +208,9 @@ router.post('/sessions/:sessionId/events', async (req, res) => {
       });
     }
     await pool.query(
-      `INSERT INTO desktop_monitor_events (session_id, employee_id, event_type, idle_seconds)
-       VALUES (?, ?, ?, ?)`,
-      [req.params.sessionId, String(employeeId), eventType, idleSeconds ?? null],
+      `INSERT INTO desktop_monitor_events (session_id, employee_id, attendance_id, event_type, idle_seconds)
+       VALUES (?, ?, ?, ?, ?)`,
+      [req.params.sessionId, String(employeeId), availability.attendanceId, eventType, idleSeconds ?? null],
     );
     return res.status(201).json({ success: true });
   } catch (error) {
@@ -255,9 +257,9 @@ router.post('/sessions/:sessionId/screenshots', parseScreenshot, async (req, res
     try {
       const [result] = await pool.query(
         `INSERT INTO desktop_monitor_screenshots
-         (session_id, employee_id, stored_name, mime_type, file_size)
-         VALUES (?, ?, ?, 'image/jpeg', ?)`,
-        [req.params.sessionId, String(employeeId), storedName, req.file.size],
+         (session_id, employee_id, attendance_id, stored_name, mime_type, file_size)
+         VALUES (?, ?, ?, ?, 'image/jpeg', ?)`,
+        [req.params.sessionId, String(employeeId), availability.attendanceId, storedName, req.file.size],
       );
       return res.status(201).json({
         success: true,
@@ -388,19 +390,31 @@ router.get('/employees/:employeeId/activity', async (req, res) => {
   }
 
   const screenshotDateFilter = hasDateRange
-    ? ' AND captured_at >= ? AND captured_at < DATE_ADD(?, INTERVAL 1 DAY)'
+    ? ` AND ((screenshot.attendance_id IS NOT NULL AND EXISTS (
+          SELECT 1 FROM employee_attendance AS linked_attendance
+          WHERE linked_attendance.id = screenshot.attendance_id
+            AND linked_attendance.employee_id = screenshot.employee_id
+            AND linked_attendance.attendance_date BETWEEN ? AND ?
+        )) OR (screenshot.attendance_id IS NULL
+          AND screenshot.captured_at >= ? AND screenshot.captured_at < DATE_ADD(?, INTERVAL 1 DAY)))`
     : '';
   const idleDateFilter = hasDateRange
-    ? ' AND occurred_at >= ? AND occurred_at < DATE_ADD(?, INTERVAL 1 DAY)'
+    ? ` AND ((event.attendance_id IS NOT NULL AND EXISTS (
+          SELECT 1 FROM employee_attendance AS linked_attendance
+          WHERE linked_attendance.id = event.attendance_id
+            AND linked_attendance.employee_id = event.employee_id
+            AND linked_attendance.attendance_date BETWEEN ? AND ?
+        )) OR (event.attendance_id IS NULL
+          AND event.occurred_at >= ? AND event.occurred_at < DATE_ADD(?, INTERVAL 1 DAY)))`
     : '';
   const attendanceDateFilter = hasDateRange
     ? ' AND attendance_date >= ? AND attendance_date <= ?'
     : '';
   const screenshotParams = hasDateRange
-    ? [targetEmployeeId, from, to]
+    ? [targetEmployeeId, from, to, from, to]
     : [targetEmployeeId];
   const idleParams = hasDateRange
-    ? [targetEmployeeId, from, to]
+    ? [targetEmployeeId, from, to, from, to]
     : [targetEmployeeId];
   const attendanceParams = hasDateRange
     ? [targetEmployeeId, from, to]
@@ -411,68 +425,86 @@ router.get('/employees/:employeeId/activity', async (req, res) => {
   try {
     const [screenshots, idleEvents, idleTotals, attendanceTotals] = await Promise.all([
       pool.query(
-        `SELECT id, captured_at AS capturedAt, file_size AS fileSize
-         FROM desktop_monitor_screenshots
-         WHERE employee_id = ?${screenshotDateFilter}
-         ORDER BY captured_at DESC${screenshotLimit}`,
+        `SELECT screenshot.id, screenshot.captured_at AS capturedAt, screenshot.file_size AS fileSize
+         FROM desktop_monitor_screenshots AS screenshot
+         WHERE screenshot.employee_id = ?${screenshotDateFilter}
+         ORDER BY screenshot.captured_at DESC${screenshotLimit}`,
         screenshotParams,
       ),
       pool.query(
-        `SELECT id, idle_seconds AS idleSeconds, occurred_at AS occurredAt
-         FROM desktop_monitor_events
-         WHERE employee_id = ? AND event_type = 'idle_ended' AND idle_seconds IS NOT NULL${idleDateFilter}
-         ORDER BY occurred_at DESC${idleLimit}`,
+        `SELECT event.id, event.idle_seconds AS idleSeconds, event.occurred_at AS occurredAt
+         FROM desktop_monitor_events AS event
+         WHERE event.employee_id = ? AND event.event_type = 'idle_ended' AND event.idle_seconds IS NOT NULL${idleDateFilter}
+         ORDER BY event.occurred_at DESC${idleLimit}`,
         idleParams,
       ),
       pool.query(
-        `SELECT COALESCE(SUM(idle_seconds), 0) AS totalIdleSeconds
-         FROM desktop_monitor_events
-         WHERE employee_id = ? AND event_type = 'idle_ended' AND idle_seconds IS NOT NULL${idleDateFilter}`,
+        `SELECT COALESCE(SUM(event.idle_seconds), 0) AS totalIdleSeconds
+         FROM desktop_monitor_events AS event
+         WHERE event.employee_id = ? AND event.event_type = 'idle_ended' AND event.idle_seconds IS NOT NULL${idleDateFilter}`,
         idleParams,
       ),
       pool.query(
         `SELECT COALESCE(SUM(attendance.total_inactivity_minutes), 0) AS breakInactivityMinutes,
+                COALESCE(SUM(
+                  COALESCE(attendance.total_break_duration_minutes, 0) * 60
+                  + CASE WHEN attendance.check_out_time IS NULL THEN COALESCE((
+                    SELECT SUM(GREATEST(
+                      0,
+                      TIMESTAMPDIFF(SECOND, active_break.created_at, CURRENT_TIMESTAMP)
+                    ))
+                    FROM employee_breaks AS active_break
+                    WHERE active_break.attendance_id = attendance.id
+                      AND active_break.break_end_time IS NULL
+                  ), 0) ELSE 0 END
+                ), 0) AS breakDurationSeconds,
                 COALESCE(SUM(
                   CASE
                     WHEN attendance.check_out_time IS NULL AND attendance.check_in_time IS NOT NULL
                       THEN GREATEST(
                         0,
                         TIMESTAMPDIFF(
-                          MINUTE,
-                          TIMESTAMP(attendance.attendance_date, attendance.check_in_time),
-                          CURRENT_TIMESTAMP
+                          SECOND,
+                          TIMESTAMP(
+                            CASE WHEN attendance.check_in_time < '06:00:00'
+                              THEN DATE_ADD(attendance.attendance_date, INTERVAL 1 DAY)
+                              ELSE attendance.attendance_date END,
+                            attendance.check_in_time
+                          ),
+                          ?
                         )
-                        - COALESCE(attendance.total_break_duration_minutes, 0)
-                        - COALESCE(attendance.total_inactivity_minutes, 0)
+                        - COALESCE(attendance.total_break_duration_minutes, 0) * 60
                         - COALESCE((
                           SELECT SUM(GREATEST(
                             0,
                             TIMESTAMPDIFF(SECOND, active_break.created_at, CURRENT_TIMESTAMP)
-                          )) / 60
+                          ))
                           FROM employee_breaks AS active_break
                           WHERE active_break.attendance_id = attendance.id
                             AND active_break.break_end_time IS NULL
                         ), 0)
                       )
+                    WHEN attendance.gross_working_time_minutes > 0
+                      THEN GREATEST(
+                        0,
+                        attendance.gross_working_time_minutes
+                        - COALESCE(attendance.total_break_duration_minutes, 0)
+                      ) * 60
                     WHEN attendance.net_working_time_minutes > 0
-                      THEN attendance.net_working_time_minutes
-                    ELSE GREATEST(
-                      0,
-                      COALESCE(attendance.gross_working_time_minutes, 0)
-                      - COALESCE(attendance.total_break_duration_minutes, 0)
-                      - COALESCE(attendance.total_inactivity_minutes, 0)
-                    )
+                      THEN attendance.net_working_time_minutes * 60
+                    ELSE 0
                   END
-                ), 0) AS netWorkingMinutes
+                ), 0) AS workingAfterBreakSeconds
          FROM employee_attendance AS attendance
          WHERE attendance.employee_id = ?${attendanceDateFilter}`,
-        attendanceParams,
+        [getPakistanMySQLDateTime(), ...attendanceParams],
       ),
     ]);
 
     const totalIdleSeconds = Number(idleTotals[0][0].totalIdleSeconds) || 0;
     const breakInactivityMinutes = Number(attendanceTotals[0][0].breakInactivityMinutes) || 0;
-    const netWorkingMinutes = Number(attendanceTotals[0][0].netWorkingMinutes) || 0;
+    const breakDurationSeconds = Number(attendanceTotals[0][0].breakDurationSeconds) || 0;
+    const workingAfterBreakSeconds = Number(attendanceTotals[0][0].workingAfterBreakSeconds) || 0;
 
     return res.status(200).json({
       success: true,
@@ -481,8 +513,9 @@ router.get('/employees/:employeeId/activity', async (req, res) => {
         idleEvents: idleEvents[0],
         totalIdleSeconds,
         breakInactivityMinutes,
-        totalInactivitySeconds: totalIdleSeconds + (breakInactivityMinutes * 60),
-        productiveSeconds: Math.max(0, (netWorkingMinutes * 60) - totalIdleSeconds),
+        breakDurationSeconds,
+        totalInactivitySeconds: totalIdleSeconds + breakDurationSeconds,
+        productiveSeconds: Math.max(0, workingAfterBreakSeconds - totalIdleSeconds),
       },
     });
   } catch (error) {

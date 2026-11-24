@@ -4,6 +4,7 @@ import { config } from "../config/api";
 import Sidebar from "../components/Sidebar";
 import HrSidebar from "../components/HrSidebar";
 import EmployeeSidebar from "../components/EmployeeSidebar";
+import { getCurrentAttendanceDate } from "../utils/timezone";
 
 const API_URL = `${config.FULL_API_URL}/desktop-monitor`;
 
@@ -27,14 +28,6 @@ const getEmployeeInitials = (name) => String(name || "Employee")
   .map((part) => part.charAt(0).toUpperCase())
   .join("") || "E";
 
-const getLocalDateInputValue = () => {
-  const date = new Date();
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
-
 const getMonitoringStatus = (employee) => {
   const status = employee.monitoringStatus || (employee.isWorking ? "working" : "disconnected");
   const statuses = {
@@ -56,8 +49,8 @@ const DesktopMonitoring = () => {
   const [employeeId, setEmployeeId] = useState("");
   const [employeeSearch, setEmployeeSearch] = useState("");
   const [activity, setActivity] = useState(null);
-  const [activityFromDate, setActivityFromDate] = useState(getLocalDateInputValue);
-  const [activityToDate, setActivityToDate] = useState(getLocalDateInputValue);
+  const [activityFromDate, setActivityFromDate] = useState(getCurrentAttendanceDate);
+  const [activityToDate, setActivityToDate] = useState(getCurrentAttendanceDate);
   const [activeActivityTab, setActiveActivityTab] = useState("idle");
   const [loadingEmployees, setLoadingEmployees] = useState(true);
   const [loadingActivity, setLoadingActivity] = useState(false);
@@ -347,7 +340,7 @@ const DesktopMonitoring = () => {
 
                       <section aria-label="Activity date filter">
                         <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                          Activity date range
+                          Attendance date range
                         </h4>
                         <div className="mt-3 grid grid-cols-2 gap-3">
                           <label className="min-w-0">
@@ -435,7 +428,7 @@ const DesktopMonitoring = () => {
                           <div className="space-y-3">
                             <div className="rounded-xl bg-amber-50 p-4">
                               <p className="text-xs font-medium text-amber-700">
-                                Total inactivity in range
+                                Unproductive hours in range
                               </p>
                               <p className="mt-1 text-2xl font-bold text-amber-900">
                                 {formatDuration(activity?.totalInactivitySeconds)}
@@ -443,9 +436,7 @@ const DesktopMonitoring = () => {
                               <p className="mt-1 text-xs text-amber-700">
                                 Desktop idle: {formatDuration(activity?.totalIdleSeconds)}
                                 {" · "}
-                                Break overrun: {formatDuration(
-                                  (Number(activity?.breakInactivityMinutes) || 0) * 60,
-                                )}
+                                Break duration: {formatDuration(activity?.breakDurationSeconds)}
                               </p>
                               <p className="mt-1 text-xs text-amber-700">
                                 {idleEvents.length} idle {idleEvents.length === 1 ? "period" : "periods"}
@@ -459,7 +450,7 @@ const DesktopMonitoring = () => {
                                 {formatDuration(activity?.productiveSeconds)}
                               </p>
                               <p className="mt-1 text-xs text-green-700">
-                                Net attendance time minus desktop idle
+                                Working time minus breaks and desktop idle
                               </p>
                             </div>
                             <h4 className="mt-5 text-xs font-bold uppercase tracking-wider text-slate-400">

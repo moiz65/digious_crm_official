@@ -8,6 +8,7 @@ jest.mock('../config/database', () => ({
 }));
 
 const express = require('express');
+const fs = require('fs/promises');
 const pool = require('../config/database');
 const desktopMonitorRoutes = require('../routes/desktopMonitor');
 
@@ -142,9 +143,79 @@ describe('desktop monitor API', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ eventType: 'key_pressed' }),
     });
-
     expect(response.status).toBe(400);
     expect(pool.query).not.toHaveBeenCalled();
+  });
+
+  test('links new idle events to the latest open attendance record', async () => {
+    pool.query
+      .mockResolvedValueOnce([[{ id: 'session-id' }], []])
+      .mockResolvedValueOnce([[], []])
+      .mockResolvedValueOnce([[{ id: 123 }], []])
+      .mockResolvedValueOnce([{ affectedRows: 1 }, []]);
+
+    const response = await fetch(`${baseUrl}/sessions/session-id/events`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ eventType: 'idle_ended', idleSeconds: 300 }),
+    });
+
+    expect(response.status).toBe(201);
+    expect(pool.query).toHaveBeenNthCalledWith(
+      3,
+      expect.stringContaining('ORDER BY attendance_date DESC, id DESC'),
+      ['42'],
+    );
+    expect(pool.query).toHaveBeenNthCalledWith(
+      4,
+      expect.stringContaining('attendance_id'),
+      ['session-id', '42', 123, 'idle_ended', 300],
+    );
+  });
+
+  test('links new screenshots to the active attendance record', async () => {
+    const mkdir = jest.spyOn(fs, 'mkdir').mockResolvedValue();
+    const writeFile = jest.spyOn(fs, 'writeFile').mockResolvedValue();
+    try {
+      pool.query
+        .mockResolvedValueOnce([[{ id: 'session-id' }], []])
+        .mockResolvedValueOnce([[], []])
+        .mockResolvedValueOnce([[{ id: 123 }], []])
+        .mockResolvedValueOnce([{ insertId: 8 }, []]);
+      const formData = new FormData();
+      formData.append('screenshot', new Blob([Buffer.from([0xff, 0xd8, 0xff])], { type: 'image/jpeg' }), 'screen.jpg');
+
+      const response = await fetch(`${baseUrl}/sessions/session-id/screenshots`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      expect(response.status).toBe(201);
+      expect(pool.query).toHaveBeenNthCalledWith(
+        4,
+        expect.stringContaining('attendance_id'),
+        ['session-id', '42', 123, expect.any(String), 3],
+      );
+    } finally {
+      mkdir.mockRestore();
+      writeFile.mockRestore();
+    }
+  });
+
+  test('does not save an idle event without an open attendance', async () => {
+    pool.query
+      .mockResolvedValueOnce([[{ id: 'session-id' }], []])
+      .mockResolvedValueOnce([[], []])
+      .mockResolvedValueOnce([[], []]);
+
+    const response = await fetch(`${baseUrl}/sessions/session-id/events`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ eventType: 'idle_started' }),
+    });
+
+    expect(response.status).toBe(409);
+    expect(pool.query).toHaveBeenCalledTimes(3);
   });
 
   test('does not accept image data that is not a JPEG', async () => {
@@ -255,7 +326,7 @@ describe('desktop monitor API', () => {
       .mockResolvedValueOnce([idleRows, []])
       .mockResolvedValueOnce([[{ totalIdleSeconds: '240' }], []])
       .mockResolvedValueOnce([[
-        { breakInactivityMinutes: '15', netWorkingMinutes: '300' },
+        { breakInactivityMinutes: '15', breakDurationSeconds: '3600', workingAfterBreakSeconds: '18000' },
       ], []]);
 
     const response = await fetch(`${baseUrl}/employees/7/activity`);
@@ -267,7 +338,8 @@ describe('desktop monitor API', () => {
       idleEvents: idleRows,
       totalIdleSeconds: 240,
       breakInactivityMinutes: 15,
-      totalInactivitySeconds: 1140,
+      breakDurationSeconds: 3600,
+      totalInactivitySeconds: 3840,
       productiveSeconds: 17760,
     });
     expect(pool.query).toHaveBeenCalledTimes(4);
@@ -286,7 +358,7 @@ describe('desktop monitor API', () => {
       .mockResolvedValueOnce([idleRows, []])
       .mockResolvedValueOnce([[{ totalIdleSeconds: '240' }], []])
       .mockResolvedValueOnce([[
-        { breakInactivityMinutes: '10', netWorkingMinutes: '300' },
+        { breakInactivityMinutes: '10', breakDurationSeconds: '1950', workingAfterBreakSeconds: '18000' },
       ], []]);
 
     const response = await fetch(
@@ -296,29 +368,57 @@ describe('desktop monitor API', () => {
 
     expect(response.status).toBe(200);
     expect(result.data.totalIdleSeconds).toBe(240);
-    expect(result.data.totalInactivitySeconds).toBe(840);
+    expect(result.data.totalInactivitySeconds).toBe(2190);
     expect(result.data.breakInactivityMinutes).toBe(10);
+    expect(result.data.breakDurationSeconds).toBe(1950);
     expect(result.data.productiveSeconds).toBe(17760);
     expect(pool.query).toHaveBeenNthCalledWith(
       1,
       expect.stringContaining('captured_at < DATE_ADD(?, INTERVAL 1 DAY)'),
-      ['7', '2026-11-09', '2026-11-10'],
+      ['7', '2026-11-09', '2026-11-10', '2026-11-09', '2026-11-10'],
     );
     expect(pool.query).toHaveBeenNthCalledWith(
       2,
       expect.stringContaining('occurred_at < DATE_ADD(?, INTERVAL 1 DAY)'),
-      ['7', '2026-11-09', '2026-11-10'],
+      ['7', '2026-11-09', '2026-11-10', '2026-11-09', '2026-11-10'],
     );
     expect(pool.query).toHaveBeenNthCalledWith(
       3,
       expect.stringContaining('occurred_at < DATE_ADD(?, INTERVAL 1 DAY)'),
-      ['7', '2026-11-09', '2026-11-10'],
+      ['7', '2026-11-09', '2026-11-10', '2026-11-09', '2026-11-10'],
     );
     expect(pool.query).toHaveBeenNthCalledWith(
       4,
       expect.stringContaining('attendance_date >= ? AND attendance_date <= ?'),
-      ['7', '2026-11-09', '2026-11-10'],
+      [expect.any(String), '7', '2026-11-09', '2026-11-10'],
     );
+    const attendanceQuery = pool.query.mock.calls[3][0];
+    for (const [sql] of pool.query.mock.calls.slice(0, 3)) {
+      expect(sql).toContain('linked_attendance.attendance_date BETWEEN ? AND ?');
+      expect(sql).toContain('attendance_id IS NULL');
+    }
+    expect(attendanceQuery).toContain('COALESCE(attendance.total_break_duration_minutes, 0) * 60');
+    expect(attendanceQuery).toContain('active_break.break_end_time IS NULL');
+    expect(attendanceQuery).toContain('attendance.gross_working_time_minutes');
+    expect(attendanceQuery).toContain("attendance.check_in_time < '06:00:00'");
+    expect(attendanceQuery).toContain('AS workingAfterBreakSeconds');
+  });
+
+  test('clamps productive time to zero when desktop idle exceeds working time', async () => {
+    global.__desktopMonitorUser = { employeeId: 42, role: 'hr' };
+    pool.query
+      .mockResolvedValueOnce([[], []])
+      .mockResolvedValueOnce([[], []])
+      .mockResolvedValueOnce([[{ totalIdleSeconds: '1800' }], []])
+      .mockResolvedValueOnce([[
+        { breakInactivityMinutes: '0', breakDurationSeconds: '1200', workingAfterBreakSeconds: '900' },
+      ], []]);
+
+    const response = await fetch(`${baseUrl}/employees/7/activity`);
+    const result = await response.json();
+
+    expect(result.data.totalInactivitySeconds).toBe(3000);
+    expect(result.data.productiveSeconds).toBe(0);
   });
 
   test('rejects invalid activity date ranges', async () => {

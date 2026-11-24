@@ -13,21 +13,25 @@ CREATE TABLE IF NOT EXISTS desktop_monitor_events (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
   session_id CHAR(36) NOT NULL,
   employee_id VARCHAR(64) NOT NULL,
+  attendance_id INT NULL,
   event_type ENUM('idle_started', 'idle_ended') NOT NULL,
   idle_seconds INT UNSIGNED NULL,
   occurred_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   INDEX idx_desktop_monitor_event_session (session_id, occurred_at),
-  INDEX idx_desktop_monitor_event_employee (employee_id, occurred_at)
+  INDEX idx_desktop_monitor_event_employee (employee_id, occurred_at),
+  INDEX idx_desktop_monitor_event_attendance (attendance_id)
 );
 
 CREATE TABLE IF NOT EXISTS desktop_monitor_screenshots (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
   session_id CHAR(36) NOT NULL,
   employee_id VARCHAR(64) NOT NULL,
+  attendance_id INT NULL,
   stored_name CHAR(36) NOT NULL UNIQUE,
   mime_type VARCHAR(32) NOT NULL,
   file_size INT UNSIGNED NOT NULL,
   captured_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   INDEX idx_desktop_monitor_screenshot_employee (employee_id, captured_at),
-  INDEX idx_desktop_monitor_screenshot_session (session_id, captured_at)
+  INDEX idx_desktop_monitor_screenshot_session (session_id, captured_at),
+  INDEX idx_desktop_monitor_screenshot_attendance (attendance_id)
 );

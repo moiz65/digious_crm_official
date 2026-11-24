@@ -33,6 +33,14 @@ export const getPakistanDateString = () => {
   return `${year}-${month}-${day}`;
 };
 
+export const getCurrentAttendanceDate = () => {
+  const date = getPakistanDate();
+  if (date.getUTCHours() < 6) {
+    date.setUTCDate(date.getUTCDate() - 1);
+  }
+  return date.toISOString().slice(0, 10);
+};
+
 /**
  * Get current time string in HH:MM:SS format (Pakistan timezone)
  * @returns {string} Time string in HH:MM:SS format

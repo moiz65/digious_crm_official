@@ -12,6 +12,7 @@ The Windows desktop companion opens the CRM in a dedicated, visible Electron win
 - Screenshots are lightly blurred before upload.
 - Screenshots may include any other applications or windows visible on the primary display. The employee must accept the updated consent before capture starts.
 - The employee picker and screenshot/activity viewer are available to Admin/Super Admin, HR, and Operations Managers through authenticated routes.
+- New screenshots and idle events are linked to the active attendance record, so activity after midnight appears under the shift's attendance date. Earlier monitoring records keep their previous date-based behavior.
 - Screenshots are uploaded separately from normal CRM API calls, with bounded retries.
 - The backend keeps screenshots outside its public `/uploads` directory. Access requires an authenticated API request.
 - Screenshots, idle events, and session records are automatically deleted after 30 days by default; set `DESKTOP_MONITOR_RETENTION_DAYS` to a value from 1 to 3650 to change this.
@@ -20,8 +21,8 @@ The Windows desktop companion opens the CRM in a dedicated, visible Electron win
 ## Setup and packaging
 
 1. Apply `Backend/migrations/create_desktop_monitor_tables.sql` to the CRM database.
-2. For databases that already have desktop monitoring tables, apply `Backend/migrations/add_desktop_monitor_session_presence.sql`.
-3. Deploy the backend and CRM frontend with the desktop-monitor API route enabled.
+2. For databases that already have desktop monitoring tables, apply `Backend/migrations/add_desktop_monitor_session_presence.sql` if needed, then `Backend/migrations/add_desktop_monitor_attendance_link.sql`.
+3. Apply the required migrations before deploying the backend and CRM frontend with the desktop-monitor API route enabled.
 4. From this directory run `npm install`, then `npm start` for local development.
 5. Run `npm run dist` on Windows to create an NSIS installer under `dist/`.
 6. On first launch the desktop app opens `https://digious-crm.vercel.app` automatically. The user signs in normally inside the CRM window.

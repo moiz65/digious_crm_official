@@ -31,13 +31,18 @@ import {
   LineChart,
   Bar,
   Line,
-  Legend,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+
+const productivitySeries = [
+  { key: "workingMinutes", label: "Working Hours", color: "#2563eb" },
+  { key: "productiveMinutes", label: "Productive", color: "#16a34a" },
+  { key: "unproductiveMinutes", label: "Unproductive", color: "#e11d48" },
+];
 
 const parseAttendanceDate = (dateStr) => {
   if (typeof dateStr === "string" && dateStr.includes("-")) {
@@ -67,6 +72,7 @@ const EmployeeAttendanceDashboard = () => {
   const [breakTimers, setBreakTimers] = useState({});
   const [loading, setLoading] = useState(true);
   const [productivityChartType, setProductivityChartType] = useState("bar");
+  const [hiddenProductivitySeries, setHiddenProductivitySeries] = useState([]);
   const [pendingCheckout, setPendingCheckout] = useState(null);
   const [isOverlapWindow, setIsOverlapWindow] = useState(false);
   const [correctionModalOpen, setCorrectionModalOpen] = useState(false);
@@ -1692,11 +1698,6 @@ const EmployeeAttendanceDashboard = () => {
                         tickLine={false}
                         tick={{ fill: "#64748b", fontSize: 12 }}
                         width={58}
-                        label={{
-                          value: "Duration",
-                          angle: -90,
-                          position: "insideLeft",
-                        }}
                       />
                       <Tooltip
                         cursor={{ fill: "#e2e8f0", fillOpacity: 0.35 }}
@@ -1713,13 +1714,9 @@ const EmployeeAttendanceDashboard = () => {
                         labelStyle={{ color: "#0f172a", fontWeight: 700 }}
                         itemStyle={{ color: "#334155", fontSize: 12 }}
                       />
-                      <Legend
-                        iconType="circle"
-                        iconSize={8}
-                        wrapperStyle={{ paddingTop: 12, fontSize: 12 }}
-                      />
                       <Bar
                         dataKey="workingMinutes"
+                        hide={hiddenProductivitySeries.includes("workingMinutes")}
                         fill="url(#working-hours-gradient)"
                         name="Working Hours"
                         radius={[6, 6, 1, 1]}
@@ -1727,6 +1724,7 @@ const EmployeeAttendanceDashboard = () => {
                       />
                       <Bar
                         dataKey="productiveMinutes"
+                        hide={hiddenProductivitySeries.includes("productiveMinutes")}
                         fill="url(#productive-time-gradient)"
                         name="Productive"
                         radius={[6, 6, 1, 1]}
@@ -1734,6 +1732,7 @@ const EmployeeAttendanceDashboard = () => {
                       />
                       <Bar
                         dataKey="unproductiveMinutes"
+                        hide={hiddenProductivitySeries.includes("unproductiveMinutes")}
                         fill="url(#unproductive-time-gradient)"
                         name="Unproductive"
                         radius={[6, 6, 1, 1]}
@@ -1763,11 +1762,6 @@ const EmployeeAttendanceDashboard = () => {
                         tickLine={false}
                         tick={{ fill: "#64748b", fontSize: 12 }}
                         width={58}
-                        label={{
-                          value: "Duration",
-                          angle: -90,
-                          position: "insideLeft",
-                        }}
                       />
                       <Tooltip
                         cursor={{ stroke: "#94a3b8", strokeDasharray: "4 4" }}
@@ -1784,14 +1778,10 @@ const EmployeeAttendanceDashboard = () => {
                         labelStyle={{ color: "#0f172a", fontWeight: 700 }}
                         itemStyle={{ color: "#334155", fontSize: 12 }}
                       />
-                      <Legend
-                        iconType="circle"
-                        iconSize={8}
-                        wrapperStyle={{ paddingTop: 12, fontSize: 12 }}
-                      />
                       <Line
                         type="monotone"
                         dataKey="workingMinutes"
+                        hide={hiddenProductivitySeries.includes("workingMinutes")}
                         stroke="#3b82f6"
                         strokeWidth={3}
                         name="Working Hours"
@@ -1801,6 +1791,7 @@ const EmployeeAttendanceDashboard = () => {
                       <Line
                         type="monotone"
                         dataKey="productiveMinutes"
+                        hide={hiddenProductivitySeries.includes("productiveMinutes")}
                         stroke="#22c55e"
                         strokeWidth={3}
                         name="Productive"
@@ -1810,6 +1801,7 @@ const EmployeeAttendanceDashboard = () => {
                       <Line
                         type="monotone"
                         dataKey="unproductiveMinutes"
+                        hide={hiddenProductivitySeries.includes("unproductiveMinutes")}
                         stroke="#ef4444"
                         strokeWidth={3}
                         name="Unproductive"
@@ -1819,6 +1811,34 @@ const EmployeeAttendanceDashboard = () => {
                     </LineChart>
                   )}
                 </ResponsiveContainer>
+              )}
+              {!productivityError && !isProductivityLoading && productivityChartData.length > 0 && (
+                <div
+                  className="flex flex-wrap justify-center gap-x-4 gap-y-2 pt-3"
+                  role="group"
+                  aria-label="Daily productivity series"
+                >
+                  {productivitySeries.map(({ key, label, color }) => {
+                    const visible = !hiddenProductivitySeries.includes(key);
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        aria-pressed={visible}
+                        onClick={() => setHiddenProductivitySeries((hidden) =>
+                          hidden.includes(key)
+                            ? hidden.filter((item) => item !== key)
+                            : [...hidden, key]
+                        )}
+                        className={`inline-flex items-center gap-2 rounded text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 ${visible ? "" : "opacity-50 line-through"}`}
+                        style={{ color }}
+                      >
+                        <span className="h-2 w-2 rounded-full bg-current" aria-hidden="true" />
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
               )}
               <div className="mt-5 grid gap-3 border-t border-slate-200 pt-5 sm:grid-cols-3">
                 <div className="rounded-xl border border-blue-100 bg-blue-50/70 p-4">

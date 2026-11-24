@@ -37,15 +37,18 @@ const getDesktopIdleSecondsByAttendanceDate = async (
     `SELECT idle_segments.attendance_date AS attendanceDate,
             SUM(idle_segments.idle_seconds) AS idleSeconds
      FROM (
-       SELECT DATE(
+       SELECT CASE WHEN ended.attendance_id IS NOT NULL THEN linked_attendance.attendance_date ELSE DATE(
                 CASE
                   WHEN TIME(COALESCE(started.occurred_at, ended.occurred_at)) < '09:00:00'
                     THEN DATE_SUB(COALESCE(started.occurred_at, ended.occurred_at), INTERVAL 1 DAY)
                   ELSE COALESCE(started.occurred_at, ended.occurred_at)
                 END
-              ) AS attendance_date,
+              ) END AS attendance_date,
               COALESCE(ended.idle_seconds, 0) AS idle_seconds
        FROM desktop_monitor_events AS ended
+       LEFT JOIN employee_attendance AS linked_attendance
+         ON linked_attendance.id = ended.attendance_id
+        AND linked_attendance.employee_id = ended.employee_id
        LEFT JOIN desktop_monitor_events AS started
          ON started.id = (
            SELECT candidate.id
@@ -59,18 +62,19 @@ const getDesktopIdleSecondsByAttendanceDate = async (
          )
        WHERE ended.employee_id = ?
          AND ended.event_type = 'idle_ended'
-         AND ended.occurred_at >= ?
-         AND ended.occurred_at < DATE_ADD(?, INTERVAL 2 DAY)
+         AND ((ended.attendance_id IS NOT NULL AND linked_attendance.attendance_date BETWEEN ? AND ?)
+           OR (ended.attendance_id IS NULL AND ended.occurred_at >= ?
+             AND ended.occurred_at < DATE_ADD(?, INTERVAL 2 DAY)))
 
        UNION ALL
 
-       SELECT DATE(
+       SELECT CASE WHEN started.attendance_id IS NOT NULL THEN linked_attendance.attendance_date ELSE DATE(
                 CASE
                   WHEN TIME(started.occurred_at) < '09:00:00'
                     THEN DATE_SUB(started.occurred_at, INTERVAL 1 DAY)
                   ELSE started.occurred_at
                 END
-              ) AS attendance_date,
+              ) END AS attendance_date,
               GREATEST(
                 0,
                 TIMESTAMPDIFF(
@@ -80,13 +84,17 @@ const getDesktopIdleSecondsByAttendanceDate = async (
                 )
               ) AS idle_seconds
        FROM desktop_monitor_events AS started
+       LEFT JOIN employee_attendance AS linked_attendance
+         ON linked_attendance.id = started.attendance_id
+        AND linked_attendance.employee_id = started.employee_id
        JOIN desktop_monitor_sessions AS monitor_session
          ON monitor_session.id = started.session_id
         AND monitor_session.employee_id = started.employee_id
        WHERE started.employee_id = ?
          AND started.event_type = 'idle_started'
-         AND started.occurred_at >= ?
-         AND started.occurred_at < DATE_ADD(?, INTERVAL 2 DAY)
+         AND ((started.attendance_id IS NOT NULL AND linked_attendance.attendance_date BETWEEN ? AND ?)
+           OR (started.attendance_id IS NULL AND started.occurred_at >= ?
+             AND started.occurred_at < DATE_ADD(?, INTERVAL 2 DAY)))
          AND NOT EXISTS (
            SELECT 1
            FROM desktop_monitor_events AS ended
@@ -102,7 +110,11 @@ const getDesktopIdleSecondsByAttendanceDate = async (
       String(employeeId),
       fromDate,
       toDate,
+      fromDate,
+      toDate,
       String(employeeId),
+      fromDate,
+      toDate,
       fromDate,
       toDate,
       fromDate,
