@@ -37,9 +37,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
 } from "recharts";
 
 const parseAttendanceDate = (dateStr) => {
@@ -766,26 +763,6 @@ const EmployeeAttendanceDashboard = () => {
           unproductiveMinutes,
         };
       });
-  };
-
-  const getStatusDistribution = () => {
-    const statusCount = monthlyAttendance.reduce((acc, record) => {
-      acc[record.status] = (acc[record.status] || 0) + 1;
-      return acc;
-    }, {});
-
-    const COLORS = {
-      Present: "#10b981",
-      Late: "#f59e0b",
-      Absent: "#ef4444",
-      Leave: "#8b5cf6",
-    };
-
-    return Object.entries(statusCount).map(([status, count]) => ({
-      name: status,
-      value: count,
-      color: COLORS[status] || "#6b7280",
-    }));
   };
 
   const formatTimeDisplay = (minutes) => {
@@ -1878,31 +1855,6 @@ const EmployeeAttendanceDashboard = () => {
               </div>
             </div>
 
-            {/* Status Distribution Chart */}
-            <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
-              <h3 className="text-lg font-bold text-gray-900 mb-6">
-                Attendance Status Distribution
-              </h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={getStatusDistribution()}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={(entry) => `${entry.name}: ${entry.value}`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {getStatusDistribution().map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
           </div>
         </main>
       </div>

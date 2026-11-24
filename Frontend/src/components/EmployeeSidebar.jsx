@@ -34,7 +34,10 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveIte
       label: 'My Dashboard',
       path: user?.designation?.trim().toLowerCase() === 'operations manager'
         ? '/operations-manager/dashboard'
-        : '/employee/dashboard'
+        : '/employee/dashboard',
+      children: user?.designation?.trim().toLowerCase() === 'operations manager'
+        ? [{ id: 'my-attendance', icon: Calendar, label: 'My Attendance', path: '/employee/dashboard' }]
+        : []
     },
     { id: 'attendance', icon: Calendar, label: 'Attendance', path: '/employee/attendance' },
     { id: 'profile', icon: User, label: 'My Profile', path: '/employee/profile' },
@@ -78,7 +81,7 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveIte
     const currentPath = location.pathname;
     
     // Check menu items
-    menuItems.forEach(item => {
+    menuItems.flatMap(item => [item, ...(item.children || [])]).forEach(item => {
       if (item.path && currentPath === item.path) {
         setActiveItem(item.id);
       }
@@ -130,7 +133,41 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveIte
   };
 
   const isItemActive = (item) => {
-    return activeItem === item.id || location.pathname === item.path;
+    const currentItem = menuItems.flatMap(menuItem => [menuItem, ...(menuItem.children || [])])
+      .find(menuItem => menuItem.path === location.pathname);
+    return currentItem ? currentItem.id === item.id : activeItem === item.id;
+  };
+
+  const renderMenuItem = (item, isChild = false) => {
+    const Icon = item.icon;
+    const active = isItemActive(item);
+
+    return (
+      <button
+        key={item.id}
+        onClick={() => handleNavigation(item)}
+        className={`
+          w-full flex items-center rounded-xl px-4 py-3 text-sm font-medium transition-all duration-300 relative
+          backdrop-blur-sm border
+          ${active
+            ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-lg shadow-blue-500/30 border-transparent transform -translate-y-0.5'
+            : 'bg-white/60 text-slate-700 border-blue-200/40 hover:bg-white/80 hover:border-blue-300 hover:shadow-md'
+          }
+          ${(isCollapsed && !isMobile) ? 'justify-center' : 'justify-start'}
+          ${isChild && (!isCollapsed || isMobile) ? 'pl-6' : ''}
+        `}
+        title={item.label}
+        aria-current={active ? 'page' : undefined}
+      >
+        <Icon className={`h-5 w-5 flex-shrink-0 ${(isCollapsed && !isMobile) ? '' : 'mr-3'} ${active ? 'text-white' : 'text-blue-500'}`} />
+        {(!isCollapsed || isMobile) && (
+          <span className="font-semibold text-left">{item.label}</span>
+        )}
+        {isCollapsed && !isMobile && active && (
+          <span className="absolute -right-1 top-1/2 transform -translate-y-1/2 w-1.5 h-8 bg-blue-500 rounded-l shadow-lg"></span>
+        )}
+      </button>
+    );
   };
 
   return (
@@ -220,36 +257,16 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, activeItem, setActiveIte
         {/* Navigation Menu */}
         <nav className="flex-1 overflow-y-auto py-6">
           <div className="space-y-2 px-4">
-            {menuItems.map((item) => {
-              const Icon = item.icon;
-              const active = isItemActive(item);
-  
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => handleNavigation(item)}
-                  className={`
-                    w-full flex items-center rounded-xl px-4 py-3 text-sm font-medium transition-all duration-300 relative
-                    backdrop-blur-sm border
-                    ${active
-                      ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-lg shadow-blue-500/30 border-transparent transform -translate-y-0.5'
-                      : 'bg-white/60 text-slate-700 border-blue-200/40 hover:bg-white/80 hover:border-blue-300 hover:shadow-md'
-                    }
-                    ${(isCollapsed && !isMobile) ? 'justify-center' : 'justify-start'}
-                  `}
-                  title={item.label}
-                >
-                  <Icon className={`h-5 w-5 flex-shrink-0 ${(isCollapsed && !isMobile) ? '' : 'mr-3'} ${active ? 'text-white' : 'text-blue-500'}`} />
-                  {(!isCollapsed || isMobile) && (
-                    <span className="font-semibold text-left">{item.label}</span>
-                  )}
-                  {/* Active indicator for collapsed view */}
-                  {isCollapsed && !isMobile && active && (
-                    <span className="absolute -right-1 top-1/2 transform -translate-y-1/2 w-1.5 h-8 bg-blue-500 rounded-l shadow-lg"></span>
-                  )}
-                </button>
-              );
-            })}
+            {menuItems.map((item) => (
+              <div key={item.id}>
+                {renderMenuItem(item)}
+                {item.children?.length > 0 && (
+                  <div className={`mt-2 space-y-2 ${(!isCollapsed || isMobile) ? 'ml-4' : ''}`}>
+                    {item.children.map(child => renderMenuItem(child, true))}
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         </nav>
 

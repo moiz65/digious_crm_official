@@ -29,8 +29,7 @@ const EmployeeDashboard = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         <DashboardHeader 
-          title="My Dashboard" 
-          
+          title="My Dashboard"
         />
         <RoleBasedNav role={role} />
 
